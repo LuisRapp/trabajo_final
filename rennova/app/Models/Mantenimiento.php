@@ -1,0 +1,34 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Mantenimiento extends Model
+{
+    protected $table = 'mantenimientos';
+    protected $primaryKey = 'id_mantenimiento';
+    protected $fillable = [
+        'id_maquinaria',
+        'id_tipo_mantenimiento',
+        'fecha_inicio',
+        'fecha_fin',
+        'costo_total',
+        'estado'
+    ];
+
+    public function maquinaria()
+    {
+        return $this->belongsTo(Maquinaria::class, 'id_maquinaria');
+    }
+
+    public function tipoMantenimiento()
+    {
+        return $this->belongsTo(TipoMantenimiento::class, 'id_tipo_mantenimiento');
+    }
+
+    public function mantenimientoInsumos()
+    {
+        return $this->hasMany(MantenimientoInsumo::class, 'id_mantenimiento');
+    }
+}
