@@ -20,8 +20,8 @@ return new class extends Migration
             $table->decimal('costo_unitario', 10, 2);
             $table->timestamps();
 
-            $table->foreign('id_unidad_medida')->references('id_unidad_medida')->on('unidad_medida')->onDelete('restrict');
-            $table->foreign('id_proveedor')->references('id_proveedor')->on('proveedor')->onDelete('set null');
+            $table->foreign('id_unidad_medida')->references('id_unidad_medida')->on('unidad_medidas')->onDelete('restrict');
+            $table->foreign('id_proveedor')->references('id_proveedor')->on('proveedors')->onDelete('set null');
         });
     }
 

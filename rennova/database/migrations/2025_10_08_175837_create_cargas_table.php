@@ -12,11 +12,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('cargas', function (Blueprint $table) {
-             $table->id('id_carga');
-            $table->foreignId('id_lote')->constrained('lote');
-            $table->foreignId('id_categoria_madera')->nullable()->constrained('categoria_madera');
+            $table->id('id_carga');
+            $table->unsignedBigInteger('id_lote');
+            $table->foreign('id_lote')->references('id_lote')->on('lotes');
+            $table->unsignedBigInteger('id_categoria_madera')->nullable();
+            $table->foreign('id_categoria_madera')->references('id_categoria_madera')->on('categoria_maderas');
             $table->bigInteger('id_chofer')->nullable();
-            $table->foreignId('id_parte_diario')->nullable()->constrained('parte_diario');
+            $table->unsignedBigInteger('id_parte_diario')->nullable();
+            $table->foreign('id_parte_diario')->references('id_parte_diario')->on('parte_diarios');
             $table->string('ticket', 20)->nullable();
             $table->decimal('peso_bruto', 10, 2)->nullable();
             $table->decimal('tara', 10, 2)->nullable();

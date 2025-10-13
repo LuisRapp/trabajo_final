@@ -22,10 +22,10 @@ return new class extends Migration
             $table->date('fecha_fin_actividades')->nullable();
             $table->timestamps();
 
-            $table->foreign('id_rol_laboral')
-                  ->references('id_rol_laboral')
-                  ->on('rol_laboral')
-                  ->onDelete('set null');
+        $table->foreign('id_rol_laboral')
+            ->references('id_rol_laboral')
+            ->on('rol_laborals')
+            ->onDelete('set null');
         });
     }
 

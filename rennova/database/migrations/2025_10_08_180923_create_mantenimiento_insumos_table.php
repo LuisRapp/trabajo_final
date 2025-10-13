@@ -13,9 +13,12 @@ return new class extends Migration
     {
         Schema::create('mantenimiento_insumos', function (Blueprint $table) {
             $table->id('id_mantenimiento_insumo');
-            $table->foreignId('id_mantenimiento')->constrained('mantenimiento');
-            $table->foreignId('id_insumo')->constrained('insumo');
-            $table->foreignId('id_movimiento')->nullable()->constrained('movimiento_stock');
+            $table->unsignedBigInteger('id_mantenimiento');
+            $table->foreign('id_mantenimiento')->references('id_mantenimiento')->on('mantenimientos');
+            $table->unsignedBigInteger('id_insumo');
+            $table->foreign('id_insumo')->references('id_insumo')->on('insumos');
+            $table->unsignedBigInteger('id_movimiento')->nullable();
+            $table->foreign('id_movimiento')->references('id_movimiento_stock')->on('movimiento_stocks');
             $table->decimal('cantidad_utilizada', 10, 2)->nullable();
             $table->timestamps();
         });

@@ -13,8 +13,10 @@ return new class extends Migration
     {
         Schema::create('mantenimientos', function (Blueprint $table) {
             $table->id('id_mantenimiento');
-            $table->foreignId('id_maquinaria')->constrained('maquinaria');
-            $table->foreignId('id_tipo_mantenimiento')->nullable()->constrained('tipo_mantenimiento');
+            $table->unsignedBigInteger('id_maquinaria');
+            $table->foreign('id_maquinaria')->references('id_maquinaria')->on('maquinarias');
+            $table->unsignedBigInteger('id_tipo_mantenimiento')->nullable();
+            $table->foreign('id_tipo_mantenimiento')->references('id_tipo_mantenimiento')->on('tipo_mantenimientos');
             $table->date('fecha_inicio');
             $table->date('fecha_fin')->nullable();
             $table->decimal('costo_total', 10, 2)->nullable();

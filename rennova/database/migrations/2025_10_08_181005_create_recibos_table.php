@@ -21,9 +21,9 @@ return new class extends Migration
             $table->string('observaciones', 150)->nullable();
             $table->timestamps();
 
-            $table->foreign('id_empleado')->references('id_empleado')->on('empleado')->onDelete('set null');
-            $table->foreign('id_cliente')->references('id_cliente')->on('cliente')->onDelete('set null');
-            $table->foreign('id_proveedor')->references('id_proveedor')->on('proveedor')->onDelete('set null');
+            $table->foreign('id_empleado')->references('id_empleado')->on('empleados')->onDelete('set null');
+            $table->foreign('id_cliente')->references('id_cliente')->on('clientes')->onDelete('set null');
+            $table->foreign('id_proveedor')->references('id_proveedor')->on('proveedors')->onDelete('set null');
         });
     }
 

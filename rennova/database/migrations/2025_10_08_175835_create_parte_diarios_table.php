@@ -12,8 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('parte_diarios', function (Blueprint $table) {
-             $table->id('id_parte_diario');
-            $table->foreignId('id_lote')->constrained('lote');
+            $table->id('id_parte_diario');
+            $table->unsignedBigInteger('id_lote');
+            $table->foreign('id_lote')->references('id_lote')->on('lotes');
             $table->date('fecha');
             $table->boolean('es_dia_caido')->default(false);
             $table->string('observaciones', 120)->nullable();

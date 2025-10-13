@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('motivo', 100)->nullable();
             $table->timestamps();
 
-            $table->foreign('id_insumo')->references('id_insumo')->on('insumo')->onDelete('cascade');
+            $table->foreign('id_insumo')->references('id_insumo')->on('insumos')->onDelete('cascade');
         });
     }
 

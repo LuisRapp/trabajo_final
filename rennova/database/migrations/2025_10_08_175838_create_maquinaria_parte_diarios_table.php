@@ -14,7 +14,8 @@ return new class extends Migration
         Schema::create('maquinaria_parte_diarios', function (Blueprint $table) {
             $table->id('id_maquinaria_parte');
             $table->bigInteger('id_maquinaria')->constrained('maquinaria');
-            $table->foreignId('id_parte_diario')->constrained('parte_diario');
+            $table->unsignedBigInteger('id_parte_diario');
+            $table->foreign('id_parte_diario')->references('id_parte_diario')->on('parte_diarios');
             $table->timestamps();
         });
     }

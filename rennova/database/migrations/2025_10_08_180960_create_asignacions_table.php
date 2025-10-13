@@ -12,9 +12,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('asignacions', function (Blueprint $table) {
-             $table->id('id_asignacion');
-            $table->foreignId('id_empleado')->constrained('empleado');
-            $table->foreignId('id_parte_diario')->constrained('parte_diario');
+            $table->id('id_asignacion');
+            $table->unsignedBigInteger('id_empleado');
+            $table->foreign('id_empleado')->references('id_empleado')->on('empleados');
+            $table->unsignedBigInteger('id_parte_diario');
+            $table->foreign('id_parte_diario')->references('id_parte_diario')->on('parte_diarios');
             $table->timestamps();
         });
     }

@@ -13,7 +13,8 @@ return new class extends Migration
     {
         Schema::create('maquinarias', function (Blueprint $table) {
             $table->id('id_maquinaria');
-            $table->foreignId('id_tipo_maquinaria')->constrained('tipo_maquinaria');
+            $table->unsignedBigInteger('id_tipo_maquinaria');
+            $table->foreign('id_tipo_maquinaria')->references('id_tipo_maquinaria')->on('tipo_maquinarias');
             $table->string('modelo', 60)->nullable();
             $table->string('estado', 20)->default('activo');
             $table->boolean('es_alquilada')->default(false);
