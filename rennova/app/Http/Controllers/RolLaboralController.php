@@ -12,7 +12,7 @@ class RolLaboralController extends Controller
      */
     public function index()
     {
-        //
+        return view('roles-laborales.index');
     }
 
     /**

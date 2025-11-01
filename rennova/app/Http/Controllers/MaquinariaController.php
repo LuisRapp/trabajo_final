@@ -12,7 +12,7 @@ class MaquinariaController extends Controller
      */
     public function index()
     {
-        //
+        return view('maquinarias.index');
     }
 
     /**

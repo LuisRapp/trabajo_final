@@ -1,0 +1,161 @@
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0"><i class="bi bi-cash-coin"></i> Histórico de Costos de Maquinaria</h1>
+    </div>
+
+    @if (session()->has('message'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill"></i> {{ session('message') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+    <!-- Pestañas (Tabs) -->
+    <ul class="nav nav-tabs mb-4" id="historicoTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="nuevo-tab" data-bs-toggle="tab" data-bs-target="#nuevo-historico" type="button" role="tab">
+                <i class="bi bi-plus-circle"></i> Nuevo Registro
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="listado-tab" data-bs-toggle="tab" data-bs-target="#listado-historicos" type="button" role="tab">
+                <i class="bi bi-list-ul"></i> Listado
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="historicoTabContent">
+        <!-- Tab 1: Formulario -->
+        <div class="tab-pane fade show active" id="nuevo-historico" role="tabpanel">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="bi bi-{{ $historico_id ? 'pencil-square' : 'plus-circle' }}"></i> {{ $historico_id ? 'Editar Registro' : 'Nuevo Registro' }}</h5>
+                </div>
+                <div class="card-body">
+                    <form wire:submit.prevent="guardar">
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Maquinaria <span class="text-danger">*</span></label>
+                                <select wire:model="id_maquinaria" class="form-select @error('id_maquinaria') is-invalid @enderror">
+                                    <option value="">Seleccione...</option>
+                                    @foreach($maquinarias as $maquinaria)
+                                        <option value="{{ $maquinaria->id_maquinaria }}">{{ $maquinaria->modelo }} ({{ $maquinaria->tipoMaquinaria->nombre ?? 'N/A' }})</option>
+                                    @endforeach
+                                </select>
+                                @error('id_maquinaria') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Costo por Tonelada <span class="text-danger">*</span></label>
+                                <input type="number" wire:model="costo_por_tonelada" step="0.01" class="form-control @error('costo_por_tonelada') is-invalid @enderror" placeholder="0.00">
+                                @error('costo_por_tonelada') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            </div>
+                        </div>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Fecha Inicio Vigencia <span class="text-danger">*</span></label>
+                                <input type="date" wire:model="fecha_inicio_vigencia" class="form-control @error('fecha_inicio_vigencia') is-invalid @enderror">
+                                @error('fecha_inicio_vigencia') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Fecha Fin Vigencia (opcional)</label>
+                                <input type="date" wire:model="fecha_fin_vigencia" class="form-control @error('fecha_fin_vigencia') is-invalid @enderror">
+                                @error('fecha_fin_vigencia') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2 justify-content-end">
+                            @if ($historico_id)
+                                <button type="button" wire:click="resetCampos" class="btn btn-secondary">
+                                    <i class="bi bi-x-circle"></i> Cancelar
+                                </button>
+                            @endif
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> {{ $historico_id ? 'Actualizar' : 'Guardar' }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Listado -->
+        <div class="tab-pane fade" id="listado-historicos" role="tabpanel">
+            <div class="card shadow">
+                <div class="card-body">
+                    <!-- Buscador -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <span class="input-group-text bg-light">
+                                    <i class="bi bi-search"></i>
+                                </span>
+                                <input type="text" wire:model.live="busqueda" class="form-control" placeholder="Buscar por maquinaria, costo o fechas...">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Maquinaria</th>
+                                    <th>Costo/Ton</th>
+                                    <th>Inicio</th>
+                                    <th>Fin</th>
+                                    <th class="text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($historicos as $historico)
+                                    <tr>
+                                        <td><span class="badge bg-secondary">{{ $historico->id_costo }}</span></td>
+                                        <td>{{ $historico->maquinaria->modelo ?? 'N/A' }}</td>
+                                        <td>${{ number_format($historico->costo_por_tonelada, 2) }}</td>
+                                        <td>{{ $historico->fecha_inicio_vigencia }}</td>
+                                        <td>{{ $historico->fecha_fin_vigencia ?? 'Vigente' }}</td>
+                                        <td class="text-center">
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <button class="btn btn-outline-primary" wire:click="editar({{ $historico->id_costo }})" onclick="cambiarAPestanaFormulario()" title="Editar">
+                                                    <i class="bi bi-pencil"></i>
+                                                </button>
+                                                <button class="btn btn-outline-danger" wire:click="eliminar({{ $historico->id_costo }})" onclick="return confirm('¿Eliminar este histórico?')" title="Eliminar">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="6" class="text-center py-4">
+                                            <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+                                            <p class="text-muted mt-2">No hay históricos registrados.</p>
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript para cambiar entre pestañas -->
+<script>
+    function cambiarAPestanaFormulario() {
+        const nuevoTab = document.getElementById('nuevo-tab');
+        const nuevoTabInstance = new bootstrap.Tab(nuevoTab);
+        nuevoTabInstance.show();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    document.addEventListener('livewire:init', () => {
+        Livewire.on('historicoGuardado', () => {
+            const listadoTab = document.getElementById('listado-tab');
+            const listadoTabInstance = new bootstrap.Tab(listadoTab);
+            listadoTabInstance.show();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    });
+</script>

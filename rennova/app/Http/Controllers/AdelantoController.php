@@ -12,7 +12,7 @@ class AdelantoController extends Controller
      */
     public function index()
     {
-        //
+        return view('adelantos.index');
     }
 
     /**

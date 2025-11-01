@@ -14,6 +14,7 @@
             <flux:navlist variant="outline">
                 <flux:navlist.group :heading="__('Platform')" class="grid">
                     <flux:navlist.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>{{ __('Dashboard') }}</flux:navlist.item>
+                    <flux:navlist.item icon="truck" :href="route('cargas.index')" :current="request()->routeIs('cargas.index')" wire:navigate>ABM Cargas</flux:navlist.item>
                 </flux:navlist.group>
             </flux:navlist>
 
@@ -31,9 +32,12 @@
 
             <!-- Desktop User Menu -->
             <flux:dropdown class="hidden lg:block" position="bottom" align="start">
+                @php
+                    $user = auth()->user();
+                @endphp
                 <flux:profile
-                    :name="auth()->user()->name"
-                    :initials="auth()->user()->initials()"
+                    :name="$user ? $user->name : __('Invitado')"
+                    :initials="$user && method_exists($user, 'initials') ? $user->initials() : ''"
                     icon:trailing="chevrons-up-down"
                     data-test="sidebar-menu-button"
                 />
@@ -46,13 +50,19 @@
                                     <span
                                         class="flex h-full w-full items-center justify-center rounded-lg bg-neutral-200 text-black dark:bg-neutral-700 dark:text-white"
                                     >
-                                        {{ auth()->user()->initials() }}
+                                        @if($user && method_exists($user, 'initials'))
+                                            {{ $user->initials() }}
+                                        @endif
                                     </span>
                                 </span>
 
                                 <div class="grid flex-1 text-start text-sm leading-tight">
-                                    <span class="truncate font-semibold">{{ auth()->user()->name }}</span>
-                                    <span class="truncate text-xs">{{ auth()->user()->email }}</span>
+                                    @if($user)
+                                        <span class="truncate font-semibold">{{ $user->name }}</span>
+                                        <span class="truncate text-xs">{{ $user->email }}</span>
+                                    @else
+                                        <span class="truncate font-semibold">{{ __('Invitado') }}</span>
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -83,8 +93,11 @@
             <flux:spacer />
 
             <flux:dropdown position="top" align="end">
+                @php
+                    $user = auth()->user();
+                @endphp
                 <flux:profile
-                    :initials="auth()->user()->initials()"
+                    :initials="$user && method_exists($user, 'initials') ? $user->initials() : ''"
                     icon-trailing="chevron-down"
                 />
 
@@ -96,13 +109,19 @@
                                     <span
                                         class="flex h-full w-full items-center justify-center rounded-lg bg-neutral-200 text-black dark:bg-neutral-700 dark:text-white"
                                     >
-                                        {{ auth()->user()->initials() }}
+                                        @if($user && method_exists($user, 'initials'))
+                                            {{ $user->initials() }}
+                                        @endif
                                     </span>
                                 </span>
 
                                 <div class="grid flex-1 text-start text-sm leading-tight">
-                                    <span class="truncate font-semibold">{{ auth()->user()->name }}</span>
-                                    <span class="truncate text-xs">{{ auth()->user()->email }}</span>
+                                    @if($user)
+                                        <span class="truncate font-semibold">{{ $user->name }}</span>
+                                        <span class="truncate text-xs">{{ $user->email }}</span>
+                                    @else
+                                        <span class="truncate font-semibold">{{ __('Invitado') }}</span>
+                                    @endif
                                 </div>
                             </div>
                         </div>

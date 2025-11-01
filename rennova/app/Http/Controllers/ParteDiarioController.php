@@ -12,7 +12,7 @@ class ParteDiarioController extends Controller
      */
     public function index()
     {
-        //
+        return view('partes-diarios.index');
     }
 
     /**

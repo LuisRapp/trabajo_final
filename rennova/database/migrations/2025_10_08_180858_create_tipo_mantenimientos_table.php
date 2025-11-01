@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('tipo_mantenimientos', function (Blueprint $table) {
            $table->id('id_tipo_mantenimiento');
             $table->string('nombre', 20);
+            $table->boolean('activo')->default(true);
             $table->timestamps();
         });
     }

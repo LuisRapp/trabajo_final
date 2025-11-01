@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 
@@ -11,6 +11,7 @@ class Usuario extends Authenticatable
     use Notifiable, HasRoles;
 
     protected $table = 'usuarios';
+    protected $primaryKey = 'id';
 
     protected $fillable = [
         'nombre',
@@ -33,6 +34,4 @@ class Usuario extends Authenticatable
         'ultimo_acceso' => 'datetime',
     ];
 }
-{
-    //
-}
+

@@ -12,7 +12,7 @@ class ReciboController extends Controller
      */
     public function index()
     {
-        //
+        return view('recibos.index');
     }
 
     /**

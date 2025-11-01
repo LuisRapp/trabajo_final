@@ -19,6 +19,7 @@ return new class extends Migration
             $table->date('fecha_emision')->default(DB::raw('CURRENT_DATE'));
             $table->decimal('monto', 10, 2);
             $table->string('observaciones', 150)->nullable();
+            $table->boolean('activo')->default(true);
             $table->timestamps();
 
             $table->foreign('id_empleado')->references('id_empleado')->on('empleados')->onDelete('set null');

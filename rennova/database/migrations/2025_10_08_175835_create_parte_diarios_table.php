@@ -18,6 +18,7 @@ return new class extends Migration
             $table->date('fecha');
             $table->boolean('es_dia_caido')->default(false);
             $table->string('observaciones', 120)->nullable();
+            $table->boolean('activo')->default(true);
             $table->timestamps();
         });
     }

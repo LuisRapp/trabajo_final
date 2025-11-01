@@ -14,6 +14,8 @@ return new class extends Migration
         Schema::create('rol_laborals', function (Blueprint $table) {
             $table->id('id_rol_laboral');
             $table->string('nombre', 50);
+            $table->decimal('costo_diario', 12, 2)->nullable();
+            $table->boolean('activo')->default(true);
             $table->timestamps();
         });
     }

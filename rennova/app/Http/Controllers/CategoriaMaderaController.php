@@ -12,7 +12,7 @@ class CategoriaMaderaController extends Controller
      */
     public function index()
     {
-        //
+        return view('categorias-madera.index');
     }
 
     /**

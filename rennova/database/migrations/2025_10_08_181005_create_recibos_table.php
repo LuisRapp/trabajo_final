@@ -17,8 +17,11 @@ return new class extends Migration
             $table->unsignedBigInteger('id_cliente')->nullable();
             $table->unsignedBigInteger('id_proveedor')->nullable();
             $table->date('fecha_emision')->default(DB::raw('CURRENT_DATE'));
+            $table->decimal('monto_bruto', 10, 2);
+            $table->decimal('descuentos', 10, 2)->default(0);
             $table->decimal('monto', 10, 2);
             $table->string('observaciones', 150)->nullable();
+            $table->boolean('activo')->default(true);
             $table->timestamps();
 
             $table->foreign('id_empleado')->references('id_empleado')->on('empleados')->onDelete('set null');

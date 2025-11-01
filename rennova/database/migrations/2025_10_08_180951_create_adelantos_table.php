@@ -17,6 +17,7 @@ return new class extends Migration
             $table->date('fecha_emision')->default(DB::raw('CURRENT_DATE'));
             $table->decimal('monto', 10, 2);
             $table->string('estado', 15)->default('pendiente');
+            $table->boolean('activo')->default(true);
             $table->timestamps();
 
             $table->foreign('id_empleado')

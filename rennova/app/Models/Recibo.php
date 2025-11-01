@@ -3,21 +3,37 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class Recibo extends Model
+
+class Recibo extends Model implements Auditable
 {
+    use \OwenIt\Auditing\Auditable;
+
     protected $table = 'recibos';
     protected $primaryKey = 'id_recibo';
     protected $fillable = [
         'id_empleado',
-        'periodo',
+        'id_cliente',
+        'id_proveedor',
+        'fecha_emision',
         'monto_bruto',
-        'monto_neto',
-        'fecha_emision'
+        'descuentos',
+        'monto',
+        'observaciones',
+        'activo'
     ];
 
     public function empleado()
     {
-        return $this->belongsTo(Empleado::class, 'id_empleado', 'id_empleado');
+        return $this->belongsTo(Empleado::class, 'id_empleado');
+    }
+    public function cliente()
+    {
+        return $this->belongsTo(Cliente::class, 'id_cliente');
+    }
+    public function proveedor()
+    {
+        return $this->belongsTo(Proveedor::class, 'id_proveedor');
     }
 }

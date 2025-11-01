@@ -12,7 +12,7 @@ class UnidadMedidaController extends Controller
      */
     public function index()
     {
-        //
+        return view('unidades-medida.index');
     }
 
     /**

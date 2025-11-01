@@ -12,7 +12,7 @@ class InsumoController extends Controller
      */
     public function index()
     {
-        //
+        return view('insumos.index');
     }
 
     /**

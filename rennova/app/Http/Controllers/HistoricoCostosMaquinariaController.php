@@ -12,7 +12,7 @@ class HistoricoCostosMaquinariaController extends Controller
      */
     public function index()
     {
-        //
+        return view('historico-costos-maquinarias.index');
     }
 
     /**

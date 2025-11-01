@@ -3,18 +3,21 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class ParteDiario extends Model
+
+class ParteDiario extends Model implements Auditable
 {
-    protected $table = 'partes_diarios';
+    use \OwenIt\Auditing\Auditable;
+
+    protected $table = 'parte_diarios';
     protected $primaryKey = 'id_parte_diario';
     protected $fillable = [
         'id_lote',
         'fecha',
-        'actividad_realizada',
-        'cantidad_trabajadores',
-        'horas_trabajadas',
+        'es_dia_caido',
         'observaciones',
+        'activo'
     ];
 
     public function lote()

@@ -12,7 +12,7 @@ class HistoricoRolLaboralController extends Controller
      */
     public function index()
     {
-        //
+        return view('historico-roles-laborales.index');
     }
 
     /**
