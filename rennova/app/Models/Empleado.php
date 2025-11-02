@@ -31,20 +31,34 @@ class Empleado extends Model implements Auditable
         return $this->hasMany(Adelanto::class, 'id_empleado', 'id_empleado');
     }
 
+    public function cargas()
+    {
+        return $this->belongsToMany(Carga::class, 'carga_empleado', 'id_empleado', 'id_carga')->withTimestamps();
+    }
+
+    public function partesDiarios()
+    {
+        return $this->belongsToMany(ParteDiario::class, 'parte_diario_empleado', 'id_empleado', 'id_parte_diario')->withTimestamps();
+    }
+
+    public function recibos()
+    {
+        return $this->hasMany(Recibo::class, 'id_empleado', 'id_empleado');
+    }
+
     /**
      * Calcular pagos de un empleado en un rango de fechas.
      *
-     * Lógica:
-     * - cantidad_dias_caidos: contar días en que existe un recibo de jornal para el empleado
-     *   relacionado con un ParteDiario con es_dia_caido = true.
-     * - total_peso_neto: sumar peso_neto de cada Carga en las fechas de los Partes en las que
-     *   exista un recibo asociado al empleado que haga referencia a la carga (observaciones).
+     * Lógica CORRECTA (desde ParteDiario y Carga directamente):
+     * - Si ParteDiario->es_dia_caido == true → Contar 1 día de jornal
+     * - Si ParteDiario->es_dia_caido == false → Buscar Cargas de ese día asignadas a este empleado
+     *   y sumar su peso_neto dividido por la cantidad de empleados asignados a cada carga
      *
      * @param  string|\DateTimeInterface  $fechaInicio
      * @param  string|\DateTimeInterface  $fechaFin
      * @return array {
      *     @type int cantidad_dias_caidos
-     *     @type float total_peso_neto
+     *     @type float total_peso_neto (toneladas asignadas al empleado)
      *     @type float valor_jornal
      *     @type float tarifa_fija_por_tonelada
      *     @type float total_pagar_jornales
@@ -54,76 +68,102 @@ class Empleado extends Model implements Auditable
      */
     public function calcularPagoRango($fechaInicio, $fechaFin)
     {
-        // Importar modelos localmente para evitar dependencias en la cabecera
-        $parteModel = \App\Models\ParteDiario::class;
-        $cargaModel = \App\Models\Carga::class;
-        $reciboModel = \App\Models\Recibo::class;
-
         $cantidad_dias_caidos = 0;
         $total_peso_neto = 0.0;
 
-        $empleado = $this; // ya tenemos la instancia
+        // Obtener valores de jornal y tarifa desde el histórico de rol laboral (vigente en fechaFin)
+        $valorJornal = 0;
+        $tarifaFija = 0;
 
-        // Obtener valores de jornal y tarifa desde el rol laboral (fallbacks por compatibilidad)
-        // Protecciones por si no existe rolLaboral relacionado
-        if ($empleado->relationLoaded('rolLaboral') || $empleado->rolLaboral) {
-            $valorJornal = $empleado->rolLaboral->jornal_diario ?? $empleado->rolLaboral->costo_diario ?? 0;
-            $tarifaFija = $empleado->rolLaboral->precio_tonelada ?? $empleado->rolLaboral->tarifa_fija_tonelada ?? 0;
+        $rolId = null;
+        if ($this->relationLoaded('rolLaboral') || $this->rolLaboral) {
+            $rolId = $this->rolLaboral->id_rol_laboral ?? $this->id_rol_laboral ?? null;
         } else {
-            $valorJornal = 0;
-            $tarifaFija = 0;
+            $rolId = $this->id_rol_laboral ?? null;
+        }
+
+        if ($rolId) {
+            $hist = \App\Models\HistoricoRolLaboral::where('rol_laboral_id', $rolId)
+                ->whereDate('fecha_inicio', '<=', $fechaFin)
+                ->where(function ($q) use ($fechaFin) {
+                    $q->whereNull('fecha_fin')->orWhereDate('fecha_fin', '>=', $fechaFin);
+                })
+                ->orderBy('fecha_inicio', 'desc')
+                ->first();
+
+            if (!$hist) {
+                // intentar con fechaInicio si no hay match exacto en fechaFin
+                $hist = \App\Models\HistoricoRolLaboral::where('rol_laboral_id', $rolId)
+                    ->whereDate('fecha_inicio', '<=', $fechaInicio)
+                    ->where(function ($q) use ($fechaInicio) {
+                        $q->whereNull('fecha_fin')->orWhereDate('fecha_fin', '>=', $fechaInicio);
+                    })
+                    ->orderBy('fecha_inicio', 'desc')
+                    ->first();
+            }
+
+            if ($hist) {
+                $valorJornal = (float) ($hist->jornal_diario ?? 0);
+                $tarifaFija = (float) ($hist->precio_tonelada ?? 0);
+            } else {
+                // fallback a campos actuales del rol si existen
+                if ($this->rolLaboral) {
+                    $valorJornal = (float) ($this->rolLaboral->jornal_diario ?? $this->rolLaboral->costo_diario ?? 0);
+                    $tarifaFija = (float) ($this->rolLaboral->precio_tonelada ?? 0);
+                }
+            }
         }
 
         // Obtener Partes en el rango de fechas
         $partes = \App\Models\ParteDiario::whereBetween('fecha', [$fechaInicio, $fechaFin])->get();
 
         foreach ($partes as $parte) {
-            // Si el parte es día caído, verificamos si existe un recibo de jornal para el empleado
             if ($parte->es_dia_caido) {
-                $tieneReciboJornal = \App\Models\Recibo::where('id_empleado', $empleado->id_empleado)
-                    ->whereDate('fecha_emision', $parte->fecha)
-                    ->where('observaciones', 'ILIKE', '%Pago por jornal%')
+                // DÍA CAÍDO: Verificar si este empleado trabajó ese día (tabla pivote)
+                $trabajoEseDia = \DB::table('parte_diario_empleado')
+                    ->where('id_parte_diario', $parte->id_parte_diario)
+                    ->where('id_empleado', $this->id_empleado)
                     ->exists();
-
-                if ($tieneReciboJornal) {
+                
+                if ($trabajoEseDia) {
                     $cantidad_dias_caidos += 1;
                 }
+            } else {
+                // PRODUCCIÓN: Buscar cargas del día asignadas a este empleado mediante tabla pivote
+                $cargasDelDia = \App\Models\Carga::whereDate('fecha_carga', $parte->fecha)
+                    ->whereHas('empleados', function($query) {
+                        // Evitar ambigüedad de columna en el join con pivote
+                        $query->where('empleados.id_empleado', $this->id_empleado);
+                    })
+                    ->with('empleados')
+                    ->get();
 
-                continue; // pasar al siguiente parte
-            }
-
-            // Modo producción: buscamos cargas del mismo día
-            $cargasDelDia = \App\Models\Carga::whereDate('fecha_carga', $parte->fecha)->get();
-
-            foreach ($cargasDelDia as $carga) {
-                // Verificar si existe un recibo para este empleado y que haga referencia a esta carga
-                // Observaciones al guardar usan el patrón: 'Pago por destajo - Parte Diario #<id> - Carga #<id> (...)'
-                $referenciaCarga = sprintf('Carga #%d', $carga->id_carga);
-
-                $tieneReciboPorCarga = \App\Models\Recibo::where('id_empleado', $empleado->id_empleado)
-                    ->whereDate('fecha_emision', $parte->fecha)
-                    ->where('observaciones', 'ILIKE', "%{$referenciaCarga}%")
-                    ->exists();
-
-                if ($tieneReciboPorCarga) {
-                    $total_peso_neto += (float) ($carga->peso_neto ?? 0);
+                foreach ($cargasDelDia as $carga) {
+                    // Dividir el peso_neto entre los empleados asignados
+                    $cantidadEmpleados = $carga->empleados->count();
+                    $pesoAsignado = $cantidadEmpleados > 0 ? $carga->peso_neto / $cantidadEmpleados : 0;
+                    $total_peso_neto += $pesoAsignado;
                 }
             }
         }
 
         // Cálculos finales
+        // IMPORTANTE: peso_neto está en kilos, convertir a toneladas (dividir por 1000) y redondear a 2 decimales
+        $total_peso_toneladas = round($total_peso_neto / 1000, 2);
+        
         $total_pagar_jornales = $cantidad_dias_caidos * (float) $valorJornal;
-        $total_pagar_produccion = $total_peso_neto * (float) $tarifaFija;
+        $total_pagar_produccion = $total_peso_toneladas * (float) $tarifaFija;
         $total_pagar_final = $total_pagar_jornales + $total_pagar_produccion;
 
         return [
             'cantidad_dias_caidos' => $cantidad_dias_caidos,
-            'total_peso_neto' => $total_peso_neto,
+            'total_peso_neto' => round($total_peso_neto, 2), // en kilos
+            'total_peso_toneladas' => round($total_peso_toneladas, 2), // en toneladas
             'valor_jornal' => (float) $valorJornal,
             'tarifa_fija_por_tonelada' => (float) $tarifaFija,
-            'total_pagar_jornales' => $total_pagar_jornales,
-            'total_pagar_produccion' => $total_pagar_produccion,
-            'total_pagar_final' => $total_pagar_final,
+            'total_pagar_jornales' => round($total_pagar_jornales, 2),
+            'total_pagar_produccion' => round($total_pagar_produccion, 2),
+            'total_pagar_final' => round($total_pagar_final, 2),
         ];
     }
 }

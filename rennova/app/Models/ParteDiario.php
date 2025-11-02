@@ -24,4 +24,9 @@ class ParteDiario extends Model implements Auditable
     {
         return $this->belongsTo(Lote::class, 'id_lote');
     }
+
+    public function empleados()
+    {
+        return $this->belongsToMany(Empleado::class, 'parte_diario_empleado', 'id_parte_diario', 'id_empleado')->withTimestamps();
+    }
 }

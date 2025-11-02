@@ -81,6 +81,9 @@ Route::middleware(['auth'])->group(function () {
     Route::view('/historico-roles-laborales', 'historico-roles-laborales.index')->name('historico-roles-laborales.index');
     Route::view('/lista-precios', 'lista-precios.index')->name('lista-precios.index');
     
+    // Liquidación de Pagos
+    Route::view('/liquidacion-pagos', 'liquidacion-pagos.index')->name('liquidacion-pagos.index');
+    
     // ABM Cargas
     Route::get('/cargas', [CargaController::class, 'index'])->name('cargas.index');
     Route::get('/cargas/create', [CargaController::class, 'create'])->name('cargas.create');

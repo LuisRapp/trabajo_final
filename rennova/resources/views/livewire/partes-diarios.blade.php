@@ -304,7 +304,7 @@
                                         @foreach($empleados as $emp)
                                             <option value="{{ $emp->id_empleado }}">
                                                 {{ $emp->apellido }}, {{ $emp->nombre }} - {{ $emp->rolLaboral->nombre ?? 'Sin rol' }} 
-                                                (Jornal: ${{ number_format($emp->rolLaboral->jornal_diario ?? 0, 2) }})
+                                                (Jornal: ${{ number_format($jornal_por_empleado[$emp->id_empleado] ?? ($emp->rolLaboral->jornal_diario ?? 0), 2) }})
                                             </option>
                                         @endforeach
                                     </select>

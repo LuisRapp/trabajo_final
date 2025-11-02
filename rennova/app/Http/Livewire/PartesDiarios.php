@@ -57,6 +57,7 @@ class PartesDiarios extends Component
     public $jornales = [];
     public $jornal_id_empleado;
     public $jornal_observaciones;
+    public $jornal_por_empleado = [];
     
     // Detalles de Movimientos de Insumos
     public $movimientos = [];
@@ -91,6 +92,13 @@ class PartesDiarios extends Component
         $this->categorias_madera = CategoriaMadera::orderBy('nombre')->get();
         $this->clientes = Cliente::orderBy('razon_social')->get();
         $this->cargarPartes();
+        $this->actualizarJornalPorEmpleado();
+    }
+
+    public function updatedFecha()
+    {
+        // Cuando cambia la fecha del parte, recalcular jornal vigente por empleado
+        $this->actualizarJornalPorEmpleado();
     }
     
     public function updatedCargaPesoBruto()
@@ -265,13 +273,15 @@ class PartesDiarios extends Component
             }
         }
         
-        $empleado = Empleado::with('rolLaboral')->find($this->jornal_id_empleado);
+    $empleado = Empleado::with('rolLaboral')->find($this->jornal_id_empleado);
+    // Obtener jornal vigente para la fecha del parte
+    $jornalVigente = $this->obtenerJornalEmpleadoParaFecha($empleado?->id_empleado, $this->fecha) ?? 0;
         
         $this->jornales[] = [
             'id_empleado' => $empleado->id_empleado,
             'nombre_completo' => $empleado->apellido . ', ' . $empleado->nombre,
             'rol' => $empleado->rolLaboral->nombre ?? 'N/A',
-            'jornal_diario' => $empleado->rolLaboral->jornal_diario ?? 0,
+            'jornal_diario' => $jornalVigente,
             'observaciones' => $this->jornal_observaciones,
         ];
         
@@ -288,6 +298,44 @@ class PartesDiarios extends Component
     {
         $this->jornal_id_empleado = null;
         $this->jornal_observaciones = null;
+    }
+
+    private function actualizarJornalPorEmpleado()
+    {
+        $this->jornal_por_empleado = [];
+        if (!$this->fecha) {
+            return;
+        }
+        foreach ($this->empleados as $emp) {
+            $this->jornal_por_empleado[$emp->id_empleado] = $this->obtenerJornalEmpleadoParaFecha($emp->id_empleado, $this->fecha) ?? (float)($emp->rolLaboral->jornal_diario ?? 0);
+        }
+    }
+
+    private function obtenerJornalEmpleadoParaFecha($empleadoId, $fecha)
+    {
+        if (!$empleadoId || !$fecha) {
+            return null;
+        }
+        $empleado = $this->empleados->firstWhere('id_empleado', $empleadoId);
+        if (!$empleado || !$empleado->rolLaboral) {
+            return null;
+        }
+        $rolId = $empleado->rolLaboral->id_rol_laboral ?? $empleado->id_rol_laboral ?? null;
+        if (!$rolId) {
+            return null;
+        }
+        $hist = \App\Models\HistoricoRolLaboral::where('rol_laboral_id', $rolId)
+            ->whereDate('fecha_inicio', '<=', $fecha)
+            ->where(function($q) use ($fecha) {
+                $q->whereNull('fecha_fin')->orWhereDate('fecha_fin', '>=', $fecha);
+            })
+            ->orderBy('fecha_inicio', 'desc')
+            ->first();
+        if ($hist) {
+            return (float) ($hist->jornal_diario ?? 0);
+        }
+        // Fallback al valor actual del rol si no hay histórico
+        return (float) ($empleado->rolLaboral->jornal_diario ?? 0);
     }
     
     // ============ GESTIÓN DE MOVIMIENTOS DE INSUMOS ============
@@ -371,6 +419,13 @@ class PartesDiarios extends Component
             
             // 2. Guardar Detalles según el tipo de día
             if (!$this->es_dia_caido) {
+                // Si estamos en modo edición, eliminar cargas anteriores del parte para evitar duplicados
+                if ($this->parte_id) {
+                    $cargasAnteriores = Carga::where('id_parte_diario', $parteDiarioId)->get();
+                    foreach ($cargasAnteriores as $cAnterior) {
+                        $cAnterior->delete(); // cascada elimina pivote carga_empleado
+                    }
+                }
                 // MODO PRODUCCIÓN: Guardar Cargas con empleados por destajo
                 foreach ($this->cargas as $cargaData) {
                     $carga = Carga::create([
@@ -386,49 +441,24 @@ class PartesDiarios extends Component
                         'fecha_carga' => $this->fecha,
                     ]);
                     
-                    // Guardar empleados asignados a esta carga (para pago por tonelada)
-                    // Usaremos la tabla 'recibos' para registrar el pago por destajo
-                    foreach ($cargaData['empleados'] as $empleadoId) {
-                        $empleado = Empleado::with('rolLaboral')->find($empleadoId);
-                        
-                        if ($empleado && $empleado->rolLaboral) {
-                            // Calcular pago por tonelada: (peso_neto / cantidad_empleados) * precio_por_tonelada
-                            $cantidadEmpleados = count($cargaData['empleados']);
-                            $toneladasPorEmpleado = $cargaData['peso_neto'] / $cantidadEmpleados;
-                            $precioPorTonelada = $empleado->rolLaboral->precio_tonelada ?? 0;
-                            $monto = $toneladasPorEmpleado * $precioPorTonelada;
-                            
-                            // Crear un recibo por el pago de destajo
-                            \App\Models\Recibo::create([
-                                'id_empleado' => $empleadoId,
-                                'fecha_emision' => $this->fecha,
-                                'monto_bruto' => $monto,
-                                'descuentos' => 0,
-                                'monto' => $monto,
-                                'observaciones' => 'Pago por destajo - Parte Diario #' . $parteDiarioId . ' - Carga #' . $carga->id_carga . ' (' . number_format($toneladasPorEmpleado, 2) . ' ton)',
-                                'activo' => true,
-                            ]);
-                        }
-                    }
+                    // Guardar empleados asignados a esta carga (para cálculo de pago posterior)
+                    // Ya NO creamos recibos aquí - los recibos se crean manualmente usando calcularPagoRango()
+                    $carga->empleados()->sync($cargaData['empleados']);
                 }
             } else {
-                // MODO DÍA CAÍDO: Guardar Jornales (pago fijo por día)
-                foreach ($this->jornales as $jornalData) {
-                    // Crear un recibo por el pago de jornal
-                    $montoBruto = $jornalData['jornal_diario'];
-                    \App\Models\Recibo::create([
-                        'id_empleado' => $jornalData['id_empleado'],
-                        'fecha_emision' => $this->fecha,
-                        'monto_bruto' => $montoBruto,
-                        'descuentos' => 0,
-                        'monto' => $montoBruto,
-                        'observaciones' => 'Pago por jornal - Día Caído - Parte Diario #' . $parteDiarioId . ' - ' . ($this->motivo_dia_caido ? 'Motivo: ' . $this->motivo_dia_caido : '') . ($jornalData['observaciones'] ? ' - ' . $jornalData['observaciones'] : ''),
-                        'activo' => true,
-                    ]);
-                }
+                // MODO DÍA CAÍDO: Guardar empleados que trabajaron ese día
+                // Ya NO creamos recibos automáticamente - se crearán después con calcularPagoRango()
+                $empleadosIds = array_column($this->jornales, 'id_empleado');
+                $parteDiario->empleados()->sync($empleadosIds);
             }
             
             // 3. Guardar Movimientos de Insumos (siempre se guardan)
+            // Si estamos en edición, eliminar movimientos previos de este parte para no duplicar
+            if ($this->parte_id) {
+                MovimientoStock::whereDate('fecha', $this->fecha)
+                    ->where('motivo', 'ILIKE', 'Parte Diario #' . $parteDiarioId . ' - %')
+                    ->delete();
+            }
             foreach ($this->movimientos as $movData) {
                 MovimientoStock::create([
                     'id_insumo' => $movData['id_insumo'],
@@ -469,14 +499,76 @@ class PartesDiarios extends Component
 
     public function editar($id)
     {
-        $parte = ParteDiario::findOrFail($id);
+        $parte = ParteDiario::with(['empleados.rolLaboral'])->findOrFail($id);
         $this->parte_id = $parte->id_parte_diario;
         $this->id_lote = $parte->id_lote;
         $this->fecha = $parte->fecha;
         $this->es_dia_caido = (bool) $parte->es_dia_caido;
         $this->observaciones = $parte->observaciones;
-        
-        // TODO: Cargar detalles asociados (cargas, jornales, movimientos)
+
+        // Cargar CARGAS si es producción
+        $this->cargas = [];
+        if (!$this->es_dia_caido) {
+            $cargas = Carga::with('empleados')
+                ->where('id_parte_diario', $parte->id_parte_diario)
+                ->get();
+            foreach ($cargas as $c) {
+                $this->cargas[] = [
+                    'id_categoria_madera' => $c->id_categoria_madera,
+                    'ticket' => $c->ticket,
+                    'peso_bruto' => (float) $c->peso_bruto,
+                    'tara' => (float) $c->tara,
+                    'peso_neto' => (float) $c->peso_neto,
+                    'id_chofer' => $c->id_chofer,
+                    'destino' => $c->destino, // se almacena como texto/ID según tu configuración actual
+                    'empleados' => $c->empleados->pluck('id_empleado')->all(),
+                ];
+            }
+            $this->calcularTotalToneladas();
+        }
+
+        // Cargar JORNALES si es día caído
+        $this->jornales = [];
+        if ($this->es_dia_caido) {
+            foreach ($parte->empleados as $emp) {
+                $jornalVig = $this->obtenerJornalEmpleadoParaFecha($emp->id_empleado, $this->fecha) ?? 0;
+                $this->jornales[] = [
+                    'id_empleado' => $emp->id_empleado,
+                    'nombre_completo' => $emp->apellido . ', ' . $emp->nombre,
+                    'rol' => $emp->rolLaboral->nombre ?? 'N/A',
+                    'jornal_diario' => $jornalVig,
+                    'observaciones' => null,
+                ];
+            }
+        }
+
+        // Cargar MOVIMIENTOS vinculados a este parte (por motivo y fecha)
+        $this->movimientos = [];
+        $movs = MovimientoStock::whereDate('fecha', $this->fecha)
+            ->where('motivo', 'ILIKE', 'Parte Diario #' . $parte->id_parte_diario . ' - %')
+            ->get();
+        foreach ($movs as $m) {
+            // Parsear motivo para extraer el enum original y observaciones
+            $motivoTexto = $m->motivo; // Ej: "Parte Diario #ID - Producción - obs"
+            $sinPrefijo = preg_replace('/^Parte Diario #'.preg_quote($parte->id_parte_diario, '/').' - /', '', $motivoTexto);
+            $partesMotivo = explode(' - ', $sinPrefijo, 2);
+            $motivoEnum = $partesMotivo[0] ?? 'Producción';
+            $obs = $partesMotivo[1] ?? null;
+
+            $insumo = $this->insumos->firstWhere('id_insumo', $m->id_insumo);
+            $this->movimientos[] = [
+                'id_insumo' => $m->id_insumo,
+                'nombre_insumo' => $insumo->nombre ?? 'Insumo',
+                'tipo' => $m->tipo,
+                'cantidad' => (float) $m->cantidad,
+                'motivo' => $motivoEnum,
+                'observaciones' => $obs,
+                'unidad' => $insumo->unidadMedida->nombre ?? 'Unidad',
+            ];
+        }
+
+        // Asegurar que el mapa de jornales vigentes esté actualizado
+        $this->actualizarJornalPorEmpleado();
     }
 
     public function eliminar($id)
@@ -491,10 +583,11 @@ class PartesDiarios extends Component
         $this->reset([
             'parte_id', 'id_lote', 'fecha', 'actividad_realizada', 'es_dia_caido', 
             'motivo_dia_caido', 'observaciones', 'cargas', 'jornales', 'movimientos',
-            'carga_peso_neto', 'carga_id_chofer', 'carga_patente', 'carga_destino', 'carga_empleados',
+            'carga_peso_neto', 'carga_id_chofer', 'carga_destino', 'carga_empleados',
             'jornal_id_empleado', 'jornal_observaciones',
             'movimiento_id_insumo', 'movimiento_tipo', 'movimiento_cantidad'
         ]);
         $this->total_toneladas = 0;
+        $this->actualizarJornalPorEmpleado();
     }
 }

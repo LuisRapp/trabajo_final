@@ -40,4 +40,9 @@ class Carga extends Model
     {
         return $this->belongsTo(CategoriaMadera::class, 'id_categoria_madera');
     }
+
+    public function empleados()
+    {
+        return $this->belongsToMany(Empleado::class, 'carga_empleado', 'id_carga', 'id_empleado')->withTimestamps();
+    }
 }

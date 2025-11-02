@@ -296,6 +296,9 @@
         <a href="{{ route('recibos.index') }}" class="sidebar-link">
             <i class="bi bi-file-earmark-text"></i> Recibos
         </a>
+        <a href="{{ route('liquidacion-pagos.index') }}" class="sidebar-link">
+            <i class="bi bi-calculator"></i> Liquidación de Pagos
+        </a>
 
         <!-- Operaciones -->
         <div class="sidebar-section">
