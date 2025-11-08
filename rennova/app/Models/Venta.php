@@ -34,4 +34,11 @@ class Venta extends Model implements Auditable
     {
         return $this->belongsTo(Proveedor::class, 'id_proveedor');
     }
+
+    public function cargas()
+    {
+        return $this->belongsToMany(Carga::class, 'venta_cargas', 'id_venta', 'id_carga')
+                    ->withPivot('precio_unitario', 'peso_toneladas', 'subtotal')
+                    ->withTimestamps();
+    }
 }

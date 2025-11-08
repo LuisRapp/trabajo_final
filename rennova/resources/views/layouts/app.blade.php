@@ -299,6 +299,9 @@
         <a href="{{ route('liquidacion-pagos.index') }}" class="sidebar-link">
             <i class="bi bi-calculator"></i> Liquidación de Pagos
         </a>
+        <a href="{{ route('asignaciones-lote.index') }}" class="sidebar-link">
+            <i class="bi bi-link-45deg"></i> Asignaciones por Lote
+        </a>
 
         <!-- Operaciones -->
         <div class="sidebar-section">

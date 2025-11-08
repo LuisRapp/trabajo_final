@@ -19,6 +19,7 @@ class Carga extends Model
         'peso_neto',
         'destino',
         'fecha_carga',
+        'estado',
     ];
 
     public function lote()
@@ -44,5 +45,24 @@ class Carga extends Model
     public function empleados()
     {
         return $this->belongsToMany(Empleado::class, 'carga_empleado', 'id_carga', 'id_empleado')->withTimestamps();
+    }
+
+    public function maquinarias()
+    {
+        return $this->belongsToMany(Maquinaria::class, 'carga_maquinaria', 'id_carga', 'id_maquinaria')->withTimestamps();
+    }
+
+    public function cliente()
+    {
+        // La relación no es directa ya que destino contiene el nombre, no el id
+        // Esta relación no se debe usar directamente
+        return $this->belongsTo(Cliente::class, 'destino', 'razon_social');
+    }
+
+    public function ventas()
+    {
+        return $this->belongsToMany(Venta::class, 'venta_cargas', 'id_carga', 'id_venta')
+                    ->withPivot('precio_unitario', 'peso_toneladas', 'subtotal')
+                    ->withTimestamps();
     }
 }

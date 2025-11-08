@@ -82,6 +82,16 @@ class Cargas extends Component
     public function guardar()
     {
         $this->validate();
+        // Si el campo destino es un id, buscar el nombre del cliente
+        $nombre_cliente = null;
+        if (is_numeric($this->destino) && $this->destino) {
+            $cliente = \App\Models\Cliente::find($this->destino);
+            if ($cliente) {
+                $nombre_cliente = $cliente->razon_social;
+            }
+        }
+        // Si no es id, usar el valor tal cual
+        $valor_destino = $nombre_cliente ?? $this->destino;
         $carga = Carga::updateOrCreate(
             ['id_carga' => $this->carga_id],
             [
@@ -93,7 +103,7 @@ class Cargas extends Component
                 'peso_bruto' => $this->peso_bruto,
                 'tara' => $this->tara,
                 'peso_neto' => $this->peso_neto,
-                'destino' => $this->destino,
+                'destino' => $valor_destino,
                 'fecha_carga' => $this->fecha_carga,
             ]
         );

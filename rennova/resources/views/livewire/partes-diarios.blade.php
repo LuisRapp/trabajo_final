@@ -115,16 +115,16 @@
                         <div class="border rounded p-3 mb-3 bg-light">
                             <h6 class="fw-semibold mb-3"><i class="bi bi-plus-circle-fill"></i> Registrar Nueva Carga</h6>
                             
-                            <!-- Fila 1: Relaciones -->
+                            <!-- Fila 1: Lote, Categoría, Maquinaria -->
                             <div class="row g-3 mb-3">
-                                <div class="col-md-3">
+                                <div class="col-md-4">
                                     <label class="form-label fw-semibold">Lote <span class="text-danger">*</span></label>
                                     <select disabled class="form-select" title="El lote se establece en los datos maestros del Parte Diario">
                                         <option value="">{{ $id_lote ? $lotes->firstWhere('id_lote', $id_lote)->propietario . ' - ' . $lotes->firstWhere('id_lote', $id_lote)->ubicacion : 'Seleccione lote arriba' }}</option>
                                     </select>
                                     <small class="text-muted">El lote se configura en la sección principal</small>
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-4">
                                     <label class="form-label fw-semibold">Categoría Madera <span class="text-danger">*</span></label>
                                     <select wire:model="carga_id_categoria_madera" class="form-select @error('carga_id_categoria_madera') is-invalid @enderror">
                                         <option value="">Seleccione...</option>
@@ -134,7 +134,37 @@
                                     </select>
                                     @error('carga_id_categoria_madera') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold">
+                                        Maquinarias Utilizadas
+                                        @if(!empty($maquinarias_asignadas_ids) && count($maquinarias_asignadas_ids) === 1)
+                                            <span class="badge bg-success ms-1" title="Auto-seleccionada (única asignada al lote)">
+                                                <i class="bi bi-check-circle"></i> Auto
+                                            </span>
+                                        @endif
+                                    </label>
+                                    <div class="border rounded p-2 @error('carga_maquinarias') border-danger @enderror" style="max-height: 180px; overflow-y: auto; background-color: #f8f9fa;">
+                                        @foreach($this->maquinariasFiltrada as $maq)
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" value="{{ $maq->id_maquinaria }}" id="maq-{{ $maq->id_maquinaria }}" wire:model="carga_maquinarias">
+                                                <label class="form-check-label" for="maq-{{ $maq->id_maquinaria }}">
+                                                    {{ $maq->modelo }} - <small class="text-muted">{{ $maq->tipoMaquinaria->nombre ?? 'Sin tipo' }}</small>
+                                                </label>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                    @error('carga_maquinarias') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                                    @if(empty($maquinarias_asignadas_ids))
+                                        <small class="text-muted"><i class="bi bi-info-circle"></i> Sin lote seleccionado. Se muestran todas las maquinarias.</small>
+                                    @elseif(count($maquinarias_asignadas_ids) > 0)
+                                        <small class="text-success"><i class="bi bi-funnel"></i> Mostrando solo maquinarias asignadas al lote ({{ count($maquinarias_asignadas_ids) }})</small>
+                                    @endif
+                                </div>
+                            </div>
+
+                            <!-- Fila 2: Chofer y Cliente -->
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
                                     <label class="form-label fw-semibold">Chofer <span class="text-danger">*</span></label>
                                     <input type="text" wire:model.live="busqueda_chofer" class="form-control mb-1" placeholder="Buscar chofer...">
                                     <select wire:model="carga_id_chofer" class="form-select @error('carga_id_chofer') is-invalid @enderror" size="3" style="height: auto;">
@@ -146,7 +176,7 @@
                                     </select>
                                     @error('carga_id_chofer') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-6">
                                     <label class="form-label fw-semibold">Destino (Cliente) <span class="text-danger">*</span></label>
                                     <input type="text" wire:model.live="busqueda_cliente" class="form-control mb-1" placeholder="Buscar cliente...">
                                     <select wire:model="carga_destino" class="form-select @error('carga_destino') is-invalid @enderror" size="3" style="height: auto;">
@@ -160,7 +190,7 @@
                                 </div>
                             </div>
 
-                            <!-- Fila 2: Pesajes y Tickets -->
+                            <!-- Fila 3: Pesajes y Tickets -->
                             <div class="row g-3 mb-3">
                                 <div class="col-md-3">
                                     <label class="form-label fw-semibold">Ticket <span class="text-danger">*</span></label>
@@ -190,7 +220,7 @@
                                     <h6 class="fw-semibold border-bottom pb-2 mb-2"><i class="bi bi-people-fill"></i> Personal Involucrado</h6>
                                     <label class="form-label fw-semibold">Empleados que participaron en esta carga <span class="text-danger">*</span></label>
                                     <div class="border rounded p-2 @error('carga_empleados') border-danger @enderror" style="max-height: 180px; overflow-y: auto; background-color: #f8f9fa;">
-                                        @foreach($empleados as $emp)
+                                        @foreach($this->empleadosFiltrados as $emp)
                                             <div class="form-check">
                                                 <input class="form-check-input" type="checkbox" value="{{ $emp->id_empleado }}" id="emp-{{ $emp->id_empleado }}" wire:model="carga_empleados">
                                                 <label class="form-check-label" for="emp-{{ $emp->id_empleado }}">
@@ -223,6 +253,7 @@
                                             <th>Chofer</th>
                                             <th>Destino (Cliente)</th>
                                             <th>Empleados</th>
+                                            <th>Maquinarias</th>
                                             <th class="text-center">Acción</th>
                                         </tr>
                                     </thead>
@@ -261,6 +292,20 @@
                                                         @endforeach
                                                     </small>
                                                 </td>
+                                                <td>
+                                                    <small>
+                                                        @if(isset($carga['maquinarias']))
+                                                            @foreach($carga['maquinarias'] as $maq_id)
+                                                                @php
+                                                                    $m = $maquinarias->firstWhere('id_maquinaria', $maq_id);
+                                                                @endphp
+                                                                @if($m)
+                                                                    <span class="badge bg-secondary">{{ $m->modelo }}</span>
+                                                                @endif
+                                                            @endforeach
+                                                        @endif
+                                                    </small>
+                                                </td>
                                                 <td class="text-center">
                                                     <button type="button" wire:click="eliminarCarga({{ $index }})" class="btn btn-sm btn-outline-danger" title="Eliminar carga">
                                                         <i class="bi bi-trash"></i>
@@ -271,7 +316,7 @@
                                     </tbody>
                                     <tfoot class="table-light">
                                         <tr>
-                                            <td colspan="6" class="text-end fw-bold">Total de Toneladas Extraídas Hoy:</td>
+                                            <td colspan="7" class="text-end fw-bold">Total de Toneladas Extraídas Hoy:</td>
                                             <td class="text-center fw-bold text-primary fs-5">{{ number_format($total_toneladas, 2) }} Ton</td>
                                         </tr>
                                     </tfoot>
@@ -301,7 +346,7 @@
                                     <label class="form-label fw-semibold">Empleado <span class="text-danger">*</span></label>
                                     <select wire:model="jornal_id_empleado" class="form-select">
                                         <option value="">Seleccione un empleado...</option>
-                                        @foreach($empleados as $emp)
+                                        @foreach($this->empleadosFiltrados as $emp)
                                             <option value="{{ $emp->id_empleado }}">
                                                 {{ $emp->apellido }}, {{ $emp->nombre }} - {{ $emp->rolLaboral->nombre ?? 'Sin rol' }} 
                                                 (Jornal: ${{ number_format($jornal_por_empleado[$emp->id_empleado] ?? ($emp->rolLaboral->jornal_diario ?? 0), 2) }})

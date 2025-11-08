@@ -32,6 +32,11 @@ class PartesDiarios extends Component
     // Catálogos
     public $lotes = [];
     public $empleados = [];
+    public $empleados_asignados_ids = [];
+    public $maquinarias = [];
+    public $maquinarias_asignadas_ids = [];
+    // selección por carga (múltiple)
+    public $carga_maquinarias = [];
     public $choferes = [];
     public $insumos = [];
     public $categorias_madera = [];
@@ -87,12 +92,54 @@ class PartesDiarios extends Component
     {
         $this->lotes = Lote::where('estado', 'activo')->orderBy('propietario')->get();
         $this->empleados = Empleado::with('rolLaboral')->whereNull('fecha_fin_actividades')->orderBy('apellido')->get();
+        $this->maquinarias = \App\Models\Maquinaria::with('tipoMaquinaria')->orderBy('modelo')->get();
         $this->choferes = Chofer::where('estado', true)->orderBy('apellido')->get();
         $this->insumos = Insumo::orderBy('nombre')->get();
         $this->categorias_madera = CategoriaMadera::orderBy('nombre')->get();
         $this->clientes = Cliente::orderBy('razon_social')->get();
         $this->cargarPartes();
         $this->actualizarJornalPorEmpleado();
+    }
+
+    public function updatedIdLote()
+    {
+        // Al cambiar el lote, cargar empleados y maquinarias asignadas para filtrar
+        $this->empleados_asignados_ids = [];
+    $this->maquinarias_asignadas_ids = [];
+    $this->carga_maquinarias = [];
+        
+        if ($this->id_lote) {
+            $lote = Lote::with(['empleados:id_empleado', 'maquinarias:id_maquinaria'])->find($this->id_lote);
+            if ($lote) {
+                $this->empleados_asignados_ids = $lote->empleados->pluck('id_empleado')->toArray();
+                $this->maquinarias_asignadas_ids = $lote->maquinarias->pluck('id_maquinaria')->toArray();
+                
+                // Preselección automática si hay solo una maquinaria asignada (selección múltiple)
+                if (count($this->maquinarias_asignadas_ids) === 1) {
+                    $this->carga_maquinarias = [$this->maquinarias_asignadas_ids[0]];
+                }
+            }
+        }
+    }
+
+    public function getEmpleadosFiltradosProperty()
+    {
+        if (empty($this->empleados_asignados_ids)) {
+            return $this->empleados;
+        }
+        return $this->empleados->filter(function($emp) {
+            return in_array($emp->id_empleado, $this->empleados_asignados_ids);
+        });
+    }
+
+    public function getMaquinariasFiltradaProperty()
+    {
+        if (empty($this->maquinarias_asignadas_ids)) {
+            return $this->maquinarias;
+        }
+        return $this->maquinarias->filter(function($maq) {
+            return in_array($maq->id_maquinaria, $this->maquinarias_asignadas_ids);
+        });
     }
 
     public function updatedFecha()
@@ -200,6 +247,7 @@ class PartesDiarios extends Component
             'carga_id_chofer' => 'required|exists:choferes,id_chofer',
             'carga_destino' => 'required|exists:clientes,id_cliente',
             'carga_empleados' => 'required|array|min:1',
+            'carga_maquinarias' => 'nullable|array',
         ], [
             'carga_id_categoria_madera.required' => 'La categoría de madera es obligatoria',
             'carga_ticket.required' => 'El número de ticket es obligatorio',
@@ -212,6 +260,7 @@ class PartesDiarios extends Component
             'carga_destino.required' => 'El destino (cliente) es obligatorio',
             'carga_empleados.required' => 'Debe seleccionar al menos un empleado',
             'carga_empleados.min' => 'Debe seleccionar al menos un empleado',
+            // no forzamos maquinaria obligatoria; se permite vacío
         ]);
         
         $this->cargas[] = [
@@ -223,6 +272,7 @@ class PartesDiarios extends Component
             'id_chofer' => $this->carga_id_chofer,
             'destino' => $this->carga_destino, // ID del cliente
             'empleados' => $this->carga_empleados,
+            'maquinarias' => $this->carga_maquinarias,
         ];
         
         $this->calcularTotalToneladas();
@@ -251,6 +301,7 @@ class PartesDiarios extends Component
         $this->carga_id_chofer = null;
         $this->carga_destino = null;
         $this->carga_empleados = [];
+        $this->carga_maquinarias = [];
         $this->busqueda_chofer = '';
         $this->busqueda_cliente = '';
     }
@@ -444,6 +495,8 @@ class PartesDiarios extends Component
                     // Guardar empleados asignados a esta carga (para cálculo de pago posterior)
                     // Ya NO creamos recibos aquí - los recibos se crean manualmente usando calcularPagoRango()
                     $carga->empleados()->sync($cargaData['empleados']);
+                    // Guardar maquinarias utilizadas en esta carga (múltiples)
+                    $carga->maquinarias()->sync($cargaData['maquinarias'] ?? []);
                 }
             } else {
                 // MODO DÍA CAÍDO: Guardar empleados que trabajaron ese día
@@ -509,7 +562,7 @@ class PartesDiarios extends Component
         // Cargar CARGAS si es producción
         $this->cargas = [];
         if (!$this->es_dia_caido) {
-            $cargas = Carga::with('empleados')
+            $cargas = Carga::with(['empleados','maquinarias'])
                 ->where('id_parte_diario', $parte->id_parte_diario)
                 ->get();
             foreach ($cargas as $c) {
@@ -522,6 +575,7 @@ class PartesDiarios extends Component
                     'id_chofer' => $c->id_chofer,
                     'destino' => $c->destino, // se almacena como texto/ID según tu configuración actual
                     'empleados' => $c->empleados->pluck('id_empleado')->all(),
+                    'maquinarias' => $c->maquinarias->pluck('id_maquinaria')->all(),
                 ];
             }
             $this->calcularTotalToneladas();

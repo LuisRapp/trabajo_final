@@ -84,6 +84,9 @@ Route::middleware(['auth'])->group(function () {
     // Liquidación de Pagos
     Route::view('/liquidacion-pagos', 'liquidacion-pagos.index')->name('liquidacion-pagos.index');
     
+    // Asignaciones por Lote (Empleados y Maquinaria)
+    Route::view('/asignaciones-lote', 'asignaciones-lote.index')->name('asignaciones-lote.index');
+    
     // ABM Cargas
     Route::get('/cargas', [CargaController::class, 'index'])->name('cargas.index');
     Route::get('/cargas/create', [CargaController::class, 'create'])->name('cargas.create');
