@@ -9,15 +9,22 @@ class TiposMaquinaria extends Component
 {
     public $tipos, $tipo_id, $nombre, $busqueda = '';
 
-    protected $rules = [
-        'nombre' => 'required|min:3|unique:tipo_maquinarias,nombre',
-    ];
-
     protected $messages = [
         'nombre.required' => 'El nombre es obligatorio.',
         'nombre.min' => 'El nombre debe tener al menos 3 caracteres.',
         'nombre.unique' => 'Este nombre ya existe.',
     ];
+
+    protected function rules()
+    {
+        return [
+            'nombre' => [
+                'required',
+                'min:3',
+                'unique:tipo_maquinarias,nombre,' . ($this->tipo_id ?? 'NULL') . ',id_tipo_maquinaria'
+            ],
+        ];
+    }
 
     public function render()
     {
@@ -48,7 +55,9 @@ class TiposMaquinaria extends Component
 
         TipoMaquinaria::updateOrCreate(
             ['id_tipo_maquinaria' => $this->tipo_id],
-            ['nombre' => $this->nombre]
+            [
+                'nombre' => $this->nombre,
+            ]
         );
 
         session()->flash('message', $this->tipo_id ? 'Tipo actualizado correctamente.' : 'Tipo creado correctamente.');

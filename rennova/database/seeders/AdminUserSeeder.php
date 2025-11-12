@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Role;
 
 class AdminUserSeeder extends Seeder
 {
@@ -13,6 +14,12 @@ class AdminUserSeeder extends Seeder
      */
     public function run(): void
     {
+        // Asegurar que exista el rol "Administrador"
+        $role = Role::firstOrCreate([
+            'name' => 'Administrador',
+            'guard_name' => 'web',
+        ]);
+
         // Crear usuario administrador si no existe
         $admin = User::firstOrCreate(
             ['email' => 'admin@rennova.com'],
@@ -22,8 +29,10 @@ class AdminUserSeeder extends Seeder
             ]
         );
 
-        // Asignar rol de Administrador
-        $admin->assignRole('Administrador');
+        // Asignar rol de Administrador si no lo tiene
+        if (!$admin->hasRole($role->name)) {
+            $admin->assignRole($role);
+        }
 
         $this->command->info('Usuario administrador creado/actualizado:');
         $this->command->info('Email: admin@rennova.com');

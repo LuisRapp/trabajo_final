@@ -8,7 +8,7 @@ use App\Models\TipoMaquinaria;
 
 class Maquinarias extends Component
 {
-    public $maquinarias, $maquinaria_id, $id_tipo_maquinaria, $modelo, $estado, $es_alquilada, $fecha_inicio_actividades, $busqueda = '';
+    public $maquinarias, $maquinaria_id, $id_tipo_maquinaria, $modelo, $estado, $es_alquilada, $fecha_inicio_actividades, $umbral_toneladas, $busqueda = '';
     public $tipos;
 
     protected $rules = [
@@ -17,6 +17,7 @@ class Maquinarias extends Component
         'estado' => 'required|in:operativa,en_mantenimiento,fuera_de_servicio',
         'es_alquilada' => 'required|boolean',
         'fecha_inicio_actividades' => 'required|date',
+        'umbral_toneladas' => 'nullable|numeric|min:0',
     ];
 
     protected $messages = [
@@ -26,6 +27,8 @@ class Maquinarias extends Component
         'estado.required' => 'El estado es obligatorio.',
         'es_alquilada.required' => 'Debe indicar si es alquilada.',
         'fecha_inicio_actividades.required' => 'La fecha de inicio es obligatoria.',
+        'umbral_toneladas.numeric' => 'El umbral debe ser un número.',
+        'umbral_toneladas.min' => 'El umbral debe ser mayor o igual a 0.',
     ];
 
     public function mount()
@@ -74,6 +77,7 @@ class Maquinarias extends Component
                 'estado' => $this->estado,
                 'es_alquilada' => $this->es_alquilada,
                 'fecha_inicio_actividades' => $this->fecha_inicio_actividades,
+                'umbral_toneladas' => $this->umbral_toneladas,
             ]
         );
 
@@ -91,6 +95,7 @@ class Maquinarias extends Component
         $this->estado = $maquinaria->estado;
         $this->es_alquilada = $maquinaria->es_alquilada;
         $this->fecha_inicio_actividades = $maquinaria->fecha_inicio_actividades;
+        $this->umbral_toneladas = $maquinaria->umbral_toneladas;
     }
 
     public function eliminar($id)
@@ -101,6 +106,6 @@ class Maquinarias extends Component
 
     public function resetCampos()
     {
-        $this->reset(['maquinaria_id', 'id_tipo_maquinaria', 'modelo', 'estado', 'es_alquilada', 'fecha_inicio_actividades']);
+        $this->reset(['maquinaria_id', 'id_tipo_maquinaria', 'modelo', 'estado', 'es_alquilada', 'fecha_inicio_actividades', 'umbral_toneladas']);
     }
 }

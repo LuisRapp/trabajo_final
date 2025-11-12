@@ -61,7 +61,7 @@
                     </div>
                 </div>
                 <div class="row g-3 mb-4">
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <label class="form-label fw-semibold">¿Es Alquilada?</label>
                         <select wire:model="es_alquilada" class="form-select @error('es_alquilada') is-invalid @enderror">
                             <option value="">Seleccione...</option>
@@ -70,10 +70,16 @@
                         </select>
                         @error('es_alquilada') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <label class="form-label fw-semibold">Fecha Inicio Actividades</label>
                         <input type="date" wire:model="fecha_inicio_actividades" class="form-control @error('fecha_inicio_actividades') is-invalid @enderror">
                         @error('fecha_inicio_actividades') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Umbral Mantenimiento Preventivo (ton)</label>
+                        <input type="number" step="0.01" wire:model="umbral_toneladas" class="form-control @error('umbral_toneladas') is-invalid @enderror" placeholder="Ej: 100.00">
+                        <small class="text-muted">Toneladas acumuladas para generar mantenimiento</small>
+                        @error('umbral_toneladas') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
                 </div>
                 <div class="d-flex gap-2 justify-content-end">
@@ -118,6 +124,7 @@
                             <th>Modelo</th>
                             <th>Estado</th>
                             <th>Alquilada</th>
+                            <th>Umbral (ton)</th>
                             <th>Fecha Inicio</th>
                             <th class="text-center">Acciones</th>
                         </tr>
@@ -140,6 +147,15 @@
                                         <i class="bi bi-x-circle-fill text-secondary"></i> No
                                     @endif
                                 </td>
+                                <td>
+                                    @if($maquinaria->umbral_toneladas)
+                                        <span class="badge bg-info">
+                                            <i class="bi bi-speedometer2"></i> {{ number_format($maquinaria->umbral_toneladas, 2) }}
+                                        </span>
+                                    @else
+                                        <span class="text-muted">No configurado</span>
+                                    @endif
+                                </td>
                                 <td>{{ $maquinaria->fecha_inicio_actividades ? \Carbon\Carbon::parse($maquinaria->fecha_inicio_actividades)->format('d/m/Y') : 'N/A' }}</td>
                                 <td class="text-center">
                                     <div class="btn-group btn-group-sm" role="group">
@@ -154,7 +170,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center py-5 text-muted">
+                                <td colspan="8" class="text-center py-5 text-muted">
                                     <i class="bi bi-inbox" style="font-size: 3rem;"></i>
                                     <p class="mb-0 mt-2">No hay maquinarias registradas.</p>
                                 </td>

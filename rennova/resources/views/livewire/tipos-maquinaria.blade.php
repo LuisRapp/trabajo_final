@@ -76,7 +76,7 @@
                         <tr>
                             <th>ID</th>
                             <th>Nombre</th>
-                            <th class="text-end">Acciones</th>
+                            <th class="text-center">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -97,9 +97,9 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="3" class="text-center py-4">
-                                    <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
-                                    <p class="text-muted mt-2">No hay tipos registrados.</p>
+                                <td colspan="3" class="text-center py-5 text-muted">
+                                    <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+                                    <p class="mb-0 mt-2">No hay tipos registrados.</p>
                                 </td>
                             </tr>
                         @endforelse

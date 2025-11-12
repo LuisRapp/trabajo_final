@@ -17,7 +17,9 @@ class Mantenimiento extends Model implements Auditable
         'fecha_inicio',
         'fecha_fin',
         'costo_total',
-        'estado'
+        'estado',
+        'toneladas_snapshot',
+        'costo_mano_obra'
     ];
 
     public function maquinaria()

@@ -282,6 +282,9 @@
         <a href="{{ route('mantenimientos.index') }}" class="sidebar-link">
             <i class="bi bi-tools"></i> Mantenimientos
         </a>
+        <a href="{{ route('kits-mantenimiento.index') }}" class="sidebar-link">
+            <i class="bi bi-gear-fill"></i> Kits de Mantenimiento
+        </a>
 
         <!-- Personal -->
         <div class="sidebar-section">

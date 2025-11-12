@@ -16,7 +16,10 @@ class Maquinaria extends Model implements Auditable
         'modelo',
         'estado',
         'es_alquilada',
-        'fecha_inicio_actividades'];
+        'fecha_inicio_actividades',
+        'toneladas_acumuladas',
+        'umbral_toneladas'
+    ];
         
     public function tipoMaquinaria()
     {

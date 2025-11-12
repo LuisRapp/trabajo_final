@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title', 'Gestión de Mantenimientos')
+
 @section('content')
-    @livewire('mantenimientos')
+    @livewire('gestion-mantenimientos')
 @endsection

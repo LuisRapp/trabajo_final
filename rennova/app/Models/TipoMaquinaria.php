@@ -11,10 +11,15 @@ class TipoMaquinaria extends Model implements Auditable
     
     protected $table = 'tipo_maquinarias';
     protected $primaryKey = 'id_tipo_maquinaria';
-    protected $fillable = ['nombre'];
+    protected $fillable = ['nombre', 'umbral_toneladas'];
 
     public function maquinarias()
     {
         return $this->hasMany(Maquinaria::class, 'id_tipo_maquinaria');
+    }
+
+    public function kitsPreventivos()
+    {
+        return $this->hasMany(KitMantenimientoPreventivo::class, 'id_tipo_maquinaria');
     }
 }

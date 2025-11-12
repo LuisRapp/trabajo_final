@@ -20,6 +20,7 @@ use App\Http\Controllers\VentaController;
 use App\Http\Controllers\AdelantoController;
 use App\Http\Controllers\ReciboController;
 use App\Http\Controllers\HistoricoCostosMaquinariaController;
+// use App\Http\Controllers\KitInsumoController;
 // Livewire ABMs
 use App\Http\Livewire\HistoricoRolesLaborales;
 use App\Http\Controllers\CargaController;
@@ -71,7 +72,15 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/maquinarias', [MaquinariaController::class, 'index'])->name('maquinarias.index');
     Route::get('/empleados', [EmpleadoController::class, 'index'])->name('empleados.index');
     Route::get('/usuarios', [UsuarioController::class, 'index'])->name('usuarios.index');
-    Route::get('/mantenimientos', [MantenimientoController::class, 'index'])->name('mantenimientos.index');
+    
+    // Mantenimientos - Componente Livewire y endpoints de gestión
+    Route::view('/mantenimientos', 'mantenimientos.index')->name('mantenimientos.index');
+    Route::post('/mantenimientos/{id}/approve', [MantenimientoController::class, 'approve'])->name('mantenimientos.approve');
+    Route::post('/mantenimientos/{id}/complete', [MantenimientoController::class, 'complete'])->name('mantenimientos.complete');
+    
+    // Configuración de Kits de Mantenimiento Preventivo (UI original)
+    Route::view('/kits-mantenimiento', 'kits-mantenimiento.index')->name('kits-mantenimiento.index');
+    
     Route::get('/partes-diarios', [ParteDiarioController::class, 'index'])->name('partes-diarios.index');
     Route::get('/ventas', [VentaController::class, 'index'])->name('ventas.index');
     Route::get('/adelantos', [AdelantoController::class, 'index'])->name('adelantos.index');
