@@ -69,9 +69,14 @@ class MantenimientoService
             $costoInsumos = 0;
 
             foreach ($insumos as $insumoData) {
-                $insumo = Insumo::findOrFail($insumoData['insumo_id']);
-                $cantidadUsada = $insumoData['cantidad'];
-                $costoUnitario = $insumo->costo_unitario;
+                // Alinear nombres de claves con controlador y BD
+                // Espera: ['id_insumo', 'cantidad_utilizada', 'costo_unitario?']
+                $insumo = Insumo::findOrFail($insumoData['id_insumo']);
+                $cantidadUsada = (float)($insumoData['cantidad_utilizada'] ?? 0);
+                // Si no viene el costo por request, usar el costo actual del insumo
+                $costoUnitario = isset($insumoData['costo_unitario'])
+                    ? (float)$insumoData['costo_unitario']
+                    : (float)$insumo->costo_unitario;
                 $subtotal = $cantidadUsada * $costoUnitario;
 
                 // Verificar stock disponible usando el accessor
@@ -108,7 +113,7 @@ class MantenimientoService
                 MantenimientoInsumo::create([
                     'id_mantenimiento' => $mantenimientoId,
                     'id_insumo' => $insumo->id_insumo,
-                    'cantidad' => $cantidadUsada,
+                    'cantidad_utilizada' => $cantidadUsada,
                     'costo_unitario' => $costoUnitario,
                     'subtotal' => $subtotal
                 ]);

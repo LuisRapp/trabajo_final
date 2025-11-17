@@ -23,7 +23,7 @@ class CheckMantenimientoUmbrales extends Command
     {
         $this->info('Iniciando verificación de umbrales de mantenimiento...');
         
-        $maquinarias = Maquinaria::with(['tipoMaquinaria'])->where('estado', 'activo')->get();
+        $maquinarias = Maquinaria::with(['tipoMaquinaria'])->where('estado', 'operativa')->get();
         $ordenesGeneradas = 0;
         $advertenciasStock = [];
 
@@ -35,9 +35,6 @@ class CheckMantenimientoUmbrales extends Command
 
             // Obtener el snapshot del último mantenimiento preventivo
             $ultimoMantenimiento = Mantenimiento::where('id_maquinaria', $maquinaria->id_maquinaria)
-                ->whereHas('tipoMantenimiento', function($q) {
-                    $q->where('nombre', 'LIKE', '%preventivo%');
-                })
                 ->whereNotNull('toneladas_snapshot')
                 ->orderBy('fecha_fin', 'desc')
                 ->first();
@@ -80,8 +77,9 @@ class CheckMantenimientoUmbrales extends Command
                         'estado' => 'programado'
                     ]);
 
-                    // Obtener kit de insumos preventivos
-                    $kit = KitMantenimientoPreventivo::where('id_tipo_maquinaria', $maquinaria->id_tipo_maquinaria)
+                    // Obtener kit de insumos preventivos de la maquinaria específica
+                    $kit = KitMantenimientoPreventivo::where('id_maquinaria', $maquinaria->id_maquinaria)
+                        ->whereNull('deleted_at')
                         ->with('insumo')
                         ->get();
 

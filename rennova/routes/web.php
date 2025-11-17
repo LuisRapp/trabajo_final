@@ -44,6 +44,13 @@ Route::middleware(['auth'])->group(function () {
         ->middleware(['verified'])
         ->name('dashboard');
 
+    // Vistas de módulos principales
+    Route::view('/modulos/maquinaria', 'modulos.maquinaria')->name('modulos.maquinaria');
+    Route::view('/modulos/inventario-forestal', 'modulos.inventario-forestal')->name('modulos.inventario-forestal');
+    Route::view('/modulos/personal', 'modulos.personal')->name('modulos.personal');
+    Route::view('/modulos/operaciones', 'modulos.operaciones')->name('modulos.operaciones');
+    Route::view('/modulos/administracion', 'modulos.administracion')->name('modulos.administracion');
+
     Route::redirect('settings', 'settings/profile');
     Volt::route('settings/profile', 'settings.profile')->name('profile.edit');
     Volt::route('settings/password', 'settings.password')->name('password.edit');
@@ -71,7 +78,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/insumos', [InsumoController::class, 'index'])->name('insumos.index');
     Route::get('/maquinarias', [MaquinariaController::class, 'index'])->name('maquinarias.index');
     Route::get('/empleados', [EmpleadoController::class, 'index'])->name('empleados.index');
-    Route::get('/usuarios', [UsuarioController::class, 'index'])->name('usuarios.index');
+    Route::get('/usuarios', [UsuarioController::class, 'index'])->middleware(['permission:gestionar-usuarios'])->name('usuarios.index');
     
     // Mantenimientos - Componente Livewire y endpoints de gestión
     Route::view('/mantenimientos', 'mantenimientos.index')->name('mantenimientos.index');

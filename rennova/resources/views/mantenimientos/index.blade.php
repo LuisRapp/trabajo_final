@@ -3,5 +3,5 @@
 @section('title', 'Gestión de Mantenimientos')
 
 @section('content')
-    @livewire('gestion-mantenimientos')
+    @livewire('mantenimientos')
 @endsection

@@ -1,77 +1,119 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="mb-0">Panel Principal</h1>
-        <button class="btn btn-outline-primary" data-bs-toggle="offcanvas" data-bs-target="#offcanvasAbms">Abrir ABMs</button>
+<style>
+    /* * Tus estilos para el fondo y las tarjetas.
+     * Esto está perfecto y no se toca.
+     */
+    body, .main-content.bg-light {
+        background: #F4F7F6 !important;
+    }
+    .erp-welcome {
+        font-size: 2.1rem;
+        font-weight: 700;
+        color: #2A6041;
+        margin-bottom: 2.5rem;
+        margin-top: 1.5rem;
+    }
+    .erp-card-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2.2rem;
+        justify-content: flex-start;
+    }
+    .erp-nav-card {
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 2px 12px rgba(44, 62, 80, 0.07);
+        padding: 2.2rem 2rem 1.7rem 2rem;
+        min-width: 240px;
+        max-width: 270px;
+        flex: 1 1 240px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        margin-bottom: 1.5rem;
+    }
+    .erp-nav-card .erp-icon {
+        font-size: 2.2rem;
+        color: #2A6041;
+        margin-bottom: 0.7rem;
+    }
+    .erp-nav-card .card-title {
+        color: #2A6041;
+        font-size: 1.18rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    .erp-nav-card .card-btn {
+        background: #2A6041;
+        color: #fff;
+        border: none;
+        border-radius: 7px;
+        padding: 0.45rem 1.2rem;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        margin-top: 1.1rem;
+        transition: background 0.13s;
+        text-decoration: none;
+        display: inline-block;
+        box-shadow: 0 1px 4px rgba(44, 62, 80, 0.07);
+    }
+    .erp-nav-card .card-btn:hover {
+        background: #1e4630;
+        color: #fff;
+    }
+    @media (max-width: 900px) {
+        .erp-card-grid { gap: 1rem; }
+        .erp-nav-card { padding: 1.2rem 1rem; min-width: 180px; max-width: 100%; }
+    }
+</style>
+
+<!-- 
+  Se eliminó el div exterior que tenía 'margin-left: 0' y 'max-width'.
+  Este div interior ahora se renderizará dentro del contenedor 
+  principal de 'layouts.app', permitiendo que la barra lateral 
+  funcione correctamente.
+-->
+<div style="margin-top: 4.5rem;">
+    <div class="erp-welcome text-center">Bienvenido {{ Auth::user()->name ?? 'Usuario' }}</div>
+    <!-- Fila 1 -->
+    <div class="erp-card-grid justify-content-center">
+        <div class="erp-nav-card">
+            <div class="erp-icon"><i class="bi bi-truck"></i></div>
+            <div class="card-title">Maquinaria</div>
+            <a href="{{ route('modulos.maquinaria') }}" class="card-btn">Acceder</a>
+        </div>
+        <div class="erp-nav-card">
+            <div class="erp-icon"><i class="bi bi-tree"></i></div>
+            <div class="card-title">Inventario Forestal</div>
+            <a href="{{ route('modulos.inventario-forestal') }}" class="card-btn">Acceder</a>
+        </div>
+        <div class="erp-nav-card">
+            <div class="erp-icon"><i class="bi bi-person"></i></div>
+            <div class="card-title">Personal</div>
+            <a href="{{ route('modulos.personal') }}" class="card-btn">Acceder</a>
+        </div>
     </div>
 
-    <div class="row g-3">
-        <div class="col-12 col-md-6 col-lg-4">
-            <div class="card h-100">
-                <div class="card-body">
-                    <h5 class="card-title">Operaciones</h5>
-                    <p class="card-text">Ingreso rápido a módulos operativos.</p>
-                    <div class="d-grid gap-2">
-                        <a href="{{ route('cargas.index') }}" class="btn btn-primary">Cargas</a>
-                        <a href="{{ route('partes-diarios.index') }}" class="btn btn-outline-primary">Partes Diarios</a>
-                        <a href="{{ route('ventas.index') }}" class="btn btn-outline-primary">Ventas</a>
-                    </div>
-                </div>
-            </div>
+    <!-- Fila 2 -->
+    <div class="erp-card-grid justify-content-center">
+        <div class="erp-nav-card">
+            <div class="erp-icon"><i class="bi bi-clipboard-check"></i></div>
+            <div class="card-title">Operaciones</div>
+            <a href="{{ route('modulos.operaciones') }}" class="card-btn">Acceder</a>
         </div>
-        <div class="col-12 col-md-6 col-lg-4">
-            <div class="card h-100">
-                <div class="card-body">
-                    <h5 class="card-title">Maquinaria e Insumos</h5>
-                    <p class="card-text">Recursos de producción y mantenimiento.</p>
-                    <div class="d-grid gap-2">
-                        <a href="{{ route('maquinarias.index') }}" class="btn btn-primary">Maquinarias</a>
-                        <a href="{{ route('mantenimientos.index') }}" class="btn btn-outline-primary">Mantenimientos</a>
-                        <a href="{{ route('insumos.index') }}" class="btn btn-outline-primary">Insumos</a>
-                    </div>
-                </div>
-            </div>
+        <div class="erp-nav-card">
+            <div class="erp-icon"><i class="bi bi-bar-chart"></i></div>
+            <div class="card-title">Estadísticas</div>
+            <a href="{{ route('historico-costos-maquinarias.index') }}" class="card-btn">Ver Informes</a>
         </div>
-        <div class="col-12 col-md-6 col-lg-4">
-            <div class="card h-100">
-                <div class="card-body">
-                    <h5 class="card-title">Personas</h5>
-                    <p class="card-text">Gestión de actores y relaciones.</p>
-                    <div class="d-grid gap-2">
-                        <a href="{{ route('clientes.index') }}" class="btn btn-primary">Clientes</a>
-                        <a href="{{ route('choferes.index') }}" class="btn btn-outline-primary">Choferes</a>
-                        <a href="{{ route('empleados.index') }}" class="btn btn-outline-primary">Empleados</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-12 col-md-6 col-lg-4">
-            <div class="card h-100">
-                <div class="card-body">
-                    <h5 class="card-title">Configuración</h5>
-                    <p class="card-text">Parámetros del sistema.</p>
-                    <div class="d-grid gap-2">
-                        <a href="{{ route('categorias-madera.index') }}" class="btn btn-primary">Categorías Madera</a>
-                        <a href="{{ route('unidades-medida.index') }}" class="btn btn-outline-primary">Unidades de Medida</a>
-                        <a href="{{ route('tipos-maquinaria.index') }}" class="btn btn-outline-primary">Tipos Maquinaria</a>
-                        <a href="{{ route('roles-laborales.index') }}" class="btn btn-outline-primary">Roles Laborales</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-12 col-md-6 col-lg-4">
-            <div class="card h-100">
-                <div class="card-body">
-                    <h5 class="card-title">Históricos</h5>
-                    <p class="card-text">Seguimiento y evolución.</p>
-                    <div class="d-grid gap-2">
-                        <a href="{{ route('historico-costos-maquinarias.index') }}" class="btn btn-primary">Costos Maquinarias</a>
-                        <a href="{{ route('historico-roles-laborales.index') }}" class="btn btn-outline-primary">Roles Laborales</a>
-                    </div>
-                </div>
-            </div>
+        <div class="erp-nav-card">
+            <div class="erp-icon"><i class="bi bi-shield-lock"></i></div>
+            <div class="card-title">Administración</div>
+            <a href="{{ route('modulos.administracion') }}" class="card-btn">Configurar</a>
         </div>
     </div>
 </div>
