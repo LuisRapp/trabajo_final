@@ -58,7 +58,7 @@ class CheckMantenimientoUmbrales extends Command
                 }
 
                 // Obtener el tipo de mantenimiento "Preventivo"
-                $tipoPreventivo = \App\Models\TipoMantenimiento::where('nombre', 'LIKE', '%preventivo%')
+                $tipoPreventivo = \App\Models\TipoMantenimiento::where('nombre', 'ILIKE', '%preventivo%')
                     ->where('activo', true)
                     ->first();
 
@@ -116,6 +116,9 @@ class CheckMantenimientoUmbrales extends Command
                             'insumos' => $insumosConProblema
                         ];
                         $this->warn("⚠ ADVERTENCIA: Falta stock para algunos insumos");
+                        
+                        // Esperar 3 segundos antes del segundo email para evitar rate limit
+                        sleep(3);
                     }
 
                 } catch (\Exception $e) {

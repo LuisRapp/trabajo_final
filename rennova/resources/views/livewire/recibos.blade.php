@@ -1,6 +1,6 @@
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="mb-0"><i class="bi bi-file-earmark-text"></i> Recibos de Sueldo</h1>
+        <h1 class="mb-0"><i class="bi bi-file-earmark-text"></i> Comprobantes de pago</h1>
     </div>
 
     @if (session()->has('message'))
@@ -14,12 +14,12 @@
     <ul class="nav nav-tabs mb-4" id="recibosTabs" role="tablist">
         <li class="nav-item" role="presentation">
             <button class="nav-link active" id="nuevo-tab" data-bs-toggle="tab" data-bs-target="#nuevo-recibo" type="button" role="tab" aria-controls="nuevo-recibo" aria-selected="true">
-                <i class="bi bi-plus-circle"></i> Nuevo Recibo
+                <i class="bi bi-plus-circle"></i> Nuevo Comprobante
             </button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="listado-tab" data-bs-toggle="tab" data-bs-target="#listado-recibos" type="button" role="tab" aria-controls="listado-recibos" aria-selected="false">
-                <i class="bi bi-list-ul"></i> Listado de Recibos
+                <i class="bi bi-list-ul"></i> Listado de Comprobantes
             </button>
         </li>
     </ul>
@@ -161,7 +161,7 @@
                             <tr>
                                 <td colspan="9" class="text-center py-5 text-muted">
                                     <i class="bi bi-inbox" style="font-size: 3rem;"></i>
-                                    <p class="mb-0 mt-2">No hay recibos registrados.</p>
+                                    <p class="mb-0 mt-2">No hay comprobantes registrados.</p>
                                 </td>
                             </tr>
                         @endforelse

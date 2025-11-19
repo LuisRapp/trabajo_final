@@ -20,6 +20,7 @@ use App\Http\Controllers\VentaController;
 use App\Http\Controllers\AdelantoController;
 use App\Http\Controllers\ReciboController;
 use App\Http\Controllers\HistoricoCostosMaquinariaController;
+use App\Http\Controllers\AuditoriaController;
 // use App\Http\Controllers\KitInsumoController;
 // Livewire ABMs
 use App\Http\Livewire\HistoricoRolesLaborales;
@@ -96,6 +97,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/historico-costos-maquinarias', [HistoricoCostosMaquinariaController::class, 'index'])->name('historico-costos-maquinarias.index');
     Route::view('/historico-roles-laborales', 'historico-roles-laborales.index')->name('historico-roles-laborales.index');
     Route::view('/lista-precios', 'lista-precios.index')->name('lista-precios.index');
+    
+    // Auditorías
+    Route::get('/auditorias', [AuditoriaController::class, 'index'])->name('auditorias.index');
     
     // Liquidación de Pagos
     Route::view('/liquidacion-pagos', 'liquidacion-pagos.index')->name('liquidacion-pagos.index');

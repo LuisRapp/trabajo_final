@@ -75,23 +75,26 @@
     </div>
 
     <div class="erp-card-grid">
-        @can('gestionar-usuarios')
         <!-- Card: Usuarios -->
         <div class="erp-nav-card">
             <div class="erp-icon"><i class="bi bi-people"></i></div>
             <div class="card-title">Usuarios</div>
             <a href="{{ route('usuarios.index') }}" class="card-btn">Gestionar</a>
         </div>
-        @endcan
 
-        @can('gestionar-permisos')
         <!-- Card: Roles y Permisos -->
         <div class="erp-nav-card">
             <div class="erp-icon"><i class="bi bi-shield-check"></i></div>
             <div class="card-title">Roles y Permisos</div>
             <a href="{{ route('roles-permisos.index') }}" class="card-btn">Gestionar</a>
         </div>
-        @endcan
+
+        <!-- Card: Auditorías -->
+        <div class="erp-nav-card">
+            <div class="erp-icon"><i class="bi bi-file-earmark-text"></i></div>
+            <div class="card-title">Auditorías</div>
+            <a href="{{ route('auditorias.index') }}" class="card-btn">Ver Historial</a>
+        </div>
     </div>
 </div>
 @endsection

@@ -263,6 +263,10 @@ class PartesDiarios extends Component
             // no forzamos maquinaria obligatoria; se permite vacío
         ]);
         
+        // Obtener el nombre del cliente para mostrar en la tabla
+        $cliente = Cliente::find($this->carga_destino);
+        $nombreCliente = $cliente ? $cliente->razon_social : 'Cliente no encontrado';
+        
         $this->cargas[] = [
             'id_categoria_madera' => $this->carga_id_categoria_madera,
             'ticket' => $this->carga_ticket,
@@ -270,7 +274,8 @@ class PartesDiarios extends Component
             'tara' => $this->carga_tara,
             'peso_neto' => $this->carga_peso_neto,
             'id_chofer' => $this->carga_id_chofer,
-            'destino' => $this->carga_destino, // ID del cliente
+            'destino' => $this->carga_destino, // ID del cliente (se convertirá al guardar en BD)
+            'destino_nombre' => $nombreCliente, // Nombre para mostrar en la tabla
             'empleados' => $this->carga_empleados,
             'maquinarias' => $this->carga_maquinarias,
         ];
@@ -479,6 +484,10 @@ class PartesDiarios extends Component
                 }
                 // MODO PRODUCCIÓN: Guardar Cargas con empleados por destajo
                 foreach ($this->cargas as $cargaData) {
+                    // Obtener el nombre del cliente a partir del ID
+                    $cliente = Cliente::find($cargaData['destino']);
+                    $nombreDestino = $cliente ? $cliente->razon_social : 'Cliente no encontrado';
+                    
                     $carga = Carga::create([
                         'id_parte_diario' => $parteDiarioId,
                         'id_lote' => $this->id_lote,
@@ -488,7 +497,7 @@ class PartesDiarios extends Component
                         'peso_bruto' => $cargaData['peso_bruto'],
                         'tara' => $cargaData['tara'],
                         'peso_neto' => $cargaData['peso_neto'],
-                        'destino' => $cargaData['destino'], // ID del cliente
+                        'destino' => $nombreDestino, // Nombre del cliente
                         'fecha_carga' => $this->fecha,
                     ]);
                     
@@ -566,6 +575,10 @@ class PartesDiarios extends Component
                 ->where('id_parte_diario', $parte->id_parte_diario)
                 ->get();
             foreach ($cargas as $c) {
+                // Buscar el ID del cliente a partir del nombre guardado en destino
+                $cliente = Cliente::where('razon_social', $c->destino)->first();
+                $idCliente = $cliente ? $cliente->id_cliente : null;
+                
                 $this->cargas[] = [
                     'id_categoria_madera' => $c->id_categoria_madera,
                     'ticket' => $c->ticket,
@@ -573,7 +586,8 @@ class PartesDiarios extends Component
                     'tara' => (float) $c->tara,
                     'peso_neto' => (float) $c->peso_neto,
                     'id_chofer' => $c->id_chofer,
-                    'destino' => $c->destino, // se almacena como texto/ID según tu configuración actual
+                    'destino' => $idCliente, // ID del cliente para el select
+                    'destino_nombre' => $c->destino, // Nombre original
                     'empleados' => $c->empleados->pluck('id_empleado')->all(),
                     'maquinarias' => $c->maquinarias->pluck('id_maquinaria')->all(),
                 ];

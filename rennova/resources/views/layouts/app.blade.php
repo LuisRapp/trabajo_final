@@ -375,6 +375,9 @@
                 <a href="{{ route('historico-roles-laborales.index') }}" class="sidebar-link">
                     <i class="bi bi-person-badge"></i> Roles Laborales
                 </a>
+                <a href="{{ route('auditorias.index') }}" class="sidebar-link">
+                    <i class="bi bi-file-earmark-text"></i> Auditorías
+                </a>
             </div>
 
             <!-- Configuración -->

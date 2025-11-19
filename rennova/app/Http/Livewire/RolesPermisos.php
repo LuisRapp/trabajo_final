@@ -9,7 +9,6 @@ use App\Models\User;
 
 class RolesPermisos extends Component
 {
-    public $roles, $permissions, $users;
     public $selectedRole = null;
     public $selectedUser = null;
     public $rolePermissions = [];
@@ -19,20 +18,11 @@ class RolesPermisos extends Component
     public $newRoleName = '';
     public $busqueda = '';
 
-    public function mount()
-    {
-        $this->loadData();
-    }
-
     public function render()
     {
-        return view('livewire.roles-permisos');
-    }
-
-    public function loadData()
-    {
-        $this->roles = Role::with('permissions')->get();
-        $this->permissions = Permission::orderBy('name')->get()->groupBy(function($permission) {
+        $roles = Role::with('permissions')->get();
+        
+        $permissions = Permission::orderBy('name')->get()->groupBy(function($permission) {
             // Agrupar por módulo (extraer el módulo del nombre del permiso)
             $parts = explode('-', $permission->name);
             return count($parts) > 1 ? implode('-', array_slice($parts, 1)) : 'otros';
@@ -43,7 +33,9 @@ class RolesPermisos extends Component
             $query->where('name', 'ilike', '%' . $this->busqueda . '%')
                   ->orWhere('email', 'ilike', '%' . $this->busqueda . '%');
         }
-        $this->users = $query->with('roles')->get();
+        $users = $query->with('roles')->get();
+        
+        return view('livewire.roles-permisos', compact('roles', 'permissions', 'users'));
     }
 
     public function selectRole($roleId)
@@ -64,7 +56,6 @@ class RolesPermisos extends Component
         $role->syncPermissions($this->rolePermissions);
         
         session()->flash('message', 'Permisos del rol actualizados correctamente');
-        $this->loadData();
     }
 
     public function createRole()
@@ -81,7 +72,6 @@ class RolesPermisos extends Component
         
         session()->flash('message', "Rol '{$this->newRoleName}' creado correctamente");
         $this->newRoleName = '';
-        $this->loadData();
     }
 
     public function deleteRole($roleId)
@@ -100,7 +90,6 @@ class RolesPermisos extends Component
 
         $role->delete();
         session()->flash('message', 'Rol eliminado correctamente');
-        $this->loadData();
         
         if ($this->selectedRole == $roleId) {
             $this->selectedRole = null;
@@ -126,11 +115,10 @@ class RolesPermisos extends Component
         $user->syncRoles($this->userRoles);
         
         session()->flash('message', 'Roles del usuario actualizados correctamente');
-        $this->loadData();
     }
 
     public function updatedBusqueda()
     {
-        $this->loadData();
+        // Livewire volverá a renderizar automáticamente
     }
 }

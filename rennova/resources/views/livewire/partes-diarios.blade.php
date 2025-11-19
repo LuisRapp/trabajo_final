@@ -275,10 +275,7 @@
                                                     {{ $chofer ? $chofer->apellido . ', ' . $chofer->nombre : '-' }}
                                                 </td>
                                                 <td>
-                                                    @php
-                                                        $cliente = $clientes->firstWhere('id_cliente', $carga['destino']);
-                                                    @endphp
-                                                    {{ $cliente->razon_social ?? '-' }}
+                                                    {{ $carga['destino_nombre'] ?? '-' }}
                                                 </td>
                                                 <td>
                                                     <small>
