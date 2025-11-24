@@ -95,6 +95,15 @@
             <div class="card-title">Auditorías</div>
             <a href="{{ route('auditorias.index') }}" class="card-btn">Ver Historial</a>
         </div>
+
+        <!-- Card: Configuración de Mantenimiento -->
+        @can('configurar-mantenimiento')
+        <div class="erp-nav-card">
+            <div class="erp-icon"><i class="bi bi-calendar-check"></i></div>
+            <div class="card-title">Configuración de Mantenimiento</div>
+            <a href="{{ route('configuracion-mantenimiento.index') }}" class="card-btn">Configurar</a>
+        </div>
+        @endcan
     </div>
 </div>
 @endsection

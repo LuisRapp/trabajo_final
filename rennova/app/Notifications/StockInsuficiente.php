@@ -39,7 +39,6 @@ class StockInsuficiente extends Notification
         }
 
         $message->line('Por favor, gestione la compra de estos insumos antes de aprobar las órdenes.')
-                ->action('Ver Órdenes', url('/mantenimientos'))
                 ->line('Este es un mensaje automático del sistema.');
 
         return $message;

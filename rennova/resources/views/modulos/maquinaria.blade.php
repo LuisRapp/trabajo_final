@@ -110,6 +110,14 @@
             <div class="card-title">Tipos de Maquinaria</div>
             <a href="{{ route('tipos-maquinaria.index') }}" class="card-btn">Gestionar</a>
         </div>
+
+        @can('configurar-notificaciones-mantenimiento')
+        <div class="erp-nav-card">
+            <div class="erp-icon"><i class="bi bi-bell-fill"></i></div>
+            <div class="card-title">Configuración de Notificaciones</div>
+            <a href="{{ route('configuracion-notificaciones.index') }}" class="card-btn">Configurar</a>
+        </div>
+        @endcan
     </div>
 </div>
 @endsection

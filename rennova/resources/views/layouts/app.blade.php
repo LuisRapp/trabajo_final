@@ -246,6 +246,11 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
+                    <!-- Campana de notificaciones SIEMPRE visible para usuarios autenticados -->
+                    @if(auth()->check())
+                        @livewire('notificaciones-campana')
+                    @endif
+                    
                     <li class="nav-item">
                         <a class="nav-link" href="{{ route('home') }}">
                             <i class="bi bi-house-door"></i> Inicio
@@ -519,6 +524,9 @@
             });
         });
     </script> <!-- <-- ESTA ERA LA ETIQUETA ROTA -->
+
+    <!-- Alpine.js para interactividad en componentes -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
     <!-- Livewire Scripts -->
     @livewireScripts

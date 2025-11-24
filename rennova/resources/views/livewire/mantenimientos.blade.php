@@ -104,6 +104,17 @@
                                 @error('fecha_inicio') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-6">
+                                <label class="form-label fw-semibold">Fecha Programada</label>
+                                <input type="date" wire:model="fecha_programada" class="form-control @error('fecha_programada') is-invalid @enderror">
+                                @error('fecha_programada') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                <small class="text-muted">
+                                    <i class="bi bi-info-circle"></i> Debe estar dentro de los próximos 7 días desde hoy
+                                    ({{ \Carbon\Carbon::now()->format('d/m/Y') }} - {{ \Carbon\Carbon::now()->addDays(7)->format('d/m/Y') }})
+                                </small>
+                            </div>
+                        </div>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
                                 <label class="form-label fw-semibold">Estado <span class="text-danger">*</span></label>
                                 <select wire:model="estado" class="form-select @error('estado') is-invalid @enderror">
                                     <option value="programado">Programado</option>
@@ -152,6 +163,7 @@
                                 <th>Maquinaria</th>
                                 <th>Tipo</th>
                                 <th>Fecha Inicio</th>
+                                <th>Fecha Programada</th>
                                 <th>Fecha Fin</th>
                                 <th>Costo</th>
                                 <th>Estado</th>
@@ -165,20 +177,46 @@
                                     <td class="fw-semibold">{{ $mantenimiento->maquinaria?->modelo ?? 'N/A' }}</td>
                                     <td>{{ $mantenimiento->tipoMantenimiento?->nombre ?? 'N/A' }}</td>
                                     <td>{{ $mantenimiento->fecha_inicio ? \Carbon\Carbon::parse($mantenimiento->fecha_inicio)->format('d/m/Y') : 'N/A' }}</td>
+                                    <td>
+                                        @if($mantenimiento->fecha_programada)
+                                            <span class="badge bg-info">
+                                                {{ \Carbon\Carbon::parse($mantenimiento->fecha_programada)->format('d/m/Y') }}
+                                            </span>
+                                            @if($mantenimiento->estado === 'programado' && \Carbon\Carbon::parse($mantenimiento->fecha_programada)->isToday())
+                                                <i class="bi bi-exclamation-circle text-warning" title="Programado para hoy"></i>
+                                            @endif
+                                        @else
+                                            <span class="text-muted">-</span>
+                                        @endif
+                                    </td>
                                     <td>{{ $mantenimiento->fecha_fin ? \Carbon\Carbon::parse($mantenimiento->fecha_fin)->format('d/m/Y') : 'N/A' }}</td>
                                     <td>${{ number_format($mantenimiento->costo_total, 2, ',', '.') }}</td>
                                     <td>
-                                        <span class="badge bg-{{ $mantenimiento->estado == 'completado' ? 'success' : ($mantenimiento->estado == 'en curso' ? 'warning' : 'secondary') }}">
+                                        <span class="badge bg-{{ $mantenimiento->estado == 'completado' ? 'success' : ($mantenimiento->estado == 'en curso' ? 'warning' : ($mantenimiento->estado == 'vencido' ? 'danger' : 'secondary')) }}">
                                             {{ ucfirst($mantenimiento->estado) }}
                                         </span>
                                     </td>
                                     <td class="text-center">
-                                        @php $isCompletado = strtolower(trim($mantenimiento->estado ?? '')) === 'completado'; @endphp
+                                        @php 
+                                            $isCompletado = strtolower(trim($mantenimiento->estado ?? '')) === 'completado';
+                                            $isProgramado = strtolower(trim($mantenimiento->estado ?? '')) === 'programado';
+                                            $isVencido = strtolower(trim($mantenimiento->estado ?? '')) === 'vencido';
+                                        @endphp
                                         <div class="btn-group btn-group-sm" role="group">
-                                            <button type="button" class="btn btn-outline-success" wire:click.prevent="abrirModalCompletar({{ $mantenimiento->id_mantenimiento }})" title="Completar" @if($isCompletado) disabled @endif>
+                                            @if($isProgramado)
+                                                <button type="button" class="btn btn-outline-info" wire:click="confirmarMantenimiento({{ $mantenimiento->id_mantenimiento }})" title="Confirmar realización">
+                                                    <i class="bi bi-check2-circle"></i>
+                                                </button>
+                                            @endif
+                                            @if($isVencido)
+                                                <button type="button" class="btn btn-outline-warning" wire:click="reprogramarMantenimiento({{ $mantenimiento->id_mantenimiento }})" title="Reprogramar">
+                                                    <i class="bi bi-calendar-plus"></i>
+                                                </button>
+                                            @endif
+                                            <button type="button" class="btn btn-outline-success" wire:click.prevent="abrirModalCompletar({{ $mantenimiento->id_mantenimiento }})" title="Completar" @if($isCompletado || $isVencido) disabled @endif>
                                                 <i class="bi bi-check-circle"></i>
                                             </button>
-                                            <button type="button" class="btn btn-outline-primary" wire:click="editar({{ $mantenimiento->id_mantenimiento }})" title="Editar" @if($isCompletado) disabled @endif>
+                                            <button type="button" class="btn btn-outline-primary" wire:click="editar({{ $mantenimiento->id_mantenimiento }})" title="Editar">
                                                 <i class="bi bi-pencil"></i>
                                             </button>
                                             <button type="button" class="btn btn-outline-danger" wire:click="eliminar({{ $mantenimiento->id_mantenimiento }})" onclick="return confirm('¿Está seguro de eliminar este mantenimiento?')" title="Eliminar">
@@ -189,7 +227,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="8" class="text-center py-5 text-muted">
+                                    <td colspan="9" class="text-center py-5 text-muted">
                                         <i class="bi bi-inbox" style="font-size: 3rem;"></i>
                                         <p class="mb-0 mt-2">No hay mantenimientos registrados.</p>
                                     </td>
@@ -292,52 +330,56 @@
                             <label class="form-label fw-semibold">Costo Total (opcional)</label>
                             <div class="input-group">
                                 <span class="input-group-text">$</span>
-                                <input type="number" wire:model="costo_total_completar" step="0.01" class="form-control @error('costo_total_completar') is-invalid @enderror" placeholder="0.00">
+                                <input type="number" wire:model="costo_total_completar" step="1" min="0" class="form-control @error('costo_total_completar') is-invalid @enderror" placeholder="0.00">
                             </div>
                             @error('costo_total_completar') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             <small class="text-muted">Se sumará automáticamente el costo de los insumos</small>
                         </div>
                     </div>
 
-                    @if($orden_es_correctivo)
-                        <hr>
-                        <h6 class="mb-3"><i class="bi bi-box-seam"></i> Insumos Utilizados (Opcional)</h6>
+                    <hr>
+                    <h6 class="mb-3">
+                        <i class="bi bi-box-seam"></i> Insumos Utilizados 
+                        @if(!$orden_es_correctivo)
+                            <span class="badge bg-info ms-2">Kit Preventivo</span>
+                        @endif
+                    </h6>
 
-                        @foreach($insumos_usados as $index => $insumo)
-                            <div class="row g-2 mb-2 align-items-end">
-                                <div class="col-md-5">
-                                    <label class="form-label small">Insumo</label>
-                                    <select wire:model="insumos_usados.{{ $index }}.id_insumo" class="form-select form-select-sm">
-                                        <option value="">Seleccione...</option>
-                                        @foreach(\App\Models\Insumo::orderBy('nombre')->get() as $ins)
-                                            <option value="{{ $ins->id_insumo }}">{{ $ins->nombre }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="form-label small">Cantidad</label>
-                                    <input type="number" wire:model="insumos_usados.{{ $index }}.cantidad" step="0.01" class="form-control form-control-sm" placeholder="0">
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="form-label small">Precio Unit.</label>
-                                    <input type="number" wire:model="insumos_usados.{{ $index }}.precio_unitario" step="0.01" class="form-control form-control-sm" placeholder="0.00">
-                                </div>
-                                <div class="col-md-1 text-end">
-                                    @if($index > 0)
-                                        <button type="button" wire:click="eliminarInsumo({{ $index }})" class="btn btn-sm btn-outline-danger" title="Eliminar">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    @endif
-                                </div>
+                    @foreach($insumos_usados as $index => $insumo)
+                        <div class="row g-2 mb-2 align-items-end">
+                            <div class="col-md-5">
+                                <label class="form-label small">Insumo</label>
+                                <select wire:model="insumos_usados.{{ $index }}.id_insumo" class="form-select form-select-sm">
+                                    <option value="">Seleccione...</option>
+                                    @foreach(\App\Models\Insumo::orderBy('nombre')->get() as $ins)
+                                        <option value="{{ $ins->id_insumo }}">{{ $ins->nombre }}</option>
+                                    @endforeach
+                                </select>
                             </div>
-                        @endforeach
+                            <div class="col-md-3">
+                                <label class="form-label small">Cantidad</label>
+                                <input type="number" wire:model="insumos_usados.{{ $index }}.cantidad" step="1" min="0" class="form-control form-control-sm" placeholder="0">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small">Precio Unit.</label>
+                                <input type="number" wire:model="insumos_usados.{{ $index }}.precio_unitario" step="0.01" min="0" class="form-control form-control-sm" placeholder="0.00">
+                            </div>
+                            <div class="col-md-1 text-end">
+                                @if($index > 0 || count($insumos_usados) > 1)
+                                    <button type="button" wire:click="eliminarInsumo({{ $index }})" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                @endif
+                            </div>
+                        </div>
+                    @endforeach
 
-                        <button type="button" wire:click="agregarInsumo" class="btn btn-sm btn-outline-primary mt-2">
-                            <i class="bi bi-plus-circle"></i> Agregar Insumo
-                        </button>
-                    @endif
+                    <button type="button" wire:click="agregarInsumo" class="btn btn-sm btn-outline-primary mt-2">
+                        <i class="bi bi-plus-circle"></i> Agregar Insumo
+                    </button>
                 </div>
                 <div class="lw-modal-footer">
+
                     <button type="button" class="btn btn-outline-secondary" wire:click="cerrarModalCompletar">
                         <i class="bi bi-x-circle"></i> Cancelar
                     </button>

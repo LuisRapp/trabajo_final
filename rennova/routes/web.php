@@ -86,6 +86,24 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/mantenimientos/{id}/approve', [MantenimientoController::class, 'approve'])->name('mantenimientos.approve');
     Route::post('/mantenimientos/{id}/complete', [MantenimientoController::class, 'complete'])->name('mantenimientos.complete');
     
+    // Configuración de Notificaciones de Mantenimiento
+    Route::view('/configuracion-notificaciones-mantenimiento', 'configuracion-notificaciones.index')
+        ->middleware(['permission:configurar-notificaciones-mantenimiento'])
+        ->name('configuracion-notificaciones.index');
+    
+    // Configuración de Horarios de Mantenimiento
+    Route::view('/configuracion-mantenimiento', 'configuracion-mantenimiento.index')
+        ->middleware(['permission:configurar-mantenimiento'])
+        ->name('configuracion-mantenimiento.index');
+    
+    // Notificaciones del Sistema
+    Route::view('/notificaciones', 'notificaciones.index')->name('notificaciones.index');
+    
+    // Programar Mantenimiento desde Notificación
+    Route::get('/programar-mantenimiento/{notificacionId}', function ($notificacionId) {
+        return view('programar-mantenimiento.index', ['notificacionId' => $notificacionId]);
+    })->name('programar-mantenimiento');
+    
     // Configuración de Kits de Mantenimiento Preventivo (UI original)
     Route::view('/kits-mantenimiento', 'kits-mantenimiento.index')->name('kits-mantenimiento.index');
     

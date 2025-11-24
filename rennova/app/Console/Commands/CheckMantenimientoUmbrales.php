@@ -8,6 +8,7 @@ use App\Models\Mantenimiento;
 use App\Models\KitMantenimientoPreventivo;
 use App\Models\Insumo;
 use App\Models\User;
+use App\Models\NotificacionSistema;
 use App\Notifications\MantenimientoCreado;
 use App\Notifications\StockInsuficiente;
 use Illuminate\Support\Facades\Log;
@@ -109,6 +110,13 @@ class CheckMantenimientoUmbrales extends Command
                     // Enviar notificación por email
                     $this->enviarNotificacion(new MantenimientoCreado($mantenimiento));
 
+                    // Crear notificación interna del sistema con plazo de 7 días
+                    $this->crearNotificacionInterna(
+                        mantenimiento: $mantenimiento,
+                        maquinaria: $maquinaria,
+                        toneladasDesdeUltimo: $toneladasDesdeUltimo
+                    );
+
                     if ($faltaStock) {
                         $advertenciasStock[] = [
                             'maquinaria' => $maquinaria->id_maquinaria,
@@ -117,8 +125,8 @@ class CheckMantenimientoUmbrales extends Command
                         ];
                         $this->warn("⚠ ADVERTENCIA: Falta stock para algunos insumos");
                         
-                        // Esperar 3 segundos antes del segundo email para evitar rate limit
-                        sleep(3);
+                        // Esperar 60 segundos antes del segundo email para evitar rate limit
+                        sleep(60);
                     }
 
                 } catch (\Exception $e) {
@@ -158,25 +166,73 @@ class CheckMantenimientoUmbrales extends Command
     }
 
     /**
-     * Envía notificación a administradores
+     * Envía notificación a usuarios configurados
      */
     protected function enviarNotificacion($notification)
     {
         try {
-            // Obtener email del administrador desde config o primer usuario
-            $adminEmail = config('mail.admin_email', 'admin@example.com');
+            // Obtener usuarios configurados según tipo de notificación
+            $tipoNotificacion = $notification instanceof \App\Notifications\StockInsuficiente ? 'stock' : 'umbral';
             
-            // Alternativa: Notificar a todos los usuarios con rol admin
-            // $admins = User::role('admin')->get();
-            // Notification::send($admins, $notification);
+            $userIds = DB::table('configuracion_notificaciones_mantenimiento')
+                ->where('tipo_notificacion', $tipoNotificacion)
+                ->pluck('user_id');
             
-            // Por ahora usar email directo
-            Notification::route('mail', $adminEmail)->notify($notification);
-            
-            $this->info("📧 Notificación enviada a {$adminEmail}");
+            if ($userIds->isEmpty()) {
+                // Fallback: enviar a admin_email configurado
+                $adminEmail = config('mail.admin_email', 'admin@example.com');
+                Notification::route('mail', $adminEmail)->notify($notification);
+                $this->info("📧 Notificación enviada a {$adminEmail} (fallback)");
+            } else {
+                $users = User::whereIn('id', $userIds)->get();
+                Notification::send($users, $notification);
+                $this->info("📧 Notificación enviada a {$users->count()} usuario(s)");
+            }
         } catch (\Exception $e) {
             $this->warn("⚠ No se pudo enviar notificación: {$e->getMessage()}");
             Log::error("Error enviando notificación", ['error' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Crea notificación interna en el sistema para usuarios configurados
+     */
+    protected function crearNotificacionInterna(Mantenimiento $mantenimiento, Maquinaria $maquinaria, float $toneladasDesdeUltimo)
+    {
+        try {
+            // Obtener usuarios configurados para notificaciones de umbral
+            $userIds = DB::table('configuracion_notificaciones_mantenimiento')
+                ->where('tipo_notificacion', 'umbral')
+                ->pluck('user_id');
+            
+            if ($userIds->isEmpty()) {
+                $this->warn("⚠ No hay usuarios configurados para recibir notificaciones de umbral");
+                return;
+            }
+
+            $fechaLimite = now()->addDays(7)->toDateString();
+            $titulo = "Mantenimiento Preventivo Requerido - {$maquinaria->id_maquinaria}";
+            $mensaje = "La maquinaria {$maquinaria->id_maquinaria} ha alcanzado {$toneladasDesdeUltimo} toneladas " .
+                      "(umbral: {$maquinaria->umbral_toneladas}). " .
+                      "Se ha generado la orden de mantenimiento #{$mantenimiento->id_mantenimiento}. " .
+                      "Por favor, programe la fecha de inicio dentro de los próximos 7 días.";
+
+            foreach ($userIds as $userId) {
+                NotificacionSistema::create([
+                    'user_id' => $userId,
+                    'mantenimiento_id' => $mantenimiento->id_mantenimiento,
+                    'tipo' => 'umbral_alcanzado',
+                    'titulo' => $titulo,
+                    'mensaje' => $mensaje,
+                    'fecha_limite' => $fechaLimite,
+                ]);
+            }
+
+            $this->info("🔔 Notificación interna creada para {$userIds->count()} usuario(s) (límite: {$fechaLimite})");
+
+        } catch (\Exception $e) {
+            $this->warn("⚠ Error creando notificación interna: {$e->getMessage()}");
+            Log::error("Error en crearNotificacionInterna", ['error' => $e->getMessage()]);
         }
     }
 }

@@ -15,6 +15,7 @@ class Mantenimiento extends Model implements Auditable
         'id_maquinaria',
         'id_tipo_mantenimiento',
         'fecha_inicio',
+        'fecha_programada',
         'fecha_fin',
         'costo_total',
         'estado',

@@ -247,6 +247,26 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
+                    <!-- Campana de notificaciones SIEMPRE visible para usuarios autenticados -->
+                    <?php if(auth()->check()): ?>
+                        <?php
+$__split = function ($name, $params = []) {
+    return [$name, $params];
+};
+[$__name, $__params] = $__split('notificaciones-campana');
+
+$__html = app('livewire')->mount($__name, $__params, 'lw-141089171-0', $__slots ?? [], get_defined_vars());
+
+echo $__html;
+
+unset($__html);
+unset($__name);
+unset($__params);
+unset($__split);
+if (isset($__slots)) unset($__slots);
+?>
+                    <?php endif; ?>
+                    
                     <li class="nav-item">
                         <a class="nav-link" href="<?php echo e(route('home')); ?>">
                             <i class="bi bi-house-door"></i> Inicio
@@ -522,6 +542,9 @@
             });
         });
     </script> <!-- <-- ESTA ERA LA ETIQUETA ROTA -->
+
+    <!-- Alpine.js para interactividad en componentes -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
     <!-- Livewire Scripts -->
     <?php echo \Livewire\Mechanisms\FrontendAssets\FrontendAssets::scripts(); ?>
