@@ -104,6 +104,9 @@
             <div class="erp-icon"><i class="bi bi-clipboard-check"></i></div>
             <div class="card-title">Operaciones</div>
             <a href="<?php echo e(route('modulos.operaciones')); ?>" class="card-btn">Acceder</a>
+            <a href="<?php echo e(route('modulos.operaciones.gestionstock')); ?>" class="card-btn" style="margin-top:0.6rem; background:#0d6efd;">
+                Gestión Stock (FIFO)
+            </a>
         </div>
         <div class="erp-nav-card">
             <div class="erp-icon"><i class="bi bi-bar-chart"></i></div>

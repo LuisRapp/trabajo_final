@@ -94,6 +94,12 @@
         </div>
 
         <div class="erp-nav-card">
+            <div class="erp-icon"><i class="bi bi-boxes"></i></div>
+            <div class="card-title">Gestión Stock (FIFO)</div>
+            <a href="{{ route('modulos.operaciones.gestionstock') }}" class="card-btn">Abrir</a>
+        </div>
+
+        <div class="erp-nav-card">
             <div class="erp-icon"><i class="bi bi-clipboard-check"></i></div>
             <div class="card-title">Partes Diarios</div>
             <a href="{{ route('partes-diarios.index') }}" class="card-btn">Gestionar</a>

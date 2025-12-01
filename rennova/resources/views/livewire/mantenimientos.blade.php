@@ -202,24 +202,24 @@
                                             $isProgramado = strtolower(trim($mantenimiento->estado ?? '')) === 'programado';
                                             $isVencido = strtolower(trim($mantenimiento->estado ?? '')) === 'vencido';
                                         @endphp
-                                        <div class="btn-group btn-group-sm" role="group">
+                                        <div class="d-flex gap-1 justify-content-center">
                                             @if($isProgramado)
-                                                <button type="button" class="btn btn-outline-info" wire:click="confirmarMantenimiento({{ $mantenimiento->id_mantenimiento }})" title="Confirmar realización">
+                                                <button type="button" class="btn btn-sm btn-outline-info" wire:click="confirmarMantenimiento({{ $mantenimiento->id_mantenimiento }})" title="Confirmar realización">
                                                     <i class="bi bi-check2-circle"></i>
                                                 </button>
                                             @endif
                                             @if($isVencido)
-                                                <button type="button" class="btn btn-outline-warning" wire:click="reprogramarMantenimiento({{ $mantenimiento->id_mantenimiento }})" title="Reprogramar">
+                                                <button type="button" class="btn btn-sm btn-outline-warning" wire:click="reprogramarMantenimiento({{ $mantenimiento->id_mantenimiento }})" title="Reprogramar">
                                                     <i class="bi bi-calendar-plus"></i>
                                                 </button>
                                             @endif
-                                            <button type="button" class="btn btn-outline-success" wire:click.prevent="abrirModalCompletar({{ $mantenimiento->id_mantenimiento }})" title="Completar" @if($isCompletado || $isVencido) disabled @endif>
+                                            <button type="button" class="btn btn-sm btn-outline-success" wire:click.prevent="abrirModalCompletar({{ $mantenimiento->id_mantenimiento }})" title="Completar" @if($isCompletado || $isVencido) disabled @endif>
                                                 <i class="bi bi-check-circle"></i>
                                             </button>
-                                            <button type="button" class="btn btn-outline-primary" wire:click="editar({{ $mantenimiento->id_mantenimiento }})" title="Editar">
+                                            <button type="button" class="btn btn-sm btn-outline-primary" wire:click="editar({{ $mantenimiento->id_mantenimiento }})" title="Editar">
                                                 <i class="bi bi-pencil"></i>
                                             </button>
-                                            <button type="button" class="btn btn-outline-danger" wire:click="eliminar({{ $mantenimiento->id_mantenimiento }})" onclick="return confirm('¿Está seguro de eliminar este mantenimiento?')" title="Eliminar">
+                                            <button type="button" class="btn btn-sm btn-outline-danger" wire:click="eliminar({{ $mantenimiento->id_mantenimiento }})" onclick="return confirm('¿Está seguro de eliminar este mantenimiento?')" title="Eliminar">
                                                 <i class="bi bi-trash"></i>
                                             </button>
                                         </div>
@@ -333,7 +333,7 @@
                                 <input type="number" wire:model="costo_total_completar" step="1" min="0" class="form-control @error('costo_total_completar') is-invalid @enderror" placeholder="0.00">
                             </div>
                             @error('costo_total_completar') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                            <small class="text-muted">Se sumará automáticamente el costo de los insumos</small>
+                            <small class="text-muted">Costo adicional (ej: mano de obra). Los insumos se calculan automáticamente con FIFO</small>
                         </div>
                     </div>
 
@@ -347,22 +347,30 @@
 
                     @foreach($insumos_usados as $index => $insumo)
                         <div class="row g-2 mb-2 align-items-end">
-                            <div class="col-md-5">
+                            <div class="col-md-6">
                                 <label class="form-label small">Insumo</label>
-                                <select wire:model="insumos_usados.{{ $index }}.id_insumo" class="form-select form-select-sm">
+                                <select wire:model.live="insumos_usados.{{ $index }}.id_insumo" class="form-select form-select-sm">
                                     <option value="">Seleccione...</option>
                                     @foreach(\App\Models\Insumo::orderBy('nombre')->get() as $ins)
-                                        <option value="{{ $ins->id_insumo }}">{{ $ins->nombre }}</option>
+                                        @php
+                                            $stockDisp = \App\Models\MovimientoStock::stockDisponible($ins->id_insumo);
+                                            $precioProm = \App\Models\MovimientoStock::precioPromedio($ins->id_insumo);
+                                        @endphp
+                                        <option value="{{ $ins->id_insumo }}">
+                                            {{ $ins->nombre }} (Stock: {{ number_format($stockDisp, 2) }} - ${{ number_format($precioProm, 2) }}/u)
+                                        </option>
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-md-3">
-                                <label class="form-label small">Cantidad</label>
-                                <input type="number" wire:model="insumos_usados.{{ $index }}.cantidad" step="1" min="0" class="form-control form-control-sm" placeholder="0">
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label small">Precio Unit.</label>
-                                <input type="number" wire:model="insumos_usados.{{ $index }}.precio_unitario" step="0.01" min="0" class="form-control form-control-sm" placeholder="0.00">
+                            <div class="col-md-4">
+                                <label class="form-label small">Cantidad a usar</label>
+                                <input type="number" wire:model="insumos_usados.{{ $index }}.cantidad" step="0.01" min="0" class="form-control form-control-sm" placeholder="0">
+                                @if(!empty($insumo['id_insumo']))
+                                    @php
+                                        $stockDisponible = \App\Models\MovimientoStock::stockDisponible($insumo['id_insumo']);
+                                    @endphp
+                                    <small class="text-muted">Disponible: {{ number_format($stockDisponible, 2) }}</small>
+                                @endif
                             </div>
                             <div class="col-md-1 text-end">
                                 @if($index > 0 || count($insumos_usados) > 1)

@@ -219,8 +219,7 @@ class Mantenimientos extends Component
                 ->select(
                     'kit_mantenimiento_preventivo.id_insumo',
                     'kit_mantenimiento_preventivo.cantidad_requerida',
-                    'insumos.nombre',
-                    'insumos.costo_unitario'
+                    'insumos.nombre'
                 )
                 ->get();
             
@@ -228,17 +227,16 @@ class Mantenimientos extends Component
                 foreach ($kitInsumos as $item) {
                     $this->insumos_usados[] = [
                         'id_insumo' => $item->id_insumo,
-                        'cantidad' => $item->cantidad_requerida,
-                        'precio_unitario' => $item->costo_unitario ?? 0
+                        'cantidad' => $item->cantidad_requerida
                     ];
                 }
             } else {
                 // Si no hay kit, mostrar un campo vacío
-                $this->insumos_usados = [['id_insumo' => '', 'cantidad' => '', 'precio_unitario' => '']];
+                $this->insumos_usados = [['id_insumo' => '', 'cantidad' => '']];
             }
         } else {
             // Para correctivos, iniciar con un campo vacío
-            $this->insumos_usados = [['id_insumo' => '', 'cantidad' => '', 'precio_unitario' => '']];
+            $this->insumos_usados = [['id_insumo' => '', 'cantidad' => '']];
         }
         
         $this->activeTab = 'listado';
@@ -254,13 +252,19 @@ class Mantenimientos extends Component
 
     public function agregarInsumo()
     {
-        $this->insumos_usados[] = ['id_insumo' => '', 'cantidad' => '', 'precio_unitario' => ''];
+        $this->insumos_usados[] = ['id_insumo' => '', 'cantidad' => ''];
     }
 
     public function eliminarInsumo($index)
     {
         unset($this->insumos_usados[$index]);
         $this->insumos_usados = array_values($this->insumos_usados);
+    }
+
+    public function updatedInsumosUsados($value, $key)
+    {
+        // Ya no necesitamos cargar el precio_unitario porque usamos FIFO
+        // Este método puede quedar vacío o eliminarse, pero lo mantenemos por compatibilidad
     }
 
     public function completarOrden()
@@ -287,16 +291,38 @@ class Mantenimientos extends Component
 
             \Log::info('Validación pasada');
 
-            // Calcular costo total automáticamente sumando todos los insumos usados
-            $costoTotal = floatval($this->costo_total_completar ?? 0);
+            // Calcular costo total base (mano de obra u otros costos adicionales)
+            $costoBase = floatval($this->costo_total_completar ?? 0);
+            
+            // Calcular costo de insumos usando FIFO (sin procesar aún, solo calcular)
+            $costoInsumos = 0;
+            $insumosValidados = [];
             
             foreach ($this->insumos_usados as $insumo) {
-                if (!empty($insumo['id_insumo']) && !empty($insumo['cantidad']) && !empty($insumo['precio_unitario'])) {
-                    $costoTotal += floatval($insumo['cantidad']) * floatval($insumo['precio_unitario']);
+                if (!empty($insumo['id_insumo']) && !empty($insumo['cantidad'])) {
+                    $cantidad = floatval($insumo['cantidad']);
+                    
+                    // Verificar stock disponible antes de procesar
+                    $stockDisponible = \App\Models\MovimientoStock::stockDisponible($insumo['id_insumo']);
+                    if ($stockDisponible < $cantidad) {
+                        $nombreInsumo = \App\Models\Insumo::find($insumo['id_insumo'])->nombre ?? 'ID ' . $insumo['id_insumo'];
+                        throw new \Exception("Stock insuficiente para {$nombreInsumo}. Disponible: {$stockDisponible}, Requerido: {$cantidad}");
+                    }
+                    
+                    // Calcular costo FIFO simulado para obtener el total
+                    $resultadoSimulado = DB::selectOne(
+                        'SELECT * FROM calcular_costo_fifo(?, ?)',
+                        [$insumo['id_insumo'], $cantidad]
+                    );
+                    
+                    $costoInsumos += $resultadoSimulado->v_costo_total;
+                    $insumosValidados[] = $insumo;
                 }
             }
+            
+            $costoTotal = $costoBase + $costoInsumos;
 
-            \Log::info('Costo total calculado', ['costo' => $costoTotal]);
+            \Log::info('Costo total calculado', ['base' => $costoBase, 'insumos' => $costoInsumos, 'total' => $costoTotal]);
 
             DB::beginTransaction();
             
@@ -311,34 +337,31 @@ class Mantenimientos extends Component
             // Registrar todos los insumos usados (preventivo o correctivo)
             $tipoMantenimiento = $this->orden_es_correctivo ? 'Correctivo' : 'Preventivo';
             
-            foreach ($this->insumos_usados as $insumo) {
-                if (!empty($insumo['id_insumo']) && !empty($insumo['cantidad'])) {
-                    // Registrar movimiento de stock (salida)
-                    DB::table('movimiento_stocks')->insert([
-                        'id_insumo' => $insumo['id_insumo'],
-                        'tipo' => 'salida',
-                        'cantidad' => $insumo['cantidad'],
-                        'fecha' => $this->fecha_fin_completar,
-                        'motivo' => "Mantenimiento {$tipoMantenimiento} - Orden #" . $orden->id_mantenimiento,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-
-                    $precioUnitario = floatval($insumo['precio_unitario'] ?? 0);
-                    $cantidad = floatval($insumo['cantidad']);
-                    $subtotal = $cantidad * $precioUnitario;
-
-                    // Registrar en mantenimiento_insumos
-                    DB::table('mantenimiento_insumos')->insert([
-                        'id_mantenimiento' => $orden->id_mantenimiento,
-                        'id_insumo' => $insumo['id_insumo'],
-                        'cantidad_utilizada' => $cantidad,
-                        'costo_unitario' => $precioUnitario,
-                        'subtotal' => $subtotal,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-                }
+            foreach ($insumosValidados as $insumo) {
+                $cantidad = floatval($insumo['cantidad']);
+                $motivo = "Mantenimiento {$tipoMantenimiento} - Orden #" . $orden->id_mantenimiento;
+                
+                // Usar el sistema FIFO para registrar la salida
+                $resultadoSalida = \App\Models\MovimientoStock::registrarSalida(
+                    $insumo['id_insumo'],
+                    $cantidad,
+                    $motivo,
+                    $this->fecha_fin_completar
+                );
+                
+                // El costo real viene de los lotes FIFO consumidos
+                $costoRealInsumo = $resultadoSalida['costo_total'];
+                
+                // Registrar en mantenimiento_insumos con el costo FIFO real
+                DB::table('mantenimiento_insumos')->insert([
+                    'id_mantenimiento' => $orden->id_mantenimiento,
+                    'id_insumo' => $insumo['id_insumo'],
+                    'cantidad_utilizada' => $cantidad,
+                    'costo_unitario' => $costoRealInsumo / $cantidad, // Promedio ponderado de los lotes
+                    'subtotal' => $costoRealInsumo,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
             }
             \Log::info('Insumos registrados');
 

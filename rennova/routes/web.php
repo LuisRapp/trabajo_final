@@ -24,6 +24,7 @@ use App\Http\Controllers\AuditoriaController;
 // use App\Http\Controllers\KitInsumoController;
 // Livewire ABMs
 use App\Http\Livewire\HistoricoRolesLaborales;
+use App\Http\Livewire\GestionStock;
 use App\Http\Controllers\CargaController;
 use App\Http\Controllers\ChoferController;
 
@@ -124,6 +125,9 @@ Route::middleware(['auth'])->group(function () {
     
     // Asignaciones por Lote (Empleados y Maquinaria)
     Route::view('/asignaciones-lote', 'asignaciones-lote.index')->name('asignaciones-lote.index');
+    
+    // Gestión de Stock (FIFO) dentro del módulo Operaciones
+    Route::view('/modulos/operaciones/gestionstock', 'modulos.operaciones.gestionstock')->name('modulos.operaciones.gestionstock');
     
     // ABM Cargas
     Route::get('/cargas', [CargaController::class, 'index'])->name('cargas.index');

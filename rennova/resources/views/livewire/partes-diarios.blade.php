@@ -408,40 +408,50 @@
                     <h5 class="mb-0"><i class="bi bi-box-seam"></i> Movimiento de Insumos</h5>
                 </div>
                 <div class="card-body">
+                    <!-- Alertas de feedback -->
+                    <div id="alertaMovimiento"></div>
+                    
                     <!-- Formulario para agregar movimiento -->
                     <div class="border rounded p-3 mb-3 bg-light">
-                        <h6 class="fw-semibold mb-3"><i class="bi bi-arrow-left-right"></i> Registrar Movimiento de Stock</h6>
+                        <h6 class="fw-semibold mb-3"><i class="bi bi-box-arrow-right"></i> Registrar Consumo de Insumos</h6>
+                        <div class="alert alert-info alert-sm mb-3">
+                            <i class="bi bi-info-circle"></i> Los insumos consumidos se descontarán automáticamente del stock usando FIFO. Para entradas, use <strong>Gestión de Stock</strong>.
+                        </div>
                         
-                        <!-- Fila 1: Identificación y Tipo -->
+                        <!-- Fila 1: Identificación y Cantidad -->
                         <div class="row g-3 mb-3">
                             <div class="col-md-4">
                                 <label class="form-label fw-semibold">Insumo <span class="text-danger">*</span></label>
-                                <select wire:model="movimiento_id_insumo" class="form-select @error('movimiento_id_insumo') is-invalid @enderror">
+                                <select wire:model.live="movimiento_id_insumo" class="form-select @error('movimiento_id_insumo') is-invalid @enderror">
                                     <option value="">Seleccione un insumo...</option>
                                     @foreach($insumos as $insumo)
-                                        <option value="{{ $insumo->id_insumo }}">{{ $insumo->nombre }} (Stock: {{ $insumo->stock }} {{ $insumo->unidadMedida->nombre ?? '' }})</option>
+                                        <option value="{{ $insumo->id_insumo }}">
+                                            {{ $insumo->nombre }}
+                                            @if($insumo->unidadMedida)
+                                                ({{ $insumo->unidadMedida->abreviatura }})
+                                            @endif
+                                        </option>
                                     @endforeach
                                 </select>
                                 @error('movimiento_id_insumo') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                @if($stock_disponible_insumo !== null)
+                                    <small class="text-muted">
+                                        Stock disponible: <strong class="{{ $stock_disponible_insumo > 0 ? 'text-success' : 'text-danger' }}">{{ $stock_disponible_insumo }}</strong>
+                                    </small>
+                                @endif
                             </div>
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold">Tipo de Movimiento <span class="text-danger">*</span></label>
-                                <select wire:model="movimiento_tipo" class="form-select @error('movimiento_tipo') is-invalid @enderror">
-                                    <option value="entrada">Entrada / Compra</option>
-                                    <option value="salida">Salida / Consumo</option>
-                                </select>
-                                @error('movimiento_tipo') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                            </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <label class="form-label fw-semibold">Cantidad <span class="text-danger">*</span></label>
-                                <input type="number" wire:model="movimiento_cantidad" step="0.01" class="form-control @error('movimiento_cantidad') is-invalid @enderror" placeholder="0.00">
+                                <input 
+                                    type="number" 
+                                    wire:model="movimiento_cantidad" 
+                                    step="0.01" 
+                                    class="form-control @error('movimiento_cantidad') is-invalid @enderror" 
+                                    placeholder="0.00"
+                                    @if($stock_disponible_insumo !== null) max="{{ $stock_disponible_insumo }}" @endif>
                                 @error('movimiento_cantidad') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
-                        </div>
-
-                        <!-- Fila 2: Motivo y Fecha -->
-                        <div class="row g-3 mb-3">
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <label class="form-label fw-semibold">Motivo <span class="text-danger">*</span></label>
                                 <select wire:model="movimiento_motivo" class="form-select @error('movimiento_motivo') is-invalid @enderror">
                                     <option value="Producción">Producción</option>
@@ -450,21 +460,22 @@
                                 </select>
                                 @error('movimiento_motivo') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold">Fecha <span class="text-info">Automática</span></label>
-                                <input type="text" value="{{ $fecha ? \Carbon\Carbon::parse($fecha)->format('d/m/Y') : 'Seleccione fecha arriba' }}" class="form-control bg-light" readonly>
-                                <small class="text-muted">Toma la fecha del Parte Diario</small>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold">Observaciones</label>
-                                <input type="text" wire:model="movimiento_observaciones" class="form-control" placeholder="Notas específicas (opcional)">
+                            <div class="col-md-2 d-flex align-items-end">
+                                <button 
+                                    type="button" 
+                                    wire:click.prevent="agregarMovimiento" 
+                                    class="btn btn-success w-100">
+                                    <i class="bi bi-plus-circle"></i> Agregar
+                                </button>
                             </div>
                         </div>
 
-                        <div class="d-flex justify-content-end">
-                            <button type="button" wire:click="agregarMovimiento" class="btn btn-success">
-                                <i class="bi bi-plus-circle"></i> Agregar Movimiento
-                            </button>
+                        <!-- Fila 2: Observaciones -->
+                        <div class="row g-3">
+                            <div class="col-md-12">
+                                <label class="form-label fw-semibold">Observaciones</label>
+                                <input type="text" wire:model="movimiento_observaciones" class="form-control" placeholder="Notas específicas (opcional)">
+                            </div>
                         </div>
                     </div>
 
@@ -475,7 +486,6 @@
                                 <thead class="table-light">
                                     <tr>
                                         <th>Insumo</th>
-                                        <th>Tipo de Movimiento</th>
                                         <th>Cantidad</th>
                                         <th>Motivo</th>
                                         <th>Observaciones</th>
@@ -489,14 +499,9 @@
                                                 <strong>{{ $mov['nombre_insumo'] }}</strong>
                                                 <br><small class="text-muted">{{ $mov['unidad'] }}</small>
                                             </td>
-                                            <td>
-                                                @if($mov['tipo'] == 'entrada')
-                                                    <span class="badge bg-primary"><i class="bi bi-arrow-down-circle"></i> Entrada</span>
-                                                @else
-                                                    <span class="badge bg-danger"><i class="bi bi-arrow-up-circle"></i> Salida</span>
-                                                @endif
+                                            <td class="fw-bold">
+                                                {{ number_format($mov['cantidad'], 2) }} {{ $mov['unidad'] }}
                                             </td>
-                                            <td class="fw-bold">{{ number_format($mov['cantidad'], 2) }}</td>
                                             <td>
                                                 @if($mov['motivo'] == 'Producción')
                                                     <span class="badge bg-info">{{ $mov['motivo'] }}</span>
@@ -637,6 +642,28 @@
             const listadoTabInstance = new bootstrap.Tab(listadoTab);
             listadoTabInstance.show();
             window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+        
+        // Manejo de alertas para movimientos de insumos
+        Livewire.on('mostrarExito', (event) => {
+            const alertaDiv = document.getElementById('alertaMovimiento');
+            alertaDiv.innerHTML = `
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="bi bi-check-circle"></i> ${event.mensaje}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            setTimeout(() => { alertaDiv.innerHTML = ''; }, 3000);
+        });
+        
+        Livewire.on('mostrarError', (event) => {
+            const alertaDiv = document.getElementById('alertaMovimiento');
+            alertaDiv.innerHTML = `
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-triangle"></i> ${event.mensaje}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
         });
     });
 </script>

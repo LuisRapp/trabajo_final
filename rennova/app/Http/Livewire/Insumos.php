@@ -9,7 +9,7 @@ use App\Models\Proveedor;
 
 class Insumos extends Component
 {
-    public $insumos, $insumo_id, $nombre, $descripcion, $id_unidad_medida, $id_proveedor, $costo_unitario, $busqueda = '';
+    public $insumos, $insumo_id, $nombre, $descripcion, $id_unidad_medida, $id_proveedor, $busqueda = '';
     public $unidades, $proveedores;
 
     protected $rules = [
@@ -17,7 +17,6 @@ class Insumos extends Component
         'descripcion' => 'nullable|string',
         'id_unidad_medida' => 'required|exists:unidad_medidas,id_unidad_medida',
         'id_proveedor' => 'required|exists:proveedors,id_proveedor',
-        'costo_unitario' => 'required|numeric|min:0',
     ];
 
     protected $messages = [
@@ -25,9 +24,6 @@ class Insumos extends Component
         'nombre.min' => 'El nombre debe tener al menos 3 caracteres.',
         'id_unidad_medida.required' => 'Debe seleccionar una unidad de medida.',
         'id_proveedor.required' => 'Debe seleccionar un proveedor.',
-        'costo_unitario.required' => 'El costo unitario es obligatorio.',
-        'costo_unitario.numeric' => 'El costo debe ser un número.',
-        'costo_unitario.min' => 'El costo debe ser mayor o igual a 0.',
     ];
 
     public function mount()
@@ -44,14 +40,15 @@ class Insumos extends Component
 
     public function cargarInsumos()
     {
-        $query = Insumo::with(['unidadMedida', 'proveedor']);
+        // Usar scope optimizado para evitar N+1 queries
+        $query = Insumo::conStockYPrecio()
+            ->with(['unidadMedida', 'proveedor']);
 
         if ($this->busqueda) {
             $busq = $this->busqueda;
             $query->where(function($q) use ($busq) {
                 $q->where('nombre', 'ILIKE', '%' . $busq . '%')
                   ->orWhere('descripcion', 'ILIKE', '%' . $busq . '%')
-                  ->orWhereRaw("CAST(costo_unitario AS TEXT) ILIKE ?", ['%' . $busq . '%'])
                   ->orWhereHas('proveedor', function($qp) use ($busq) {
                       $qp->where('razon_social', 'ILIKE', '%' . $busq . '%');
                   })
@@ -81,7 +78,6 @@ class Insumos extends Component
                 'descripcion' => $this->descripcion,
                 'id_unidad_medida' => $this->id_unidad_medida,
                 'id_proveedor' => $this->id_proveedor,
-                'costo_unitario' => $this->costo_unitario,
             ]
         );
 
@@ -98,7 +94,6 @@ class Insumos extends Component
         $this->descripcion = $insumo->descripcion;
         $this->id_unidad_medida = $insumo->id_unidad_medida;
         $this->id_proveedor = $insumo->id_proveedor;
-        $this->costo_unitario = $insumo->costo_unitario;
     }
 
     public function eliminar($id)
@@ -109,6 +104,6 @@ class Insumos extends Component
 
     public function resetCampos()
     {
-        $this->reset(['insumo_id', 'nombre', 'descripcion', 'id_unidad_medida', 'id_proveedor', 'costo_unitario']);
+        $this->reset(['insumo_id', 'nombre', 'descripcion', 'id_unidad_medida', 'id_proveedor']);
     }
 }
