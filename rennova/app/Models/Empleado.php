@@ -4,10 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Contracts\Auditable;
+use App\Models\Traits\CalculaCostosLaborales;
 
 class Empleado extends Model implements Auditable
 {
     use \OwenIt\Auditing\Auditable;
+    use CalculaCostosLaborales;
     
     protected $table = 'empleados';
     protected $primaryKey = 'id_empleado';

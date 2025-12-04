@@ -364,7 +364,7 @@
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label small">Cantidad a usar</label>
-                                <input type="number" wire:model="insumos_usados.{{ $index }}.cantidad" step="0.01" min="0" class="form-control form-control-sm" placeholder="0">
+                                <input type="number" wire:model="insumos_usados.{{ $index }}.cantidad" step="0.1" min="0" min="0" class="form-control form-control-sm" placeholder="0">
                                 @if(!empty($insumo['id_insumo']))
                                     @php
                                         $stockDisponible = \App\Models\MovimientoStock::stockDisponible($insumo['id_insumo']);

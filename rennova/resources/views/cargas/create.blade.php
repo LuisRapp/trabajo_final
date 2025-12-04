@@ -78,8 +78,8 @@
 
                     <div class="col-md-3">
                         <label class="form-label fw-semibold">Fecha Carga <span class="text-danger">*</span></label>
-                        <input type="date" name="fecha_carga" value="{{ old('fecha_carga', now()->toDateString()) }}" 
-                               class="form-control @error('fecha_carga') is-invalid @enderror" required>
+                           <input type="date" name="fecha_carga" value="{{ old('fecha_carga', now()->toDateString()) }}" 
+                               class="form-control @error('fecha_carga') is-invalid @enderror" required max="{{ now()->toDateString() }}">
                         @error('fecha_carga') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
                 </div>
@@ -87,21 +87,21 @@
                 <div class="row g-3 mb-4">
                     <div class="col-md-3">
                         <label class="form-label fw-semibold">Peso Bruto (kg)</label>
-                        <input type="number" step="0.01" name="peso_bruto" value="{{ old('peso_bruto') }}" 
+                        <input type="number" step="0.1" min="0" name="peso_bruto" value="{{ old('peso_bruto') }}" 
                                class="form-control @error('peso_bruto') is-invalid @enderror" placeholder="0.00">
                         @error('peso_bruto') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
 
                     <div class="col-md-3">
                         <label class="form-label fw-semibold">Tara (kg)</label>
-                        <input type="number" step="0.01" name="tara" value="{{ old('tara') }}" 
+                        <input type="number" step="0.1" min="0" name="tara" value="{{ old('tara') }}" 
                                class="form-control @error('tara') is-invalid @enderror" placeholder="0.00">
                         @error('tara') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
 
                     <div class="col-md-3">
                         <label class="form-label fw-semibold">Peso Neto (kg)</label>
-                        <input type="number" step="0.01" name="peso_neto" value="" 
+                        <input type="number" step="0.1" min="0" name="peso_neto" value="" 
                                class="form-control bg-light" id="peso_neto" readonly>
                         <small class="text-muted">Calculado automáticamente</small>
                     </div>

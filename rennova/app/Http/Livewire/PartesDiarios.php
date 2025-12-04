@@ -3,6 +3,8 @@
 namespace App\Http\Livewire;
 
 use Livewire\Component;
+use Livewire\WithPagination;
+use App\Events\CargaRegistrada;
 use App\Models\ParteDiario;
 use App\Models\Lote;
 use App\Models\Empleado;
@@ -13,13 +15,17 @@ use App\Models\MovimientoStock;
 use App\Models\Recibo;
 use App\Models\CategoriaMadera;
 use App\Models\Cliente;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class PartesDiarios extends Component
 {
+    use WithPagination;
+    protected $paginationTheme = 'bootstrap';
+
     // Parte Diario Principal
-    public $partes = [];
+    // Listado paginado se entrega desde render(), no como estado
     public $parte_id;
     public $id_lote;
     public $fecha;
@@ -29,18 +35,18 @@ class PartesDiarios extends Component
     public $observaciones;
     public $busqueda = '';
     
-    // Catálogos
-    public $lotes = [];
-    public $empleados = [];
+    // Catálogos (lazy loaded via computed properties)
+    protected $lotesCache;
+    protected $empleadosFiltradosCache;
+    protected $maquinariasFiltradaCache;
+    // Catálogos pesados se obtienen vía propiedades computadas para evitar deshidratación
     public $empleados_asignados_ids = [];
-    public $maquinarias = [];
+    
+    // Se usa propiedad computada
     public $maquinarias_asignadas_ids = [];
     // selección por carga (múltiple)
     public $carga_maquinarias = [];
-    public $choferes = [];
-    public $insumos = [];
-    public $categorias_madera = [];
-    public $clientes = [];
+    // Catálogos: se resolverán por getters computados
     
     // Detalles de Cargas (Modo Destajo)
     public $cargas = [];
@@ -74,9 +80,17 @@ class PartesDiarios extends Component
 
     protected function rules()
     {
+        $fechaMinima = Carbon::today()->subDays(7)->toDateString();
+        
         $rules = [
             'id_lote' => 'required|exists:lotes,id_lote',
-            'fecha' => 'required|date',
+            // Validar fecha: solo hoy o dentro de los últimos 7 días
+            'fecha' => [
+                'required',
+                'date',
+                'before_or_equal:today',
+                'after_or_equal:' . $fechaMinima,
+            ],
             'actividad_realizada' => 'required|string|max:255',
             'observaciones' => 'nullable|string',
         ];
@@ -88,58 +102,84 @@ class PartesDiarios extends Component
         return $rules;
     }
 
+    protected function messages()
+    {
+        $fechaMinima = Carbon::today()->subDays(7)->format('d/m/Y');
+        
+        return [
+            'fecha.required' => 'La fecha es obligatoria.',
+            'fecha.date' => 'La fecha no es válida.',
+            'fecha.before_or_equal' => 'No se pueden crear partes diarios para fechas futuras. Solo hoy o días anteriores.',
+            'fecha.after_or_equal' => "No se pueden crear partes diarios con más de 7 días de antigüedad. Fecha mínima permitida: {$fechaMinima}.",
+            'id_lote.required' => 'Debe seleccionar un lote.',
+            'actividad_realizada.required' => 'Debe describir la actividad realizada.',
+            'motivo_dia_caido.required' => 'Debe especificar el motivo del día caído.',
+        ];
+    }
+
     public function mount()
     {
-        $this->lotes = Lote::where('estado', 'activo')->orderBy('propietario')->get();
-        $this->empleados = Empleado::with('rolLaboral')->whereNull('fecha_fin_actividades')->orderBy('apellido')->get();
-        $this->maquinarias = \App\Models\Maquinaria::with('tipoMaquinaria')->orderBy('modelo')->get();
-        $this->choferes = Chofer::where('estado', true)->orderBy('apellido')->get();
-        $this->insumos = Insumo::conStockYPrecio()->with('unidadMedida')->orderBy('nombre')->get();
-        $this->categorias_madera = CategoriaMadera::orderBy('nombre')->get();
-        $this->clientes = Cliente::orderBy('razon_social')->get();
-        $this->cargarPartes();
-        $this->actualizarJornalPorEmpleado();
+        // Los lotes se cargan lazy via propiedad computada
+        // actualizarJornalPorEmpleado se llama cuando hay fecha
     }
 
     public function updatedIdLote()
     {
         // Al cambiar el lote, cargar empleados y maquinarias asignadas para filtrar
         $this->empleados_asignados_ids = [];
-    $this->maquinarias_asignadas_ids = [];
-    $this->carga_maquinarias = [];
+        $this->maquinarias_asignadas_ids = [];
+        $this->carga_maquinarias = [];
+        $this->carga_empleados = [];
         
         if ($this->id_lote) {
-            $lote = Lote::with(['empleados:id_empleado', 'maquinarias:id_maquinaria'])->find($this->id_lote);
-            if ($lote) {
-                $this->empleados_asignados_ids = $lote->empleados->pluck('id_empleado')->toArray();
-                $this->maquinarias_asignadas_ids = $lote->maquinarias->pluck('id_maquinaria')->toArray();
+            // Query directa sin validación extra - más rápido
+            $this->empleados_asignados_ids = \DB::table('lote_empleado')
+                ->where('id_lote', $this->id_lote)
+                ->pluck('id_empleado')
+                ->toArray();
                 
-                // Preselección automática si hay solo una maquinaria asignada (selección múltiple)
-                if (count($this->maquinarias_asignadas_ids) === 1) {
-                    $this->carga_maquinarias = [$this->maquinarias_asignadas_ids[0]];
-                }
-            }
+            $this->maquinarias_asignadas_ids = \DB::table('lote_maquinaria')
+                ->where('id_lote', $this->id_lote)
+                ->pluck('id_maquinaria')
+                ->toArray();
         }
+        
+        // Limpiar cache de propiedades computadas
+        unset($this->empleadosFiltradosCache, $this->maquinariasFiltradaCache);
     }
 
     public function getEmpleadosFiltradosProperty()
     {
-        if (empty($this->empleados_asignados_ids)) {
-            return $this->empleados;
+        if (isset($this->empleadosFiltradosCache)) {
+            return $this->empleadosFiltradosCache;
         }
-        return $this->empleados->filter(function($emp) {
-            return in_array($emp->id_empleado, $this->empleados_asignados_ids);
-        });
+        
+        $empleados = $this->empleados; // propiedad computada
+        if (empty($this->empleados_asignados_ids)) {
+            $this->empleadosFiltradosCache = $empleados;
+        } else {
+            $this->empleadosFiltradosCache = $empleados->filter(function($emp) {
+                return in_array($emp->id_empleado, $this->empleados_asignados_ids);
+            });
+        }
+        return $this->empleadosFiltradosCache;
     }
 
     public function getMaquinariasFiltradaProperty()
     {
-        if (empty($this->maquinarias_asignadas_ids)) {
-            return $this->maquinarias;
+        if (isset($this->maquinariasFiltradaCache)) {
+            return $this->maquinariasFiltradaCache;
         }
-        return $this->maquinarias->filter(function($maq) {
-            return in_array($maq->id_maquinaria, $this->maquinarias_asignadas_ids);
-        });
+        
+        $maquinarias = $this->maquinarias; // propiedad computada
+        if (empty($this->maquinarias_asignadas_ids)) {
+            $this->maquinariasFiltradaCache = $maquinarias;
+        } else {
+            $this->maquinariasFiltradaCache = $maquinarias->filter(function($maq) {
+                return in_array($maq->id_maquinaria, $this->maquinarias_asignadas_ids);
+            });
+        }
+        return $this->maquinariasFiltradaCache;
     }
 
     public function updatedFecha()
@@ -158,6 +198,11 @@ class PartesDiarios extends Component
         $this->calcularPesoNeto();
     }
     
+    public function updatedCargaPesoNeto()
+    {
+        // No hacer nada; es calculado pero el usuario puede overridear
+    }
+    
     private function calcularPesoNeto()
     {
         if ($this->carga_peso_bruto && $this->carga_tara) {
@@ -170,7 +215,7 @@ class PartesDiarios extends Component
     public function getChoferesFiltradosProperty()
     {
         if (empty($this->busqueda_chofer)) {
-            return $this->choferes;
+            return $this->choferes; // computada
         }
         
         $busq = strtolower($this->busqueda_chofer);
@@ -183,7 +228,7 @@ class PartesDiarios extends Component
     public function getClientesFiltradosProperty()
     {
         if (empty($this->busqueda_cliente)) {
-            return $this->clientes;
+            return $this->clientes; // computada
         }
         
         $busq = strtolower($this->busqueda_cliente);
@@ -194,13 +239,7 @@ class PartesDiarios extends Component
 
     public function render()
     {
-        $this->cargarPartes();
-        return view('livewire.partes-diarios');
-    }
-
-    public function cargarPartes()
-    {
-        $query = ParteDiario::with('lote');
+        $query = ParteDiario::with('lote')->orderBy('fecha', 'desc')->orderBy('id_parte_diario', 'desc');
 
         if ($this->busqueda) {
             $busq = $this->busqueda;
@@ -213,12 +252,15 @@ class PartesDiarios extends Component
             });
         }
 
-        $this->partes = $query->orderBy('fecha', 'desc')->orderBy('id_parte_diario', 'desc')->get();
+        $partes = $query->paginate(10);
+        return view('livewire.partes-diarios', compact('partes'));
     }
+
+    // Método eliminado: render() ya maneja la paginación
 
     public function updatedBusqueda()
     {
-        $this->cargarPartes();
+        $this->resetPage();
     }
     
     public function updatedEsDiaCaido()
@@ -247,7 +289,7 @@ class PartesDiarios extends Component
             'carga_id_chofer' => 'required|exists:choferes,id_chofer',
             'carga_destino' => 'required|exists:clientes,id_cliente',
             'carga_empleados' => 'required|array|min:1',
-            'carga_maquinarias' => 'nullable|array',
+            'carga_maquinarias' => 'required|array|min:1',
         ], [
             'carga_id_categoria_madera.required' => 'La categoría de madera es obligatoria',
             'carga_ticket.required' => 'El número de ticket es obligatorio',
@@ -260,7 +302,8 @@ class PartesDiarios extends Component
             'carga_destino.required' => 'El destino (cliente) es obligatorio',
             'carga_empleados.required' => 'Debe seleccionar al menos un empleado',
             'carga_empleados.min' => 'Debe seleccionar al menos un empleado',
-            // no forzamos maquinaria obligatoria; se permite vacío
+            'carga_maquinarias.required' => 'Debe seleccionar al menos una maquinaria para la carga',
+            'carga_maquinarias.min' => 'Debe seleccionar al menos una maquinaria para la carga',
         ]);
         
         // Obtener el nombre del cliente para mostrar en la tabla
@@ -482,10 +525,33 @@ class PartesDiarios extends Component
     {
         $this->validate();
         
+        // Guard adicional: bloquear fecha futura por seguridad
+        if (Carbon::parse($this->fecha)->isAfter(Carbon::today())) {
+            session()->flash('error', 'La fecha del parte no puede ser futura.');
+            return;
+        }
+        
+        // Guard adicional: bloquear fecha muy antigua
+        if (Carbon::parse($this->fecha)->isBefore(Carbon::today()->subDays(7))) {
+            $fechaMinima = Carbon::today()->subDays(7)->format('d/m/Y');
+            session()->flash('error', "No se pueden crear partes con más de 7 días de antigüedad. Fecha mínima: {$fechaMinima}.");
+            return;
+        }
+        
         // Validaciones adicionales
         if (!$this->es_dia_caido && empty($this->cargas)) {
             session()->flash('error', 'Debe registrar al menos una carga para modo producción.');
             return;
+        }
+        // Validar que cada carga tenga al menos una maquinaria asociada
+        if (!$this->es_dia_caido) {
+            foreach ($this->cargas as $idx => $c) {
+                $maqs = $c['maquinarias'] ?? [];
+                if (empty($maqs)) {
+                    session()->flash('error', 'La carga #' . ($idx + 1) . ' no tiene maquinarias seleccionadas. Asigne al menos una maquinaria.');
+                    return;
+                }
+            }
         }
         
         if ($this->es_dia_caido && empty($this->jornales)) {
@@ -495,6 +561,7 @@ class PartesDiarios extends Component
 
         try {
             \DB::beginTransaction();
+            $eventosCarga = [];
             
             // 1. Guardar el Parte Diario (Maestro)
             $parteDiario = ParteDiario::updateOrCreate(
@@ -543,6 +610,29 @@ class PartesDiarios extends Component
                     $carga->empleados()->sync($cargaData['empleados']);
                     // Guardar maquinarias utilizadas en esta carga (múltiples)
                     $carga->maquinarias()->sync($cargaData['maquinarias'] ?? []);
+
+                    // Programar evento para actualizar odómetro de las maquinarias (post-commit)
+                    $maqs = $cargaData['maquinarias'] ?? [];
+                    if (!empty($maqs)) {
+                        // Normalizar unidades: si el usuario ingresó en kg o en toneladas
+                        $valorIngresado = (float) ($cargaData['peso_neto'] ?? 0);
+                        // Heurística: si es mayor a 1000 asumimos kg; si no, asumimos toneladas
+                        $toneladasTotales = $valorIngresado > 1000 ? ($valorIngresado / 1000.0) : $valorIngresado;
+                        $porMaquinaria = count($maqs) > 0 ? $toneladasTotales / count($maqs) : 0;
+
+                        foreach ($maqs as $maqId) {
+                            $eventosCarga[] = [$carga, $maqId, $porMaquinaria];
+                        }
+
+                        \Log::info('Eventos CargaRegistrada acumulados (post-commit) desde ParteDiario', [
+                            'parte_diario_id' => $parteDiarioId,
+                            'carga_id' => $carga->id_carga,
+                            'maquinarias' => $maqs,
+                            'valor_ingresado' => $valorIngresado,
+                            'toneladas_totales' => $toneladasTotales,
+                            'toneladas_por_maquinaria' => $porMaquinaria,
+                        ]);
+                    }
                 }
             } else {
                 // MODO DÍA CAÍDO: Guardar empleados que trabajaron ese día
@@ -596,8 +686,24 @@ class PartesDiarios extends Component
 
             
             \DB::commit();
+
+            // Despachar eventos después del commit para garantizar consistencia
+            foreach ($eventosCarga as [$carga, $maqId, $ton]) {
+                event(new CargaRegistrada($carga, $maqId, $ton));
+            }
             
-            $this->cargarPartes();
+            // Calcular y guardar costos del parte diario
+            try {
+                $parteDiario->calcularYGuardarCostos();
+            } catch (\Exception $e) {
+                \Log::error('Error al calcular costos del parte diario', [
+                    'parte_id' => $parteDiario->id_parte_diario,
+                    'error' => $e->getMessage()
+                ]);
+                // No lanzar excepción para no bloquear el guardado del parte
+            }
+            
+            // $this->cargarPartes(); // Método eliminado por no existir
             session()->flash('message', $this->parte_id ? 'Parte diario actualizado correctamente con todos sus detalles.' : 'Parte diario creado correctamente con todos sus detalles.');
             $this->resetCampos();
             $this->dispatch('parteDiarioGuardado');
@@ -709,7 +815,7 @@ class PartesDiarios extends Component
     public function eliminar($id)
     {
         ParteDiario::findOrFail($id)->delete();
-        $this->cargarPartes();
+        // $this->cargarPartes();
         session()->flash('message', 'Parte diario eliminado correctamente.');
     }
 
@@ -725,5 +831,57 @@ class PartesDiarios extends Component
         $this->total_toneladas = 0;
         $this->stock_disponible_insumo = null;
         $this->actualizarJornalPorEmpleado();
+    }
+
+    // ============ PROPIEDADES COMPUTADAS (Catálogos) ============
+
+    public function getLotesProperty()
+    {
+        if (!isset($this->lotesCache)) {
+            $this->lotesCache = Lote::where('estado', 'activo')
+                ->orderBy('propietario')
+                ->get();
+        }
+        return $this->lotesCache;
+    }
+
+    public function getEmpleadosProperty()
+    {
+        return Empleado::with('rolLaboral')
+            ->whereNull('fecha_fin_actividades')
+            ->orderBy('apellido')
+            ->get();
+    }
+
+    public function getMaquinariasProperty()
+    {
+        return \App\Models\Maquinaria::with('tipoMaquinaria')
+            ->orderBy('modelo')
+            ->get();
+    }
+
+    public function getChoferesProperty()
+    {
+        return Chofer::where('estado', true)
+            ->orderBy('apellido')
+            ->get();
+    }
+
+    public function getInsumosProperty()
+    {
+        return Insumo::conStockYPrecio()
+            ->with('unidadMedida')
+            ->orderBy('nombre')
+            ->get();
+    }
+
+    public function getCategoriasMaderaProperty()
+    {
+        return CategoriaMadera::orderBy('nombre')->get();
+    }
+
+    public function getClientesProperty()
+    {
+        return Cliente::orderBy('razon_social')->get();
     }
 }

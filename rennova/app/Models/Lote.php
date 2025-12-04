@@ -19,6 +19,8 @@ class Lote extends Model implements AuditableContract
         'ubicacion',
         'especie',
         'superficie',
+        'latitud',
+        'longitud',
     ];
 
     /**

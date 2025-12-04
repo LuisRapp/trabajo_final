@@ -183,7 +183,7 @@
                                             <input type="number" 
                                                    wire:model.live="monto_bruto" 
                                                    id="monto_bruto" 
-                                                   step="0.01" 
+                                                   step="0.1" min="0" 
                                                    class="form-control @error('monto_bruto') is-invalid @enderror">
                                             @error('monto_bruto') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                             <div class="form-text">Puedes modificar el monto calculado si es necesario</div>
@@ -201,7 +201,7 @@
                                             <input type="number" 
                                                    wire:model.live="descuentos" 
                                                    id="descuentos" 
-                                                   step="0.01" 
+                                                   step="0.1" min="0" 
                                                    class="form-control @error('descuentos') is-invalid @enderror">
                                             @error('descuentos') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                             <div class="form-text">

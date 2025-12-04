@@ -9,6 +9,7 @@ use App\Models\KitMantenimientoPreventivo;
 use App\Models\Insumo;
 use App\Models\User;
 use App\Models\NotificacionSistema;
+use App\Models\TipoMantenimiento;
 use App\Notifications\MantenimientoCreado;
 use App\Notifications\StockInsuficiente;
 use Illuminate\Support\Facades\Log;
@@ -17,12 +18,77 @@ use Illuminate\Support\Facades\Notification;
 
 class CheckMantenimientoUmbrales extends Command
 {
-    protected $signature = 'mantenimiento:check-umbrales';
+    protected $signature = 'mantenimiento:check-umbrales {--maquinaria=} {--simular}';
     protected $description = 'Verifica umbrales de toneladas y genera órdenes de mantenimiento preventivo';
 
     public function handle()
     {
+        // Opciones de simulación para presentaciones
+        $maquinariaIdOpt = $this->option('maquinaria');
+        $simular = (bool)$this->option('simular');
+
+        if ($maquinariaIdOpt && $simular) {
+            try {
+                $maq = Maquinaria::find($maquinariaIdOpt);
+                if ($maq) {
+                    if ($maq->toneladas_acumuladas < $maq->umbral_toneladas) {
+                        $maq->toneladas_acumuladas = $maq->umbral_toneladas + 5;
+                        $maq->save();
+                        $this->info("⚙️ Simulación: Maquinaria {$maq->id_maquinaria} supera umbral ({$maq->toneladas_acumuladas}/{$maq->umbral_toneladas})");
+                    } else {
+                        $this->info("⚙️ Simulación: Maquinaria {$maq->id_maquinaria} ya supera el umbral");
+                    }
+                } else {
+                    $this->warn("No se encontró la maquinaria ID {$maquinariaIdOpt} para simular");
+                }
+            } catch (\Throwable $e) {
+                $this->warn("No se pudo simular umbral: {$e->getMessage()}");
+            }
+        }
         $this->info('Iniciando verificación de umbrales de mantenimiento...');
+
+        // Camino seguro para presentaciones: si se pidió simular con maquinaria específica,
+        // generar una orden inmediatamente y notificar.
+        $ordenesGeneradas = 0;
+        if ($maquinariaIdOpt && $simular) {
+            try {
+                $maquinaria = Maquinaria::find($maquinariaIdOpt);
+                if ($maquinaria) {
+                    DB::beginTransaction();
+                    // Seleccionar tipo preventivo
+                    $tipoPreventivo = TipoMantenimiento::where('nombre', 'Preventivo')->first();
+                    if (!$tipoPreventivo) {
+                        $tipoPreventivo = TipoMantenimiento::first();
+                    }
+
+                    // Crear la orden programada
+                    $mantenimiento = Mantenimiento::create([
+                        'id_maquinaria' => $maquinaria->id_maquinaria,
+                        'id_tipo_mantenimiento' => $tipoPreventivo?->id_tipo_mantenimiento,
+                        'fecha_inicio' => now(),
+                        'estado' => 'programado',
+                        'costo_total' => 0
+                    ]);
+
+                    // Notificación por email
+                    $this->enviarNotificacion(new \App\Notifications\MantenimientoCreado($mantenimiento));
+
+                    // Notificación interna
+                    $this->crearNotificacionInterna(
+                        mantenimiento: $mantenimiento,
+                        maquinaria: $maquinaria,
+                        toneladasDesdeUltimo: ($maquinaria->toneladas_acumuladas ?? 0)
+                    );
+
+                    DB::commit();
+                    $ordenesGeneradas++;
+                    $this->info("✓ Orden creada por simulación (ID: {$mantenimiento->id_mantenimiento})");
+                }
+            } catch (\Throwable $e) {
+                DB::rollBack();
+                $this->warn("No se pudo crear orden por simulación: {$e->getMessage()}");
+            }
+        }
         
         $maquinarias = Maquinaria::with(['tipoMaquinaria'])->where('estado', 'operativa')->get();
         $ordenesGeneradas = 0;

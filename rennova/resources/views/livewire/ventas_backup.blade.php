@@ -57,7 +57,7 @@
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fw-semibold">Superficie (ha)</label>
-                        <input type="number" wire:model="superficie" step="0.01" class="form-control @error('superficie') is-invalid @enderror" placeholder="0.00">
+                        <input type="number" wire:model="superficie" step="0.1" min="0" class="form-control @error('superficie') is-invalid @enderror" placeholder="0.00">
                         @error('superficie') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
                 </div>

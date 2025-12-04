@@ -16,6 +16,7 @@
         :root {
             --navbar-height: 56px;
             --sidebar-width: 280px;
+            --footer-height: 56px;
             --primary-color: #2A6041;
             --primary-light: #C8D6AF;
             --bg-light: #F4F7F6;
@@ -40,6 +41,7 @@
             flex: 1;
             overflow: hidden;
             min-height: 0;
+            height: calc(100vh - var(--navbar-height));
         }
         .sidebar {
             width: var(--sidebar-width);
@@ -50,6 +52,8 @@
             box-shadow: 2px 0 8px rgba(0, 0, 0, 0.08);
             transition: margin-left 0.3s ease-in-out;
             flex-shrink: 0;
+            height: calc(100vh - var(--navbar-height) - var(--footer-height));
+            padding-bottom: 0.5rem; /* que no se esconda el último item */
         }
         .sidebar.collapsed {
             margin-left: calc(-1 * var(--sidebar-width));
@@ -230,192 +234,14 @@
     @livewireStyles
 </head>
 <body class="d-flex flex-column" style="height: 100vh;">
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark shadow" style="background-color: #2A6041;">
-        <div class="container-fluid">
-            <div class="d-flex align-items-center">
-                <span id="sidebarToggle" style="cursor: pointer; margin-right: 0.5rem;">
-                    <i class="bi bi-list toggle-icon" id="toggleIcon" style="font-size: 1.5rem; color: white;"></i>
-                </span>
-                <a class="navbar-brand fw-bold fs-4 mb-0" href="{{ route('home') }}">
-                    Rennova
-                </a>
-            </div>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <!-- Campana de notificaciones SIEMPRE visible para usuarios autenticados -->
-                    @if(auth()->check())
-                        @livewire('notificaciones-campana')
-                    @endif
-                    
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('home') }}">
-                            <i class="bi bi-house-door"></i> Inicio
-                        </a>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                            <i class="bi bi-person-circle"></i> Usuario
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="{{ route('dashboard') }}"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
-                            <li><a class="dropdown-item" href="{{ route('profile.edit') }}"><i class="bi bi-person"></i> Perfil</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <form method="POST" action="{{ route('logout') }}">
-                                    @csrf
-                                    <button type="submit" class="dropdown-item"><i class="bi bi-box-arrow-right"></i> Cerrar sesión</button>
-                                </form>
-                            </li>
-                        </ul>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+    @include('partials.header')
 
     <!-- Sidebar Overlay (for mobile) -->
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 
     <div class="layout-container">
-        <!-- Sidebar -->
-        <aside class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <h6 class="mb-0"><i class="bi bi-grid-3x3-gap"></i> Módulos</h6>
-            </div>
-            
-            <!-- Principal -->
-            <button class="sidebar-collapse-btn" type="button" data-bs-toggle="collapse" data-bs-target="#menuPrincipal">
-                <span><i class="bi bi-star-fill"></i> Principal</span>
-                <i class="bi bi-chevron-down toggle-arrow"></i>
-            </button>
-            <div class="collapse show sidebar-submenu" id="menuPrincipal">
-                <a href="{{ route('lotes.index') }}" class="sidebar-link">
-                    <i class="bi bi-geo-alt"></i> Lotes
-                </a>
-                <a href="{{ route('clientes.index') }}" class="sidebar-link">
-                    <i class="bi bi-people"></i> Clientes
-                </a>
-                <a href="{{ route('proveedores.index') }}" class="sidebar-link">
-                    <i class="bi bi-truck"></i> Proveedores
-                </a>
-                <a href="{{ route('ventas.index') }}" class="sidebar-link">
-                    <i class="bi bi-receipt"></i> Ventas
-                </a>
-                <a href="{{ route('cargas.index') }}" class="sidebar-link">
-                    <i class="bi bi-box-seam"></i> Cargas
-                </a>
-                <a href="{{ route('choferes.index') }}" class="sidebar-link">
-                    <i class="bi bi-person-vcard"></i> Choferes
-                </a>
-            </div>
-
-            <!-- Recursos -->
-            <button class="sidebar-collapse-btn collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#menuRecursos">
-                <span><i class="bi bi-tools"></i> Recursos</span>
-                <i class="bi bi-chevron-down toggle-arrow"></i>
-            </button>
-            <div class="collapse sidebar-submenu" id="menuRecursos">
-                <a href="{{ route('insumos.index') }}" class="sidebar-link">
-                    <i class="bi bi-box-seam"></i> Insumos
-                </a>
-                <a href="{{ route('maquinarias.index') }}" class="sidebar-link">
-                    <i class="bi bi-truck"></i> Maquinarias
-                </a>
-                <a href="{{ route('mantenimientos.index') }}" class="sidebar-link">
-                    <i class="bi bi-tools"></i> Mantenimientos
-                </a>
-                <a href="{{ route('kits-mantenimiento.index') }}" class="sidebar-link">
-                    <i class="bi bi-gear-fill"></i> Kits de Mantenimiento
-                </a>
-            </div>
-
-            <!-- Personal -->
-            <button class="sidebar-collapse-btn collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#menuPersonal">
-                <span><i class="bi bi-people-fill"></i> Personal</span>
-                <i class="bi bi-chevron-down toggle-arrow"></i>
-            </button>
-            <div class="collapse sidebar-submenu" id="menuPersonal">
-                <a href="{{ route('empleados.index') }}" class="sidebar-link">
-                    <i class="bi bi-person-workspace"></i> Empleados
-                </a>
-                <a href="{{ route('adelantos.index') }}" class="sidebar-link">
-                    <i class="bi bi-cash-coin"></i> Adelantos
-                </a>
-                <a href="{{ route('recibos.index') }}" class="sidebar-link">
-                    <i class="bi bi-file-earmark-text"></i> Recibos
-                </a>
-                <a href="{{ route('liquidacion-pagos.index') }}" class="sidebar-link">
-                    <i class="bi bi-calculator"></i> Liquidación de Pagos
-                </a>
-                <a href="{{ route('asignaciones-lote.index') }}" class="sidebar-link">
-                    <i class="bi bi-link-45deg"></i> Asignaciones por Lote
-                </a>
-            </div>
-
-            <!-- Operaciones -->
-            <button class="sidebar-collapse-btn collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#menuOperaciones">
-                <span><i class="bi bi-clipboard-check"></i> Operaciones</span>
-                <i class="bi bi-chevron-down toggle-arrow"></i>
-            </button>
-            <div class="collapse sidebar-submenu" id="menuOperaciones">
-                <a href="{{ route('partes-diarios.index') }}" class="sidebar-link">
-                    <i class="bi bi-clipboard-check"></i> Partes Diarios
-                </a>
-            </div>
-
-            <!-- Históricos -->
-            <button class="sidebar-collapse-btn collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#menuHistoricos">
-                <span><i class="bi bi-clock-history"></i> Históricos</span>
-                <i class="bi bi-chevron-down toggle-arrow"></i>
-            </button>
-            <div class="collapse sidebar-submenu" id="menuHistoricos">
-                <a href="{{ route('historico-costos-maquinarias.index') }}" class="sidebar-link">
-                    <i class="bi bi-graph-up"></i> Costos Maquinarias
-                </a>
-                <a href="{{ route('historico-roles-laborales.index') }}" class="sidebar-link">
-                    <i class="bi bi-person-badge"></i> Roles Laborales
-                </a>
-                <a href="{{ route('auditorias.index') }}" class="sidebar-link">
-                    <i class="bi bi-file-earmark-text"></i> Auditorías
-                </a>
-            </div>
-
-            <!-- Configuración -->
-            <button class="sidebar-collapse-btn collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#menuConfiguracion">
-                <span><i class="bi bi-gear-fill"></i> Configuración</span>
-                <i class="bi bi-chevron-down toggle-arrow"></i>
-            </button>
-            <div class="collapse sidebar-submenu" id="menuConfiguracion">
-                <a href="{{ route('categorias-madera.index') }}" class="sidebar-link">
-                    <i class="bi bi-tree"></i> Categorías Madera
-                </a>
-                <a href="{{ route('lista-precios.index') }}" class="sidebar-link">
-                    <i class="bi bi-tags"></i> Lista de Precios
-                </a>
-                <a href="{{ route('unidades-medida.index') }}" class="sidebar-link">
-                    <i class="bi bi-rulers"></i> Unidades de Medida
-                </a>
-                <a href="{{ route('tipos-maquinaria.index') }}" class="sidebar-link">
-                    <i class="bi bi-gear-wide-connected"></i> Tipos Maquinaria
-                </a>
-                <a href="{{ route('roles-laborales.index') }}" class="sidebar-link">
-                    <i class="bi bi-person-badge"></i> Roles Laborales
-                </a>
-                <a href="{{ route('usuarios.index') }}" class="sidebar-link">
-                    <i class="bi bi-person-circle"></i> Usuarios
-                </a>
-                @can('gestionar-permisos')
-                <a href="{{ route('roles-permisos.index') }}" class="sidebar-link">
-                    <i class="bi bi-shield-lock"></i> Roles y Permisos
-                </a>
-                @endcan
-            </div>
-        </aside>
+        @include('partials.sidebar')
 
         <!-- Main Content + Footer -->
         <div class="page-wrapper flex-grow-1 d-flex flex-column bg-light" id="pageWrapper">
@@ -442,12 +268,7 @@
                     
                 </div>
             </main>
-            <!-- Footer -->
-            <footer class="text-white text-center py-3 mt-auto" style="background-color: #2A6041;">
-                <div class="container">
-                    <p class="mb-0">© {{ date('Y') }} Rapp Luis - Todos los derechos reservados</p>
-                </div>
-            </footer>
+            @include('partials.footer')
         </div>
     </div>
 
@@ -523,12 +344,9 @@
                 }, 250);
             });
         });
-    </script> <!-- <-- ESTA ERA LA ETIQUETA ROTA -->
+    </script>
 
-    <!-- Alpine.js para interactividad en componentes -->
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-
-    <!-- Livewire Scripts -->
+    <!-- Livewire Scripts (incluye Alpine.js automáticamente en v3) -->
     @livewireScripts
 </body>
 </html>

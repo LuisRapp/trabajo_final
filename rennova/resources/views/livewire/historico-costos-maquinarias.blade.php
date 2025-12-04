@@ -46,7 +46,7 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Costo por Tonelada <span class="text-danger">*</span></label>
-                                <input type="number" wire:model="costo_por_tonelada" step="0.01" class="form-control @error('costo_por_tonelada') is-invalid @enderror" placeholder="0.00">
+                                <input type="number" wire:model="costo_por_tonelada" step="0.1" min="0" class="form-control @error('costo_por_tonelada') is-invalid @enderror" placeholder="0.00">
                                 @error('costo_por_tonelada') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                         </div>

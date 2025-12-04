@@ -28,7 +28,7 @@ class Cargas extends Component
         'tara' => 'nullable|numeric|min:0',
         'peso_neto' => 'nullable|numeric|min:0',
         'destino' => 'nullable|string|max:100',
-        'fecha_carga' => 'required|date',
+        'fecha_carga' => 'required|date|before_or_equal:today',
     ];
 
     public function mount()
@@ -82,6 +82,11 @@ class Cargas extends Component
     public function guardar()
     {
         $this->validate();
+        // Bloqueo adicional: evitar fecha futura
+        if (\Carbon\Carbon::parse($this->fecha_carga)->isAfter(\Carbon\Carbon::today())) {
+            session()->flash('error', 'La fecha de la carga no puede ser futura.');
+            return;
+        }
         // Si el campo destino es un id, buscar el nombre del cliente
         $nombre_cliente = null;
         if (is_numeric($this->destino) && $this->destino) {

@@ -225,13 +225,13 @@
 
                                 <div class="col-md-4">
                                     <label class="form-label fw-semibold">Cantidad <span class="text-danger">*</span></label>
-                                    <input type="number" step="0.01" class="form-control @error('cantidad') is-invalid @enderror" wire:model.live="cantidad">
+                                    <input type="number" step="0.1" min="0" class="form-control @error('cantidad') is-invalid @enderror" wire:model.live="cantidad">
                                     @error('cantidad') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                 </div>
 
                                 <div class="col-md-4">
                                     <label class="form-label fw-semibold">Precio Unitario <span class="text-danger">*</span></label>
-                                    <input type="number" step="0.01" class="form-control @error('precio_unitario') is-invalid @enderror" wire:model.live="precio_unitario">
+                                    <input type="number" step="0.1" min="0" class="form-control @error('precio_unitario') is-invalid @enderror" wire:model.live="precio_unitario">
                                     @error('precio_unitario') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                 </div>
 

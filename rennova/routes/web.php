@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 use Livewire\Volt\Volt;
 use App\Http\Controllers\LoteController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\ProveedorController;
 use App\Http\Controllers\CategoriaMaderaController;
@@ -29,10 +30,8 @@ use App\Http\Controllers\CargaController;
 use App\Http\Controllers\ChoferController;
 
 // --- RUTAS PÚBLICAS ---
-// Página principal (pública)
-Route::get('/', function () {
-    return view('index');
-})->name('home');
+// Página principal (pública) usando controlador para armar pronóstico
+Route::get('/', [DashboardController::class, 'index'])->name('home');
 
 // Las rutas de autenticación (login, register, etc.) deben estar PÚBLICAS
 require __DIR__.'/auth.php';
@@ -41,8 +40,8 @@ require __DIR__.'/auth.php';
 // --- RUTAS PROTEGIDAS (Requieren Iniciar Sesión) ---
 Route::middleware(['auth'])->group(function () {
 
-    // Dashboard y configuración (ya estaban protegidos)
-    Route::view('dashboard', 'dashboard')
+    // Dashboard (usa mismo controlador/flujo que inicio; protegido si se accede por esta ruta)
+    Route::get('dashboard', [DashboardController::class, 'index'])
         ->middleware(['verified'])
         ->name('dashboard');
 

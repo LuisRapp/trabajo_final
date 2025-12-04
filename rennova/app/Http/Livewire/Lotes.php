@@ -14,6 +14,8 @@ class Lotes extends Component
     public $estado = 'activo';
     public $condicion_compra;
     public $especie;
+    public $latitud;
+    public $longitud;
     public $lote_id;
     public $busqueda = '';
 
@@ -24,6 +26,8 @@ class Lotes extends Component
         'superficie' => 'required|numeric|min:0.1|max:10000',
         'condicion_compra' => 'required|in:propio,alquilado',
         'estado' => 'required|in:activo,inactivo',
+        'latitud' => 'nullable|numeric|between:-90,90',
+        'longitud' => 'nullable|numeric|between:-180,180',
     ];
 
     protected $messages = [
@@ -70,6 +74,8 @@ class Lotes extends Component
         $this->estado = 'activo';
         $this->condicion_compra = '';
         $this->especie = '';
+        $this->latitud = null;
+        $this->longitud = null;
         $this->lote_id = null;
     }
 
@@ -78,10 +84,10 @@ class Lotes extends Component
         $this->validate();
         if ($this->lote_id) {
             $lote = Lote::find($this->lote_id);
-            $lote->update($this->only(['propietario','ubicacion','superficie','estado','condicion_compra','especie']));
+            $lote->update($this->only(['propietario','ubicacion','superficie','estado','condicion_compra','especie','latitud','longitud']));
             session()->flash('message', 'Lote actualizado correctamente.');
         } else {
-            Lote::create($this->only(['propietario','ubicacion','superficie','estado','condicion_compra','especie']));
+            Lote::create($this->only(['propietario','ubicacion','superficie','estado','condicion_compra','especie','latitud','longitud']));
             session()->flash('message', 'Lote creado correctamente.');
         }
         $this->resetCampos();
@@ -101,6 +107,8 @@ class Lotes extends Component
         $this->estado = $lote->estado;
         $this->condicion_compra = $lote->condicion_compra;
         $this->especie = $lote->especie;
+        $this->latitud = $lote->latitud;
+        $this->longitud = $lote->longitud;
     }
 
     public function eliminar($id)
