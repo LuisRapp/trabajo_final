@@ -22,6 +22,7 @@ use App\Http\Controllers\AdelantoController;
 use App\Http\Controllers\ReciboController;
 use App\Http\Controllers\HistoricoCostosMaquinariaController;
 use App\Http\Controllers\AuditoriaController;
+use App\Http\Controllers\ReporteController;
 // use App\Http\Controllers\KitInsumoController;
 // Livewire ABMs
 use App\Http\Livewire\HistoricoRolesLaborales;
@@ -118,6 +119,9 @@ Route::middleware(['auth'])->group(function () {
     
     // Auditorías
     Route::get('/auditorias', [AuditoriaController::class, 'index'])->name('auditorias.index');
+    
+    // Reportes - Estadísticas Forestales
+    Route::get('/reportes/estadisticas-forestales', [ReporteController::class, 'estadisticasForestales'])->name('reportes.estadisticas-forestales');
     
     // Liquidación de Pagos
     Route::view('/liquidacion-pagos', 'liquidacion-pagos.index')->name('liquidacion-pagos.index');
