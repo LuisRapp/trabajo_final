@@ -3,13 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use OwenIt\Auditing\Contracts\Auditable;
 use Carbon\Carbon;
 
 
 class ParteDiario extends Model implements Auditable
 {
-    use \OwenIt\Auditing\Auditable;
+    use HasFactory, \OwenIt\Auditing\Auditable;
 
     protected $table = 'parte_diarios';
     protected $primaryKey = 'id_parte_diario';

@@ -20,12 +20,12 @@
     <!-- Pestañas (Tabs) -->
     <ul class="nav nav-tabs mb-4" id="partesTabs" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="nuevo-tab" data-bs-toggle="tab" data-bs-target="#nuevo-parte" type="button" role="tab" aria-controls="nuevo-parte" aria-selected="true">
+            <button class="nav-link" id="nuevo-tab" data-bs-toggle="tab" data-bs-target="#nuevo-parte" type="button" role="tab" aria-controls="nuevo-parte" aria-selected="false">
                 <i class="bi bi-plus-circle"></i> Nuevo Parte Diario
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="listado-tab" data-bs-toggle="tab" data-bs-target="#listado-partes" type="button" role="tab" aria-controls="listado-partes" aria-selected="false">
+            <button class="nav-link active" id="listado-tab" data-bs-toggle="tab" data-bs-target="#listado-partes" type="button" role="tab" aria-controls="listado-partes" aria-selected="true">
                 <i class="bi bi-list-ul"></i> Listado de Partes Diarios
             </button>
         </li>
@@ -33,7 +33,7 @@
 
     <div class="tab-content" id="partesTabContent">
         <!-- Pestaña 1: Nuevo Parte Diario -->
-        <div class="tab-pane fade show active" id="nuevo-parte" role="tabpanel" aria-labelledby="nuevo-tab">
+        <div class="tab-pane fade" id="nuevo-parte" role="tabpanel" aria-labelledby="nuevo-tab">
             
             <!-- SECCIÓN 1: Datos Maestros -->
             <div class="card shadow mb-4">
@@ -83,16 +83,7 @@
                         </div>
                     </div>
 
-                    <!-- Fila 2: Actividad -->
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-12">
-                            <label class="form-label fw-semibold">Actividad Realizada <span class="text-danger">*</span></label>
-                            <textarea wire:model="actividad_realizada" class="form-control @error('actividad_realizada') is-invalid @enderror" rows="2" placeholder="Descripción de la actividad"></textarea>
-                            @error('actividad_realizada') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                        </div>
-                    </div>
-
-                    <!-- Fila 3: Observaciones -->
+                    <!-- Fila 2: Observaciones -->
                     <div class="row g-3">
                         <div class="col-md-12">
                             <label class="form-label fw-semibold">Observaciones</label>
@@ -515,13 +506,22 @@
         </div>
 
         <!-- Pestaña 2: Listado -->
-        <div class="tab-pane fade" id="listado-partes" role="tabpanel" aria-labelledby="listado-tab">
+        <div class="tab-pane fade show active" id="listado-partes" role="tabpanel" aria-labelledby="listado-tab">
             <div class="card shadow">
                 <div class="card-header bg-light">
                     <h5 class="mb-0">Partes Diarios Registrados</h5>
                 </div>
                 <div class="card-body">
-                    <input type="text" wire:model.live.debounce.400ms="busqueda" class="form-control mb-3" placeholder="Buscar por lote o fecha...">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Buscar por Propietario</label>
+                            <input type="text" wire:model.live.debounce.400ms="busqueda" class="form-control" placeholder="Ej: Juan Pérez...">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Buscar por Fecha</label>
+                            <input type="date" wire:model.live="busqueda_fecha" class="form-control">
+                        </div>
+                    </div>
                     
                     @if($partes && count($partes) > 0)
                         <div class="table-responsive">
@@ -566,7 +566,7 @@
                             </table>
                         </div>
                         @isset($partes)
-                            <div class="mt-3">
+                            <div class="mt-3" wire:key="pagination-{{ now() }}">
                                 {{ $partes->links() }}
                             </div>
                         @endisset

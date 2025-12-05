@@ -18,16 +18,20 @@
     @endif
 
     {{-- 2. SELECTOR DE LOTE --}}
-    @include('partials.selector-lote', ['lotes' => $lotes ?? \App\Models\Lote::all(), 'loteSeleccionado' => $loteSeleccionado ?? null])
+    @include('partials.selector-lote', ['lotes' => $lotes ?? collect(), 'loteSeleccionado' => $loteSeleccionado ?? null])
 
     {{-- 3. COMPONENTE DE CLIMA --}}
+    @if(isset($pronosticoError) && $pronosticoError)
+        <div class="alert alert-warning small">{{ $pronosticoError }}</div>
+    @endif
+
     @if(isset($pronosticoData) && !empty($pronosticoData))
         <div class="mb-5">
             <x-clima.pronostico 
-                :alerta="$pronosticoData['alerta'] ?? null"
+                :alerta="$pronosticoData['alerta'] ?? 'NORMAL'"
                 :pronostico="$pronosticoData['pronostico'] ?? []"
                 :analisisImpacto="$pronosticoData['analisisImpacto'] ?? []"
-                :lote="isset($loteSeleccionado) ? ($loteSeleccionado->nombre ?? ('Lote #' . $loteSeleccionado->id)) : null" 
+                :lote="$pronosticoData['loteNombre'] ?? 'Desconocido'" 
             />
         </div>
     @endif
@@ -98,7 +102,7 @@
                         <div class="bg-light rounded p-3 me-3 text-primary"><i class="bi bi-bar-chart fs-2"></i></div>
                         <div>
                             <h6 class="fw-bold mb-1">Reportes</h6>
-                            <a href="{{ route('historico-costos-maquinarias.index') }}" class="text-decoration-none small stretched-link">Ver costos e históricos</a>
+                            <a href="{{ route('reportes.estadisticas-forestales') }}" class="text-decoration-none small stretched-link">Ver costos e históricos</a>
                         </div>
                     </div>
                 </div>

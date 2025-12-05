@@ -218,5 +218,4 @@ unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
         </div>
     </div>
 </div>
-<?php endif; ?><!--[if ENDBLOCK]><![endif]-->
-<?php /**PATH D:\trabajo_final\rennova\resources\views/livewire/notificaciones-campana.blade.php ENDPATH**/ ?>
+<?php endif; ?><!--[if ENDBLOCK]><![endif]--><?php /**PATH /var/www/html/resources/views/livewire/notificaciones-campana.blade.php ENDPATH**/ ?>

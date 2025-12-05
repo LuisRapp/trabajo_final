@@ -65,4 +65,4 @@
         </div>
     </div>
 </aside>
-<?php /**PATH D:\trabajo_final\rennova\resources\views/partials/sidebar.blade.php ENDPATH**/ ?>
+<?php /**PATH /var/www/html/resources/views/partials/sidebar.blade.php ENDPATH**/ ?>

@@ -3,12 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use OwenIt\Auditing\Contracts\Auditable;
 use Carbon\Carbon;
 
 class Carga extends Model implements Auditable
 {
-    use \OwenIt\Auditing\Auditable;
+    use HasFactory, \OwenIt\Auditing\Auditable;
     protected $table = 'cargas';
     protected $primaryKey = 'id_carga';
     protected $fillable = [

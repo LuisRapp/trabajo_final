@@ -16,31 +16,78 @@ class DashboardController extends Controller
 
     public function index()
     {
-        $lotes = Lote::all();
+        // Solo lotes activos
+        $lotes = Lote::where('estado', 'activo')->get();
         $loteSeleccionado = null;
+        
+        // Si hay un parámetro lote en la URL, buscar por id_lote
         if (request()->has('lote')) {
-            $loteSeleccionado = $lotes->where('id', request('lote'))->first();
+            $loteId = request('lote');
+            $loteSeleccionado = Lote::where('id_lote', $loteId)->first();
         }
-        if (!$loteSeleccionado) {
+        
+        // Si no se encontró o no se pasó parámetro, usar el primer lote
+        if (!$loteSeleccionado && $lotes->count() > 0) {
             $loteSeleccionado = $lotes->sortByDesc('created_at')->first();
         }
 
         $pronosticoData = null;
+        $pronosticoError = null;
         if ($loteSeleccionado) {
             $climaData = $this->climaService->analizarYRecomendar($loteSeleccionado);
-            if ($climaData) {
+            if ($climaData && !isset($climaData['error'])) {
+                // Mapear dias_detalle al formato que espera el componente
+                $pronosticoFormateado = [];
+                if (isset($climaData['dias_detalle']) && is_array($climaData['dias_detalle'])) {
+                    foreach ($climaData['dias_detalle'] as $dia) {
+                        $iconMap = [
+                            'OPERATIVO' => 'sun',
+                            'INACTIVO' => $dia['razon'] && strpos($dia['razon'], 'Lluvia') !== false ? 'storm' : 'cloud',
+                        ];
+                        $pronosticoFormateado[] = [
+                            'label' => ucfirst(substr($dia['dia_semana'], 0, 3)) . ' (' . $dia['fecha_str'] . ')',
+                            'estado' => $dia['estado'] === 'INACTIVO' ? 'NO OPERATIVO' : 'OPERATIVO',
+                            'icono' => $iconMap[$dia['estado']] ?? 'sun',
+                            'inactivo' => $dia['estado'] === 'INACTIVO',
+                            'suelo' => $dia['razon'] ?? null,
+                        ];
+                    }
+                }
+
+                // Calcular días perdidos contando días inactivos
+                $diasPerdidos = 0;
+                if (isset($climaData['dias_detalle'])) {
+                    foreach ($climaData['dias_detalle'] as $dia) {
+                        if ($dia['estado'] === 'INACTIVO') {
+                            $diasPerdidos++;
+                        }
+                    }
+                }
+
+                // Determinar el tipo de recomendación
+                $nivelUrgencia = $climaData['nivel_urgencia'] ?? 'NORMAL';
+                $tipoAlerta = match($nivelUrgencia) {
+                    'ALTA' => 'ACELERAR',
+                    'CRITICA' => 'SUSPENDER',
+                    default => 'NORMAL',
+                };
+
                 $pronosticoData = [
-                    'alerta' => $climaData['recomendacion'] ?? 'NORMAL',
-                    'pronostico' => $climaData['pronostico'] ?? [],
+                    'alerta' => $tipoAlerta,
+                    'pronostico' => $pronosticoFormateado,
                     'analisisImpacto' => [
-                        'diasPerdidos' => $climaData['dias_perdidos'] ?? 0,
-                        'deficitTn' => $climaData['deficit_tn'] ?? 0,
-                        'accionPorcentaje' => $climaData['accion_porcentaje'] ?? 0,
+                        'diasPerdidos' => $diasPerdidos,
+                        'deficitTn' => $climaData['datos_calculados']['volumen_riesgo'] ?? 0,
+                        'accionPorcentaje' => round($climaData['datos_calculados']['aumento_necesario_pct'] ?? 0),
                     ],
+                    'loteNombre' => $loteSeleccionado->propietario ?? ('Lote #' . $loteSeleccionado->id_lote),
+                    'recomendacionDetallada' => $climaData['recomendacion'] ?? '',
                 ];
+            } elseif (isset($climaData['error'])) {
+                $pronosticoError = $climaData['error'];
             }
         }
 
-        return view('index', compact('lotes', 'loteSeleccionado', 'pronosticoData'));
+        return view('index', compact('lotes', 'loteSeleccionado', 'pronosticoData', 'pronosticoError'));
     }
 }

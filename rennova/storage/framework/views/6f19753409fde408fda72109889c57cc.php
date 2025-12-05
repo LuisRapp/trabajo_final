@@ -12,7 +12,7 @@ $__split = function ($name, $params = []) {
 };
 [$__name, $__params] = $__split('notificaciones-campana');
 
-$__html = app('livewire')->mount($__name, $__params, 'lw-2187290138-0', $__slots ?? [], get_defined_vars());
+$__html = app('livewire')->mount($__name, $__params, 'lw-3760590309-0', $__slots ?? [], get_defined_vars());
 
 echo $__html;
 
@@ -43,4 +43,4 @@ if (isset($__slots)) unset($__slots);
         </div>
     </div>
 </nav>
-<?php /**PATH D:\trabajo_final\rennova\resources\views/partials/header.blade.php ENDPATH**/ ?>
+<?php /**PATH /var/www/html/resources/views/partials/header.blade.php ENDPATH**/ ?>

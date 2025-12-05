@@ -34,6 +34,7 @@ class PartesDiarios extends Component
     public $motivo_dia_caido;
     public $observaciones;
     public $busqueda = '';
+    public $busqueda_fecha = '';
     
     // Catálogos (lazy loaded via computed properties)
     protected $lotesCache;
@@ -91,13 +92,8 @@ class PartesDiarios extends Component
                 'before_or_equal:today',
                 'after_or_equal:' . $fechaMinima,
             ],
-            'actividad_realizada' => 'required|string|max:255',
             'observaciones' => 'nullable|string',
         ];
-        
-        if ($this->es_dia_caido) {
-            $rules['motivo_dia_caido'] = 'required|string|max:500';
-        }
         
         return $rules;
     }
@@ -112,8 +108,6 @@ class PartesDiarios extends Component
             'fecha.before_or_equal' => 'No se pueden crear partes diarios para fechas futuras. Solo hoy o días anteriores.',
             'fecha.after_or_equal' => "No se pueden crear partes diarios con más de 7 días de antigüedad. Fecha mínima permitida: {$fechaMinima}.",
             'id_lote.required' => 'Debe seleccionar un lote.',
-            'actividad_realizada.required' => 'Debe describir la actividad realizada.',
-            'motivo_dia_caido.required' => 'Debe especificar el motivo del día caído.',
         ];
     }
 
@@ -241,15 +235,17 @@ class PartesDiarios extends Component
     {
         $query = ParteDiario::with('lote')->orderBy('fecha', 'desc')->orderBy('id_parte_diario', 'desc');
 
+        // Buscar por propietario del lote
         if ($this->busqueda) {
             $busq = $this->busqueda;
-            $query->where(function($q) use ($busq) {
-                $q->whereDate('fecha', $busq)
-                  ->orWhereHas('lote', function($ql) use ($busq) {
-                      $ql->where('propietario', 'ILIKE', '%' . $busq . '%')
-                         ->orWhere('ubicacion', 'ILIKE', '%' . $busq . '%');
-                  });
+            $query->whereHas('lote', function($ql) use ($busq) {
+                $ql->where('propietario', 'ILIKE', '%' . $busq . '%');
             });
+        }
+        
+        // Buscar por fecha exacta
+        if ($this->busqueda_fecha) {
+            $query->whereDate('fecha', $this->busqueda_fecha);
         }
 
         $partes = $query->paginate(10);
@@ -259,6 +255,11 @@ class PartesDiarios extends Component
     // Método eliminado: render() ya maneja la paginación
 
     public function updatedBusqueda()
+    {
+        $this->resetPage();
+    }
+    
+    public function updatedBusquedaFecha()
     {
         $this->resetPage();
     }
@@ -704,9 +705,11 @@ class PartesDiarios extends Component
             }
             
             // $this->cargarPartes(); // Método eliminado por no existir
-            session()->flash('message', $this->parte_id ? 'Parte diario actualizado correctamente con todos sus detalles.' : 'Parte diario creado correctamente con todos sus detalles.');
+            $mensaje = $this->parte_id ? 'Parte diario actualizado correctamente con todos sus detalles.' : 'Parte diario creado correctamente con todos sus detalles.';
             $this->resetCampos();
-            $this->dispatch('parteDiarioGuardado');
+            session()->flash('message', $mensaje);
+            // No despachar evento para evitar cambio de pestaña automático
+            // $this->dispatch('parteDiarioGuardado');
             
         } catch (\Exception $e) {
             \DB::rollBack();
@@ -715,6 +718,7 @@ class PartesDiarios extends Component
                 'exception' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
+            return; // Evita que la página quede en blanco
         }
     }
 

@@ -3,12 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 use OwenIt\Auditing\Auditable;
 
 class Lote extends Model implements AuditableContract
 {
-    use Auditable;
+    use HasFactory, Auditable;
     
     protected $table = 'lotes';
     protected $primaryKey = 'id_lote';

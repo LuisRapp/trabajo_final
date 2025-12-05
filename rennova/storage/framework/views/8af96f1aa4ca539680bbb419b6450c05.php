@@ -267,7 +267,12 @@
                         </div>
                     <?php endif; ?>
                     
-                    <?php echo $__env->yieldContent('content'); ?>
+                    <?php if(isset($slot)): ?>
+                        <?php echo e($slot); ?>
+
+                    <?php else: ?>
+                        <?php echo $__env->yieldContent('content'); ?>
+                    <?php endif; ?>
                     
                 </div>
             </main>
@@ -353,4 +358,4 @@
     <?php echo \Livewire\Mechanisms\FrontendAssets\FrontendAssets::scripts(); ?>
 
 </body>
-</html><?php /**PATH D:\trabajo_final\rennova\resources\views/layouts/app.blade.php ENDPATH**/ ?>
+</html><?php /**PATH /var/www/html/resources/views/layouts/app.blade.php ENDPATH**/ ?>

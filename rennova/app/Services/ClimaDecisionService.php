@@ -150,13 +150,20 @@ class ClimaDecisionService
             $mm = $precipitaciones[$index] ?? 0;
             $cloudCover = $nubosidades[$index] ?? 0;
             $esHoy = $fecha->isToday();
+            $esFinDeSemana = $fecha->isWeekend(); // Sábado (6) o Domingo (0)
 
             // Analizar estado del día
             $estado = 'OPERATIVO';
             $razon = null;
 
+            // 0. Verificar si es fin de semana
+            if ($esFinDeSemana) {
+                $estado = 'INACTIVO';
+                $razon = "Fin de semana (no laboral)";
+                $totalDiasPerdidos++;
+            }
             // 1. Verificar lluvia directa
-            if ($mm >= self::UMBRAL_LLUVIA) {
+            elseif ($mm >= self::UMBRAL_LLUVIA) {
                 $estado = 'INACTIVO';
                 $razon = "Lluvia pronosticada: {$mm}mm";
                 
