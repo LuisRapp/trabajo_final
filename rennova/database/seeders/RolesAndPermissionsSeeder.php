@@ -60,6 +60,10 @@ class RolesAndPermissionsSeeder extends Seeder
         Permission::firstOrCreate(['name' => 'ver-auditoria', 'guard_name' => 'web']);
         Permission::firstOrCreate(['name' => 'gestionar-permisos', 'guard_name' => 'web']);
         Permission::firstOrCreate(['name' => 'gestionar-usuarios', 'guard_name' => 'web']);
+        Permission::firstOrCreate(['name' => 'configurar-notificaciones-mantenimiento', 'guard_name' => 'web']);
+        Permission::firstOrCreate(['name' => 'confirmar-mantenimiento', 'guard_name' => 'web']);
+        Permission::firstOrCreate(['name' => 'reprogramar-mantenimiento', 'guard_name' => 'web']);
+        Permission::firstOrCreate(['name' => 'configurar-mantenimiento', 'guard_name' => 'web']);
 
         // Crear roles
         $adminRole = Role::firstOrCreate(['name' => 'Administrador', 'guard_name' => 'web']);

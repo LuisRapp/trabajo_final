@@ -379,7 +379,7 @@
                             </div>
                             <div class="mb-3">
                                 <label class="form-label fw-semibold">Cantidad Requerida <span class="text-danger">*</span></label>
-                                <input type="number" wire:model="cantidad_requerida" class="form-control @error('cantidad_requerida') is-invalid @enderror" step="0.01" min="0.01" placeholder="Ej: 10.00">
+                                <input type="number" wire:model="cantidad_requerida" class="form-control @error('cantidad_requerida') is-invalid @enderror" step="0.1" min="0" min="0.01" placeholder="Ej: 10.00">
                                 @error('cantidad_requerida')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror

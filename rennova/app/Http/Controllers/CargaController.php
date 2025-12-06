@@ -48,7 +48,7 @@ class CargaController extends Controller
             'peso_bruto' => 'nullable|numeric|min:0',
             'tara' => 'nullable|numeric|min:0',
             'destino' => 'nullable|string|max:100',
-            'fecha_carga' => 'required|date',
+            'fecha_carga' => 'required|date|before_or_equal:today',
         ]);
 
         $data['peso_neto'] = ($data['peso_bruto'] ?? 0) - ($data['tara'] ?? 0);
@@ -92,7 +92,7 @@ class CargaController extends Controller
             'peso_bruto' => 'nullable|numeric|min:0',
             'tara' => 'nullable|numeric|min:0',
             'destino' => 'nullable|string|max:100',
-            'fecha_carga' => 'required|date',
+            'fecha_carga' => 'required|date|before_or_equal:today',
         ]);
 
         $data['peso_neto'] = ($data['peso_bruto'] ?? 0) - ($data['tara'] ?? 0);

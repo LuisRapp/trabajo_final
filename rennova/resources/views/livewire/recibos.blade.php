@@ -60,7 +60,7 @@
                         <label class="form-label fw-semibold">Monto Bruto <span class="text-danger">*</span></label>
                         <div class="input-group">
                             <span class="input-group-text">$</span>
-                            <input type="number" wire:model="monto_bruto" step="0.01" class="form-control @error('monto_bruto') is-invalid @enderror" placeholder="0.00">
+                            <input type="number" wire:model="monto_bruto" step="0.1" min="0" class="form-control @error('monto_bruto') is-invalid @enderror" placeholder="0.00">
                         </div>
                         @error('monto_bruto') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
@@ -68,7 +68,7 @@
                         <label class="form-label fw-semibold">Descuentos</label>
                         <div class="input-group">
                             <span class="input-group-text">$</span>
-                            <input type="number" wire:model="descuentos" step="0.01" class="form-control @error('descuentos') is-invalid @enderror" placeholder="0.00">
+                            <input type="number" wire:model="descuentos" step="0.1" min="0" class="form-control @error('descuentos') is-invalid @enderror" placeholder="0.00">
                         </div>
                         @error('descuentos') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
@@ -76,7 +76,7 @@
                         <label class="form-label fw-semibold">Monto Neto</label>
                         <div class="input-group">
                             <span class="input-group-text">$</span>
-                            <input type="number" wire:model="monto" step="0.01" class="form-control bg-light" placeholder="0.00" readonly>
+                            <input type="number" wire:model="monto" step="0.1" min="0" class="form-control bg-light" placeholder="0.00" readonly>
                         </div>
                         <small class="text-muted">Se calcula automáticamente (Bruto - Descuentos)</small>
                     </div>

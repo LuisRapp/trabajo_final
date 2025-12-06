@@ -224,7 +224,7 @@
                             <div class="col-md-3">
                                 @if($modo_edicion)
                                     <label><strong>Monto:</strong></label>
-                                    <input type="number" wire:model="monto_edicion" step="0.01" class="form-control form-control-sm">
+                                    <input type="number" wire:model="monto_edicion" step="0.1" min="0" class="form-control form-control-sm">
                                 @else
                                     <strong>Monto Total:</strong><br>
                                     ${{ number_format($venta_seleccionada->monto, 2, ',', '.') }}

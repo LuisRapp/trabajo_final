@@ -6,11 +6,13 @@ use Livewire\Component;
 use App\Models\Mantenimiento;
 use App\Models\Maquinaria;
 use App\Models\TipoMantenimiento;
+use App\Models\NotificacionSistema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class Mantenimientos extends Component
 {
-    public $mantenimientos, $mantenimiento_id, $id_maquinaria, $id_tipo_mantenimiento, $fecha_inicio, $estado, $busqueda = '';
+    public $mantenimientos, $mantenimiento_id, $id_maquinaria, $id_tipo_mantenimiento, $fecha_inicio, $fecha_programada, $estado, $busqueda = '';
     public $maquinarias, $tipos;
     public $kitPreventivo = [];
     public $activeTab = 'nuevo';
@@ -24,12 +26,25 @@ class Mantenimientos extends Component
     public $costo_total_completar;
     public $insumos_usados = [];
 
-    protected $rules = [
-        'id_maquinaria' => 'required|exists:maquinarias,id_maquinaria',
-        'id_tipo_mantenimiento' => 'required|exists:tipo_mantenimientos,id_tipo_mantenimiento',
-        'fecha_inicio' => 'required|date',
-        'estado' => 'required|in:programado,en curso',
-    ];
+    protected function rules()
+    {
+        return [
+            'id_maquinaria' => 'required|exists:maquinarias,id_maquinaria',
+            'id_tipo_mantenimiento' => 'required|exists:tipo_mantenimientos,id_tipo_mantenimiento',
+            'fecha_inicio' => 'required|date',
+            'fecha_programada' => [
+                'nullable',
+                'date',
+                'after_or_equal:fecha_inicio',
+                function ($attribute, $value, $fail) {
+                    if ($value && $this->mantenimiento_id) {
+                        $this->validarFechaProgramadaDentroDeRango($value, $fail);
+                    }
+                },
+            ],
+            'estado' => 'required|in:programado,en curso',
+        ];
+    }
 
     protected $messages = [
         'id_maquinaria.required' => 'Debe seleccionar una maquinaria.',
@@ -83,6 +98,12 @@ class Mantenimientos extends Component
 
     public function cargarMantenimientos()
     {
+        // Primero, marcar como vencidos los mantenimientos programados cuya fecha programada ya pasó
+        Mantenimiento::where('estado', 'programado')
+            ->whereNotNull('fecha_programada')
+            ->where('fecha_programada', '<', now()->toDateString())
+            ->update(['estado' => 'vencido']);
+
         $query = Mantenimiento::with(['maquinaria', 'tipoMantenimiento']);
 
         if ($this->busqueda) {
@@ -109,14 +130,32 @@ class Mantenimientos extends Component
 
     public function guardar()
     {
+        // Si hay fecha_programada, validar que esté dentro del rango de la notificación
+        if ($this->fecha_programada && !$this->mantenimiento_id) {
+            $fail = function($message) {
+                $this->addError('fecha_programada', $message);
+            };
+            $this->validarFechaProgramadaDentroDeRangoNuevo($this->fecha_programada, $fail);
+            
+            if ($this->getErrorBag()->has('fecha_programada')) {
+                return;
+            }
+        }
+
         $this->validate();
 
+        // La fecha de inicio debe ser igual a la programada si existe
+        $fechaInicio = $this->fecha_programada ?: $this->fecha_inicio;
         $mantenimiento = Mantenimiento::create([
             'id_maquinaria' => $this->id_maquinaria,
             'id_tipo_mantenimiento' => $this->id_tipo_mantenimiento,
-            'fecha_inicio' => $this->fecha_inicio,
+            'fecha_inicio' => $fechaInicio,
+            'fecha_programada' => $this->fecha_programada,
             'estado' => $this->estado,
         ]);
+
+        // Marcar notificación como accionada si existe
+        $this->marcarNotificacionComoAccionada($mantenimiento->id_mantenimiento);
 
         $tipoNombre = TipoMantenimiento::find($this->id_tipo_mantenimiento)->nombre ?? 'Mantenimiento';
         $maquinaNombre = Maquinaria::find($this->id_maquinaria)->modelo ?? '';
@@ -134,6 +173,7 @@ class Mantenimientos extends Component
         $this->id_maquinaria = $mantenimiento->id_maquinaria;
         $this->id_tipo_mantenimiento = $mantenimiento->id_tipo_mantenimiento;
         $this->fecha_inicio = $mantenimiento->fecha_inicio;
+        $this->fecha_programada = $mantenimiento->fecha_programada;
         $this->estado = $mantenimiento->estado;
         $this->activeTab = 'nuevo';
     }
@@ -146,7 +186,7 @@ class Mantenimientos extends Component
 
     public function resetCampos()
     {
-        $this->reset(['mantenimiento_id', 'id_maquinaria', 'id_tipo_mantenimiento']);
+        $this->reset(['mantenimiento_id', 'id_maquinaria', 'id_tipo_mantenimiento', 'fecha_programada']);
         $this->fecha_inicio = date('Y-m-d');
         $this->estado = 'programado';
         $this->kitPreventivo = [];
@@ -170,8 +210,33 @@ class Mantenimientos extends Component
 
         $this->orden_es_correctivo = str_contains(strtolower($this->orden_completar_info['tipo']), 'correctivo');
 
-        if ($this->orden_es_correctivo) {
-            $this->insumos_usados = [['id_insumo' => '', 'cantidad' => '', 'precio_unitario' => '']];
+        // Siempre mostrar la sección de insumos
+        // Si es preventivo, cargar los insumos del kit automáticamente
+        if (!$this->orden_es_correctivo) {
+            // Cargar insumos del kit de mantenimiento preventivo
+            $kitInsumos = \App\Models\KitMantenimientoPreventivo::where('id_maquinaria', $orden->id_maquinaria)
+                ->join('insumos', 'kit_mantenimiento_preventivo.id_insumo', '=', 'insumos.id_insumo')
+                ->select(
+                    'kit_mantenimiento_preventivo.id_insumo',
+                    'kit_mantenimiento_preventivo.cantidad_requerida',
+                    'insumos.nombre'
+                )
+                ->get();
+            
+            if ($kitInsumos->count() > 0) {
+                foreach ($kitInsumos as $item) {
+                    $this->insumos_usados[] = [
+                        'id_insumo' => $item->id_insumo,
+                        'cantidad' => $item->cantidad_requerida
+                    ];
+                }
+            } else {
+                // Si no hay kit, mostrar un campo vacío
+                $this->insumos_usados = [['id_insumo' => '', 'cantidad' => '']];
+            }
+        } else {
+            // Para correctivos, iniciar con un campo vacío
+            $this->insumos_usados = [['id_insumo' => '', 'cantidad' => '']];
         }
         
         $this->activeTab = 'listado';
@@ -187,13 +252,19 @@ class Mantenimientos extends Component
 
     public function agregarInsumo()
     {
-        $this->insumos_usados[] = ['id_insumo' => '', 'cantidad' => '', 'precio_unitario' => ''];
+        $this->insumos_usados[] = ['id_insumo' => '', 'cantidad' => ''];
     }
 
     public function eliminarInsumo($index)
     {
         unset($this->insumos_usados[$index]);
         $this->insumos_usados = array_values($this->insumos_usados);
+    }
+
+    public function updatedInsumosUsados($value, $key)
+    {
+        // Ya no necesitamos cargar el precio_unitario porque usamos FIFO
+        // Este método puede quedar vacío o eliminarse, pero lo mantenemos por compatibilidad
     }
 
     public function completarOrden()
@@ -206,24 +277,52 @@ class Mantenimientos extends Component
             \Log::info('Orden encontrada', ['orden' => $orden->toArray()]);
             
             $this->validate([
-                'fecha_fin_completar' => 'required|date|after_or_equal:' . $orden->fecha_inicio,
+                'fecha_fin_completar' => [
+                    'required',
+                    'date',
+                    function($attribute, $value, $fail) use ($orden) {
+                        if ($value < $orden->fecha_inicio) {
+                            $fail('La fecha de finalización no puede ser anterior a la fecha de inicio del mantenimiento.');
+                        }
+                    }
+                ],
                 'costo_total_completar' => 'nullable|numeric|min:0',
             ]);
 
             \Log::info('Validación pasada');
 
-            // Calcular costo total automáticamente sumando insumos
-            $costoTotal = floatval($this->costo_total_completar ?? 0);
+            // Calcular costo total base (mano de obra u otros costos adicionales)
+            $costoBase = floatval($this->costo_total_completar ?? 0);
             
-            if ($this->orden_es_correctivo && count($this->insumos_usados) > 0) {
-                foreach ($this->insumos_usados as $insumo) {
-                    if (!empty($insumo['id_insumo']) && !empty($insumo['cantidad']) && !empty($insumo['precio_unitario'])) {
-                        $costoTotal += floatval($insumo['cantidad']) * floatval($insumo['precio_unitario']);
+            // Calcular costo de insumos usando FIFO (sin procesar aún, solo calcular)
+            $costoInsumos = 0;
+            $insumosValidados = [];
+            
+            foreach ($this->insumos_usados as $insumo) {
+                if (!empty($insumo['id_insumo']) && !empty($insumo['cantidad'])) {
+                    $cantidad = floatval($insumo['cantidad']);
+                    
+                    // Verificar stock disponible antes de procesar
+                    $stockDisponible = \App\Models\MovimientoStock::stockDisponible($insumo['id_insumo']);
+                    if ($stockDisponible < $cantidad) {
+                        $nombreInsumo = \App\Models\Insumo::find($insumo['id_insumo'])->nombre ?? 'ID ' . $insumo['id_insumo'];
+                        throw new \Exception("Stock insuficiente para {$nombreInsumo}. Disponible: {$stockDisponible}, Requerido: {$cantidad}");
                     }
+                    
+                    // Calcular costo FIFO simulado para obtener el total
+                    $resultadoSimulado = DB::selectOne(
+                        'SELECT * FROM calcular_costo_fifo(?, ?)',
+                        [$insumo['id_insumo'], $cantidad]
+                    );
+                    
+                    $costoInsumos += $resultadoSimulado->v_costo_total;
+                    $insumosValidados[] = $insumo;
                 }
             }
+            
+            $costoTotal = $costoBase + $costoInsumos;
 
-            \Log::info('Costo total calculado', ['costo' => $costoTotal]);
+            \Log::info('Costo total calculado', ['base' => $costoBase, 'insumos' => $costoInsumos, 'total' => $costoTotal]);
 
             DB::beginTransaction();
             
@@ -235,39 +334,36 @@ class Mantenimientos extends Component
 
             \Log::info('Orden actualizada');
 
-            // Si es correctivo, registrar insumos usados
-            if ($this->orden_es_correctivo && count($this->insumos_usados) > 0) {
-                foreach ($this->insumos_usados as $insumo) {
-                    if (!empty($insumo['id_insumo']) && !empty($insumo['cantidad'])) {
-                        // Registrar movimiento de stock (salida)
-                        DB::table('movimiento_stocks')->insert([
-                            'id_insumo' => $insumo['id_insumo'],
-                            'tipo' => 'salida',
-                            'cantidad' => $insumo['cantidad'],
-                            'fecha' => $this->fecha_fin_completar,
-                            'motivo' => 'Mantenimiento Correctivo - Orden #' . $orden->id_mantenimiento,
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
-
-                        $precioUnitario = floatval($insumo['precio_unitario'] ?? 0);
-                        $cantidad = floatval($insumo['cantidad']);
-                        $subtotal = $cantidad * $precioUnitario;
-
-                        // Registrar en mantenimiento_insumos
-                        DB::table('mantenimiento_insumos')->insert([
-                            'id_mantenimiento' => $orden->id_mantenimiento,
-                            'id_insumo' => $insumo['id_insumo'],
-                            'cantidad_utilizada' => $cantidad,
-                            'costo_unitario' => $precioUnitario,
-                            'subtotal' => $subtotal,
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
-                    }
-                }
-                \Log::info('Insumos registrados');
+            // Registrar todos los insumos usados (preventivo o correctivo)
+            $tipoMantenimiento = $this->orden_es_correctivo ? 'Correctivo' : 'Preventivo';
+            
+            foreach ($insumosValidados as $insumo) {
+                $cantidad = floatval($insumo['cantidad']);
+                $motivo = "Mantenimiento {$tipoMantenimiento} - Orden #" . $orden->id_mantenimiento;
+                
+                // Usar el sistema FIFO para registrar la salida
+                $resultadoSalida = \App\Models\MovimientoStock::registrarSalida(
+                    $insumo['id_insumo'],
+                    $cantidad,
+                    $motivo,
+                    $this->fecha_fin_completar
+                );
+                
+                // El costo real viene de los lotes FIFO consumidos
+                $costoRealInsumo = $resultadoSalida['costo_total'];
+                
+                // Registrar en mantenimiento_insumos con el costo FIFO real
+                DB::table('mantenimiento_insumos')->insert([
+                    'id_mantenimiento' => $orden->id_mantenimiento,
+                    'id_insumo' => $insumo['id_insumo'],
+                    'cantidad_utilizada' => $cantidad,
+                    'costo_unitario' => $costoRealInsumo / $cantidad, // Promedio ponderado de los lotes
+                    'subtotal' => $costoRealInsumo,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
             }
+            \Log::info('Insumos registrados');
 
             DB::commit();
             
@@ -293,6 +389,113 @@ class Mantenimientos extends Component
             ]);
             session()->flash('error', 'Error al completar la orden: ' . $e->getMessage());
             $this->addError('general', $e->getMessage());
+        }
+    }
+
+    public function confirmarMantenimiento($id)
+    {
+        try {
+            $mantenimiento = Mantenimiento::findOrFail($id);
+            
+            if ($mantenimiento->estado !== 'programado') {
+                session()->flash('error', 'Solo se pueden confirmar mantenimientos en estado programado.');
+                return;
+            }
+
+            $mantenimiento->update([
+                'estado' => 'en curso',
+                'fecha_inicio' => now()->toDateString()
+            ]);
+
+            // Marcar notificación como accionada
+            $this->marcarNotificacionComoAccionada($id);
+
+            session()->flash('message', "Mantenimiento #{$id} confirmado y en curso.");
+            $this->cargarMantenimientos();
+            
+        } catch (\Exception $e) {
+            session()->flash('error', 'Error al confirmar mantenimiento: ' . $e->getMessage());
+        }
+    }
+
+    public function reprogramarMantenimiento($id)
+    {
+        try {
+            $mantenimiento = Mantenimiento::findOrFail($id);
+            
+            if ($mantenimiento->estado !== 'vencido') {
+                session()->flash('error', 'Solo se pueden reprogramar mantenimientos vencidos.');
+                return;
+            }
+
+            $mantenimiento->update([
+                'estado' => 'programado',
+                'fecha_programada' => null
+            ]);
+
+            session()->flash('message', "Mantenimiento #{$id} reprogramado. Por favor, asigne una nueva fecha.");
+            $this->editar($id);
+            
+        } catch (\Exception $e) {
+            session()->flash('error', 'Error al reprogramar: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Valida que la fecha_programada esté dentro de los 7 días desde la notificación
+     * Para mantenimientos existentes (edición)
+     */
+    protected function validarFechaProgramadaDentroDeRango($fechaProgramada, $fail)
+    {
+        $notificacion = NotificacionSistema::where('mantenimiento_id', $this->mantenimiento_id)
+            ->where('tipo', 'umbral_alcanzado')
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        if (!$notificacion) {
+            return; // Si no hay notificación, no validar (puede ser mantenimiento creado manualmente)
+        }
+
+        $fechaNotificacion = $notificacion->created_at->toDateString();
+        $fechaLimite = $notificacion->created_at->addDays(7)->toDateString();
+
+        if ($fechaProgramada < $fechaNotificacion || $fechaProgramada > $fechaLimite) {
+            $fail("La fecha programada debe estar entre {$fechaNotificacion} y {$fechaLimite} (dentro de los 7 días desde la notificación).");
+        }
+    }
+
+    /**
+     * Valida que la fecha_programada esté dentro de los 7 días desde HOY
+     * Para mantenimientos nuevos (sin notificación previa)
+     */
+    protected function validarFechaProgramadaDentroDeRangoNuevo($fechaProgramada, $fail)
+    {
+        $fechaNotificacion = now()->toDateString();
+        $fechaLimite = now()->addDays(7)->toDateString();
+
+        if ($fechaProgramada < $fechaNotificacion || $fechaProgramada > $fechaLimite) {
+            $fail("La fecha programada debe estar entre {$fechaNotificacion} y {$fechaLimite} (dentro de los próximos 7 días).");
+        }
+    }
+
+    /**
+     * Marca como accionada la notificación del usuario actual relacionada con este mantenimiento
+     */
+    protected function marcarNotificacionComoAccionada($mantenimientoId)
+    {
+        try {
+            $notificacion = NotificacionSistema::where('user_id', Auth::id())
+                ->where('mantenimiento_id', $mantenimientoId)
+                ->where('accionada', false)
+                ->first();
+
+            if ($notificacion) {
+                $notificacion->marcarComoAccionada();
+                \Log::info("Notificación #{$notificacion->id} marcada como accionada para mantenimiento #{$mantenimientoId}");
+            }
+        } catch (\Exception $e) {
+            \Log::warning("Error marcando notificación como accionada: {$e->getMessage()}");
+            // No lanzar excepción para no interrumpir el flujo principal
         }
     }
 }

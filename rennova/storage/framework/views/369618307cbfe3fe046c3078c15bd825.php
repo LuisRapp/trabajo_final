@@ -418,7 +418,7 @@ if (isset($message)) { $__messageOriginal = $message; }
 $message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
-unset($__errorArgs, $__bag); ?>" step="0.01" min="0.01" placeholder="Ej: 10.00">
+unset($__errorArgs, $__bag); ?>" step="0.1" min="0" min="0.01" placeholder="Ej: 10.00">
                                 <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['cantidad_requerida'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :

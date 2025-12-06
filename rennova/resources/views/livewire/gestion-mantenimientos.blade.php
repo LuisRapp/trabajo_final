@@ -312,7 +312,7 @@
                                         <input type="number" 
                                                wire:model="insumos_usados.{{ $index }}.cantidad" 
                                                class="form-control form-control-sm" 
-                                               step="0.01" 
+                                               step="0.1" min="0" 
                                                min="0">
                                         @error("insumos_usados.{$index}.cantidad")
                                             <span class="text-danger small">{{ $message }}</span>
@@ -359,7 +359,7 @@
                                 <input type="number" 
                                        wire:model="costo_mano_obra" 
                                        class="form-control" 
-                                       step="0.01" 
+                                       step="0.1" min="0" 
                                        min="0">
                             </div>
                             @error('costo_mano_obra')

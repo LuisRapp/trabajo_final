@@ -20,22 +20,22 @@
     <!-- Pestañas (Tabs) -->
     <ul class="nav nav-tabs mb-4" id="partesTabs" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="nuevo-tab" data-bs-toggle="tab" data-bs-target="#nuevo-parte" type="button" role="tab" aria-controls="nuevo-parte" aria-selected="true">
+            <button class="nav-link" id="nuevo-tab" data-bs-toggle="tab" data-bs-target="#nuevo-parte" type="button" role="tab" aria-controls="nuevo-parte" aria-selected="false">
                 <i class="bi bi-plus-circle"></i> Nuevo Parte Diario
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="listado-tab" data-bs-toggle="tab" data-bs-target="#listado-partes" type="button" role="tab" aria-controls="listado-partes" aria-selected="false">
+            <button class="nav-link active" id="listado-tab" data-bs-toggle="tab" data-bs-target="#listado-partes" type="button" role="tab" aria-controls="listado-partes" aria-selected="true">
                 <i class="bi bi-list-ul"></i> Listado de Partes Diarios
             </button>
         </li>
     </ul>
 
     <div class="tab-content" id="partesTabContent">
-        <!-- Pestaña 1: Nuevo Parte Diario (Formulario Maestro-Detalle) -->
-        <div class="tab-pane fade show active" id="nuevo-parte" role="tabpanel" aria-labelledby="nuevo-tab">
+        <!-- Pestaña 1: Nuevo Parte Diario -->
+        <div class="tab-pane fade" id="nuevo-parte" role="tabpanel" aria-labelledby="nuevo-tab">
             
-            <!-- 1. TARJETA PRINCIPAL: Datos Maestros -->
+            <!-- SECCIÓN 1: Datos Maestros -->
             <div class="card shadow mb-4">
                 <div class="card-header bg-light">
                     <h5 class="mb-0">
@@ -44,214 +44,225 @@
                     </h5>
                 </div>
                 <div class="card-body">
+                    <!-- Fila 1: Lote, Fecha, Día Caído -->
                     <div class="row g-3 mb-4">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="form-label fw-semibold">Lote <span class="text-danger">*</span></label>
-                            <select wire:model="id_lote" class="form-select @error('id_lote') is-invalid @enderror">
+                            <select wire:model.live="id_lote" class="form-select @error('id_lote') is-invalid @enderror">
                                 <option value="">Seleccione un lote...</option>
-                                @foreach($lotes as $lote)
+                                @foreach($this->lotes as $lote)
                                     <option value="{{ $lote->id_lote }}">{{ $lote->propietario }} - {{ $lote->ubicacion }}</option>
                                 @endforeach
                             </select>
                             @error('id_lote') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            <div wire:loading wire:target="id_lote" class="text-muted small mt-1">
+                                <i class="bi bi-arrow-repeat"></i> Cargando maquinarias y empleados...
+                            </div>
                         </div>
-                        <div class="col-md-6">
+
+                        <div class="col-md-4">
                             <label class="form-label fw-semibold">Fecha <span class="text-danger">*</span></label>
-                            <input type="date" wire:model="fecha" class="form-control @error('fecha') is-invalid @enderror">
+                            <input type="date" 
+                                   wire:model="fecha" 
+                                   max="{{ date('Y-m-d') }}" 
+                                   min="{{ date('Y-m-d', strtotime('-7 days')) }}"
+                                   class="form-control @error('fecha') is-invalid @enderror">
                             @error('fecha') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
-                    </div>
 
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-12">
-                            <label class="form-label fw-semibold">Actividad Realizada <span class="text-danger">*</span></label>
-                            <textarea wire:model="actividad_realizada" class="form-control @error('actividad_realizada') is-invalid @enderror" rows="2" placeholder="Descripción de la actividad realizada"></textarea>
-                            @error('actividad_realizada') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                        </div>
-                    </div>
-
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-6">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" role="switch" id="esDiaCaido" wire:model.live="es_dia_caido">
-                                <label class="form-check-label fw-semibold" for="esDiaCaido">
-                                    <i class="bi bi-calendar-x"></i> ¿Día Caído?
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Día Caído</label>
+                            <div class="form-check form-switch mt-2">
+                                <input class="form-check-input" type="checkbox" id="diaCaidoSwitch" wire:model.live="es_dia_caido">
+                                <label class="form-check-label" for="diaCaidoSwitch">
                                     <span class="badge {{ $es_dia_caido ? 'bg-warning text-dark' : 'bg-secondary' }}">
-                                        {{ $es_dia_caido ? 'SÍ - Pago por Jornal' : 'NO - Pago por Destajo' }}
+                                        {{ $es_dia_caido ? 'SÍ - Jornal' : 'NO - Destajo' }}
                                     </span>
                                 </label>
                             </div>
-                            <small class="text-muted">Si es día caído, se pagará jornal fijo. Si no, se paga por tonelada extraída.</small>
                         </div>
                     </div>
 
-                    @if($es_dia_caido)
-                        <div class="row g-3 mb-4">
-                            <div class="col-md-12">
-                                <label class="form-label fw-semibold">Motivo del Día Caído <span class="text-danger">*</span></label>
-                                <textarea wire:model="motivo_dia_caido" class="form-control @error('motivo_dia_caido') is-invalid @enderror" rows="3" placeholder="Explique el motivo del día caído (lluvia, falla mecánica, etc.)"></textarea>
-                                @error('motivo_dia_caido') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                            </div>
-                        </div>
-                    @endif
-
+                    <!-- Fila 2: Observaciones -->
                     <div class="row g-3">
                         <div class="col-md-12">
-                            <label class="form-label fw-semibold">Observaciones Generales</label>
-                            <textarea wire:model="observaciones" class="form-control" rows="2" placeholder="Observaciones adicionales del parte diario"></textarea>
+                            <label class="form-label fw-semibold">Observaciones</label>
+                            <textarea wire:model="observaciones" class="form-control" rows="2" placeholder="Observaciones adicionales"></textarea>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- 2A. SECCIÓN CONDICIONAL: REGISTRO DE PRODUCCIÓN (Cargas) - Solo si NO es día caído -->
+            <!-- SECCIÓN 2: Registro de Producción (Si NO es día caído) -->
             @if(!$es_dia_caido)
                 <div class="card shadow mb-4">
                     <div class="card-header bg-primary text-white">
-                        <h5 class="mb-0"><i class="bi bi-truck"></i> Registro de Producción (Cargas)</h5>
+                        <h5 class="mb-0"><i class="bi bi-truck"></i> Registro de Producción</h5>
                     </div>
                     <div class="card-body">
-                        <!-- Formulario para agregar carga -->
-                        <div class="border rounded p-3 mb-3 bg-light">
-                            <h6 class="fw-semibold mb-3"><i class="bi bi-plus-circle-fill"></i> Registrar Nueva Carga</h6>
+                        <!-- Errores generales de validación de carga -->
+                        @if ($errors->has('carga_id_categoria_madera') || $errors->has('carga_ticket') || $errors->has('carga_peso_bruto') || $errors->has('carga_tara') || $errors->has('carga_peso_neto') || $errors->has('carga_id_chofer') || $errors->has('carga_destino') || $errors->has('carga_empleados') || $errors->has('carga_maquinarias'))
+                            <div class="alert alert-danger">
+                                <i class="bi bi-exclamation-triangle"></i> <strong>Errores en la carga:</strong>
+                                <ul class="mb-0 mt-2">
+                                    @error('carga_id_categoria_madera') <li>{{ $message }}</li> @enderror
+                                    @error('carga_ticket') <li>{{ $message }}</li> @enderror
+                                    @error('carga_peso_bruto') <li>{{ $message }}</li> @enderror
+                                    @error('carga_tara') <li>{{ $message }}</li> @enderror
+                                    @error('carga_peso_neto') <li>{{ $message }}</li> @enderror
+                                    @error('carga_id_chofer') <li>{{ $message }}</li> @enderror
+                                    @error('carga_destino') <li>{{ $message }}</li> @enderror
+                                    @error('carga_empleados') <li>{{ $message }}</li> @enderror
+                                    @error('carga_maquinarias') <li>{{ $message }}</li> @enderror
+                                </ul>
+                            </div>
+                        @endif
+
+                        <!-- Formulario agregar carga -->
+                        <div class="border rounded p-3 mb-3 bg-light" x-data="{
+                            bruto: @entangle('carga_peso_bruto').live,
+                            tara: @entangle('carga_tara').live,
+                            get neto() {
+                                return (parseFloat(this.bruto) || 0) - (parseFloat(this.tara) || 0);
+                            }
+                        }" x-init="$watch('neto', value => $wire.set('carga_peso_neto', value))">
+                            <h6 class="fw-semibold mb-3"><i class="bi bi-plus-circle-fill"></i> Registrar Carga</h6>
                             
-                            <!-- Fila 1: Lote, Categoría, Maquinaria -->
+                            <!-- Fila 1: Categoría, Maquinaria -->
                             <div class="row g-3 mb-3">
                                 <div class="col-md-4">
-                                    <label class="form-label fw-semibold">Lote <span class="text-danger">*</span></label>
-                                    <select disabled class="form-select" title="El lote se establece en los datos maestros del Parte Diario">
-                                        <option value="">{{ $id_lote ? $lotes->firstWhere('id_lote', $id_lote)->propietario . ' - ' . $lotes->firstWhere('id_lote', $id_lote)->ubicacion : 'Seleccione lote arriba' }}</option>
-                                    </select>
-                                    <small class="text-muted">El lote se configura en la sección principal</small>
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label fw-semibold">Categoría Madera <span class="text-danger">*</span></label>
+                                    <label class="form-label fw-semibold">Categoría <span class="text-danger">*</span></label>
                                     <select wire:model="carga_id_categoria_madera" class="form-select @error('carga_id_categoria_madera') is-invalid @enderror">
                                         <option value="">Seleccione...</option>
-                                        @foreach($categorias_madera as $cat)
+                                        @foreach($this->categoriasMadera as $cat)
                                             <option value="{{ $cat->id_categoria_madera }}">{{ $cat->nombre }}</option>
                                         @endforeach
                                     </select>
                                     @error('carga_id_categoria_madera') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                 </div>
-                                <div class="col-md-4">
-                                    <label class="form-label fw-semibold">
-                                        Maquinarias Utilizadas
-                                        @if(!empty($maquinarias_asignadas_ids) && count($maquinarias_asignadas_ids) === 1)
-                                            <span class="badge bg-success ms-1" title="Auto-seleccionada (única asignada al lote)">
-                                                <i class="bi bi-check-circle"></i> Auto
-                                            </span>
-                                        @endif
-                                    </label>
-                                    <div class="border rounded p-2 @error('carga_maquinarias') border-danger @enderror" style="max-height: 180px; overflow-y: auto; background-color: #f8f9fa;">
-                                        @foreach($this->maquinariasFiltrada as $maq)
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" value="{{ $maq->id_maquinaria }}" id="maq-{{ $maq->id_maquinaria }}" wire:model="carga_maquinarias">
-                                                <label class="form-check-label" for="maq-{{ $maq->id_maquinaria }}">
-                                                    {{ $maq->modelo }} - <small class="text-muted">{{ $maq->tipoMaquinaria->nombre ?? 'Sin tipo' }}</small>
-                                                </label>
-                                            </div>
-                                        @endforeach
+                                <div class="col-md-8">
+                                    <label class="form-label fw-semibold">Maquinarias <span class="text-danger">*</span></label>
+                                    <div wire:loading wire:target="id_lote" class="text-center py-2">
+                                        <span class="spinner-border spinner-border-sm"></span> Cargando maquinarias...
                                     </div>
-                                    @error('carga_maquinarias') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
-                                    @if(empty($maquinarias_asignadas_ids))
-                                        <small class="text-muted"><i class="bi bi-info-circle"></i> Sin lote seleccionado. Se muestran todas las maquinarias.</small>
-                                    @elseif(count($maquinarias_asignadas_ids) > 0)
-                                        <small class="text-success"><i class="bi bi-funnel"></i> Mostrando solo maquinarias asignadas al lote ({{ count($maquinarias_asignadas_ids) }})</small>
-                                    @endif
+                                    <div wire:loading.remove wire:target="id_lote">
+                                        <div class="border rounded p-2 @error('carga_maquinarias') border-danger @enderror" style="max-height: 120px; overflow-y: auto;">
+                                            @forelse($this->maquinariasFiltrada as $maq)
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" value="{{ $maq->id_maquinaria }}" id="maq-{{ $maq->id_maquinaria }}" wire:model="carga_maquinarias">
+                                                    <label class="form-check-label" for="maq-{{ $maq->id_maquinaria }}">
+                                                        {{ $maq->modelo }} - <small class="text-muted">{{ $maq->tipoMaquinaria->nombre ?? 'Sin tipo' }}</small>
+                                                    </label>
+                                                </div>
+                                            @empty
+                                                <div class="text-muted small p-2">
+                                                    <i class="bi bi-info-circle"></i> Seleccione un lote para ver maquinarias disponibles
+                                                </div>
+                                            @endforelse
+                                        </div>
+                                        @error('carga_maquinarias') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                                    </div>
                                 </div>
                             </div>
 
-                            <!-- Fila 2: Chofer y Cliente -->
+                            <!-- Fila 2: Chofer y Cliente con búsqueda -->
                             <div class="row g-3 mb-3">
                                 <div class="col-md-6">
                                     <label class="form-label fw-semibold">Chofer <span class="text-danger">*</span></label>
-                                    <input type="text" wire:model.live="busqueda_chofer" class="form-control mb-1" placeholder="Buscar chofer...">
-                                    <select wire:model="carga_id_chofer" class="form-select @error('carga_id_chofer') is-invalid @enderror" size="3" style="height: auto;">
+                                    <input type="text" wire:model.live.debounce.500ms="busqueda_chofer" class="form-control mb-1 @error('carga_id_chofer') is-invalid @enderror" placeholder="Buscar chofer...">
+                                    <select wire:model="carga_id_chofer" class="form-select" size="3">
                                         @forelse($this->choferesFiltrados as $chofer)
                                             <option value="{{ $chofer->id_chofer }}">{{ $chofer->apellido }}, {{ $chofer->nombre }}</option>
                                         @empty
-                                            <option value="">No hay resultados</option>
+                                            <option value="" disabled>No hay resultados</option>
                                         @endforelse
                                     </select>
                                     @error('carga_id_chofer') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label fw-semibold">Destino (Cliente) <span class="text-danger">*</span></label>
-                                    <input type="text" wire:model.live="busqueda_cliente" class="form-control mb-1" placeholder="Buscar cliente...">
-                                    <select wire:model="carga_destino" class="form-select @error('carga_destino') is-invalid @enderror" size="3" style="height: auto;">
+                                    <input type="text" wire:model.live.debounce.500ms="busqueda_cliente" class="form-control mb-1 @error('carga_destino') is-invalid @enderror" placeholder="Buscar cliente...">
+                                    <select wire:model="carga_destino" class="form-select" size="3">
                                         @forelse($this->clientesFiltrados as $cliente)
                                             <option value="{{ $cliente->id_cliente }}">{{ $cliente->razon_social }}</option>
                                         @empty
-                                            <option value="">No hay resultados</option>
+                                            <option value="" disabled>No hay resultados</option>
                                         @endforelse
                                     </select>
                                     @error('carga_destino') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                 </div>
                             </div>
 
-                            <!-- Fila 3: Pesajes y Tickets -->
+                            <!-- Fila 3: Pesajes con cálculo reactivo Alpine -->
                             <div class="row g-3 mb-3">
                                 <div class="col-md-3">
                                     <label class="form-label fw-semibold">Ticket <span class="text-danger">*</span></label>
-                                    <input type="text" wire:model="carga_ticket" class="form-control @error('carga_ticket') is-invalid @enderror" placeholder="Ej: TKT-12345">
+                                    <input type="text" wire:model="carga_ticket" class="form-control @error('carga_ticket') is-invalid @enderror" placeholder="TKT-12345">
                                     @error('carga_ticket') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                 </div>
                                 <div class="col-md-3">
-                                    <label class="form-label fw-semibold">Peso Bruto (Ton) <span class="text-danger">*</span></label>
-                                    <input type="number" wire:model.live="carga_peso_bruto" step="0.01" class="form-control @error('carga_peso_bruto') is-invalid @enderror" placeholder="0.00">
+                                    <label class="form-label fw-semibold">Bruto (Ton) <span class="text-danger">*</span></label>
+                                    <input type="number" x-model.number="bruto" step="0.1" min="0" class="form-control @error('carga_peso_bruto') is-invalid @enderror" placeholder="0.00">
                                     @error('carga_peso_bruto') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                 </div>
                                 <div class="col-md-3">
                                     <label class="form-label fw-semibold">Tara (Ton) <span class="text-danger">*</span></label>
-                                    <input type="number" wire:model.live="carga_tara" step="0.01" class="form-control @error('carga_tara') is-invalid @enderror" placeholder="0.00">
+                                    <input type="number" x-model.number="tara" step="0.1" min="0" class="form-control @error('carga_tara') is-invalid @enderror" placeholder="0.00">
                                     @error('carga_tara') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                 </div>
                                 <div class="col-md-3">
-                                    <label class="form-label fw-semibold">Peso Neto (Ton) <span class="text-info">Calculado</span></label>
-                                    <input type="text" value="{{ $carga_peso_neto ? number_format($carga_peso_neto, 2) : '0.00' }}" class="form-control bg-light" readonly>
-                                    <small class="text-muted">Peso Bruto - Tara</small>
-                                </div>
-                            </div>
-                            
-                            <!-- Sección de Personal Involucrado -->
-                            <div class="row g-3 mt-3">
-                                <div class="col-md-12">
-                                    <h6 class="fw-semibold border-bottom pb-2 mb-2"><i class="bi bi-people-fill"></i> Personal Involucrado</h6>
-                                    <label class="form-label fw-semibold">Empleados que participaron en esta carga <span class="text-danger">*</span></label>
-                                    <div class="border rounded p-2 @error('carga_empleados') border-danger @enderror" style="max-height: 180px; overflow-y: auto; background-color: #f8f9fa;">
-                                        @foreach($this->empleadosFiltrados as $emp)
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" value="{{ $emp->id_empleado }}" id="emp-{{ $emp->id_empleado }}" wire:model="carga_empleados">
-                                                <label class="form-check-label" for="emp-{{ $emp->id_empleado }}">
-                                                    {{ $emp->apellido }}, {{ $emp->nombre }} - <small class="text-muted">{{ $emp->rolLaboral->nombre ?? 'Sin rol' }}</small>
-                                                </label>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                    @error('carga_empleados') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
-                                    <small class="text-muted d-block mt-1"><i class="bi bi-info-circle"></i> Seleccione todos los empleados que trabajaron en la extracción de esta carga. El pago se calculará por destajo (toneladas extraídas).</small>
+                                    <label class="form-label fw-semibold">Neto (Ton) <span class="text-info">Calculado</span></label>
+                                    <input type="text" x-text="neto.toFixed(2)" class="form-control bg-light" readonly>
+                                    @error('carga_peso_neto') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
                                 </div>
                             </div>
 
-                            <div class="d-flex justify-content-end mt-3">
-                                <button type="button" wire:click="agregarCarga" class="btn btn-primary">
-                                    <i class="bi bi-plus-circle"></i> Agregar Carga
+                            <!-- Fila 4: Empleados -->
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-12">
+                                    <label class="form-label fw-semibold">Empleados <span class="text-danger">*</span></label>
+                                    <div wire:loading wire:target="id_lote" class="text-center py-2">
+                                        <span class="spinner-border spinner-border-sm"></span> Cargando empleados...
+                                    </div>
+                                    <div wire:loading.remove wire:target="id_lote">
+                                        <div class="border rounded p-2 @error('carga_empleados') border-danger @enderror" style="max-height: 150px; overflow-y: auto;">
+                                            @forelse($this->empleadosFiltrados as $emp)
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" value="{{ $emp->id_empleado }}" id="emp-{{ $emp->id_empleado }}" wire:model="carga_empleados">
+                                                    <label class="form-check-label" for="emp-{{ $emp->id_empleado }}">
+                                                        {{ $emp->apellido }}, {{ $emp->nombre }} - <small class="text-muted">{{ $emp->rolLaboral->nombre ?? 'Sin rol' }}</small>
+                                                    </label>
+                                                </div>
+                                            @empty
+                                                <div class="text-muted small p-2">
+                                                    <i class="bi bi-info-circle"></i> Seleccione un lote para ver empleados disponibles
+                                                </div>
+                                            @endforelse
+                                        </div>
+                                        @error('carga_empleados') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-end">
+                                <button type="button" wire:click.prevent="agregarCarga" class="btn btn-primary" wire:loading.attr="disabled" wire:target="agregarCarga">
+                                    <span wire:loading.remove wire:target="agregarCarga"><i class="bi bi-plus-circle"></i> Agregar Carga</span>
+                                    <span wire:loading wire:target="agregarCarga"><span class="spinner-border spinner-border-sm"></span> Agregando...</span>
                                 </button>
                             </div>
                         </div>
 
-                        <!-- Listado de cargas registradas -->
+                        <!-- Listado cargas -->
                         @if(count($cargas) > 0)
                             <div class="table-responsive">
-                                <table class="table table-sm table-hover align-middle">
+                                <table class="table table-sm table-hover">
                                     <thead class="table-light">
                                         <tr>
                                             <th>Ticket</th>
                                             <th>Categoría</th>
-                                            <th>Peso Neto (Ton)</th>
+                                            <th>Neto (Ton)</th>
                                             <th>Chofer</th>
-                                            <th>Destino (Cliente)</th>
+                                            <th>Destino</th>
                                             <th>Empleados</th>
                                             <th>Maquinarias</th>
                                             <th class="text-center">Acción</th>
@@ -263,48 +274,22 @@
                                                 <td><span class="badge bg-secondary">{{ $carga['ticket'] }}</span></td>
                                                 <td>
                                                     @php
-                                                        $cat = $categorias_madera->firstWhere('id_categoria_madera', $carga['id_categoria_madera']);
+                                                        $cat = $this->categoriasMadera->firstWhere('id_categoria_madera', $carga['id_categoria_madera']);
                                                     @endphp
                                                     {{ $cat->nombre ?? '-' }}
                                                 </td>
-                                                <td><strong>{{ number_format($carga['peso_neto'], 2) }}</strong> <small class="text-muted">(B: {{ number_format($carga['peso_bruto'], 2) }} - T: {{ number_format($carga['tara'], 2) }})</small></td>
+                                                <td><strong>{{ number_format($carga['peso_neto'], 2) }}</strong></td>
                                                 <td>
                                                     @php
-                                                        $chofer = $choferes->firstWhere('id_chofer', $carga['id_chofer']);
+                                                        $chofer = $this->choferes->firstWhere('id_chofer', $carga['id_chofer']);
                                                     @endphp
                                                     {{ $chofer ? $chofer->apellido . ', ' . $chofer->nombre : '-' }}
                                                 </td>
-                                                <td>
-                                                    {{ $carga['destino_nombre'] ?? '-' }}
-                                                </td>
-                                                <td>
-                                                    <small>
-                                                        @foreach($carga['empleados'] as $emp_id)
-                                                            @php
-                                                                $emp = $empleados->firstWhere('id_empleado', $emp_id);
-                                                            @endphp
-                                                            @if($emp)
-                                                                <span class="badge bg-info">{{ $emp->apellido }}</span>
-                                                            @endif
-                                                        @endforeach
-                                                    </small>
-                                                </td>
-                                                <td>
-                                                    <small>
-                                                        @if(isset($carga['maquinarias']))
-                                                            @foreach($carga['maquinarias'] as $maq_id)
-                                                                @php
-                                                                    $m = $maquinarias->firstWhere('id_maquinaria', $maq_id);
-                                                                @endphp
-                                                                @if($m)
-                                                                    <span class="badge bg-secondary">{{ $m->modelo }}</span>
-                                                                @endif
-                                                            @endforeach
-                                                        @endif
-                                                    </small>
-                                                </td>
+                                                <td>{{ $carga['destino_nombre'] ?? '-' }}</td>
+                                                <td><small>{{ count($carga['empleados'] ?? []) }} emp</small></td>
+                                                <td><small>{{ count($carga['maquinarias'] ?? []) }} maq</small></td>
                                                 <td class="text-center">
-                                                    <button type="button" wire:click="eliminarCarga({{ $index }})" class="btn btn-sm btn-outline-danger" title="Eliminar carga">
+                                                    <button type="button" wire:click.prevent="eliminarCarga({{ $index }})" class="btn btn-sm btn-outline-danger" title="Eliminar">
                                                         <i class="bi bi-trash"></i>
                                                     </button>
                                                 </td>
@@ -313,135 +298,143 @@
                                     </tbody>
                                     <tfoot class="table-light">
                                         <tr>
-                                            <td colspan="7" class="text-end fw-bold">Total de Toneladas Extraídas Hoy:</td>
-                                            <td class="text-center fw-bold text-primary fs-5">{{ number_format($total_toneladas, 2) }} Ton</td>
+                                            <td colspan="7" class="text-end fw-bold">Total:</td>
+                                            <td class="text-center fw-bold text-primary">{{ number_format($total_toneladas, 2) }} Ton</td>
                                         </tr>
                                     </tfoot>
                                 </table>
                             </div>
                         @else
                             <div class="alert alert-info mb-0">
-                                <i class="bi bi-info-circle"></i> No hay cargas registradas. Agregue al menos una carga para continuar.
+                                <i class="bi bi-info-circle"></i> Sin cargas registradas. Agregue al menos una carga.
                             </div>
                         @endif
                     </div>
                 </div>
             @endif
 
-            <!-- 2B. SECCIÓN CONDICIONAL: ASIGNACIÓN DE JORNAL (Día Caído) - Solo si ES día caído -->
+            <!-- SECCIÓN 3: Jornales (Si ES día caído) -->
             @if($es_dia_caido)
                 <div class="card shadow mb-4">
                     <div class="card-header bg-warning text-dark">
-                        <h5 class="mb-0"><i class="bi bi-cash-coin"></i> Asignación de Jornal por Día Caído</h5>
+                        <h5 class="mb-0"><i class="bi bi-cash-coin"></i> Asignación de Jornales</h5>
                     </div>
                     <div class="card-body">
-                        <!-- Formulario para agregar empleado al jornal -->
                         <div class="border rounded p-3 mb-3 bg-light">
-                            <h6 class="fw-semibold mb-3"><i class="bi bi-person-plus-fill"></i> Añadir Empleado</h6>
+                            <h6 class="fw-semibold mb-3"><i class="bi bi-person-plus-fill"></i> Agregar Empleado al Jornal</h6>
                             <div class="row g-3">
-                                <div class="col-md-8">
+                                <div class="col-md-10">
                                     <label class="form-label fw-semibold">Empleado <span class="text-danger">*</span></label>
-                                    <select wire:model="jornal_id_empleado" class="form-select">
-                                        <option value="">Seleccione un empleado...</option>
+                                    <select wire:model="jornal_id_empleado" class="form-select @error('jornal_id_empleado') is-invalid @enderror">
+                                        <option value="">Seleccione...</option>
                                         @foreach($this->empleadosFiltrados as $emp)
                                             <option value="{{ $emp->id_empleado }}">
-                                                {{ $emp->apellido }}, {{ $emp->nombre }} - {{ $emp->rolLaboral->nombre ?? 'Sin rol' }} 
-                                                (Jornal: ${{ number_format($jornal_por_empleado[$emp->id_empleado] ?? ($emp->rolLaboral->jornal_diario ?? 0), 2) }})
+                                                {{ $emp->apellido }}, {{ $emp->nombre }} - {{ $emp->rolLaboral->nombre ?? 'Sin rol' }}
+                                                @if(isset($jornal_por_empleado[$emp->id_empleado]))
+                                                    (Jornal: ${{ number_format($jornal_por_empleado[$emp->id_empleado], 2) }})
+                                                @endif
                                             </option>
                                         @endforeach
                                     </select>
+                                    @error('jornal_id_empleado') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                 </div>
-                                <div class="col-md-4">
-                                    <label class="form-label fw-semibold">Observaciones</label>
-                                    <input type="text" wire:model="jornal_observaciones" class="form-control" placeholder="Obs. de pago">
+                                <div class="col-md-2 d-flex align-items-end">
+                                    <button type="button" wire:click.prevent="agregarJornal" class="btn btn-warning w-100" wire:loading.attr="disabled" wire:target="agregarJornal">
+                                        <span wire:loading.remove wire:target="agregarJornal"><i class="bi bi-plus-circle"></i> Agregar</span>
+                                        <span wire:loading wire:target="agregarJornal"><span class="spinner-border spinner-border-sm"></span></span>
+                                    </button>
                                 </div>
-                            </div>
-                            <div class="d-flex justify-content-end mt-3">
-                                <button type="button" wire:click="agregarJornal" class="btn btn-warning">
-                                    <i class="bi bi-plus-circle"></i> Agregar Empleado
-                                </button>
                             </div>
                         </div>
 
-                        <!-- Listado de jornales -->
                         @if(count($jornales) > 0)
                             <div class="table-responsive">
-                                <table class="table table-sm table-hover align-middle">
+                                <table class="table table-sm">
                                     <thead class="table-light">
                                         <tr>
                                             <th>Empleado</th>
-                                            <th>Rol Laboral</th>
-                                            <th>Valor Jornal Diario</th>
-                                            <th>Observaciones</th>
+                                            <th>Rol</th>
+                                            <th>Jornal</th>
                                             <th class="text-center">Acción</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @foreach($jornales as $index => $jornal)
                                             <tr>
-                                                <td>{{ $jornal['nombre_completo'] }}</td>
-                                                <td><span class="badge bg-secondary">{{ $jornal['rol'] }}</span></td>
-                                                <td class="text-end fw-bold text-success">${{ number_format($jornal['jornal_diario'], 2) }}</td>
-                                                <td>{{ $jornal['observaciones'] ?? '-' }}</td>
+                                                <td>{{ $jornal['nombre_completo'] ?? '-' }}</td>
+                                                <td><span class="badge bg-secondary">{{ $jornal['rol'] ?? '-' }}</span></td>
+                                                <td class="text-success fw-bold">${{ number_format($jornal['jornal_diario'] ?? 0, 2) }}</td>
                                                 <td class="text-center">
-                                                    <button type="button" wire:click="eliminarJornal({{ $index }})" class="btn btn-sm btn-outline-danger">
+                                                    <button type="button" wire:click.prevent="eliminarJornal({{ $index }})" class="btn btn-sm btn-outline-danger">
                                                         <i class="bi bi-trash"></i>
                                                     </button>
                                                 </td>
                                             </tr>
                                         @endforeach
                                     </tbody>
+                                    <tfoot class="table-light">
+                                        <tr>
+                                            <td colspan="3" class="text-end fw-bold">Total Jornales:</td>
+                                            <td class="text-center fw-bold text-warning">${{ number_format(array_sum(array_column($jornales, 'jornal_diario')), 2) }}</td>
+                                        </tr>
+                                    </tfoot>
                                 </table>
                             </div>
                         @else
                             <div class="alert alert-warning mb-0">
-                                <i class="bi bi-exclamation-triangle"></i> No hay empleados asignados al jornal. Agregue al menos un empleado.
+                                <i class="bi bi-info-circle"></i> Sin empleados asignados. Agregue al menos un empleado.
                             </div>
                         @endif
                     </div>
                 </div>
             @endif
 
-            <!-- 3. SECCIÓN FIJA: MOVIMIENTO DE INSUMOS -->
+            <!-- SECCIÓN 4: Movimientos de Insumos -->
             <div class="card shadow mb-4">
                 <div class="card-header bg-success text-white">
-                    <h5 class="mb-0"><i class="bi bi-box-seam"></i> Movimiento de Insumos</h5>
+                    <h5 class="mb-0"><i class="bi bi-box-seam"></i> Movimientos de Insumos</h5>
                 </div>
                 <div class="card-body">
-                    <!-- Formulario para agregar movimiento -->
+                    <div id="alertaMovimiento"></div>
+                    
+                    <!-- Errores generales de validación de movimiento -->
+                    @if ($errors->has('movimiento_id_insumo') || $errors->has('movimiento_cantidad') || $errors->has('movimiento_motivo'))
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-triangle"></i> <strong>Errores en el movimiento:</strong>
+                            <ul class="mb-0 mt-2">
+                                @error('movimiento_id_insumo') <li>{{ $message }}</li> @enderror
+                                @error('movimiento_cantidad') <li>{{ $message }}</li> @enderror
+                                @error('movimiento_motivo') <li>{{ $message }}</li> @enderror
+                            </ul>
+                        </div>
+                    @endif
+                    
                     <div class="border rounded p-3 mb-3 bg-light">
-                        <h6 class="fw-semibold mb-3"><i class="bi bi-arrow-left-right"></i> Registrar Movimiento de Stock</h6>
-                        
-                        <!-- Fila 1: Identificación y Tipo -->
+                        <h6 class="fw-semibold mb-3"><i class="bi bi-box-arrow-right"></i> Registrar Consumo</h6>
                         <div class="row g-3 mb-3">
                             <div class="col-md-4">
                                 <label class="form-label fw-semibold">Insumo <span class="text-danger">*</span></label>
-                                <select wire:model="movimiento_id_insumo" class="form-select @error('movimiento_id_insumo') is-invalid @enderror">
-                                    <option value="">Seleccione un insumo...</option>
-                                    @foreach($insumos as $insumo)
-                                        <option value="{{ $insumo->id_insumo }}">{{ $insumo->nombre }} (Stock: {{ $insumo->stock }} {{ $insumo->unidadMedida->nombre ?? '' }})</option>
+                                <select wire:model.live="movimiento_id_insumo" class="form-select @error('movimiento_id_insumo') is-invalid @enderror">
+                                    <option value="">Seleccione...</option>
+                                    @foreach($this->insumos as $insumo)
+                                        <option value="{{ $insumo->id_insumo }}">{{ $insumo->nombre }}</option>
                                     @endforeach
                                 </select>
+                                @if($stock_disponible_insumo !== null)
+                                    <small class="text-muted mt-1 d-block">
+                                        Stock disponible: <strong class="{{ $stock_disponible_insumo > 0 ? 'text-success' : 'text-danger' }}">{{ $stock_disponible_insumo }}</strong>
+                                    </small>
+                                @endif
                                 @error('movimiento_id_insumo') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold">Tipo de Movimiento <span class="text-danger">*</span></label>
-                                <select wire:model="movimiento_tipo" class="form-select @error('movimiento_tipo') is-invalid @enderror">
-                                    <option value="entrada">Entrada / Compra</option>
-                                    <option value="salida">Salida / Consumo</option>
-                                </select>
-                                @error('movimiento_tipo') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                            </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <label class="form-label fw-semibold">Cantidad <span class="text-danger">*</span></label>
-                                <input type="number" wire:model="movimiento_cantidad" step="0.01" class="form-control @error('movimiento_cantidad') is-invalid @enderror" placeholder="0.00">
+                                <input type="number" wire:model="movimiento_cantidad" step="0.1" min="0" 
+                                       @if($stock_disponible_insumo !== null) max="{{ $stock_disponible_insumo }}" @endif
+                                       class="form-control @error('movimiento_cantidad') is-invalid @enderror" placeholder="0.00">
                                 @error('movimiento_cantidad') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
-                        </div>
-
-                        <!-- Fila 2: Motivo y Fecha -->
-                        <div class="row g-3 mb-3">
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <label class="form-label fw-semibold">Motivo <span class="text-danger">*</span></label>
                                 <select wire:model="movimiento_motivo" class="form-select @error('movimiento_motivo') is-invalid @enderror">
                                     <option value="Producción">Producción</option>
@@ -450,32 +443,21 @@
                                 </select>
                                 @error('movimiento_motivo') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold">Fecha <span class="text-info">Automática</span></label>
-                                <input type="text" value="{{ $fecha ? \Carbon\Carbon::parse($fecha)->format('d/m/Y') : 'Seleccione fecha arriba' }}" class="form-control bg-light" readonly>
-                                <small class="text-muted">Toma la fecha del Parte Diario</small>
+                            <div class="col-md-2 d-flex align-items-end">
+                                <button type="button" wire:click.prevent="agregarMovimiento" class="btn btn-success w-100" wire:loading.attr="disabled" wire:target="agregarMovimiento">
+                                    <span wire:loading.remove wire:target="agregarMovimiento"><i class="bi bi-plus-circle"></i> Agregar</span>
+                                    <span wire:loading wire:target="agregarMovimiento"><span class="spinner-border spinner-border-sm"></span></span>
+                                </button>
                             </div>
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold">Observaciones</label>
-                                <input type="text" wire:model="movimiento_observaciones" class="form-control" placeholder="Notas específicas (opcional)">
-                            </div>
-                        </div>
-
-                        <div class="d-flex justify-content-end">
-                            <button type="button" wire:click="agregarMovimiento" class="btn btn-success">
-                                <i class="bi bi-plus-circle"></i> Agregar Movimiento
-                            </button>
                         </div>
                     </div>
 
-                    <!-- Listado de movimientos -->
                     @if(count($movimientos) > 0)
                         <div class="table-responsive">
-                            <table class="table table-sm table-hover align-middle">
+                            <table class="table table-sm">
                                 <thead class="table-light">
                                     <tr>
                                         <th>Insumo</th>
-                                        <th>Tipo de Movimiento</th>
                                         <th>Cantidad</th>
                                         <th>Motivo</th>
                                         <th>Observaciones</th>
@@ -485,30 +467,12 @@
                                 <tbody>
                                     @foreach($movimientos as $index => $mov)
                                         <tr>
-                                            <td>
-                                                <strong>{{ $mov['nombre_insumo'] }}</strong>
-                                                <br><small class="text-muted">{{ $mov['unidad'] }}</small>
-                                            </td>
-                                            <td>
-                                                @if($mov['tipo'] == 'entrada')
-                                                    <span class="badge bg-primary"><i class="bi bi-arrow-down-circle"></i> Entrada</span>
-                                                @else
-                                                    <span class="badge bg-danger"><i class="bi bi-arrow-up-circle"></i> Salida</span>
-                                                @endif
-                                            </td>
-                                            <td class="fw-bold">{{ number_format($mov['cantidad'], 2) }}</td>
-                                            <td>
-                                                @if($mov['motivo'] == 'Producción')
-                                                    <span class="badge bg-info">{{ $mov['motivo'] }}</span>
-                                                @elseif($mov['motivo'] == 'Mantenimiento')
-                                                    <span class="badge bg-warning text-dark">{{ $mov['motivo'] }}</span>
-                                                @else
-                                                    <span class="badge bg-secondary">{{ $mov['motivo'] }}</span>
-                                                @endif
-                                            </td>
-                                            <td>{{ $mov['observaciones'] ?? '-' }}</td>
+                                            <td><strong>{{ $mov['nombre_insumo'] }}</strong></td>
+                                            <td>{{ number_format($mov['cantidad'], 2) }} {{ $mov['unidad'] ?? '' }}</td>
+                                            <td><span class="badge bg-secondary">{{ $mov['motivo'] }}</span></td>
+                                            <td><small>{{ $mov['observaciones'] ?? '-' }}</small></td>
                                             <td class="text-center">
-                                                <button type="button" wire:click="eliminarMovimiento({{ $index }})" class="btn btn-sm btn-outline-danger" title="Eliminar movimiento">
+                                                <button type="button" wire:click.prevent="eliminarMovimiento({{ $index }})" class="btn btn-sm btn-outline-danger">
                                                     <i class="bi bi-trash"></i>
                                                 </button>
                                             </td>
@@ -519,124 +483,127 @@
                         </div>
                     @else
                         <div class="alert alert-secondary mb-0">
-                            <i class="bi bi-info-circle"></i> No hay movimientos de insumos registrados. Esta sección es opcional.
+                            <i class="bi bi-info-circle"></i> Sin movimientos registrados. Esta sección es opcional.
                         </div>
                     @endif
                 </div>
             </div>
 
-            <!-- BOTÓN FINAL PARA GUARDAR TODO -->
+            <!-- BOTÓN GUARDAR -->
             <div class="card shadow">
                 <div class="card-body">
                     <div class="d-flex gap-2 justify-content-end">
-                        @if ($parte_id)
-                            <button type="button" wire:click="resetCampos" class="btn btn-secondary btn-lg">
-                                <i class="bi bi-x-circle"></i> Cancelar
-                            </button>
-                        @endif
-                        <button type="button" wire:click="guardar" class="btn btn-primary btn-lg">
-                            <i class="bi bi-check-circle"></i> {{ $parte_id ? 'Actualizar Parte Diario' : 'Guardar Parte Diario Completo' }}
+                        <button type="button" wire:click.prevent="resetCampos" class="btn btn-secondary btn-lg" wire:loading.attr="disabled">
+                            <i class="bi bi-x-circle"></i> Cancelar
+                        </button>
+                        <button type="button" wire:click.prevent="guardar" class="btn btn-primary btn-lg" wire:loading.attr="disabled" wire:target="guardar">
+                            <span wire:loading.remove wire:target="guardar"><i class="bi bi-check-circle"></i> Guardar Parte Diario</span>
+                            <span wire:loading wire:target="guardar"><span class="spinner-border spinner-border-sm"></span> Guardando...</span>
                         </button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Pestaña 2: Listado de Partes Diarios (Tabla) -->
-        <div class="tab-pane fade" id="listado-partes" role="tabpanel" aria-labelledby="listado-tab">
+        <!-- Pestaña 2: Listado -->
+        <div class="tab-pane fade show active" id="listado-partes" role="tabpanel" aria-labelledby="listado-tab">
             <div class="card shadow">
-                <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Listado de Partes Diarios</h5>
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Partes Diarios Registrados</h5>
                 </div>
                 <div class="card-body">
-                    <!-- Buscador -->
-                    <div class="row mb-3">
+                    <div class="row g-3 mb-3">
                         <div class="col-md-6">
-                            <div class="input-group">
-                                <span class="input-group-text bg-light">
-                                    <i class="bi bi-search"></i>
-                                </span>
-                                <input type="text" wire:model.live="busqueda" class="form-control" placeholder="Buscar por lote o fecha...">
-                            </div>
+                            <label class="form-label fw-semibold">Buscar por Propietario</label>
+                            <input type="text" wire:model.live.debounce.400ms="busqueda" class="form-control" placeholder="Ej: Juan Pérez...">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Buscar por Fecha</label>
+                            <input type="date" wire:model.live="busqueda_fecha" class="form-control">
                         </div>
                     </div>
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Lote</th>
-                                    <th>Fecha</th>
-                                    <th>Tipo</th>
-                                    <th>Observaciones</th>
-                                    <th>Estado</th>
-                                    <th class="text-center">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse ($partes as $parte)
+                    
+                    @if($partes && count($partes) > 0)
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
                                     <tr>
-                                        <td><span class="badge bg-secondary">{{ $parte->id_parte_diario }}</span></td>
-                                        <td class="fw-semibold">{{ $parte->lote?->propietario ?? 'N/A' }}</td>
-                                        <td>{{ $parte->fecha ? \Carbon\Carbon::parse($parte->fecha)->format('d/m/Y') : 'N/A' }}</td>
-                                        <td>
-                                            @if($parte->es_dia_caido)
-                                                <span class="badge bg-warning text-dark"><i class="bi bi-calendar-x"></i> Día Caído</span>
-                                            @else
-                                                <span class="badge bg-success"><i class="bi bi-truck"></i> Producción</span>
-                                            @endif
-                                        </td>
-                                        <td>{{ $parte->observaciones ? \Illuminate\Support\Str::limit($parte->observaciones, 30) : '-' }}</td>
-                                        <td>
-                                            @if($parte->activo)
-                                                <span class="badge bg-success">Activo</span>
-                                            @else
-                                                <span class="badge bg-danger">Inactivo</span>
-                                            @endif
-                                        </td>
-                                        <td class="text-center">
-                                            <div class="btn-group btn-group-sm" role="group">
-                                                <button class="btn btn-outline-primary" wire:click="editar({{ $parte->id_parte_diario }})" onclick="cambiarAPestanaFormulario()" title="Editar">
-                                                    <i class="bi bi-pencil"></i>
-                                                </button>
-                                                <button class="btn btn-outline-danger" wire:click="eliminar({{ $parte->id_parte_diario }})" onclick="return confirm('¿Está seguro de eliminar este parte diario?')" title="Eliminar">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                            </div>
-                                        </td>
+                                        <th>ID</th>
+                                        <th>Lote</th>
+                                        <th>Fecha</th>
+                                        <th>Tipo</th>
+                                        <th>Observaciones</th>
+                                        <th class="text-center">Acciones</th>
                                     </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="7" class="text-center py-5 text-muted">
-                                            <i class="bi bi-inbox" style="font-size: 3rem;"></i>
-                                            <p class="mb-0 mt-2">No hay partes diarios registrados.</p>
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
+                                </thead>
+                                <tbody>
+                                    @foreach($partes as $parte)
+                                        <tr>
+                                            <td><span class="badge bg-secondary">#{{ $parte->id_parte_diario }}</span></td>
+                                            <td>{{ $parte->lote?->propietario ?? '-' }}</td>
+                                            <td>{{ $parte->fecha ? \Carbon\Carbon::parse($parte->fecha)->format('d/m/Y') : '-' }}</td>
+                                            <td>
+                                                @if($parte->es_dia_caido)
+                                                    <span class="badge bg-warning text-dark"><i class="bi bi-calendar-x"></i> Día Caído</span>
+                                                @else
+                                                    <span class="badge bg-success"><i class="bi bi-truck"></i> Producción</span>
+                                                @endif
+                                            </td>
+                                            <td><small>{{ $parte->observaciones ? \Illuminate\Support\Str::limit($parte->observaciones, 40) : '-' }}</small></td>
+                                            <td class="text-center">
+                                                <div class="btn-group btn-group-sm">
+                                                    <button class="btn btn-outline-primary" wire:click.prevent="editar({{ $parte->id_parte_diario }})" title="Editar">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </button>
+                                                    <button class="btn btn-outline-danger" wire:click.prevent="eliminar({{ $parte->id_parte_diario }})" wire:confirm="¿Está seguro de eliminar este parte diario?" title="Eliminar">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                        @isset($partes)
+                            <div class="mt-3" wire:key="pagination-{{ now() }}">
+                                {{ $partes->links() }}
+                            </div>
+                        @endisset
+                    @else
+                        <div class="alert alert-info text-center py-5">
+                            <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+                            <p class="mb-0 mt-2">No hay partes diarios registrados.</p>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- JavaScript para cambiar de pestaña al editar/guardar -->
+@push('scripts')
 <script>
-    function cambiarAPestanaFormulario() {
-        const nuevoTab = document.getElementById('nuevo-tab');
-        const nuevoTabInstance = new bootstrap.Tab(nuevoTab);
-        nuevoTabInstance.show();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
+    // Evento para cambiar a la pestaña de listado después de guardar
     document.addEventListener('livewire:init', () => {
         Livewire.on('parteDiarioGuardado', () => {
             const listadoTab = document.getElementById('listado-tab');
-            const listadoTabInstance = new bootstrap.Tab(listadoTab);
-            listadoTabInstance.show();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            if(window.bootstrap && listadoTab) {
+                const tabInstance = new bootstrap.Tab(listadoTab);
+                tabInstance.show();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        });
+
+        // Evento para cambiar a la pestaña de formulario al editar
+        Livewire.on('editandoParteDiario', () => {
+            const nuevoTab = document.getElementById('nuevo-tab');
+            if(window.bootstrap && nuevoTab) {
+                const tabInstance = new bootstrap.Tab(nuevoTab);
+                tabInstance.show();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
         });
     });
 </script>
+@endpush

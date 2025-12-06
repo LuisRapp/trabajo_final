@@ -179,8 +179,8 @@ return [
     */
 
     'queue' => [
-        'enable' => false,
-        'connection' => 'sync',
+        'enable' => env('AUDITING_QUEUE_ENABLED', false),
+        'connection' => env('AUDITING_QUEUE_CONNECTION', 'sync'),
         'queue' => 'default',
         'delay' => 0,
     ],

@@ -77,7 +77,7 @@
                     </div>
                     <div class="col-md-4">
                         <label class="form-label fw-semibold">Umbral Mantenimiento Preventivo (ton)</label>
-                        <input type="number" step="0.01" wire:model="umbral_toneladas" class="form-control @error('umbral_toneladas') is-invalid @enderror" placeholder="Ej: 100.00">
+                        <input type="number" step="0.1" min="0" wire:model="umbral_toneladas" class="form-control @error('umbral_toneladas') is-invalid @enderror" placeholder="Ej: 100.00">
                         <small class="text-muted">Toneladas acumuladas para generar mantenimiento</small>
                         @error('umbral_toneladas') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>

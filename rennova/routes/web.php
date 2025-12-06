@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 use Livewire\Volt\Volt;
 use App\Http\Controllers\LoteController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\ProveedorController;
 use App\Http\Controllers\CategoriaMaderaController;
@@ -21,17 +22,17 @@ use App\Http\Controllers\AdelantoController;
 use App\Http\Controllers\ReciboController;
 use App\Http\Controllers\HistoricoCostosMaquinariaController;
 use App\Http\Controllers\AuditoriaController;
+use App\Http\Controllers\ReporteController;
 // use App\Http\Controllers\KitInsumoController;
 // Livewire ABMs
 use App\Http\Livewire\HistoricoRolesLaborales;
+use App\Http\Livewire\GestionStock;
 use App\Http\Controllers\CargaController;
 use App\Http\Controllers\ChoferController;
 
 // --- RUTAS PÚBLICAS ---
-// Página principal (pública)
-Route::get('/', function () {
-    return view('index');
-})->name('home');
+// Página principal (pública) usando controlador para armar pronóstico
+Route::get('/', [DashboardController::class, 'index'])->name('home');
 
 // Las rutas de autenticación (login, register, etc.) deben estar PÚBLICAS
 require __DIR__.'/auth.php';
@@ -40,8 +41,8 @@ require __DIR__.'/auth.php';
 // --- RUTAS PROTEGIDAS (Requieren Iniciar Sesión) ---
 Route::middleware(['auth'])->group(function () {
 
-    // Dashboard y configuración (ya estaban protegidos)
-    Route::view('dashboard', 'dashboard')
+    // Dashboard (usa mismo controlador/flujo que inicio; protegido si se accede por esta ruta)
+    Route::get('dashboard', [DashboardController::class, 'index'])
         ->middleware(['verified'])
         ->name('dashboard');
 
@@ -86,6 +87,24 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/mantenimientos/{id}/approve', [MantenimientoController::class, 'approve'])->name('mantenimientos.approve');
     Route::post('/mantenimientos/{id}/complete', [MantenimientoController::class, 'complete'])->name('mantenimientos.complete');
     
+    // Configuración de Notificaciones de Mantenimiento
+    Route::view('/configuracion-notificaciones-mantenimiento', 'configuracion-notificaciones.index')
+        ->middleware(['permission:configurar-notificaciones-mantenimiento'])
+        ->name('configuracion-notificaciones.index');
+    
+    // Configuración de Horarios de Mantenimiento
+    Route::view('/configuracion-mantenimiento', 'configuracion-mantenimiento.index')
+        ->middleware(['permission:configurar-mantenimiento'])
+        ->name('configuracion-mantenimiento.index');
+    
+    // Notificaciones del Sistema
+    Route::view('/notificaciones', 'notificaciones.index')->name('notificaciones.index');
+    
+    // Programar Mantenimiento desde Notificación
+    Route::get('/programar-mantenimiento/{notificacionId}', function ($notificacionId) {
+        return view('programar-mantenimiento.index', ['notificacionId' => $notificacionId]);
+    })->name('programar-mantenimiento');
+    
     // Configuración de Kits de Mantenimiento Preventivo (UI original)
     Route::view('/kits-mantenimiento', 'kits-mantenimiento.index')->name('kits-mantenimiento.index');
     
@@ -101,11 +120,17 @@ Route::middleware(['auth'])->group(function () {
     // Auditorías
     Route::get('/auditorias', [AuditoriaController::class, 'index'])->name('auditorias.index');
     
+    // Reportes - Estadísticas Forestales
+    Route::get('/reportes/estadisticas-forestales', [ReporteController::class, 'estadisticasForestales'])->name('reportes.estadisticas-forestales');
+    
     // Liquidación de Pagos
     Route::view('/liquidacion-pagos', 'liquidacion-pagos.index')->name('liquidacion-pagos.index');
     
     // Asignaciones por Lote (Empleados y Maquinaria)
     Route::view('/asignaciones-lote', 'asignaciones-lote.index')->name('asignaciones-lote.index');
+    
+    // Gestión de Stock (FIFO) dentro del módulo Operaciones
+    Route::view('/modulos/operaciones/gestionstock', 'modulos.operaciones.gestionstock')->name('modulos.operaciones.gestionstock');
     
     // ABM Cargas
     Route::get('/cargas', [CargaController::class, 'index'])->name('cargas.index');

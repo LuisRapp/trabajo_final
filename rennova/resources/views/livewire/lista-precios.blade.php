@@ -70,7 +70,7 @@
                                 <label class="form-label fw-semibold">Precio <span class="text-danger">*</span></label>
                                 <div class="input-group">
                                     <span class="input-group-text">$</span>
-                                    <input type="number" wire:model="precio" step="0.01" class="form-control @error('precio') is-invalid @enderror" placeholder="0.00">
+                                    <input type="number" wire:model="precio" step="0.1" min="0" class="form-control @error('precio') is-invalid @enderror" placeholder="0.00">
                                     @error('precio') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                 </div>
                             </div>

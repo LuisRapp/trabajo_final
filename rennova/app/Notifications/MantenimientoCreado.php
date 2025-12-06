@@ -35,7 +35,6 @@ class MantenimientoCreado extends Notification
                     ->line("**Maquinaria:** {$mantenimiento->maquinaria->modelo}")
                     ->line("**Tipo:** {$mantenimiento->tipoMantenimiento->nombre}")
                     ->line("**Estado:** {$mantenimiento->estado}")
-                    ->action('Ver Orden', url("/mantenimientos"))
                     ->line('Por favor, revise el stock de insumos necesarios.');
     }
 

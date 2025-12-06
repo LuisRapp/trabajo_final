@@ -79,17 +79,17 @@
                             </div>
                             <div class="col-md-2">
                                 <label class="form-label fw-semibold">Peso Bruto</label>
-                                <input type="number" wire:model="peso_bruto" step="0.01" class="form-control @error('peso_bruto') is-invalid @enderror">
+                                <input type="number" wire:model="peso_bruto" step="0.1" min="0" class="form-control @error('peso_bruto') is-invalid @enderror">
                                 @error('peso_bruto') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-2">
                                 <label class="form-label fw-semibold">Tara</label>
-                                <input type="number" wire:model="tara" step="0.01" class="form-control @error('tara') is-invalid @enderror">
+                                <input type="number" wire:model="tara" step="0.1" min="0" class="form-control @error('tara') is-invalid @enderror">
                                 @error('tara') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-2">
                                 <label class="form-label fw-semibold">Peso Neto</label>
-                                <input type="number" wire:model="peso_neto" step="0.01" class="form-control @error('peso_neto') is-invalid @enderror">
+                                <input type="number" wire:model="peso_neto" step="0.1" min="0" class="form-control @error('peso_neto') is-invalid @enderror">
                                 @error('peso_neto') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-2">
@@ -99,7 +99,7 @@
                             </div>
                             <div class="col-md-2">
                                 <label class="form-label fw-semibold">Fecha Carga <span class="text-danger">*</span></label>
-                                <input type="date" wire:model="fecha_carga" class="form-control @error('fecha_carga') is-invalid @enderror">
+                                <input type="date" wire:model="fecha_carga" class="form-control @error('fecha_carga') is-invalid @enderror" max="{{ now()->toDateString() }}">
                                 @error('fecha_carga') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                         </div>

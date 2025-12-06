@@ -150,7 +150,7 @@ unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
                             </div>
                             <div class="col-md-2">
                                 <label class="form-label fw-semibold">Peso Bruto</label>
-                                <input type="number" wire:model="peso_bruto" step="0.01" class="form-control <?php $__errorArgs = ['peso_bruto'];
+                                <input type="number" wire:model="peso_bruto" step="0.1" min="0" class="form-control <?php $__errorArgs = ['peso_bruto'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
@@ -169,7 +169,7 @@ unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
                             </div>
                             <div class="col-md-2">
                                 <label class="form-label fw-semibold">Tara</label>
-                                <input type="number" wire:model="tara" step="0.01" class="form-control <?php $__errorArgs = ['tara'];
+                                <input type="number" wire:model="tara" step="0.1" min="0" class="form-control <?php $__errorArgs = ['tara'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
@@ -188,7 +188,7 @@ unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
                             </div>
                             <div class="col-md-2">
                                 <label class="form-label fw-semibold">Peso Neto</label>
-                                <input type="number" wire:model="peso_neto" step="0.01" class="form-control <?php $__errorArgs = ['peso_neto'];
+                                <input type="number" wire:model="peso_neto" step="0.1" min="0" class="form-control <?php $__errorArgs = ['peso_neto'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
@@ -233,7 +233,7 @@ if (isset($message)) { $__messageOriginal = $message; }
 $message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
-unset($__errorArgs, $__bag); ?>">
+unset($__errorArgs, $__bag); ?>" max="<?php echo e(now()->toDateString()); ?>">
                                 <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['fecha_carga'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :

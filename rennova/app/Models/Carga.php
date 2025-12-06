@@ -3,11 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use OwenIt\Auditing\Contracts\Auditable;
+use Carbon\Carbon;
 
 class Carga extends Model implements Auditable
 {
-    use \OwenIt\Auditing\Auditable;
+    use HasFactory, \OwenIt\Auditing\Auditable;
     protected $table = 'cargas';
     protected $primaryKey = 'id_carga';
     protected $fillable = [
@@ -66,5 +68,14 @@ class Carga extends Model implements Auditable
         return $this->belongsToMany(Venta::class, 'venta_cargas', 'id_carga', 'id_venta')
                     ->withPivot('precio_unitario', 'peso_toneladas', 'subtotal')
                     ->withTimestamps();
+    }
+
+    protected static function booted()
+    {
+        static::saving(function (self $model) {
+            if ($model->fecha_carga && Carbon::parse($model->fecha_carga)->isAfter(Carbon::today())) {
+                throw new \InvalidArgumentException('La fecha de la carga no puede ser futura.');
+            }
+        });
     }
 }

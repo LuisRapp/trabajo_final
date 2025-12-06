@@ -48,7 +48,7 @@
                         <label class="form-label fw-semibold">Monto <span class="text-danger">*</span></label>
                         <div class="input-group">
                             <span class="input-group-text">$</span>
-                            <input type="number" wire:model="monto" step="0.01" class="form-control @error('monto') is-invalid @enderror" placeholder="0.00">
+                            <input type="number" wire:model="monto" step="0.1" min="0" class="form-control @error('monto') is-invalid @enderror" placeholder="0.00">
                         </div>
                         @error('monto') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>

@@ -57,7 +57,7 @@
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fw-semibold">Superficie (ha)</label>
-                        <input type="number" wire:model="superficie" step="0.01" class="form-control @error('superficie') is-invalid @enderror" placeholder="0.00">
+                        <input type="number" wire:model="superficie" step="0.1" min="0" class="form-control @error('superficie') is-invalid @enderror" placeholder="0.00">
                         @error('superficie') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
                 </div>
@@ -79,6 +79,33 @@
                             <option value="inactivo">Inactivo</option>
                         </select>
                         @error('estado') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+                </div>
+                
+                <!-- Coordenadas GPS para análisis climático -->
+                <div class="row g-3 mb-4">
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i> <strong>Coordenadas GPS (Opcional):</strong> 
+                            Agregue las coordenadas para habilitar pronóstico de lluvia y alertas climáticas.
+                            <a href="https://www.google.com/maps" target="_blank" class="alert-link">Buscar coordenadas</a>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-geo"></i> Latitud
+                        </label>
+                        <input type="number" wire:model="latitud" step="0.00000001" class="form-control @error('latitud') is-invalid @enderror" placeholder="-27.469771" min="-90" max="90">
+                        @error('latitud') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        <small class="form-text text-muted">Ejemplo: -27.469771 (entre -90 y 90)</small>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-geo-alt"></i> Longitud
+                        </label>
+                        <input type="number" wire:model="longitud" step="0.00000001" class="form-control @error('longitud') is-invalid @enderror" placeholder="-58.832443" min="-180" max="180">
+                        @error('longitud') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        <small class="form-text text-muted">Ejemplo: -58.832443 (entre -180 y 180)</small>
                     </div>
                 </div>
                 <div class="d-flex gap-2 justify-content-end">
@@ -125,6 +152,7 @@
                             <th>Ubicación</th>
                             <th>Especie</th>
                             <th>Superficie (ha)</th>
+                            <th>Coordenadas GPS</th>
                             <th>Condición</th>
                             <th>Estado</th>
                             <th class="text-end">Acciones</th>
@@ -138,6 +166,16 @@
                                 <td>{{ $lote->ubicacion }}</td>
                                 <td>{{ $lote->especie ?? '-' }}</td>
                                 <td class="text-end">{{ number_format($lote->superficie ?? 0, 2) }}</td>
+                                <td>
+                                    @if($lote->latitud && $lote->longitud)
+                                        <a href="https://www.google.com/maps?q={{ $lote->latitud }},{{ $lote->longitud }}" target="_blank" class="text-decoration-none" title="Ver en Google Maps">
+                                            <i class="bi bi-geo-alt-fill text-primary"></i>
+                                            <small>{{ number_format($lote->latitud, 6) }}, {{ number_format($lote->longitud, 6) }}</small>
+                                        </a>
+                                    @else
+                                        <span class="text-muted"><i class="bi bi-geo"></i> Sin coordenadas</span>
+                                    @endif
+                                </td>
                                 <td>
                                     @if($lote->condicion_compra)
                                         <span class="badge bg-{{ $lote->condicion_compra == 'propio' ? 'success' : 'info' }}">
@@ -165,7 +203,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="text-center py-5 text-muted">
+                                <td colspan="9" class="text-center py-5 text-muted">
                                     <i class="bi bi-inbox" style="font-size: 3rem;"></i>
                                     <p class="mb-0 mt-2">No hay lotes registrados.</p>
                                 </td>

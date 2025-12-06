@@ -34,23 +34,15 @@
                 <div class="card-body">
                     <form wire:submit.prevent="guardar">
                 <div class="row g-3 mb-4">
-                    <div class="col-md-6">
+                    <div class="col-md-12">
                         <label class="form-label fw-semibold">Nombre <span class="text-danger">*</span></label>
                         <input type="text" wire:model="nombre" class="form-control @error('nombre') is-invalid @enderror" placeholder="Nombre del insumo">
                         @error('nombre') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold">Costo Unitario</label>
-                        <div class="input-group">
-                            <span class="input-group-text">$</span>
-                            <input type="number" wire:model="costo_unitario" step="0.01" class="form-control @error('costo_unitario') is-invalid @enderror" placeholder="0.00">
-                        </div>
-                        @error('costo_unitario') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                    </div>
                 </div>
                 <div class="row g-3 mb-4">
                     <div class="col-md-4">
-                        <label class="form-label fw-semibold">Unidad de Medida</label>
+                        <label class="form-label fw-semibold">Unidad de Medida <span class="text-danger">*</span></label>
                         <select wire:model="id_unidad_medida" class="form-select @error('id_unidad_medida') is-invalid @enderror">
                             <option value="">Seleccione...</option>
                             @foreach($unidades as $unidad)
@@ -60,7 +52,7 @@
                         @error('id_unidad_medida') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label fw-semibold">Proveedor</label>
+                        <label class="form-label fw-semibold">Proveedor Principal <span class="text-danger">*</span></label>
                         <select wire:model="id_proveedor" class="form-select @error('id_proveedor') is-invalid @enderror">
                             <option value="">Seleccione...</option>
                             @foreach($proveedores as $proveedor)
@@ -74,6 +66,9 @@
                         <textarea wire:model="descripcion" class="form-control @error('descripcion') is-invalid @enderror" placeholder="Descripción del insumo" rows="1"></textarea>
                         @error('descripcion') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
+                </div>
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> <strong>Nota:</strong> El precio se calcula automáticamente usando el sistema FIFO basado en los lotes de stock. Gestione el stock en el módulo de <strong>Gestión de Stock</strong>.
                 </div>
                 <div class="d-flex gap-2 justify-content-end">
                     @if ($insumo_id)
@@ -117,7 +112,8 @@
                             <th>Descripción</th>
                             <th>Unidad</th>
                             <th>Proveedor</th>
-                            <th>Costo Unitario</th>
+                            <th class="text-end">Stock Actual</th>
+                            <th class="text-end">Precio Promedio</th>
                             <th class="text-center">Acciones</th>
                         </tr>
                     </thead>
@@ -135,7 +131,18 @@
                                     @endif
                                 </td>
                                 <td>{{ $insumo->proveedor?->razon_social ?? 'N/A' }}</td>
-                                <td>${{ number_format($insumo->costo_unitario, 2, ',', '.') }}</td>
+                                <td class="text-end">
+                                    <span class="badge {{ $insumo->stock > 0 ? 'bg-success' : 'bg-warning' }}">
+                                        {{ number_format($insumo->stock, 2) }}
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    @if($insumo->precio_promedio > 0)
+                                        ${{ number_format($insumo->precio_promedio, 2, ',', '.') }}
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                </td>
                                 <td class="text-center">
                                     <div class="btn-group btn-group-sm" role="group">
                                         <button class="btn btn-outline-primary" wire:click="editar({{ $insumo->id_insumo }})" onclick="cambiarAPestanaFormulario()" title="Editar">
@@ -149,7 +156,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center py-5 text-muted">
+                                <td colspan="8" class="text-center py-5 text-muted">
                                     <i class="bi bi-inbox" style="font-size: 3rem;"></i>
                                     <p class="mb-0 mt-2">No hay insumos registrados.</p>
                                 </td>

@@ -3,6 +3,8 @@
 namespace App\Http\Livewire;
 
 use Livewire\Component;
+use Livewire\WithPagination;
+use App\Events\CargaRegistrada;
 use App\Models\ParteDiario;
 use App\Models\Lote;
 use App\Models\Empleado;
@@ -13,13 +15,17 @@ use App\Models\MovimientoStock;
 use App\Models\Recibo;
 use App\Models\CategoriaMadera;
 use App\Models\Cliente;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class PartesDiarios extends Component
 {
+    use WithPagination;
+    protected $paginationTheme = 'bootstrap';
+
     // Parte Diario Principal
-    public $partes = [];
+    // Listado paginado se entrega desde render(), no como estado
     public $parte_id;
     public $id_lote;
     public $fecha;
@@ -28,19 +34,20 @@ class PartesDiarios extends Component
     public $motivo_dia_caido;
     public $observaciones;
     public $busqueda = '';
+    public $busqueda_fecha = '';
     
-    // Catálogos
-    public $lotes = [];
-    public $empleados = [];
+    // Catálogos (lazy loaded via computed properties)
+    protected $lotesCache;
+    protected $empleadosFiltradosCache;
+    protected $maquinariasFiltradaCache;
+    // Catálogos pesados se obtienen vía propiedades computadas para evitar deshidratación
     public $empleados_asignados_ids = [];
-    public $maquinarias = [];
+    
+    // Se usa propiedad computada
     public $maquinarias_asignadas_ids = [];
     // selección por carga (múltiple)
     public $carga_maquinarias = [];
-    public $choferes = [];
-    public $insumos = [];
-    public $categorias_madera = [];
-    public $clientes = [];
+    // Catálogos: se resolverán por getters computados
     
     // Detalles de Cargas (Modo Destajo)
     public $cargas = [];
@@ -67,79 +74,106 @@ class PartesDiarios extends Component
     // Detalles de Movimientos de Insumos
     public $movimientos = [];
     public $movimiento_id_insumo;
-    public $movimiento_tipo = 'entrada';
     public $movimiento_cantidad;
-    public $movimiento_motivo = 'Producción'; // Nuevo campo
-    public $movimiento_observaciones; // Nuevo campo
+    public $movimiento_motivo = 'Producción';
+    public $movimiento_observaciones;
+    public $stock_disponible_insumo = null; // Para mostrar en UI
 
     protected function rules()
     {
+        $fechaMinima = Carbon::today()->subDays(7)->toDateString();
+        
         $rules = [
             'id_lote' => 'required|exists:lotes,id_lote',
-            'fecha' => 'required|date',
-            'actividad_realizada' => 'required|string|max:255',
+            // Validar fecha: solo hoy o dentro de los últimos 7 días
+            'fecha' => [
+                'required',
+                'date',
+                'before_or_equal:today',
+                'after_or_equal:' . $fechaMinima,
+            ],
             'observaciones' => 'nullable|string',
         ];
-        
-        if ($this->es_dia_caido) {
-            $rules['motivo_dia_caido'] = 'required|string|max:500';
-        }
         
         return $rules;
     }
 
+    protected function messages()
+    {
+        $fechaMinima = Carbon::today()->subDays(7)->format('d/m/Y');
+        
+        return [
+            'fecha.required' => 'La fecha es obligatoria.',
+            'fecha.date' => 'La fecha no es válida.',
+            'fecha.before_or_equal' => 'No se pueden crear partes diarios para fechas futuras. Solo hoy o días anteriores.',
+            'fecha.after_or_equal' => "No se pueden crear partes diarios con más de 7 días de antigüedad. Fecha mínima permitida: {$fechaMinima}.",
+            'id_lote.required' => 'Debe seleccionar un lote.',
+        ];
+    }
+
     public function mount()
     {
-        $this->lotes = Lote::where('estado', 'activo')->orderBy('propietario')->get();
-        $this->empleados = Empleado::with('rolLaboral')->whereNull('fecha_fin_actividades')->orderBy('apellido')->get();
-        $this->maquinarias = \App\Models\Maquinaria::with('tipoMaquinaria')->orderBy('modelo')->get();
-        $this->choferes = Chofer::where('estado', true)->orderBy('apellido')->get();
-        $this->insumos = Insumo::orderBy('nombre')->get();
-        $this->categorias_madera = CategoriaMadera::orderBy('nombre')->get();
-        $this->clientes = Cliente::orderBy('razon_social')->get();
-        $this->cargarPartes();
-        $this->actualizarJornalPorEmpleado();
+        // Los lotes se cargan lazy via propiedad computada
+        // actualizarJornalPorEmpleado se llama cuando hay fecha
     }
 
     public function updatedIdLote()
     {
         // Al cambiar el lote, cargar empleados y maquinarias asignadas para filtrar
         $this->empleados_asignados_ids = [];
-    $this->maquinarias_asignadas_ids = [];
-    $this->carga_maquinarias = [];
+        $this->maquinarias_asignadas_ids = [];
+        $this->carga_maquinarias = [];
+        $this->carga_empleados = [];
         
         if ($this->id_lote) {
-            $lote = Lote::with(['empleados:id_empleado', 'maquinarias:id_maquinaria'])->find($this->id_lote);
-            if ($lote) {
-                $this->empleados_asignados_ids = $lote->empleados->pluck('id_empleado')->toArray();
-                $this->maquinarias_asignadas_ids = $lote->maquinarias->pluck('id_maquinaria')->toArray();
+            // Query directa sin validación extra - más rápido
+            $this->empleados_asignados_ids = \DB::table('lote_empleado')
+                ->where('id_lote', $this->id_lote)
+                ->pluck('id_empleado')
+                ->toArray();
                 
-                // Preselección automática si hay solo una maquinaria asignada (selección múltiple)
-                if (count($this->maquinarias_asignadas_ids) === 1) {
-                    $this->carga_maquinarias = [$this->maquinarias_asignadas_ids[0]];
-                }
-            }
+            $this->maquinarias_asignadas_ids = \DB::table('lote_maquinaria')
+                ->where('id_lote', $this->id_lote)
+                ->pluck('id_maquinaria')
+                ->toArray();
         }
+        
+        // Limpiar cache de propiedades computadas
+        unset($this->empleadosFiltradosCache, $this->maquinariasFiltradaCache);
     }
 
     public function getEmpleadosFiltradosProperty()
     {
-        if (empty($this->empleados_asignados_ids)) {
-            return $this->empleados;
+        if (isset($this->empleadosFiltradosCache)) {
+            return $this->empleadosFiltradosCache;
         }
-        return $this->empleados->filter(function($emp) {
-            return in_array($emp->id_empleado, $this->empleados_asignados_ids);
-        });
+        
+        $empleados = $this->empleados; // propiedad computada
+        if (empty($this->empleados_asignados_ids)) {
+            $this->empleadosFiltradosCache = $empleados;
+        } else {
+            $this->empleadosFiltradosCache = $empleados->filter(function($emp) {
+                return in_array($emp->id_empleado, $this->empleados_asignados_ids);
+            });
+        }
+        return $this->empleadosFiltradosCache;
     }
 
     public function getMaquinariasFiltradaProperty()
     {
-        if (empty($this->maquinarias_asignadas_ids)) {
-            return $this->maquinarias;
+        if (isset($this->maquinariasFiltradaCache)) {
+            return $this->maquinariasFiltradaCache;
         }
-        return $this->maquinarias->filter(function($maq) {
-            return in_array($maq->id_maquinaria, $this->maquinarias_asignadas_ids);
-        });
+        
+        $maquinarias = $this->maquinarias; // propiedad computada
+        if (empty($this->maquinarias_asignadas_ids)) {
+            $this->maquinariasFiltradaCache = $maquinarias;
+        } else {
+            $this->maquinariasFiltradaCache = $maquinarias->filter(function($maq) {
+                return in_array($maq->id_maquinaria, $this->maquinarias_asignadas_ids);
+            });
+        }
+        return $this->maquinariasFiltradaCache;
     }
 
     public function updatedFecha()
@@ -158,6 +192,11 @@ class PartesDiarios extends Component
         $this->calcularPesoNeto();
     }
     
+    public function updatedCargaPesoNeto()
+    {
+        // No hacer nada; es calculado pero el usuario puede overridear
+    }
+    
     private function calcularPesoNeto()
     {
         if ($this->carga_peso_bruto && $this->carga_tara) {
@@ -170,7 +209,7 @@ class PartesDiarios extends Component
     public function getChoferesFiltradosProperty()
     {
         if (empty($this->busqueda_chofer)) {
-            return $this->choferes;
+            return $this->choferes; // computada
         }
         
         $busq = strtolower($this->busqueda_chofer);
@@ -183,7 +222,7 @@ class PartesDiarios extends Component
     public function getClientesFiltradosProperty()
     {
         if (empty($this->busqueda_cliente)) {
-            return $this->clientes;
+            return $this->clientes; // computada
         }
         
         $busq = strtolower($this->busqueda_cliente);
@@ -194,31 +233,35 @@ class PartesDiarios extends Component
 
     public function render()
     {
-        $this->cargarPartes();
-        return view('livewire.partes-diarios');
-    }
+        $query = ParteDiario::with('lote')->orderBy('fecha', 'desc')->orderBy('id_parte_diario', 'desc');
 
-    public function cargarPartes()
-    {
-        $query = ParteDiario::with('lote');
-
+        // Buscar por propietario del lote
         if ($this->busqueda) {
             $busq = $this->busqueda;
-            $query->where(function($q) use ($busq) {
-                $q->whereDate('fecha', $busq)
-                  ->orWhereHas('lote', function($ql) use ($busq) {
-                      $ql->where('propietario', 'ILIKE', '%' . $busq . '%')
-                         ->orWhere('ubicacion', 'ILIKE', '%' . $busq . '%');
-                  });
+            $query->whereHas('lote', function($ql) use ($busq) {
+                $ql->where('propietario', 'ILIKE', '%' . $busq . '%');
             });
         }
+        
+        // Buscar por fecha exacta
+        if ($this->busqueda_fecha) {
+            $query->whereDate('fecha', $this->busqueda_fecha);
+        }
 
-        $this->partes = $query->orderBy('fecha', 'desc')->orderBy('id_parte_diario', 'desc')->get();
+        $partes = $query->paginate(10);
+        return view('livewire.partes-diarios', compact('partes'));
     }
+
+    // Método eliminado: render() ya maneja la paginación
 
     public function updatedBusqueda()
     {
-        $this->cargarPartes();
+        $this->resetPage();
+    }
+    
+    public function updatedBusquedaFecha()
+    {
+        $this->resetPage();
     }
     
     public function updatedEsDiaCaido()
@@ -247,7 +290,7 @@ class PartesDiarios extends Component
             'carga_id_chofer' => 'required|exists:choferes,id_chofer',
             'carga_destino' => 'required|exists:clientes,id_cliente',
             'carga_empleados' => 'required|array|min:1',
-            'carga_maquinarias' => 'nullable|array',
+            'carga_maquinarias' => 'required|array|min:1',
         ], [
             'carga_id_categoria_madera.required' => 'La categoría de madera es obligatoria',
             'carga_ticket.required' => 'El número de ticket es obligatorio',
@@ -260,7 +303,8 @@ class PartesDiarios extends Component
             'carga_destino.required' => 'El destino (cliente) es obligatorio',
             'carga_empleados.required' => 'Debe seleccionar al menos un empleado',
             'carga_empleados.min' => 'Debe seleccionar al menos un empleado',
-            // no forzamos maquinaria obligatoria; se permite vacío
+            'carga_maquinarias.required' => 'Debe seleccionar al menos una maquinaria para la carga',
+            'carga_maquinarias.min' => 'Debe seleccionar al menos una maquinaria para la carga',
         ]);
         
         // Obtener el nombre del cliente para mostrar en la tabla
@@ -398,32 +442,60 @@ class PartesDiarios extends Component
     
     public function agregarMovimiento()
     {
-        $this->validate([
-            'movimiento_id_insumo' => 'required|exists:insumos,id_insumo',
-            'movimiento_tipo' => 'required|in:entrada,salida',
-            'movimiento_cantidad' => 'required|numeric|min:0.01',
-            'movimiento_motivo' => 'required|in:Producción,Mantenimiento,Varios',
-        ], [
-            'movimiento_id_insumo.required' => 'Debe seleccionar un insumo',
-            'movimiento_tipo.required' => 'El tipo de movimiento es obligatorio',
-            'movimiento_cantidad.required' => 'La cantidad es obligatoria',
-            'movimiento_cantidad.min' => 'La cantidad debe ser mayor a 0',
-            'movimiento_motivo.required' => 'El motivo es obligatorio',
+        \Log::info('agregarMovimiento llamado', [
+            'id_insumo' => $this->movimiento_id_insumo,
+            'cantidad' => $this->movimiento_cantidad,
+            'motivo' => $this->movimiento_motivo
         ]);
         
-        $insumo = Insumo::with('unidadMedida')->find($this->movimiento_id_insumo);
-        
-        $this->movimientos[] = [
-            'id_insumo' => $insumo->id_insumo,
-            'nombre_insumo' => $insumo->nombre,
-            'tipo' => $this->movimiento_tipo,
-            'cantidad' => $this->movimiento_cantidad,
-            'motivo' => $this->movimiento_motivo,
-            'observaciones' => $this->movimiento_observaciones,
-            'unidad' => $insumo->unidadMedida->nombre ?? 'Unidad',
-        ];
-        
-        $this->resetMovimientoForm();
+        try {
+            $this->validate([
+                'movimiento_id_insumo' => 'required|exists:insumos,id_insumo',
+                'movimiento_cantidad' => 'required|numeric|min:0.01',
+                'movimiento_motivo' => 'required|in:Producción,Mantenimiento,Varios',
+            ], [
+                'movimiento_id_insumo.required' => 'Debe seleccionar un insumo',
+                'movimiento_cantidad.required' => 'La cantidad es obligatoria',
+                'movimiento_cantidad.min' => 'La cantidad debe ser mayor a 0',
+                'movimiento_motivo.required' => 'El motivo es obligatorio',
+            ]);
+            
+            \Log::info('Validación pasada');
+            
+            // Validar stock disponible
+            $stockDisponible = MovimientoStock::stockDisponible($this->movimiento_id_insumo);
+            \Log::info('Stock disponible', ['stock' => $stockDisponible, 'requerido' => $this->movimiento_cantidad]);
+            
+            if ($this->movimiento_cantidad > $stockDisponible) {
+                \Log::warning('Stock insuficiente');
+                $this->dispatch('mostrarError', mensaje: "Stock insuficiente. Disponible: {$stockDisponible}");
+                return;
+            }
+            
+            $insumo = Insumo::with('unidadMedida')->find($this->movimiento_id_insumo);
+            
+            $this->movimientos[] = [
+                'id_insumo' => $insumo->id_insumo,
+                'nombre_insumo' => $insumo->nombre,
+                'tipo' => 'salida', // Siempre salida (consumo)
+                'cantidad' => $this->movimiento_cantidad,
+                'motivo' => $this->movimiento_motivo,
+                'observaciones' => $this->movimiento_observaciones,
+                'unidad' => $insumo->unidadMedida->nombre ?? 'Unidad',
+            ];
+            
+            \Log::info('Insumo agregado exitosamente', ['total_movimientos' => count($this->movimientos)]);
+            $this->dispatch('mostrarExito', mensaje: 'Insumo agregado correctamente');
+            $this->resetMovimientoForm();
+            
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Error de validación: ' . json_encode($e->errors()));
+            throw $e;
+        } catch (\Exception $e) {
+            \Log::error('Error en agregarMovimiento: ' . $e->getMessage());
+            \Log::error($e->getTraceAsString());
+            $this->dispatch('mostrarError', mensaje: 'Error al agregar insumo: ' . $e->getMessage());
+        }
     }
     
     public function eliminarMovimiento($index)
@@ -435,20 +507,52 @@ class PartesDiarios extends Component
     private function resetMovimientoForm()
     {
         $this->movimiento_id_insumo = null;
-        $this->movimiento_tipo = 'entrada';
         $this->movimiento_cantidad = null;
         $this->movimiento_motivo = 'Producción';
         $this->movimiento_observaciones = null;
+        $this->stock_disponible_insumo = null;
+    }
+    
+    public function updatedMovimientoIdInsumo($value)
+    {
+        if ($value) {
+            $this->stock_disponible_insumo = MovimientoStock::stockDisponible($value);
+        } else {
+            $this->stock_disponible_insumo = null;
+        }
     }
 
     public function guardar()
     {
         $this->validate();
         
+        // Guard adicional: bloquear fecha futura por seguridad
+        if (Carbon::parse($this->fecha)->isAfter(Carbon::today())) {
+            session()->flash('error', 'La fecha del parte no puede ser futura.');
+            return;
+        }
+        
+        // Guard adicional: bloquear fecha muy antigua
+        if (Carbon::parse($this->fecha)->isBefore(Carbon::today()->subDays(7))) {
+            $fechaMinima = Carbon::today()->subDays(7)->format('d/m/Y');
+            session()->flash('error', "No se pueden crear partes con más de 7 días de antigüedad. Fecha mínima: {$fechaMinima}.");
+            return;
+        }
+        
         // Validaciones adicionales
         if (!$this->es_dia_caido && empty($this->cargas)) {
             session()->flash('error', 'Debe registrar al menos una carga para modo producción.');
             return;
+        }
+        // Validar que cada carga tenga al menos una maquinaria asociada
+        if (!$this->es_dia_caido) {
+            foreach ($this->cargas as $idx => $c) {
+                $maqs = $c['maquinarias'] ?? [];
+                if (empty($maqs)) {
+                    session()->flash('error', 'La carga #' . ($idx + 1) . ' no tiene maquinarias seleccionadas. Asigne al menos una maquinaria.');
+                    return;
+                }
+            }
         }
         
         if ($this->es_dia_caido && empty($this->jornales)) {
@@ -458,6 +562,7 @@ class PartesDiarios extends Component
 
         try {
             \DB::beginTransaction();
+            $eventosCarga = [];
             
             // 1. Guardar el Parte Diario (Maestro)
             $parteDiario = ParteDiario::updateOrCreate(
@@ -506,6 +611,29 @@ class PartesDiarios extends Component
                     $carga->empleados()->sync($cargaData['empleados']);
                     // Guardar maquinarias utilizadas en esta carga (múltiples)
                     $carga->maquinarias()->sync($cargaData['maquinarias'] ?? []);
+
+                    // Programar evento para actualizar odómetro de las maquinarias (post-commit)
+                    $maqs = $cargaData['maquinarias'] ?? [];
+                    if (!empty($maqs)) {
+                        // Normalizar unidades: si el usuario ingresó en kg o en toneladas
+                        $valorIngresado = (float) ($cargaData['peso_neto'] ?? 0);
+                        // Heurística: si es mayor a 1000 asumimos kg; si no, asumimos toneladas
+                        $toneladasTotales = $valorIngresado > 1000 ? ($valorIngresado / 1000.0) : $valorIngresado;
+                        $porMaquinaria = count($maqs) > 0 ? $toneladasTotales / count($maqs) : 0;
+
+                        foreach ($maqs as $maqId) {
+                            $eventosCarga[] = [$carga, $maqId, $porMaquinaria];
+                        }
+
+                        \Log::info('Eventos CargaRegistrada acumulados (post-commit) desde ParteDiario', [
+                            'parte_diario_id' => $parteDiarioId,
+                            'carga_id' => $carga->id_carga,
+                            'maquinarias' => $maqs,
+                            'valor_ingresado' => $valorIngresado,
+                            'toneladas_totales' => $toneladasTotales,
+                            'toneladas_por_maquinaria' => $porMaquinaria,
+                        ]);
+                    }
                 }
             } else {
                 // MODO DÍA CAÍDO: Guardar empleados que trabajaron ese día
@@ -521,33 +649,67 @@ class PartesDiarios extends Component
                     ->where('motivo', 'ILIKE', 'Parte Diario #' . $parteDiarioId . ' - %')
                     ->delete();
             }
+            
+            // Registrar movimientos con cálculo FIFO automático para salidas
             foreach ($this->movimientos as $movData) {
-                MovimientoStock::create([
-                    'id_insumo' => $movData['id_insumo'],
-                    'tipo' => $movData['tipo'],
-                    'cantidad' => $movData['cantidad'],
-                    'fecha' => $this->fecha,
-                    'motivo' => 'Parte Diario #' . $parteDiarioId . ' - ' . $movData['motivo'] . ($movData['observaciones'] ? ' - ' . $movData['observaciones'] : ''),
-                ]);
+                $motivo = 'Parte Diario #' . $parteDiarioId . ' - ' . $movData['motivo'] . 
+                         ($movData['observaciones'] ? ' - ' . $movData['observaciones'] : '');
                 
-                // Actualizar stock del insumo
-                $insumo = Insumo::find($movData['id_insumo']);
-                if ($insumo) {
-                    if ($movData['tipo'] == 'entrada') {
-                        $insumo->stock += $movData['cantidad'];
-                    } else {
-                        $insumo->stock -= $movData['cantidad'];
+                if ($movData['tipo'] == 'salida') {
+                    // Usar FIFO para salidas (consumos de producción)
+                    try {
+                        $resultado = MovimientoStock::registrarSalida(
+                            $movData['id_insumo'],
+                            $movData['cantidad'],
+                            $motivo,
+                            $this->fecha
+                        );
+                        
+                        // Opcional: guardar detalle del costo FIFO en log para auditoría
+                        \Log::info('Consumo FIFO en Parte Diario', [
+                            'parte_diario_id' => $parteDiarioId,
+                            'insumo_id' => $movData['id_insumo'],
+                            'cantidad' => $movData['cantidad'],
+                            'costo_total' => $resultado['costo_total'],
+                            'lotes_consumidos' => count($resultado['lotes_consumidos'])
+                        ]);
+                        
+                    } catch (\Exception $e) {
+                        // Si hay stock insuficiente, lanzar excepción para rollback
+                        throw new \Exception("Stock insuficiente para insumo ID {$movData['id_insumo']}: " . $e->getMessage());
                     }
-                    $insumo->save();
+                    
+                } else {
+                    // Este caso ya no debería ocurrir, pero por seguridad:
+                    throw new \Exception("Solo se permiten salidas de insumos en Parte Diario. Use Gestión de Stock para entradas.");
                 }
             }
+
             
             \DB::commit();
+
+            // Despachar eventos después del commit para garantizar consistencia
+            foreach ($eventosCarga as [$carga, $maqId, $ton]) {
+                event(new CargaRegistrada($carga, $maqId, $ton));
+            }
             
-            $this->cargarPartes();
-            session()->flash('message', $this->parte_id ? 'Parte diario actualizado correctamente con todos sus detalles.' : 'Parte diario creado correctamente con todos sus detalles.');
+            // Calcular y guardar costos del parte diario
+            try {
+                $parteDiario->calcularYGuardarCostos();
+            } catch (\Exception $e) {
+                \Log::error('Error al calcular costos del parte diario', [
+                    'parte_id' => $parteDiario->id_parte_diario,
+                    'error' => $e->getMessage()
+                ]);
+                // No lanzar excepción para no bloquear el guardado del parte
+            }
+            
+            // $this->cargarPartes(); // Método eliminado por no existir
+            $mensaje = $this->parte_id ? 'Parte diario actualizado correctamente con todos sus detalles.' : 'Parte diario creado correctamente con todos sus detalles.';
             $this->resetCampos();
-            $this->dispatch('parteDiarioGuardado');
+            session()->flash('message', $mensaje);
+            // No despachar evento para evitar cambio de pestaña automático
+            // $this->dispatch('parteDiarioGuardado');
             
         } catch (\Exception $e) {
             \DB::rollBack();
@@ -556,6 +718,7 @@ class PartesDiarios extends Component
                 'exception' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
+            return; // Evita que la página quede en blanco
         }
     }
 
@@ -615,6 +778,9 @@ class PartesDiarios extends Component
         $movs = MovimientoStock::whereDate('fecha', $this->fecha)
             ->where('motivo', 'ILIKE', 'Parte Diario #' . $parte->id_parte_diario . ' - %')
             ->get();
+        
+        // Agrupar múltiples movimientos FIFO del mismo insumo en uno solo para edición
+        $movimientosAgrupados = [];
         foreach ($movs as $m) {
             // Parsear motivo para extraer el enum original y observaciones
             $motivoTexto = $m->motivo; // Ej: "Parte Diario #ID - Producción - obs"
@@ -624,16 +790,27 @@ class PartesDiarios extends Component
             $obs = $partesMotivo[1] ?? null;
 
             $insumo = $this->insumos->firstWhere('id_insumo', $m->id_insumo);
-            $this->movimientos[] = [
-                'id_insumo' => $m->id_insumo,
-                'nombre_insumo' => $insumo->nombre ?? 'Insumo',
-                'tipo' => $m->tipo,
-                'cantidad' => (float) $m->cantidad,
-                'motivo' => $motivoEnum,
-                'observaciones' => $obs,
-                'unidad' => $insumo->unidadMedida->nombre ?? 'Unidad',
-            ];
+            
+            // Clave única por insumo+tipo+motivo
+            $clave = $m->id_insumo . '_' . $m->tipo . '_' . $motivoEnum;
+            
+            if (!isset($movimientosAgrupados[$clave])) {
+                $movimientosAgrupados[$clave] = [
+                    'id_insumo' => $m->id_insumo,
+                    'nombre_insumo' => $insumo->nombre ?? 'Insumo',
+                    'tipo' => $m->tipo,
+                    'cantidad' => 0,
+                    'motivo' => $motivoEnum,
+                    'observaciones' => $obs,
+                    'unidad' => $insumo->unidadMedida->nombre ?? 'Unidad',
+                ];
+            }
+            
+            // Acumular cantidad (para movimientos FIFO múltiples del mismo insumo)
+            $movimientosAgrupados[$clave]['cantidad'] += (float) $m->cantidad;
         }
+        
+        $this->movimientos = array_values($movimientosAgrupados);
 
         // Asegurar que el mapa de jornales vigentes esté actualizado
         $this->actualizarJornalPorEmpleado();
@@ -642,7 +819,7 @@ class PartesDiarios extends Component
     public function eliminar($id)
     {
         ParteDiario::findOrFail($id)->delete();
-        $this->cargarPartes();
+        // $this->cargarPartes();
         session()->flash('message', 'Parte diario eliminado correctamente.');
     }
 
@@ -653,9 +830,62 @@ class PartesDiarios extends Component
             'motivo_dia_caido', 'observaciones', 'cargas', 'jornales', 'movimientos',
             'carga_peso_neto', 'carga_id_chofer', 'carga_destino', 'carga_empleados',
             'jornal_id_empleado', 'jornal_observaciones',
-            'movimiento_id_insumo', 'movimiento_tipo', 'movimiento_cantidad'
+            'movimiento_id_insumo', 'movimiento_cantidad', 'movimiento_motivo', 'movimiento_observaciones'
         ]);
         $this->total_toneladas = 0;
+        $this->stock_disponible_insumo = null;
         $this->actualizarJornalPorEmpleado();
+    }
+
+    // ============ PROPIEDADES COMPUTADAS (Catálogos) ============
+
+    public function getLotesProperty()
+    {
+        if (!isset($this->lotesCache)) {
+            $this->lotesCache = Lote::where('estado', 'activo')
+                ->orderBy('propietario')
+                ->get();
+        }
+        return $this->lotesCache;
+    }
+
+    public function getEmpleadosProperty()
+    {
+        return Empleado::with('rolLaboral')
+            ->whereNull('fecha_fin_actividades')
+            ->orderBy('apellido')
+            ->get();
+    }
+
+    public function getMaquinariasProperty()
+    {
+        return \App\Models\Maquinaria::with('tipoMaquinaria')
+            ->orderBy('modelo')
+            ->get();
+    }
+
+    public function getChoferesProperty()
+    {
+        return Chofer::where('estado', true)
+            ->orderBy('apellido')
+            ->get();
+    }
+
+    public function getInsumosProperty()
+    {
+        return Insumo::conStockYPrecio()
+            ->with('unidadMedida')
+            ->orderBy('nombre')
+            ->get();
+    }
+
+    public function getCategoriasMaderaProperty()
+    {
+        return CategoriaMadera::orderBy('nombre')->get();
+    }
+
+    public function getClientesProperty()
+    {
+        return Cliente::orderBy('razon_social')->get();
     }
 }

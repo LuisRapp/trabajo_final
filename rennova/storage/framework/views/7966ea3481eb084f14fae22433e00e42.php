@@ -148,7 +148,7 @@ unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
                     </div>
                     <div class="col-md-4">
                         <label class="form-label fw-semibold">Umbral Mantenimiento Preventivo (ton)</label>
-                        <input type="number" step="0.01" wire:model="umbral_toneladas" class="form-control <?php $__errorArgs = ['umbral_toneladas'];
+                        <input type="number" step="0.1" min="0" wire:model="umbral_toneladas" class="form-control <?php $__errorArgs = ['umbral_toneladas'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }

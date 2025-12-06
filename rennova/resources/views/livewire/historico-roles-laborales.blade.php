@@ -57,12 +57,12 @@
                         <div class="row g-3 mb-4">
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Precio por Tonelada</label>
-                                <input type="number" wire:model="precio_tonelada" step="0.01" class="form-control @error('precio_tonelada') is-invalid @enderror" placeholder="0.00">
+                                <input type="number" wire:model="precio_tonelada" step="0.1" min="0" class="form-control @error('precio_tonelada') is-invalid @enderror" placeholder="0.00">
                                 @error('precio_tonelada') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Jornal Diario</label>
-                                <input type="number" wire:model="jornal_diario" step="0.01" class="form-control @error('jornal_diario') is-invalid @enderror" placeholder="0.00">
+                                <input type="number" wire:model="jornal_diario" step="0.1" min="0" class="form-control @error('jornal_diario') is-invalid @enderror" placeholder="0.00">
                                 @error('jornal_diario') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                         </div>

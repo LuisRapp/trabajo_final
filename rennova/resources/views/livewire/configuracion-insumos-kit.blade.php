@@ -53,7 +53,7 @@
                     </div>
                     <div class="col-md-3">
                         <label class="form-label fw-semibold">Cantidad Necesaria <span class="text-danger">*</span></label>
-                        <input type="number" step="0.01" wire:model="cantidad_necesaria" class="form-control @error('cantidad_necesaria') is-invalid @enderror" placeholder="0.00">
+                        <input type="number" step="0.1" min="0" wire:model="cantidad_necesaria" class="form-control @error('cantidad_necesaria') is-invalid @enderror" placeholder="0.00">
                         @error('cantidad_necesaria') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-3 d-flex align-items-end">
