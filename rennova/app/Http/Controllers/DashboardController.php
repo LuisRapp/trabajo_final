@@ -36,13 +36,15 @@ class DashboardController extends Controller
         if ($loteSeleccionado) {
             $climaData = $this->climaService->analizarYRecomendar($loteSeleccionado);
             if ($climaData && !isset($climaData['error'])) {
-                // Mapear dias_detalle al formato que espera el componente
+                // Mapear pronostico (dias_detalle) al formato que espera el componente
                 $pronosticoFormateado = [];
-                if (isset($climaData['dias_detalle']) && is_array($climaData['dias_detalle'])) {
-                    foreach ($climaData['dias_detalle'] as $dia) {
+                $diasDetalle = $climaData['pronostico'] ?? $climaData['dias_detalle'] ?? [];
+                
+                if (is_array($diasDetalle)) {
+                    foreach ($diasDetalle as $dia) {
                         $iconMap = [
                             'OPERATIVO' => 'sun',
-                            'INACTIVO' => $dia['razon'] && strpos($dia['razon'], 'Lluvia') !== false ? 'storm' : 'cloud',
+                            'INACTIVO' => isset($dia['razon']) && strpos($dia['razon'], 'Lluvia') !== false ? 'storm' : 'cloud',
                         ];
                         $pronosticoFormateado[] = [
                             'label' => ucfirst(substr($dia['dia_semana'], 0, 3)) . ' (' . $dia['fecha_str'] . ')',
@@ -56,18 +58,17 @@ class DashboardController extends Controller
 
                 // Calcular días perdidos contando días inactivos
                 $diasPerdidos = 0;
-                if (isset($climaData['dias_detalle'])) {
-                    foreach ($climaData['dias_detalle'] as $dia) {
-                        if ($dia['estado'] === 'INACTIVO') {
-                            $diasPerdidos++;
-                        }
+                foreach ($diasDetalle as $dia) {
+                    if ($dia['estado'] === 'INACTIVO') {
+                        $diasPerdidos++;
                     }
                 }
 
                 // Determinar el tipo de recomendación
-                $nivelUrgencia = $climaData['nivel_urgencia'] ?? 'NORMAL';
+                $nivelUrgencia = $climaData['nivel_urgencia'] ?? 'BAJA';
                 $tipoAlerta = match($nivelUrgencia) {
                     'ALTA' => 'ACELERAR',
+                    'MEDIA' => 'ACELERAR',
                     'CRITICA' => 'SUSPENDER',
                     default => 'NORMAL',
                 };

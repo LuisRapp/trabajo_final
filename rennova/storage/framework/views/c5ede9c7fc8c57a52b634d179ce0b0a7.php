@@ -31,14 +31,14 @@
         <div class="mb-5">
             <?php if (isset($component)) { $__componentOriginal8e533a9f8b46dcc010c770ef91e454a9 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal8e533a9f8b46dcc010c770ef91e454a9 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.clima.pronostico','data' => ['alerta' => $pronosticoData['alerta'] ?? 'NORMAL','pronostico' => $pronosticoData['pronostico'] ?? [],'analisisImpacto' => $pronosticoData['analisisImpacto'] ?? [],'lote' => $pronosticoData['loteNombre'] ?? 'Desconocido']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.clima.pronostico','data' => ['alerta' => $pronosticoData['alerta'] ?? 'NORMAL','pronostico' => $pronosticoData['pronostico'] ?? [],'analisisImpacto' => $pronosticoData['analisisImpacto'] ?? [],'lote' => $pronosticoData['loteNombre'] ?? 'Desconocido','recomendacionDetallada' => $pronosticoData['recomendacionDetallada'] ?? null]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('clima.pronostico'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['alerta' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($pronosticoData['alerta'] ?? 'NORMAL'),'pronostico' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($pronosticoData['pronostico'] ?? []),'analisisImpacto' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($pronosticoData['analisisImpacto'] ?? []),'lote' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($pronosticoData['loteNombre'] ?? 'Desconocido')]); ?>
+<?php $component->withAttributes(['alerta' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($pronosticoData['alerta'] ?? 'NORMAL'),'pronostico' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($pronosticoData['pronostico'] ?? []),'analisisImpacto' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($pronosticoData['analisisImpacto'] ?? []),'lote' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($pronosticoData['loteNombre'] ?? 'Desconocido'),'recomendacionDetallada' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($pronosticoData['recomendacionDetallada'] ?? null)]); ?>
 <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginal8e533a9f8b46dcc010c770ef91e454a9)): ?>

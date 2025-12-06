@@ -62,13 +62,8 @@ class ClimaDecisionService
             // 2. PASO A: Mapeo de Días Inactivos (Futuro)
             $analisisDias = $this->mapearDiasInactivos($pronostico);
 
-            // 3. PASO B: Estrategia de Anticipación (Previo a la lluvia)
-            if ($analisisDias['dias_operativos_previos'] > 0) {
-                return $this->estrategiaAnticipacion($lote, $analisisDias);
-            }
-
-            // 4. PASO C: Estrategia de Reacción (Ya está lloviendo o es inevitable)
-            return $this->estrategiaReaccion($lote, $analisisDias);
+            // 3. Determinar estrategia según ventanas operativas disponibles
+            return $this->determinarEstrategia($lote, $analisisDias);
 
         } catch (\Exception $e) {
             Log::error("Error en ClimaDecisionService::analizarYRecomendar", [
@@ -156,11 +151,11 @@ class ClimaDecisionService
             $estado = 'OPERATIVO';
             $razon = null;
 
-            // 0. Verificar si es fin de semana
+            // 0. Verificar si es fin de semana (NO cuenta como día perdido, solo es no laboral)
             if ($esFinDeSemana) {
                 $estado = 'INACTIVO';
                 $razon = "Fin de semana (no laboral)";
-                $totalDiasPerdidos++;
+                // NO incrementar totalDiasPerdidos - los fines de semana no generan déficit
             }
             // 1. Verificar lluvia directa
             elseif ($mm >= self::UMBRAL_LLUVIA) {
@@ -201,11 +196,29 @@ class ClimaDecisionService
 
         // Calcular días operativos previos al Día Cero
         $diasOperativosPrevios = 0;
+        $diasOperativosPosterior = 0;
+        $totalDiasOperativos = 0;
+        
         if ($diaCeroIndex !== null) {
+            // Contar días operativos ANTES del primer día de lluvia
             for ($i = 0; $i < $diaCeroIndex; $i++) {
                 if ($diasDetalle[$i]['estado'] === 'OPERATIVO' && !$diasDetalle[$i]['es_hoy']) {
                     $diasOperativosPrevios++;
                 }
+            }
+            
+            // Contar días operativos DESPUÉS de la ventana de lluvia
+            for ($i = $diaCeroIndex + 1; $i < count($diasDetalle); $i++) {
+                if ($diasDetalle[$i]['estado'] === 'OPERATIVO') {
+                    $diasOperativosPosterior++;
+                }
+            }
+        }
+        
+        // Contar TODOS los días operativos en la ventana de 7 días
+        foreach ($diasDetalle as $dia) {
+            if ($dia['estado'] === 'OPERATIVO' && !$dia['es_hoy']) {
+                $totalDiasOperativos++;
             }
         }
 
@@ -220,11 +233,187 @@ class ClimaDecisionService
             'meta_diaria' => $metaDiaria,
             'dia_cero_index' => $diaCeroIndex,
             'dias_operativos_previos' => $diasOperativosPrevios,
+            'dias_operativos_posterior' => $diasOperativosPosterior,
+            'total_dias_operativos' => $totalDiasOperativos,
         ];
     }
 
     /**
-     * PASO B: Estrategia de Anticipación
+     * NUEVO: Determinar estrategia según análisis completo de ventanas operativas
+     */
+    private function determinarEstrategia(Lote $lote, array $analisisDias): array
+    {
+        $volumenRiesgo = $analisisDias['volumen_riesgo'];
+        $diasPerdidos = $analisisDias['total_dias_perdidos'];
+        $diasPrevios = $analisisDias['dias_operativos_previos'];
+        $diasPosterior = $analisisDias['dias_operativos_posterior'];
+        $totalDiasOperativos = $analisisDias['total_dias_operativos'];
+        $metaDiaria = $analisisDias['meta_diaria'];
+
+        // CASO 1: No hay días perdidos por lluvia → Operación normal
+        if ($diasPerdidos === 0 || $volumenRiesgo == 0) {
+            return [
+                'success' => true,
+                'estrategia' => 'NORMAL',
+                'nivel_urgencia' => 'BAJA',
+                'recomendacion' => "✅ OPERACIÓN NORMAL\n\nNo se pronostican lluvias significativas en los próximos 7 días.\nMantener ritmo de producción actual.",
+                'pronostico' => $analisisDias['dias_detalle'],
+                'dias_inactivos' => [],
+                'datos_calculados' => [
+                    'volumen_riesgo' => 0,
+                    'meta_diaria' => $metaDiaria,
+                    'aumento_necesario_pct' => 0,
+                    'dias_perdidos' => 0,
+                ],
+            ];
+        }
+
+        // CASO 2: Hay días operativos disponibles (antes o después) → Planificación estratégica
+        if ($totalDiasOperativos > 0) {
+            $aumentoNecesario = $volumenRiesgo / $totalDiasOperativos;
+            $porcentajeAumento = ($aumentoNecesario / $metaDiaria) * 100;
+            
+            // Subcaso 2A: Aumento viable (≤ 25%)
+            if ($porcentajeAumento <= 25) {
+                $nuevaMetaDiaria = $metaDiaria + $aumentoNecesario;
+                $recomendacion = $this->generarRecomendacionAnticipacion($analisisDias, $porcentajeAumento, $nuevaMetaDiaria, 'VIABLE');
+                
+                return [
+                    'success' => true,
+                    'estrategia' => 'ANTICIPACION_PLANIFICADA',
+                    'nivel_urgencia' => 'MEDIA',
+                    'recomendacion' => $recomendacion,
+                    'pronostico' => $analisisDias['dias_detalle'],
+                    'dias_inactivos' => $this->extraerDiasInactivos($analisisDias['dias_detalle']),
+                    'datos_calculados' => [
+                        'volumen_riesgo' => $volumenRiesgo,
+                        'meta_diaria' => $metaDiaria,
+                        'nueva_meta_diaria' => round($nuevaMetaDiaria, 2),
+                        'aumento_necesario_pct' => round($porcentajeAumento, 0),
+                        'dias_perdidos' => $diasPerdidos,
+                        'dias_operativos_disponibles' => $totalDiasOperativos,
+                    ],
+                ];
+            }
+            
+            // Subcaso 2B: Aumento excesivo (> 25%) → Máximo esfuerzo
+            else {
+                $aumentoMaximo = $metaDiaria * 0.25;
+                $volumenRecuperable = $aumentoMaximo * $totalDiasOperativos;
+                $deficitResidual = $volumenRiesgo - $volumenRecuperable;
+                $recomendacion = $this->generarRecomendacionAnticipacion($analisisDias, 25, $metaDiaria * 1.25, 'MAXIMA', $volumenRecuperable, $deficitResidual);
+                
+                return [
+                    'success' => true,
+                    'estrategia' => 'ANTICIPACION_MAXIMA',
+                    'nivel_urgencia' => 'ALTA',
+                    'recomendacion' => $recomendacion,
+                    'pronostico' => $analisisDias['dias_detalle'],
+                    'dias_inactivos' => $this->extraerDiasInactivos($analisisDias['dias_detalle']),
+                    'datos_calculados' => [
+                        'volumen_riesgo' => $volumenRiesgo,
+                        'meta_diaria' => $metaDiaria,
+                        'nueva_meta_diaria' => round($metaDiaria * 1.25, 2),
+                        'aumento_necesario_pct' => 25,
+                        'dias_perdidos' => $diasPerdidos,
+                        'volumen_recuperable' => round($volumenRecuperable, 2),
+                        'deficit_residual' => round($deficitResidual, 2),
+                        'dias_operativos_disponibles' => $totalDiasOperativos,
+                    ],
+                ];
+            }
+        }
+
+        // CASO 3: No hay días operativos disponibles → Suspensión
+        return $this->estrategiaReaccion($lote, $analisisDias);
+    }
+
+    /**
+     * Generar recomendación de anticipación estratégica
+     */
+    private function generarRecomendacionAnticipacion(array $analisisDias, float $porcentaje, float $nuevaMeta, string $tipo, float $volRecuperable = 0, float $deficitResidual = 0): string
+    {
+        $diasPrevios = $analisisDias['dias_operativos_previos'];
+        $diasPosterior = $analisisDias['dias_operativos_posterior'];
+        $totalOperativos = $analisisDias['total_dias_operativos'];
+        $diasPerdidos = $analisisDias['total_dias_perdidos'];
+        $volumenRiesgo = $analisisDias['volumen_riesgo'];
+        
+        $diaCero = $analisisDias['dia_cero_index'] !== null 
+            ? $analisisDias['dias_detalle'][$analisisDias['dia_cero_index']] 
+            : null;
+
+        if ($tipo === 'VIABLE') {
+            $recomendacion = "📋 PLANIFICACIÓN ESTRATÉGICA - LLUVIA PRONOSTICADA\n\n";
+            
+            if ($diaCero) {
+                $recomendacion .= "🌧️ Primera lluvia: {$diaCero['dia_semana']} {$diaCero['fecha_str']}\n";
+            }
+            
+            $recomendacion .= "📊 ANÁLISIS DE VENTANA (7 días):\n";
+            $recomendacion .= "   • Días laborales disponibles: {$totalOperativos}\n";
+            $recomendacion .= "   • Días perdidos por lluvia: {$diasPerdidos}\n";
+            $recomendacion .= "   • Déficit proyectado: " . round($volumenRiesgo, 2) . " toneladas\n\n";
+            
+            $recomendacion .= "✅ ESTRATEGIA DE COMPENSACIÓN:\n";
+            $recomendacion .= "   • Aumentar producción un " . round($porcentaje, 0) . "% en días operativos\n";
+            $recomendacion .= "   • Meta diaria ajustada: " . round($nuevaMeta, 2) . " toneladas\n";
+            
+            if ($diasPrevios > 0 && $diasPosterior > 0) {
+                $recomendacion .= "   • Distribuir entre {$diasPrevios} días ANTES y {$diasPosterior} días DESPUÉS de la lluvia\n";
+            } elseif ($diasPrevios > 0) {
+                $recomendacion .= "   • Concentrar esfuerzo en los {$diasPrevios} días ANTES de la lluvia\n";
+            } else {
+                $recomendacion .= "   • Recuperar volumen en los {$diasPosterior} días DESPUÉS de la lluvia\n";
+            }
+            
+            $recomendacion .= "\n💡 ACCIÓN RECOMENDADA:\n";
+            $recomendacion .= "   Coordinar con capataz para aumentar ritmo de trabajo.\n";
+            $recomendacion .= "   Esta planificación cubrirá el 100% del déficit proyectado.";
+            
+        } else { // MAXIMA
+            $porcentajeCobertura = round(($volRecuperable / $volumenRiesgo) * 100, 0);
+            
+            $recomendacion = "🚨 ALERTA CLIMÁTICA - PLANIFICACIÓN DE MÁXIMA PRIORIDAD\n\n";
+            
+            if ($diaCero) {
+                $recomendacion .= "🌧️ Primera lluvia: {$diaCero['dia_semana']} {$diaCero['fecha_str']}\n";
+            }
+            
+            $recomendacion .= "📊 ANÁLISIS DE VENTANA (7 días):\n";
+            $recomendacion .= "   • Días laborales disponibles: {$totalOperativos}\n";
+            $recomendacion .= "   • Días perdidos por lluvia: {$diasPerdidos}\n";
+            $recomendacion .= "   • Déficit proyectado: " . round($volumenRiesgo, 2) . " toneladas\n\n";
+            
+            $recomendacion .= "⚠️ ESTRATEGIA DE MÁXIMO ESFUERZO:\n";
+            $recomendacion .= "   • Aumentar producción al MÁXIMO: 25%\n";
+            $recomendacion .= "   • Meta diaria ajustada: " . round($nuevaMeta, 2) . " toneladas\n";
+            $recomendacion .= "   • Volumen recuperable: " . round($volRecuperable, 2) . " toneladas ({$porcentajeCobertura}%)\n";
+            $recomendacion .= "   • Déficit residual: " . round($deficitResidual, 2) . " toneladas\n\n";
+            
+            $recomendacion .= "💡 ACCIONES INMEDIATAS:\n";
+            $recomendacion .= "   1. Movilizar TODOS los recursos disponibles\n";
+            $recomendacion .= "   2. Considerar horas extras o turnos extendidos\n";
+            $recomendacion .= "   3. Priorizar cargas de mayor valor\n\n";
+            
+            $recomendacion .= "⚠️ ADVERTENCIA:\n";
+            $recomendacion .= "   No será posible cubrir el 100% del déficit.\n";
+            $recomendacion .= "   Se recomienda maximizar producción en días disponibles.";
+        }
+        
+        return $recomendacion;
+    }
+
+    /**
+     * Extraer solo días inactivos del análisis
+     */
+    private function extraerDiasInactivos(array $diasDetalle): array
+    {
+        return array_filter($diasDetalle, fn($dia) => $dia['estado'] === 'INACTIVO');
+    }
+
+    /**
+     * PASO B: Estrategia de Anticipación (DEPRECATED - mantenido por compatibilidad)
      * 
      * Intenta redistribuir el volumen de riesgo en días previos operativos
      * Máximo aumento permitido: 25%
@@ -316,7 +505,7 @@ class ClimaDecisionService
     private function estrategiaReaccion(Lote $lote, array $analisisDias): array
     {
         $estrategia = 'REACCION';
-        $nivel_urgencia = 'INMEDIATA';
+        $nivel_urgencia = 'CRITICA'; // Cambiado de INMEDIATA a CRITICA para que mapee a SUSPENDER
         $recomendacion = '';
         $accion_recomendada = '';
 
@@ -409,7 +598,10 @@ class ClimaDecisionService
             ->get()
             ->avg('cargas_sum_peso_neto');
 
-        return round($promedioHistorico ?: 50, 2); // Default 50 ton si no hay histórico
+        // Convertir de kilos a toneladas
+        $promedioToneladas = $promedioHistorico ? $promedioHistorico / 1000.0 : 50;
+        
+        return round($promedioToneladas, 2); // Default 50 ton si no hay histórico
     }
 
     /**

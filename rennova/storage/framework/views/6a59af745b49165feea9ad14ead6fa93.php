@@ -6,6 +6,7 @@ $__propNames = \Illuminate\View\ComponentAttributeBag::extractPropNames(([
     'alerta' => 'NORMAL',
     'pronostico' => [],
     'analisisImpacto' => ['diasPerdidos' => 0, 'deficitTn' => 0, 'accionPorcentaje' => 0],
+    'recomendacionDetallada' => null,
 ]));
 
 foreach ($attributes->all() as $__key => $__value) {
@@ -26,6 +27,7 @@ foreach (array_filter(([
     'alerta' => 'NORMAL',
     'pronostico' => [],
     'analisisImpacto' => ['diasPerdidos' => 0, 'deficitTn' => 0, 'accionPorcentaje' => 0],
+    'recomendacionDetallada' => null,
 ]), 'is_string', ARRAY_FILTER_USE_KEY) as $__key => $__value) {
     $$__key = $$__key ?? $__value;
 }
@@ -163,16 +165,56 @@ unset($__defined_vars, $__key, $__value); ?>
 
             <!-- Acción Sugerida -->
             <div class="col-md-4">
-                <div class="card h-100 rounded-2 shadow-sm border-start border-success border-5 p-3" style="background-color: #f0f8f4;">
-                    <h6 class="fw-bold text-success small mb-3 text-uppercase">⚡ Acción Sugerida</h6>
+                <?php
+                    $accionConfig = match($alerta) {
+                        'SUSPENDER' => [
+                            'color' => 'danger',
+                            'bg' => '#fff0f0',
+                            'texto' => 'SUSPENDER OPERACIONES',
+                            'detalle' => 'Condiciones no permiten trabajar',
+                            'icono' => '🛑',
+                            'mostrar_porcentaje' => false
+                        ],
+                        'ACELERAR' => [
+                            'color' => 'warning',
+                            'bg' => '#fff8e1',
+                            'texto' => '+' . ($analisisImpacto['accionPorcentaje'] ?? 0) . '%',
+                            'detalle' => 'Acelerar ritmo de producción',
+                            'icono' => '⚡',
+                            'mostrar_porcentaje' => true
+                        ],
+                        default => [
+                            'color' => 'success',
+                            'bg' => '#f0f8f4',
+                            'texto' => 'OPERACIÓN NORMAL',
+                            'detalle' => 'Mantener ritmo actual',
+                            'icono' => '✅',
+                            'mostrar_porcentaje' => false
+                        ]
+                    };
+                ?>
+                <div class="card h-100 rounded-2 shadow-sm border-start border-<?php echo e($accionConfig['color']); ?> border-5 p-3" style="background-color: <?php echo e($accionConfig['bg']); ?>;">
+                    <h6 class="fw-bold text-<?php echo e($accionConfig['color']); ?> small mb-3 text-uppercase"><?php echo e($accionConfig['icono']); ?> Acción Sugerida</h6>
                     <div class="mb-2">
-                        <span class="display-4 fw-bold text-success">+<?php echo e($analisisImpacto['accionPorcentaje'] ?? 0); ?>%</span>
+                        <span class="display-4 fw-bold text-<?php echo e($accionConfig['color']); ?>"><?php echo e($accionConfig['texto']); ?></span>
                     </div>
-                    <small class="fw-semibold text-success">Aumentar ritmo de producción</small>
+                    <small class="fw-semibold text-<?php echo e($accionConfig['color']); ?>"><?php echo e($accionConfig['detalle']); ?></small>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Recomendación Detallada -->
+    <?php if($recomendacionDetallada): ?>
+    <div class="mt-4">
+        <div class="card rounded-2 shadow-sm border-0" style="background-color: #f8f9fa;">
+            <div class="card-body p-3">
+                <h6 class="fw-bold text-dark mb-2" style="font-size: 0.9rem;"><i class="bi bi-lightbulb"></i> Recomendación del Sistema</h6>
+                <div style="font-size: 0.8rem; line-height: 1.5; white-space: pre-line; font-family: 'Courier New', monospace; color: #333;"><?php echo nl2br(e($recomendacionDetallada)); ?></div>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
 </div>
 
 <style>

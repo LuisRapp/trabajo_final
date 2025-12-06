@@ -2,7 +2,8 @@
     <div class="flex h-full w-full flex-1 flex-col gap-4 rounded-xl">
         @php
             $lotes = \App\Models\Lote::query()->orderByDesc('created_at')->get();
-            $loteSeleccionadoId = request('lote');
+            // Tomar el id_lote enviado por querystring y forzar entero
+            $loteSeleccionadoId = (int) request('lote');
             $lote = null;
             if ($loteSeleccionadoId) {
                 $lote = \App\Models\Lote::find($loteSeleccionadoId);
@@ -21,8 +22,8 @@
             <form method="GET" action="{{ route('dashboard') }}" class="flex items-center gap-2">
                 <select name="lote" class="rounded-md border px-3 py-2 text-sm">
                     @foreach($lotes as $op)
-                        <option value="{{ $op->id }}" @selected(optional($lote)->id === $op->id)>
-                            {{ $op->nombre ?? ('Lote #' . $op->id) }}
+                        <option value="{{ $op->id_lote }}" @selected(optional($lote)->id_lote === $op->id_lote)>
+                            {{ $op->propietario ?? $op->nombre ?? ('Lote #' . $op->id_lote) }}
                         </option>
                     @endforeach
                 </select>
