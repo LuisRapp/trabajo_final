@@ -82,7 +82,7 @@ class ClimaDecisionService
 
     /**
      * Obtiene pronóstico completo de Open-Meteo API
-     * Incluye precipitation_sum y cloudcover_mean para 7 días
+     * Incluye daily + hourly (precipitación horaria) para 7 días
      */
     private function obtenerPronosticoCompleto(Lote $lote): ?array
     {
@@ -91,7 +91,8 @@ class ClimaDecisionService
         $params = [
             'latitude' => $lote->latitud,
             'longitude' => $lote->longitud,
-            'daily' => 'precipitation_sum,cloudcover_mean',
+            'daily' => 'precipitation_sum,cloudcover_mean,wind_speed_10m_max,et0_fao_evapotranspiration',
+            'hourly' => 'precipitation',
             'timezone' => 'America/Argentina/Buenos_Aires',
             'forecast_days' => self::DIAS_FORECAST,
         ];
@@ -115,18 +116,22 @@ class ClimaDecisionService
     }
 
     /**
-     * PASO A: Mapeo de Días Inactivos
+     * PASO A: Mapeo de Días Inactivos (actualizado)
      * 
-     * Analiza los 7 días y marca como INACTIVO:
-     * 1. Días con lluvia > 10mm
-     * 2. Días siguientes a lluvia con nubosidad > 60% (barro)
+     * Reglas clave para reducir falsos positivos:
+     * 1) Granularidad horaria: si precipitación diaria > 10mm, solo es INACTIVO
+     *    si la lluvia acumulada entre 06:00 y 18:00 supera 5mm.
+     * 2) Saturación de suelo: Saturacion_Index = Lluvia_Hoy + (Lluvia_Ayer * 0.5)
+     *    Riesgo si > 12mm.
+     * 3) Factor de secado: si viento_max > 15 km/h O ET0 > 4mm, puede ser OPERATIVO
+     *    aunque esté nublado. Solo INACTIVO si saturación alta + nubosidad alta + poco viento.
      * 
      * @return array [
      *   'dias_detalle' => array de cada día con estado,
      *   'total_dias_perdidos' => int,
      *   'volumen_riesgo' => float,
-     *   'dia_cero_index' => int|null (primer día de lluvia),
-     *   'dias_operativos_previos' => int (días secos antes del Día Cero)
+     *   'dia_cero_index' => int|null (primer día INACTIVO por clima),
+     *   'dias_operativos_previos' => int (días operativos antes del Día Cero)
      * ]
      */
     private function mapearDiasInactivos(array $pronostico): array
@@ -134,18 +139,44 @@ class ClimaDecisionService
         $fechas = $pronostico['daily']['time'] ?? [];
         $precipitaciones = $pronostico['daily']['precipitation_sum'] ?? [];
         $nubosidades = $pronostico['daily']['cloudcover_mean'] ?? [];
+        $vientosMax = $pronostico['daily']['wind_speed_10m_max'] ?? [];
+        $et0s = $pronostico['daily']['et0_fao_evapotranspiration'] ?? [];
+
+        $horas = $pronostico['hourly']['time'] ?? [];
+        $precipitacionHoraria = $pronostico['hourly']['precipitation'] ?? [];
 
         $diasDetalle = [];
         $diaCeroIndex = null;
         $totalDiasPerdidos = 0;
-        $huboDiaLluvia = false;
+
+        // Construir mapa de lluvia diurna (06:00–18:00) por fecha
+        $lluviaDiurnaPorFecha = [];
+        foreach ($horas as $hIndex => $horaStr) {
+            $hora = Carbon::parse($horaStr);
+            $fechaKey = $hora->toDateString();
+            $hour = (int) $hora->format('H');
+
+            if ($hour >= 6 && $hour < 18) {
+                $lluviaDiurnaPorFecha[$fechaKey] = ($lluviaDiurnaPorFecha[$fechaKey] ?? 0)
+                    + ($precipitacionHoraria[$hIndex] ?? 0);
+            }
+        }
 
         foreach ($fechas as $index => $fechaStr) {
             $fecha = Carbon::parse($fechaStr);
             $mm = $precipitaciones[$index] ?? 0;
             $cloudCover = $nubosidades[$index] ?? 0;
+            $vientoMax = $vientosMax[$index] ?? 0;
+            $et0 = $et0s[$index] ?? 0;
             $esHoy = $fecha->isToday();
             $esFinDeSemana = $fecha->isWeekend(); // Sábado (6) o Domingo (0)
+
+            $fechaKey = $fecha->toDateString();
+            $lluviaDiurna = $lluviaDiurnaPorFecha[$fechaKey] ?? 0;
+            $lluviaAyer = ($index > 0) ? ($precipitaciones[$index - 1] ?? 0) : 0;
+            $saturacionIndex = $mm + ($lluviaAyer * 0.5);
+            $saturacionAlta = $saturacionIndex > 12;
+            $secadoActivo = ($vientoMax > 15) || ($et0 > 4);
 
             // Analizar estado del día
             $estado = 'OPERATIVO';
@@ -157,28 +188,35 @@ class ClimaDecisionService
                 $razon = "Fin de semana (no laboral)";
                 // NO incrementar totalDiasPerdidos - los fines de semana no generan déficit
             }
-            // 1. Verificar lluvia directa
-            elseif ($mm >= self::UMBRAL_LLUVIA) {
+            // 1. Granularidad horaria para lluvia diaria alta
+            elseif ($mm > self::UMBRAL_LLUVIA && $lluviaDiurna > 5) {
                 $estado = 'INACTIVO';
-                $razon = "Lluvia pronosticada: {$mm}mm";
-                
-                // Marcar Día Cero (primer día de lluvia)
+                $razon = "Lluvia diurna > 5mm (06-18)";
+
                 if ($diaCeroIndex === null && !$esHoy) {
                     $diaCeroIndex = $index;
                 }
-                
-                $huboDiaLluvia = true;
+
                 $totalDiasPerdidos++;
             }
-            // 2. Verificar efecto de barro (días después de lluvia con alta nubosidad)
-            elseif ($huboDiaLluvia && $cloudCover > self::UMBRAL_NUBOSIDAD) {
-                $estado = 'INACTIVO';
-                $razon = "Barro post-lluvia (Nubosidad: {$cloudCover}%)";
-                $totalDiasPerdidos++;
+            elseif ($mm > self::UMBRAL_LLUVIA && $lluviaDiurna <= 5) {
+                $estado = 'OPERATIVO_CONDICIONAL';
+                $razon = "Lluvia nocturna";
             }
-            // 3. Si pasó la nubosidad crítica, resetear flag de lluvia
-            elseif ($huboDiaLluvia && $cloudCover <= self::UMBRAL_NUBOSIDAD) {
-                $huboDiaLluvia = false; // Terreno se secó
+            else {
+                // 2. Barro por saturación + nubosidad + poco viento
+                if ($saturacionAlta && $cloudCover > self::UMBRAL_NUBOSIDAD && !$secadoActivo) {
+                    $estado = 'INACTIVO';
+                    $razon = "Saturación alta + nubosidad + poco viento";
+
+                    if ($diaCeroIndex === null && !$esHoy) {
+                        $diaCeroIndex = $index;
+                    }
+
+                    $totalDiasPerdidos++;
+                } else {
+                    $estado = 'OPERATIVO';
+                }
             }
 
             $diasDetalle[] = [
@@ -188,6 +226,10 @@ class ClimaDecisionService
                 'es_hoy' => $esHoy,
                 'precipitacion_mm' => round($mm, 1),
                 'nubosidad' => round($cloudCover, 0),
+                'viento_max' => round($vientoMax, 1),
+                'et0' => round($et0, 1),
+                'lluvia_diurna_mm' => round($lluviaDiurna, 1),
+                'saturacion_index' => round($saturacionIndex, 2),
                 'estado' => $estado,
                 'razon' => $razon,
                 'index' => $index,
@@ -202,14 +244,14 @@ class ClimaDecisionService
         if ($diaCeroIndex !== null) {
             // Contar días operativos ANTES del primer día de lluvia
             for ($i = 0; $i < $diaCeroIndex; $i++) {
-                if ($diasDetalle[$i]['estado'] === 'OPERATIVO' && !$diasDetalle[$i]['es_hoy']) {
+                if (in_array($diasDetalle[$i]['estado'], ['OPERATIVO', 'OPERATIVO_CONDICIONAL'], true) && !$diasDetalle[$i]['es_hoy']) {
                     $diasOperativosPrevios++;
                 }
             }
             
             // Contar días operativos DESPUÉS de la ventana de lluvia
             for ($i = $diaCeroIndex + 1; $i < count($diasDetalle); $i++) {
-                if ($diasDetalle[$i]['estado'] === 'OPERATIVO') {
+                if (in_array($diasDetalle[$i]['estado'], ['OPERATIVO', 'OPERATIVO_CONDICIONAL'], true)) {
                     $diasOperativosPosterior++;
                 }
             }
@@ -217,7 +259,7 @@ class ClimaDecisionService
         
         // Contar TODOS los días operativos en la ventana de 7 días
         foreach ($diasDetalle as $dia) {
-            if ($dia['estado'] === 'OPERATIVO' && !$dia['es_hoy']) {
+            if (in_array($dia['estado'], ['OPERATIVO', 'OPERATIVO_CONDICIONAL'], true) && !$dia['es_hoy']) {
                 $totalDiasOperativos++;
             }
         }

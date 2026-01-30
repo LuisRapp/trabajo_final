@@ -17,20 +17,43 @@
     $pronostico = $data['pronostico'] ?? [];
 @endphp
 
-<x-layouts.app :title="__('Dashboard')">
-    <!-- Estilos inline para sobrescribir flux:main -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rennova - Panel de Control</title>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <link href="https://fonts.bunny.net/css?family=inter:300,400,500,600,700" rel="stylesheet" />
     <style>
-        flux\:main, [data-flux-main], .flux-main {
-            max-width: none !important;
-            width: 100% !important;
-        }
+        body { font-family: 'Inter', sans-serif; }
     </style>
+</head>
+<body class="bg-gray-50 antialiased">
     
-    <!-- Container Principal Moderno con ancho completo -->
-    <div class="!max-w-none w-full">
+    <!-- Navegación Superior -->
+    <nav class="bg-green-800 border-b border-green-900">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <span class="text-white text-2xl font-bold">Rennova</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span class="text-green-100 text-sm">{{ auth()->user()?->name ?? 'Usuario' }}</span>
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button class="text-green-100 hover:text-white text-sm">Cerrar Sesión</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Container Principal -->
+    <div class="min-h-screen p-4 sm:p-6 lg:p-8">
         
-        <!-- Header Moderno -->
-        <div class="mb-8">
+        <!-- Header -->
+        <div class="max-w-7xl mx-auto mb-8">
             <div class="bg-white rounded-2xl shadow-sm p-6 sm:p-8">
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <!-- Título -->
@@ -41,7 +64,6 @@
                     
                     <!-- Controles -->
                     <form method="GET" action="{{ route('dashboard') }}" class="flex flex-col sm:flex-row gap-3">
-                        <!-- Selector de Lotes -->
                         <div class="relative">
                             <select name="lote" class="appearance-none bg-white border border-gray-200 rounded-xl px-4 py-3 pr-10 text-sm font-medium text-gray-700 hover:border-green-700 focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent transition-all duration-200 cursor-pointer">
                                 @if($lotes->count() > 0)
@@ -61,7 +83,6 @@
                             </div>
                         </div>
                         
-                        <!-- Botón Actualizar -->
                         <button type="submit" class="bg-green-700 hover:bg-green-800 text-white font-medium px-6 py-3 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-center gap-2 active:scale-95">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
@@ -75,7 +96,7 @@
 
         @if($data)
             <!-- Contenido Principal -->
-            <div class="space-y-6">
+            <div class="max-w-7xl mx-auto space-y-6">
                 
                 <!-- KPIs Section -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -94,7 +115,6 @@
                             </div>
                         </div>
                         
-                        <!-- Indicador de rango -->
                         <div class="mt-6 pt-6 border-t border-gray-100">
                             <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Período</p>
                             <div class="flex items-center justify-between">
@@ -124,7 +144,6 @@
                             </div>
                         </div>
                         
-                        <!-- Acción recomendada -->
                         @if(isset($data['accion_porcentaje']) && $data['accion_porcentaje'] > 0)
                             <div class="mt-6 pt-6 border-t border-gray-100">
                                 <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Acción Recomendada</p>
@@ -147,7 +166,6 @@
                         <span class="text-sm text-gray-500">Próximos {{ count($pronostico) }} días</span>
                     </div>
                     
-                    <!-- Cinta de días -->
                     <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4">
                         @foreach($pronostico as $dia)
                             @php
@@ -179,11 +197,10 @@
                     </div>
                 </div>
 
-                <!-- Accesos Directos (Grid) -->
+                <!-- Accesos Directos -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     
-                    <!-- Maquinaria -->
-                    <a href="{{ route('modulos.maquinaria') }}" class="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 p-8 hover:-translate-y-1 cursor-pointer">
+                    <a href="{{ route('modulos.maquinaria') }}" class="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 p-8 hover:-translate-y-1">
                         <div class="flex flex-col items-center text-center">
                             <div class="bg-blue-50 group-hover:bg-blue-100 p-6 rounded-2xl mb-4 transition-colors duration-300">
                                 <svg class="w-12 h-12 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -191,12 +208,11 @@
                                 </svg>
                             </div>
                             <h3 class="text-lg font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">Maquinaria</h3>
-                            <p class="text-sm text-gray-500">Gestión de equipos y mantenimientos</p>
+                            <p class="text-sm text-gray-500">Gestión de equipos</p>
                         </div>
                     </a>
 
-                    <!-- Inventario -->
-                    <a href="{{ route('modulos.inventario-forestal') }}" class="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 p-8 hover:-translate-y-1 cursor-pointer">
+                    <a href="{{ route('modulos.inventario-forestal') }}" class="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 p-8 hover:-translate-y-1">
                         <div class="flex flex-col items-center text-center">
                             <div class="bg-purple-50 group-hover:bg-purple-100 p-6 rounded-2xl mb-4 transition-colors duration-300">
                                 <svg class="w-12 h-12 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -204,12 +220,11 @@
                                 </svg>
                             </div>
                             <h3 class="text-lg font-bold text-gray-900 mb-2 group-hover:text-purple-600 transition-colors">Inventario</h3>
-                            <p class="text-sm text-gray-500">Control de stock y materiales</p>
+                            <p class="text-sm text-gray-500">Control de stock</p>
                         </div>
                     </a>
 
-                    <!-- Personal -->
-                    <a href="{{ route('modulos.personal') }}" class="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 p-8 hover:-translate-y-1 cursor-pointer">
+                    <a href="{{ route('modulos.personal') }}" class="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 p-8 hover:-translate-y-1">
                         <div class="flex flex-col items-center text-center">
                             <div class="bg-orange-50 group-hover:bg-orange-100 p-6 rounded-2xl mb-4 transition-colors duration-300">
                                 <svg class="w-12 h-12 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -217,15 +232,12 @@
                                 </svg>
                             </div>
                             <h3 class="text-lg font-bold text-gray-900 mb-2 group-hover:text-orange-600 transition-colors">Personal</h3>
-                            <p class="text-sm text-gray-500">Gestión de empleados y asistencia</p>
+                            <p class="text-sm text-gray-500">Gestión de empleados</p>
                         </div>
                     </a>
 
-                    <!-- Registrar Operaciones - CTA Principal -->
-                    <a href="{{ route('modulos.operaciones') }}" class="group bg-gradient-to-br from-green-700 to-green-800 rounded-2xl shadow-md hover:shadow-2xl transition-all duration-300 p-8 hover:-translate-y-1 cursor-pointer relative overflow-hidden">
-                        <!-- Efecto de brillo -->
+                    <a href="{{ route('modulos.operaciones') }}" class="group bg-gradient-to-br from-green-700 to-green-800 rounded-2xl shadow-md hover:shadow-2xl transition-all duration-300 p-8 hover:-translate-y-1 relative overflow-hidden">
                         <div class="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
-                        
                         <div class="flex flex-col items-center text-center relative z-10">
                             <div class="bg-white bg-opacity-20 group-hover:bg-opacity-30 p-6 rounded-2xl mb-4 transition-all duration-300">
                                 <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -233,10 +245,8 @@
                                 </svg>
                             </div>
                             <h3 class="text-lg font-bold text-white mb-2 group-hover:scale-105 transition-transform">Registrar Operaciones</h3>
-                            <p class="text-sm text-green-100">Añadir nueva operación forestal</p>
+                            <p class="text-sm text-green-100">Añadir nueva operación</p>
                         </div>
-                        
-                        <!-- Badge "Acción Principal" -->
                         <div class="absolute top-4 right-4">
                             <span class="bg-white bg-opacity-20 text-white text-xs font-semibold px-2 py-1 rounded-full">★</span>
                         </div>
@@ -244,7 +254,7 @@
                 </div>
             </div>
         @else
-            <div class="bg-white rounded-2xl shadow-sm p-12">
+            <div class="max-w-7xl mx-auto bg-white rounded-2xl shadow-sm p-12">
                 <div class="flex flex-col items-center text-center">
                     <div class="bg-gray-100 p-6 rounded-full mb-4">
                         <svg class="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -252,7 +262,7 @@
                         </svg>
                     </div>
                     <h3 class="text-xl font-bold text-gray-900 mb-2">No hay lotes configurados</h3>
-                    <p class="text-gray-500 mb-6">Crea tu primer lote para comenzar a gestionar operaciones forestales</p>
+                    <p class="text-gray-500 mb-6">Crea tu primer lote para comenzar</p>
                     <a href="{{ route('lotes.index') }}" class="bg-green-700 hover:bg-green-800 text-white font-medium px-6 py-3 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
                         Crear Lote
                     </a>
@@ -260,4 +270,6 @@
             </div>
         @endif
     </div>
-</x-layouts.app>
+
+</body>
+</html>

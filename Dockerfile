@@ -2,8 +2,8 @@ FROM php:8.2-apache
 
 # Instalar extensiones necesarias
 RUN apt-get update \
-    && apt-get install -y libpq-dev git unzip cron \
-    && docker-php-ext-install pdo pdo_pgsql
+    && apt-get install -y libpq-dev libicu-dev git unzip cron \
+    && docker-php-ext-install pdo pdo_pgsql intl
 
 # Instalar Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer

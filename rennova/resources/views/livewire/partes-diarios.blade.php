@@ -20,12 +20,12 @@
     <!-- Pestañas (Tabs) -->
     <ul class="nav nav-tabs mb-4" id="partesTabs" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="nuevo-tab" data-bs-toggle="tab" data-bs-target="#nuevo-parte" type="button" role="tab" aria-controls="nuevo-parte" aria-selected="false">
+            <button class="nav-link active" id="nuevo-tab" data-bs-toggle="tab" data-bs-target="#nuevo-parte" type="button" role="tab" aria-controls="nuevo-parte" aria-selected="true">
                 <i class="bi bi-plus-circle"></i> Nuevo Parte Diario
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="listado-tab" data-bs-toggle="tab" data-bs-target="#listado-partes" type="button" role="tab" aria-controls="listado-partes" aria-selected="true">
+            <button class="nav-link" id="listado-tab" data-bs-toggle="tab" data-bs-target="#listado-partes" type="button" role="tab" aria-controls="listado-partes" aria-selected="false">
                 <i class="bi bi-list-ul"></i> Listado de Partes Diarios
             </button>
         </li>
@@ -33,7 +33,7 @@
 
     <div class="tab-content" id="partesTabContent">
         <!-- Pestaña 1: Nuevo Parte Diario -->
-        <div class="tab-pane fade" id="nuevo-parte" role="tabpanel" aria-labelledby="nuevo-tab">
+        <div class="tab-pane fade show active" id="nuevo-parte" role="tabpanel" aria-labelledby="nuevo-tab">
             
             <!-- SECCIÓN 1: Datos Maestros -->
             <div class="card shadow mb-4">
@@ -493,7 +493,7 @@
             <div class="card shadow">
                 <div class="card-body">
                     <div class="d-flex gap-2 justify-content-end">
-                        <button type="button" wire:click.prevent="resetCampos" class="btn btn-secondary btn-lg" wire:loading.attr="disabled">
+                        <button type="button" wire:click.prevent="cancelarEdicion" class="btn btn-secondary btn-lg" wire:loading.attr="disabled">
                             <i class="bi bi-x-circle"></i> Cancelar
                         </button>
                         <button type="button" wire:click.prevent="guardar" class="btn btn-primary btn-lg" wire:loading.attr="disabled" wire:target="guardar">
@@ -506,7 +506,7 @@
         </div>
 
         <!-- Pestaña 2: Listado -->
-        <div class="tab-pane fade show active" id="listado-partes" role="tabpanel" aria-labelledby="listado-tab">
+        <div class="tab-pane fade" id="listado-partes" role="tabpanel" aria-labelledby="listado-tab">
             <div class="card shadow">
                 <div class="card-header bg-light">
                     <h5 class="mb-0">Partes Diarios Registrados</h5>
@@ -584,13 +584,48 @@
 
 @push('scripts')
 <script>
+    function mostrarTabPartes(tabId) {
+        const nuevoTab = document.getElementById('nuevo-tab');
+        const listadoTab = document.getElementById('listado-tab');
+        const nuevoPane = document.getElementById('nuevo-parte');
+        const listadoPane = document.getElementById('listado-partes');
+
+        const activarTab = (tabButton, tabPane) => {
+            [nuevoTab, listadoTab].forEach(btn => btn?.classList.remove('active'));
+            [nuevoPane, listadoPane].forEach(pane => pane?.classList.remove('show', 'active'));
+            tabButton?.classList.add('active');
+            tabPane?.classList.add('show', 'active');
+        };
+
+        if (tabId === 'listado') {
+            activarTab(listadoTab, listadoPane);
+        } else {
+            activarTab(nuevoTab, nuevoPane);
+        }
+    }
+
     // Evento para cambiar a la pestaña de listado después de guardar
     document.addEventListener('livewire:init', () => {
         Livewire.on('parteDiarioGuardado', () => {
             const listadoTab = document.getElementById('listado-tab');
-            if(window.bootstrap && listadoTab) {
+            if(window.bootstrap?.Tab && listadoTab) {
                 const tabInstance = new bootstrap.Tab(listadoTab);
                 tabInstance.show();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                mostrarTabPartes('listado');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        });
+
+        Livewire.on('parteDiarioCancelado', () => {
+            const listadoTab = document.getElementById('listado-tab');
+            if(window.bootstrap?.Tab && listadoTab) {
+                const tabInstance = new bootstrap.Tab(listadoTab);
+                tabInstance.show();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                mostrarTabPartes('listado');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             }
         });
@@ -598,10 +633,32 @@
         // Evento para cambiar a la pestaña de formulario al editar
         Livewire.on('editandoParteDiario', () => {
             const nuevoTab = document.getElementById('nuevo-tab');
-            if(window.bootstrap && nuevoTab) {
+            if(window.bootstrap?.Tab && nuevoTab) {
                 const tabInstance = new bootstrap.Tab(nuevoTab);
                 tabInstance.show();
                 window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                mostrarTabPartes('nuevo');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        });
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const listadoTab = document.getElementById('listado-tab');
+        const nuevoTab = document.getElementById('nuevo-tab');
+
+        listadoTab?.addEventListener('click', (e) => {
+            if (!window.bootstrap?.Tab) {
+                e.preventDefault();
+                mostrarTabPartes('listado');
+            }
+        });
+
+        nuevoTab?.addEventListener('click', (e) => {
+            if (!window.bootstrap?.Tab) {
+                e.preventDefault();
+                mostrarTabPartes('nuevo');
             }
         });
     });

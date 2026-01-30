@@ -14,15 +14,23 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Usuarios de prueba
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        // Usuario administrador de demostración
+        $this->call([
+            RolesAndPermissionsSeeder::class,
+            LotesClimaDemoSeeder::class,
         ]);
 
-        // Usuario administrador con rol
-        $this->call([
-            AdminUserSeeder::class,
+        $admin = User::factory()->create([
+            'name' => 'Demo Admin',
+            'email' => 'demo@example.com',
+            'password' => bcrypt('demo1234'),
         ]);
+
+        // Asignar rol de Administrador
+        $admin->assignRole('Administrador');
+
+        $this->command->info('✅ Usuario de demostración creado:');
+        $this->command->info('   Email: demo@example.com');
+        $this->command->info('   Password: demo1234');
     }
 }

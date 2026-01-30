@@ -31,8 +31,13 @@ use App\Http\Controllers\CargaController;
 use App\Http\Controllers\ChoferController;
 
 // --- RUTAS PÚBLICAS ---
-// Página principal (pública) usando controlador para armar pronóstico
-Route::get('/', [DashboardController::class, 'index'])->name('home');
+// Página de bienvenida / login
+Route::get('/', function () {
+    if (auth()->check()) {
+        return redirect()->route('dashboard');
+    }
+    return view('welcome');
+})->name('welcome');
 
 // Las rutas de autenticación (login, register, etc.) deben estar PÚBLICAS
 require __DIR__.'/auth.php';

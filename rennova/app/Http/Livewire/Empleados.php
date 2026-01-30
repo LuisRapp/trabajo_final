@@ -36,6 +36,7 @@ class Empleados extends Component
     public function mount()
     {
         $this->roles = RolLaboral::all();
+        $this->empleados = $this->obtenerEmpleados();
     }
 
     public function render()

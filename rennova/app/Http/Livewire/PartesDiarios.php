@@ -563,6 +563,20 @@ class PartesDiarios extends Component
         try {
             \DB::beginTransaction();
             $eventosCarga = [];
+
+            // Enforce lógico: 1 Parte Diario por (lote, fecha).
+            // Si el usuario intenta crear uno nuevo y ya existe, reutilizamos el existente.
+            if (!$this->parte_id) {
+                $existente = ParteDiario::where('id_lote', $this->id_lote)
+                    ->whereDate('fecha', $this->fecha)
+                    ->orderByDesc('id_parte_diario')
+                    ->first();
+
+                if ($existente) {
+                    $this->parte_id = $existente->id_parte_diario;
+                    session()->flash('message', 'Ya existe un Parte Diario para ese lote y fecha. Se actualizará el registro existente.');
+                }
+            }
             
             // 1. Guardar el Parte Diario (Maestro)
             $parteDiario = ParteDiario::updateOrCreate(
@@ -828,13 +842,22 @@ class PartesDiarios extends Component
         $this->reset([
             'parte_id', 'id_lote', 'fecha', 'actividad_realizada', 'es_dia_caido', 
             'motivo_dia_caido', 'observaciones', 'cargas', 'jornales', 'movimientos',
-            'carga_peso_neto', 'carga_id_chofer', 'carga_destino', 'carga_empleados',
+            'carga_id_categoria_madera', 'carga_ticket', 'carga_peso_bruto', 'carga_tara',
+            'carga_peso_neto', 'carga_id_chofer', 'carga_destino', 'carga_empleados', 'carga_maquinarias',
+            'busqueda_chofer', 'busqueda_cliente', 'empleados_asignados_ids', 'maquinarias_asignadas_ids',
             'jornal_id_empleado', 'jornal_observaciones',
             'movimiento_id_insumo', 'movimiento_cantidad', 'movimiento_motivo', 'movimiento_observaciones'
         ]);
         $this->total_toneladas = 0;
         $this->stock_disponible_insumo = null;
         $this->actualizarJornalPorEmpleado();
+    }
+
+    public function cancelarEdicion()
+    {
+        $this->resetCampos();
+        $this->resetValidation();
+        $this->dispatch('parteDiarioCancelado');
     }
 
     // ============ PROPIEDADES COMPUTADAS (Catálogos) ============

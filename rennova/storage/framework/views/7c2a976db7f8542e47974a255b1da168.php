@@ -2,9 +2,89 @@
 
 <?php $__env->startSection('content'); ?>
 
+<style>
+    .modern-card {
+        border: none;
+        border-radius: 0.5rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+    }
+    .modern-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.08);
+    }
+    .kpi-card {
+        background: white;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        border: none;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+        transition: all 0.3s ease;
+    }
+    .kpi-card:hover {
+        box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+    }
+    .kpi-number {
+        font-size: 1.75rem;
+        font-weight: 700;
+        line-height: 1;
+    }
+    .kpi-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .weather-day {
+        text-align: center;
+        padding: 0.5rem;
+    }
+    .weather-icon-bg {
+        width: 40px;
+        height: 40px;
+        border-radius: 0.5rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 0.5rem;
+    }
+    .weather-bar {
+        height: 2px;
+        border-radius: 1px;
+        margin-top: 0.4rem;
+    }
+    .cta-card {
+        background: linear-gradient(135deg, var(--primary-color) 0%, #1e5631 100%);
+        position: relative;
+        overflow: hidden;
+    }
+    .cta-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255,255,255,0);
+        transition: background 0.3s ease;
+    }
+    .cta-card:hover::before {
+        background: rgba(255,255,255,0.1);
+    }
+    .page-header {
+        background: white;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+    }
+</style>
+
     
     <?php if(session('status')): ?>
-        <div class="alert alert-success alert-dismissible fade show shadow-sm mb-4">
+        <div class="alert alert-success alert-dismissible fade show shadow-sm mb-4 rounded-3">
             <i class="bi bi-check-circle-fill me-2"></i> <?php echo e(session('status')); ?>
 
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
@@ -12,7 +92,7 @@
     <?php endif; ?>
     
     <?php if(session('error')): ?>
-        <div class="alert alert-danger alert-dismissible fade show shadow-sm mb-4">
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm mb-4 rounded-3">
             <i class="bi bi-exclamation-triangle-fill me-2"></i> <?php echo e(session('error')); ?>
 
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
@@ -20,135 +100,193 @@
     <?php endif; ?>
 
     
-    <?php echo $__env->make('partials.selector-lote', ['lotes' => $lotes ?? collect(), 'loteSeleccionado' => $loteSeleccionado ?? null], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
+    <div class="page-header">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+            <div>
+                <h1 class="h4 fw-bold mb-1">Panel de Control</h1>
+                <p class="text-muted small mb-0" style="font-size: 0.8rem;">Gestión Forestal Rennova</p>
+            </div>
+            <div class="d-flex gap-2">
+                <?php echo $__env->make('partials.selector-lote', ['lotes' => $lotes ?? collect(), 'loteSeleccionado' => $loteSeleccionado ?? null], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
+            </div>
+        </div>
+    </div>
 
     
     <?php if(isset($pronosticoError) && $pronosticoError): ?>
-        <div class="alert alert-warning small"><?php echo e($pronosticoError); ?></div>
+        <div class="alert alert-warning rounded-3 mb-4">
+            <i class="bi bi-exclamation-triangle me-2"></i> <?php echo e($pronosticoError); ?>
+
+        </div>
     <?php endif; ?>
 
     <?php if(isset($pronosticoData) && !empty($pronosticoData)): ?>
-        <div class="mb-5">
-            <?php if (isset($component)) { $__componentOriginal8e533a9f8b46dcc010c770ef91e454a9 = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginal8e533a9f8b46dcc010c770ef91e454a9 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.clima.pronostico','data' => ['alerta' => $pronosticoData['alerta'] ?? 'NORMAL','pronostico' => $pronosticoData['pronostico'] ?? [],'analisisImpacto' => $pronosticoData['analisisImpacto'] ?? [],'lote' => $pronosticoData['loteNombre'] ?? 'Desconocido','recomendacionDetallada' => $pronosticoData['recomendacionDetallada'] ?? null]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('clima.pronostico'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['alerta' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($pronosticoData['alerta'] ?? 'NORMAL'),'pronostico' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($pronosticoData['pronostico'] ?? []),'analisisImpacto' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($pronosticoData['analisisImpacto'] ?? []),'lote' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($pronosticoData['loteNombre'] ?? 'Desconocido'),'recomendacionDetallada' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($pronosticoData['recomendacionDetallada'] ?? null)]); ?>
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginal8e533a9f8b46dcc010c770ef91e454a9)): ?>
-<?php $attributes = $__attributesOriginal8e533a9f8b46dcc010c770ef91e454a9; ?>
-<?php unset($__attributesOriginal8e533a9f8b46dcc010c770ef91e454a9); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginal8e533a9f8b46dcc010c770ef91e454a9)): ?>
-<?php $component = $__componentOriginal8e533a9f8b46dcc010c770ef91e454a9; ?>
-<?php unset($__componentOriginal8e533a9f8b46dcc010c770ef91e454a9); ?>
-<?php endif; ?>
+        
+        <div class="row g-2 mb-2">
+            
+            <div class="col-12 col-md-6">
+                <div class="kpi-card">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <p class="text-uppercase text-muted fw-semibold mb-1" style="font-size: 0.7rem;">Días Perdidos</p>
+                            <div class="kpi-number text-dark"><?php echo e($pronosticoData['analisisImpacto']['diasPerdidos'] ?? 0); ?></div>
+                        </div>
+                        <div class="kpi-icon bg-danger bg-opacity-10">
+                            <i class="bi bi-exclamation-circle text-danger" style="font-size: 1.1rem;"></i>
+                        </div>
+                    </div>
+                    <div class="pt-2 border-top">
+                        <p class="text-uppercase text-muted fw-semibold mb-1" style="font-size: 0.7rem;">Período</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="small text-muted">Últimos 7 días</span>
+                            <?php
+                                $dias = $pronosticoData['analisisImpacto']['diasPerdidos'] ?? 0;
+                            ?>
+                            <?php if($dias > 5): ?>
+                                <span class="badge bg-danger">Alto</span>
+                            <?php elseif($dias > 2): ?>
+                                <span class="badge bg-warning">Moderado</span>
+                            <?php else: ?>
+                                <span class="badge bg-success">Normal</span>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            
+            <div class="col-12 col-md-6">
+                <div class="kpi-card">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <p class="text-uppercase text-muted fw-semibold mb-1" style="font-size: 0.7rem;">Déficit TN</p>
+                            <div class="kpi-number text-dark"><?php echo e($pronosticoData['analisisImpacto']['deficitTn'] ?? 0); ?></div>
+                        </div>
+                        <div class="kpi-icon bg-warning bg-opacity-10">
+                            <i class="bi bi-graph-down text-warning" style="font-size: 1.1rem;"></i>
+                        </div>
+                    </div>
+                    <?php if(isset($pronosticoData['analisisImpacto']['accionPorcentaje']) && $pronosticoData['analisisImpacto']['accionPorcentaje'] > 0): ?>
+                        <div class="pt-2 border-top">
+                            <p class="text-uppercase text-muted fw-semibold mb-1" style="font-size: 0.7rem;">Acción Recomendada</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="small text-muted">Aumentar producción</span>
+                                <span class="fw-bold text-warning">+<?php echo e($pronosticoData['analisisImpacto']['accionPorcentaje']); ?>%</span>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+
+        
+        <div class="card modern-card mb-2">
+            <div class="card-body p-2">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h2 class="fw-bold mb-0" style="font-size: 0.9rem;">Pronóstico de Operatividad</h2>
+                    <span class="text-muted" style="font-size: 0.75rem;">Próximos <?php echo e(count($pronosticoData['pronostico'] ?? [])); ?> días</span>
+                </div>
+                
+                <div class="row g-3">
+                    <?php $__currentLoopData = ($pronosticoData['pronostico'] ?? []); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $dia): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <?php
+                            $esOperativo = strtoupper($dia['estado'] ?? 'OPERATIVO') === 'OPERATIVO';
+                            $esFinDeSemana = isset($dia['suelo']) && stripos($dia['suelo'], 'fin de semana') !== false;
+                            $colorBg = $esFinDeSemana ? 'secondary' : ($esOperativo ? 'success' : 'danger');
+                            $labelParts = explode('(', $dia['label'] ?? 'Día');
+                            $diaNombre = trim($labelParts[0] ?? 'Día');
+                            $fecha = isset($labelParts[1]) ? trim(str_replace(')', '', $labelParts[1])) : '';
+                            $textoEstado = $esFinDeSemana ? 'No laboral' : ($esOperativo ? 'Operativo' : ($dia['suelo'] ?? 'Inactivo'));
+                        ?>
+                        <div class="col-6 col-sm-4 col-md-3 col-lg">
+                            <div class="weather-day">
+                                <p class="fw-semibold mb-0" style="font-size: 0.75rem;"><?php echo e($diaNombre); ?></p>
+                                <p class="text-muted mb-2" style="font-size: 0.65rem;"><?php echo e($fecha); ?></p>
+                                <div class="weather-icon-bg bg-<?php echo e($colorBg); ?> bg-opacity-10">
+                                    <?php if($esFinDeSemana): ?>
+                                        <i class="bi bi-calendar-x text-<?php echo e($colorBg); ?>" style="font-size: 1.2rem;"></i>
+                                    <?php elseif($esOperativo): ?>
+                                        <i class="bi bi-sun text-<?php echo e($colorBg); ?>" style="font-size: 1.2rem;"></i>
+                                    <?php else: ?>
+                                        <i class="bi bi-cloud-rain text-<?php echo e($colorBg); ?>" style="font-size: 1.2rem;"></i>
+                                    <?php endif; ?>
+                                </div>
+                                <div class="weather-bar bg-<?php echo e($colorBg); ?>"></div>
+                                <p class="fw-medium text-<?php echo e($colorBg); ?> mt-1 mb-0" style="font-size: 0.7rem;">
+                                    <?php echo e($textoEstado); ?>
+
+                                </p>
+                            </div>
+                        </div>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                </div>
+            </div>
         </div>
     <?php endif; ?>
 
     
-    <div>
-        <h3 class="fw-bold text-secondary mb-4 opacity-75">Panel de Control</h3>
-
+    <div class="row g-2 mb-2">
         
-        <h6 class="text-uppercase text-muted fw-bold mb-3 small">Módulos Operativos</h6>
-        <div class="row g-4 mb-5">
-            <!-- Maquinaria -->
-            <div class="col-12 col-md-6 col-lg-3">
-                <div class="card h-100 border-0 shadow-sm hover-elevate">
-                    <div class="card-body text-center p-4">
-                        <div class="mb-3" style="color: var(--primary-color);"><i class="bi bi-truck display-4"></i></div>
-                        <h5 class="card-title fw-bold">Maquinaria</h5>
-                        <p class="text-muted small">Gestión de flota</p>
-                        <a href="<?php echo e(route('modulos.maquinaria')); ?>" class="btn btn-outline-success w-100 stretched-link">Ingresar</a>
+        <div class="col-12 col-sm-6 col-lg-3">
+            <a href="<?php echo e(route('modulos.maquinaria')); ?>" class="text-decoration-none">
+                <div class="card modern-card h-100">
+                    <div class="card-body text-center p-2">
+                        <div class="kpi-icon bg-primary bg-opacity-10 mx-auto mb-2">
+                            <i class="bi bi-truck text-primary" style="font-size: 1.2rem;"></i>
+                        </div>
+                        <h5 class="fw-bold mb-1 text-dark" style="font-size: 0.9rem;">Maquinaria</h5>
+                        <p class="text-muted mb-0" style="font-size: 0.7rem;">Gestión de equipos</p>
                     </div>
                 </div>
-            </div>
-
-            <!-- Inventario -->
-            <div class="col-12 col-md-6 col-lg-3">
-                <div class="card h-100 border-0 shadow-sm hover-elevate">
-                    <div class="card-body text-center p-4">
-                        <div class="mb-3" style="color: var(--primary-color);"><i class="bi bi-tree display-4"></i></div>
-                        <h5 class="card-title fw-bold">Inventario</h5>
-                        <p class="text-muted small">Control de lotes</p>
-                        <a href="<?php echo e(route('modulos.inventario-forestal')); ?>" class="btn btn-outline-success w-100 stretched-link">Ingresar</a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Personal -->
-            <div class="col-12 col-md-6 col-lg-3">
-                <div class="card h-100 border-0 shadow-sm hover-elevate">
-                    <div class="card-body text-center p-4">
-                        <div class="mb-3" style="color: var(--primary-color);"><i class="bi bi-people display-4"></i></div>
-                        <h5 class="card-title fw-bold">Personal</h5>
-                        <p class="text-muted small">RRHH y legajos</p>
-                        <a href="<?php echo e(route('modulos.personal')); ?>" class="btn btn-outline-success w-100 stretched-link">Ingresar</a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Operaciones -->
-            <div class="col-12 col-md-6 col-lg-3">
-                <div class="card h-100 border-0 shadow-sm hover-elevate bg-success bg-opacity-10">
-                    <div class="card-body text-center p-4">
-                        <div class="mb-3" style="color: var(--primary-color);"><i class="bi bi-clipboard-check display-4"></i></div>
-                        <h5 class="card-title fw-bold text-success">Operaciones</h5>
-                        <p class="text-muted small">Producción diaria</p>
-                        <a href="<?php echo e(route('modulos.operaciones')); ?>" class="btn btn-success w-100 stretched-link">Registrar</a>
-                    </div>
-                </div>
-            </div>
+            </a>
         </div>
 
         
-        <h6 class="text-uppercase text-muted fw-bold mb-3 small">Gestión y Análisis</h6>
-        <div class="row g-4">
-            <!-- Reportes -->
-            <div class="col-12 col-md-6 col-lg-3">
-                <div class="card h-100 border-0 shadow-sm hover-elevate">
-                    <div class="card-body p-3 d-flex align-items-center">
-                        <div class="bg-light rounded p-3 me-3 text-primary"><i class="bi bi-bar-chart fs-2"></i></div>
-                        <div>
-                            <h6 class="fw-bold mb-1">Reportes</h6>
-                            <a href="<?php echo e(route('reportes.estadisticas-forestales')); ?>" class="text-decoration-none small stretched-link">Ver costos e históricos</a>
+        <div class="col-12 col-sm-6 col-lg-3">
+            <a href="<?php echo e(route('modulos.inventario-forestal')); ?>" class="text-decoration-none">
+                <div class="card modern-card h-100">
+                    <div class="card-body text-center p-2">
+                        <div class="kpi-icon" style="background: rgba(139, 92, 246, 0.1); margin: 0 auto;" class="mb-2">
+                            <i class="bi bi-box-seam" style="color: #8B5CF6; font-size: 1.2rem;"></i>
                         </div>
+                        <h5 class="fw-bold mb-1 text-dark" style="font-size: 0.9rem;">Inventario</h5>
+                        <p class="text-muted mb-0" style="font-size: 0.7rem;">Control de stock</p>
                     </div>
                 </div>
-            </div>
+            </a>
+        </div>
 
-            <!-- Stock -->
-            <div class="col-12 col-md-6 col-lg-3">
-                <div class="card h-100 border-0 shadow-sm hover-elevate">
-                    <div class="card-body p-3 d-flex align-items-center">
-                        <div class="bg-light rounded p-3 me-3 text-warning"><i class="bi bi-box-seam fs-2"></i></div>
-                        <div>
-                            <h6 class="fw-bold mb-1">Stock (FIFO)</h6>
-                            <a href="<?php echo e(route('modulos.operaciones.gestionstock')); ?>" class="text-decoration-none small stretched-link">Gestionar Insumos</a>
+        
+        <div class="col-12 col-sm-6 col-lg-3">
+            <a href="<?php echo e(route('modulos.personal')); ?>" class="text-decoration-none">
+                <div class="card modern-card h-100">
+                    <div class="card-body text-center p-2">
+                        <div class="kpi-icon" style="background: rgba(249, 115, 22, 0.1); margin: 0 auto;" class="mb-2">
+                            <i class="bi bi-people" style="color: #F97316; font-size: 1.2rem;"></i>
                         </div>
+                        <h5 class="fw-bold mb-1 text-dark" style="font-size: 0.9rem;">Personal</h5>
+                        <p class="text-muted mb-0" style="font-size: 0.7rem;">Gestión de empleados</p>
                     </div>
                 </div>
-            </div>
+            </a>
+        </div>
 
-            <!-- Configuración -->
-            <div class="col-12 col-md-6 col-lg-3">
-                <div class="card h-100 border-0 shadow-sm hover-elevate">
-                    <div class="card-body p-3 d-flex align-items-center">
-                        <div class="bg-light rounded p-3 me-3 text-secondary"><i class="bi bi-gear fs-2"></i></div>
-                        <div>
-                            <h6 class="fw-bold mb-1">Configuración</h6>
-                            <a href="<?php echo e(route('modulos.administracion')); ?>" class="text-decoration-none small stretched-link">Ajustes del sistema</a>
+        
+        <div class="col-12 col-sm-6 col-lg-3">
+            <a href="<?php echo e(route('modulos.operaciones')); ?>" class="text-decoration-none">
+                <div class="card cta-card modern-card h-100 position-relative">
+                    <div class="card-body text-center p-2">
+                        <div class="kpi-icon mx-auto mb-2" style="background: rgba(255,255,255,0.2);">
+                            <i class="bi bi-plus-lg text-white" style="font-size: 1.2rem;"></i>
                         </div>
+                        <h5 class="fw-bold mb-1 text-white" style="font-size: 0.9rem;">Registrar Operaciones</h5>
+                        <p class="text-white-50 mb-0" style="font-size: 0.7rem;">Nueva operación</p>
+                    </div>
+                    <div class="position-absolute top-0 end-0 m-3">
+                        <span class="badge bg-light bg-opacity-25 text-white">★</span>
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
     </div>
 

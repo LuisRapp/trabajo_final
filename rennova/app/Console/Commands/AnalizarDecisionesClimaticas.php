@@ -61,6 +61,7 @@ class AnalizarDecisionesClimaticas extends Command
         $resultados = [
             'anticipacion' => 0,
             'reaccion' => 0,
+            'normal' => 0,
             'errores' => 0,
         ];
 
@@ -81,10 +82,12 @@ class AnalizarDecisionesClimaticas extends Command
                 $this->renderRecomendacion($resultado);
                 
                 // Contabilizar estrategia
-                if ($resultado['estrategia'] === 'ANTICIPACION') {
+                if (str_starts_with($resultado['estrategia'], 'ANTICIPACION')) {
                     $resultados['anticipacion']++;
-                } else {
+                } elseif ($resultado['estrategia'] === 'REACCION') {
                     $resultados['reaccion']++;
+                } else {
+                    $resultados['normal']++;
                 }
             }
 
@@ -151,6 +154,7 @@ class AnalizarDecisionesClimaticas extends Command
         $this->line("   Total de lotes analizados: <fg=cyan>{$totalLotes}</>");
         $this->line("   Estrategias de Anticipación: <fg=yellow>{$resultados['anticipacion']}</>");
         $this->line("   Estrategias de Reacción: <fg=red>{$resultados['reaccion']}</>");
+        $this->line("   Operación Normal: <fg=green>{$resultados['normal']}</>");
         
         if ($resultados['errores'] > 0) {
             $this->line("   Errores: <fg=red>{$resultados['errores']}</>");

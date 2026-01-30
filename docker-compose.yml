@@ -11,13 +11,15 @@ services:
     volumes:
       - ./rennova:/var/www/html
     environment:
-      - DB_HOST=db
-      - DB_PORT=5432
-      - DB_DATABASE=rennova
-      - DB_USERNAME=postgres
-      - DB_PASSWORD=postgres
+      DB_CONNECTION: pgsql
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_DATABASE: rennova
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     ports:
       - "8000:80"
 
@@ -33,6 +35,11 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d rennova"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
 
 volumes:
   pgdata:

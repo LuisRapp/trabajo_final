@@ -14,9 +14,9 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
         :root {
-            --navbar-height: 56px;
-            --sidebar-width: 280px;
-            --footer-height: 56px;
+            --navbar-height: 38px;
+            --sidebar-width: 220px;
+            --footer-height: 40px;
             --primary-color: #2A6041;
             --primary-light: #C8D6AF;
             --bg-light: #F4F7F6;
@@ -52,40 +52,42 @@
             box-shadow: 2px 0 8px rgba(0, 0, 0, 0.08);
             transition: margin-left 0.3s ease-in-out;
             flex-shrink: 0;
-            height: calc(100vh - var(--navbar-height) - var(--footer-height));
-            padding-bottom: 0.5rem; /* que no se esconda el último item */
+            height: 100%;
+            padding-bottom: 1.5rem;
         }
         .sidebar.collapsed {
             margin-left: calc(-1 * var(--sidebar-width));
         }
         .sidebar-header {
-            padding: 1rem;
+            padding: 0.75rem;
             font-weight: bold;
             background: var(--sidebar-header-bg);
         }
         .sidebar-header h6 {
             color: var(--primary-color);
+            font-size: 0.85rem;
         }
         .sidebar-section {
-            padding: 0.75rem 1rem 0.25rem 1rem;
-            font-size: 0.95rem;
+            padding: 0.5rem 0.75rem 0.25rem 0.75rem;
+            font-size: 0.8rem;
             color: var(--primary-color);
             font-weight: 600;
         }
         .sidebar-link {
             display: flex;
             align-items: center;
-            padding: 0.75rem 1rem;
+            padding: 0.5rem 0.75rem;
             color: #343A40;
             text-decoration: none;
             transition: all 0.2s;
-            border-left: 3px solid transparent;
+            border-left: 2px solid transparent;
+            font-size: 0.85rem;
         }
         .sidebar-link:hover {
             background: var(--bg-light);
             color: var(--primary-color);
             border-left-color: var(--primary-color);
-            padding-left: 1.25rem;
+            padding-left: 0.9rem;
         }
         .sidebar-link.active {
             background: var(--bg-light);
@@ -94,9 +96,10 @@
             font-weight: 500;
         }
         .sidebar-link i {
-            margin-right: 0.5rem;
-            width: 20px;
+            margin-right: 0.4rem;
+            width: 16px;
             text-align: center;
+            font-size: 0.9rem;
         }
 
         /* Sidebar collapse sections */
@@ -104,7 +107,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0.75rem 1rem;
+            padding: 0.5rem 0.75rem;
             color: var(--primary-color);
             background: transparent;
             border: none;
@@ -114,24 +117,29 @@
             width: 100%;
             text-align: left;
             font-weight: 600;
-            font-size: 0.95rem;
+            font-size: 0.85rem;
         }
         .sidebar-collapse-btn:hover {
             background: var(--bg-light);
         }
         .sidebar-collapse-btn i.toggle-arrow {
             transition: transform 0.3s;
-            font-size: 0.8rem;
+            font-size: 0.7rem;
         }
         .sidebar-collapse-btn.collapsed i.toggle-arrow {
             transform: rotate(-90deg);
         }
         .sidebar-submenu {
-            padding-left: 1rem;
+            padding-left: 0.75rem;
+            background: rgba(0, 0, 0, 0.02);
         }
         .sidebar-submenu .sidebar-link {
-            padding: 0.5rem 1rem;
-            font-size: 0.9rem;
+            padding: 0.4rem 0.75rem;
+            font-size: 0.8rem;
+            border-left: 2px solid transparent;
+        }
+        .sidebar-submenu .sidebar-link:hover {
+            padding-left: 0.9rem;
         }
 
         /* Page wrapper */
@@ -145,7 +153,7 @@
 
         /* Main content */
         .main-content {
-            padding: 2rem;
+            padding: 1rem;
             overflow-y: auto;
             flex: 1;
         }
@@ -222,7 +230,7 @@
                 margin-left: 0;
             }
             .main-content {
-                padding: 1rem;
+                padding: 0.75rem;
             }
         }
     </style>
@@ -238,7 +246,6 @@
 
     <!-- Sidebar Overlay (for mobile) -->
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
-
 
     <div class="layout-container">
         @include('partials.sidebar')
@@ -278,24 +285,44 @@
 
     @stack('scripts')
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
     <!-- Sidebar Toggle Script -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Bootstrap ya está cargado sincrónicamente
+            initializeSidebar();
+        });
+
+        function reinitializeBootstrapCollapses() {
+            // Reinitialize ALL collapse elements if Bootstrap is available
+            if (!window.bootstrap || !window.bootstrap.Collapse) return;
+            
+            const collapseElements = document.querySelectorAll('[data-bs-toggle="collapse"]');
+            collapseElements.forEach(el => {
+                // Destroy old instance if exists
+                const instance = window.bootstrap.Collapse.getInstance(el);
+                if (instance) instance.dispose();
+                
+                // Create new instance
+                new window.bootstrap.Collapse(el.getAttribute('data-bs-target'), { toggle: false });
+            });
+        }
+
+        function initializeSidebar() {
             const sidebarToggle = document.getElementById('sidebarToggle');
             const sidebar = document.getElementById('sidebar');
-            // 4. Se selecciona el nuevo pageWrapper
-            const pageWrapper = document.getElementById('pageWrapper');
             const sidebarOverlay = document.getElementById('sidebarOverlay');
             const toggleIcon = document.getElementById('toggleIcon');
             
-            // Cargar estado del sidebar desde localStorage
+            if (!sidebar || !sidebarToggle) return;
+            
+            // Re-initialize Bootstrap collapses
+            reinitializeBootstrapCollapses();
+
+            // Cargar estado del sidebar (expandido/colapsado) desde localStorage
             const sidebarState = localStorage.getItem('sidebarCollapsed');
             if (sidebarState === 'true') {
                 sidebar.classList.add('collapsed');
-                toggleIcon.classList.add('rotated');
+                if (toggleIcon) toggleIcon.classList.add('rotated');
             }
 
             // Toggle sidebar al hacer clic en el logo
@@ -303,36 +330,36 @@
                 e.preventDefault();
                 
                 if (window.innerWidth <= 768) {
-                    // En móvil, mostrar/ocultar
                     sidebar.classList.toggle('show');
-                    sidebarOverlay.classList.toggle('show');
+                    if (sidebarOverlay) sidebarOverlay.classList.toggle('show');
                 } else {
-                    // En desktop, colapsar/expandir
                     sidebar.classList.toggle('collapsed');
-                    toggleIcon.classList.toggle('rotated');
-                    
-                    // Guardar estado en localStorage
+                    if (toggleIcon) toggleIcon.classList.toggle('rotated');
                     localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
                 }
             });
 
             // Cerrar sidebar al hacer clic en el overlay (móvil)
-            sidebarOverlay.addEventListener('click', function() {
-                sidebar.classList.remove('show');
-                sidebarOverlay.classList.remove('show');
-            });
+            if (sidebarOverlay) {
+                sidebarOverlay.addEventListener('click', function() {
+                    sidebar.classList.remove('show');
+                    sidebarOverlay.classList.remove('show');
+                });
+            }
 
             // Marcar link activo
-            const currentUrl = window.location.href; // Usar href para que coincida con las rutas completas
+            const currentPath = window.location.pathname.replace(/\/+$/, '') || '/';
             const sidebarLinks = document.querySelectorAll('.sidebar-link');
+            
             sidebarLinks.forEach(link => {
-                // Comprobar si la URL actual comienza con el href del enlace
-                // Esto marca como activos '.../maquinarias/1/edit' si el enlace es '.../maquinarias'
-                // Pero para ser más precisos, usaremos una coincidencia más exacta si es posible.
-                // Una coincidencia simple es mejor para evitar sobrecargar.
-                if (link.href === currentUrl) {
-                    link.classList.add('active');
-                }
+                try {
+                    const linkPath = new URL(link.href).pathname.replace(/\/+$/, '') || '/';
+                    const isActive = (linkPath === '/') 
+                        ? currentPath === '/'
+                        : (currentPath === linkPath || currentPath.startsWith(linkPath + '/'));
+                    
+                    if (isActive) link.classList.add('active');
+                } catch (_) {}
             });
 
             // Responsive: resetear estado en cambio de tamaño
@@ -341,14 +368,25 @@
                 clearTimeout(resizeTimer);
                 resizeTimer = setTimeout(function() {
                     if (window.innerWidth > 768) {
-                        // Si pasamos a desktop, ocultar el overlay
                         sidebar.classList.remove('show');
-                        sidebarOverlay.classList.remove('show');
+                        if (sidebarOverlay) sidebarOverlay.classList.remove('show');
                     }
                 }, 250);
             });
-        });
+            
+            // Detector de cambios en el sidebar (Livewire puede reemplazar el DOM)
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar) {
+                const observer = new MutationObserver(() => {
+                    reinitializeBootstrapCollapses();
+                });
+                observer.observe(sidebar, { childList: true, subtree: true });
+            }
+        }
     </script>
+
+    <!-- Bootstrap Bundle JS (con Popper) - Carga sincrónica -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
     <!-- Livewire Scripts (incluye Alpine.js automáticamente en v3) -->
     @livewireScripts

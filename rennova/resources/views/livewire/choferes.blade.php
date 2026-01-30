@@ -182,11 +182,35 @@
 
 <!-- JavaScript para cambiar de pestaña al editar -->
 <script>
+    function mostrarTabChoferes(tabId) {
+        const nuevoTab = document.getElementById('nuevo-tab');
+        const listadoTab = document.getElementById('listado-tab');
+        const nuevoPane = document.getElementById('nuevo-chofer');
+        const listadoPane = document.getElementById('listado-choferes');
+
+        const activarTab = (tabButton, tabPane) => {
+            [nuevoTab, listadoTab].forEach(btn => btn?.classList.remove('active'));
+            [nuevoPane, listadoPane].forEach(pane => pane?.classList.remove('show', 'active'));
+            tabButton?.classList.add('active');
+            tabPane?.classList.add('show', 'active');
+        };
+
+        if (tabId === 'listado') {
+            activarTab(listadoTab, listadoPane);
+        } else {
+            activarTab(nuevoTab, nuevoPane);
+        }
+    }
+
     function cambiarAPestanaFormulario() {
         // Activar la pestaña del formulario
         const nuevoTab = document.getElementById('nuevo-tab');
-        const nuevoTabInstance = new bootstrap.Tab(nuevoTab);
-        nuevoTabInstance.show();
+        if (window.bootstrap?.Tab && nuevoTab) {
+            const nuevoTabInstance = new bootstrap.Tab(nuevoTab);
+            nuevoTabInstance.show();
+        } else {
+            mostrarTabChoferes('nuevo');
+        }
         
         // Scroll suave al inicio de la página
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -197,8 +221,12 @@
         Livewire.on('choferGuardado', () => {
             // Cambiar a la pestaña de listado después de guardar
             const listadoTab = document.getElementById('listado-tab');
-            const listadoTabInstance = new bootstrap.Tab(listadoTab);
-            listadoTabInstance.show();
+            if (window.bootstrap?.Tab && listadoTab) {
+                const listadoTabInstance = new bootstrap.Tab(listadoTab);
+                listadoTabInstance.show();
+            } else {
+                mostrarTabChoferes('listado');
+            }
             
             // Scroll al inicio
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -219,6 +247,25 @@
                 } else {
                     nuevoTabButton.innerHTML = '<i class="bi bi-plus-circle"></i> Nuevo Chofer';
                 }
+            }
+        });
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const listadoTab = document.getElementById('listado-tab');
+        const nuevoTab = document.getElementById('nuevo-tab');
+
+        listadoTab?.addEventListener('click', (e) => {
+            if (!window.bootstrap?.Tab) {
+                e.preventDefault();
+                mostrarTabChoferes('listado');
+            }
+        });
+
+        nuevoTab?.addEventListener('click', (e) => {
+            if (!window.bootstrap?.Tab) {
+                e.preventDefault();
+                mostrarTabChoferes('nuevo');
             }
         });
     });

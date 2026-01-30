@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="<?php echo e(str_replace('_', '-', app()->getLocale())); ?>">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="csrf-token" content="<?php echo e(csrf_token()); ?>">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title><?php echo e(config('app.name', 'Laravel')); ?></title>
+    <title>{{ config('app.name', 'Laravel') }}</title>
 
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -236,165 +236,213 @@
     </style>
 
     <!-- Scripts -->
-    <?php echo app('Illuminate\Foundation\Vite')(['resources/css/app.css', 'resources/js/app.js']); ?>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <!-- Livewire Styles -->
-    <?php echo \Livewire\Mechanisms\FrontendAssets\FrontendAssets::styles(); ?>
-
+    @livewireStyles
 </head>
 <body class="d-flex flex-column" style="height: 100vh;">
-    <?php echo $__env->make('partials.header', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
+    @include('partials.header')
 
     <!-- Sidebar Overlay (for mobile) -->
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
+
     <div class="layout-container">
-        <?php echo $__env->make('partials.sidebar', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
+        @include('partials.sidebar')
 
         <!-- Main Content + Footer -->
         <div class="page-wrapper flex-grow-1 d-flex flex-column bg-light" id="pageWrapper">
             <main class="main-content flex-fill" id="mainContent">
                 <div class="flex-fill">
-                    <?php if(session('status')): ?>
+                    @if(session('status'))
                         <div class="container py-2">
                             <div class="alert alert-success alert-dismissible fade show" role="alert">
-                                <i class="bi bi-check-circle-fill"></i> <?php echo e(session('status')); ?>
-
+                                <i class="bi bi-check-circle-fill"></i> {{ session('status') }}
                                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                             </div>
                         </div>
-                    <?php endif; ?>
-                    <?php if(session('error')): ?>
+                    @endif
+                    @if(session('error'))
                         <div class="container py-2">
                             <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                                <i class="bi bi-exclamation-triangle-fill"></i> <?php echo e(session('error')); ?>
-
+                                <i class="bi bi-exclamation-triangle-fill"></i> {{ session('error') }}
                                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                             </div>
                         </div>
-                    <?php endif; ?>
+                    @endif
                     
-                    <?php if(isset($slot)): ?>
-                        <?php echo e($slot); ?>
-
-                    <?php else: ?>
-                        <?php echo $__env->yieldContent('content'); ?>
-                    <?php endif; ?>
+                    @if (isset($slot))
+                        {{ $slot }}
+                    @else
+                        @yield('content')
+                    @endif
                     
                 </div>
             </main>
-            <?php echo $__env->make('partials.footer', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
+            @include('partials.footer')
         </div>
     </div>
 
-    <?php echo $__env->yieldPushContent('scripts'); ?>
+    @stack('scripts')
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
     <!-- Sidebar Toggle Script -->
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Bootstrap ya está cargado sincrónicamente
-            initializeSidebar();
-        });
+        (function() {
+            const normalizePath = (path) => (path || '/').replace(/\/+$/, '') || '/';
 
-        function reinitializeBootstrapCollapses() {
-            // Reinitialize ALL collapse elements if Bootstrap is available
-            if (!window.bootstrap || !window.bootstrap.Collapse) return;
-            
-            const collapseElements = document.querySelectorAll('[data-bs-toggle="collapse"]');
-            collapseElements.forEach(el => {
-                // Destroy old instance if exists
-                const instance = window.bootstrap.Collapse.getInstance(el);
-                if (instance) instance.dispose();
-                
-                // Create new instance
-                new window.bootstrap.Collapse(el.getAttribute('data-bs-target'), { toggle: false });
-            });
-        }
+            const showCollapse = (collapseEl) => {
+                if (!collapseEl || !collapseEl.id) return;
+                if (collapseEl.classList.contains('show')) return;
 
-        function initializeSidebar() {
-            const sidebarToggle = document.getElementById('sidebarToggle');
-            const sidebar = document.getElementById('sidebar');
-            const sidebarOverlay = document.getElementById('sidebarOverlay');
-            const toggleIcon = document.getElementById('toggleIcon');
-            
-            if (!sidebar || !sidebarToggle) return;
-            
-            // Re-initialize Bootstrap collapses
-            reinitializeBootstrapCollapses();
-
-            // Cargar estado del sidebar (expandido/colapsado) desde localStorage
-            const sidebarState = localStorage.getItem('sidebarCollapsed');
-            if (sidebarState === 'true') {
-                sidebar.classList.add('collapsed');
-                if (toggleIcon) toggleIcon.classList.add('rotated');
-            }
-
-            // Toggle sidebar al hacer clic en el logo
-            sidebarToggle.addEventListener('click', function(e) {
-                e.preventDefault();
-                
-                if (window.innerWidth <= 768) {
-                    sidebar.classList.toggle('show');
-                    if (sidebarOverlay) sidebarOverlay.classList.toggle('show');
+                const Collapse = window.bootstrap?.Collapse;
+                if (Collapse) {
+                    const instance = Collapse.getOrCreateInstance(collapseEl, { toggle: false });
+                    instance.show();
                 } else {
-                    sidebar.classList.toggle('collapsed');
-                    if (toggleIcon) toggleIcon.classList.toggle('rotated');
-                    localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+                    collapseEl.classList.add('show');
                 }
-            });
 
-            // Cerrar sidebar al hacer clic en el overlay (móvil)
-            if (sidebarOverlay) {
+                const trigger = document.querySelector(`[data-bs-target="#${collapseEl.id}"]`);
+                if (trigger) {
+                    trigger.classList.remove('collapsed');
+                    trigger.setAttribute('aria-expanded', 'true');
+                }
+            };
+
+            const applySidebarCollapseState = () => {
+                const sidebar = document.getElementById('sidebar');
+                if (!sidebar) return;
+
+                const Collapse = window.bootstrap?.Collapse;
+                const collapses = sidebar.querySelectorAll('.collapse[id]');
+
+                collapses.forEach(collapseEl => {
+                    const key = `sidebarCollapse:${collapseEl.id}`;
+                    const stored = localStorage.getItem(key);
+
+                    // Evitar el "aparece y desaparece": nunca auto-colapsar en init.
+                    // Solo re-abrir lo que esté persistido como abierto.
+                    // Además, 'menuPrincipal' debe arrancar abierto siempre.
+                    if (collapseEl.id === 'menuPrincipal') {
+                        if (stored === 'false') {
+                            // Si quedó un estado viejo que lo cierra, lo ignoramos.
+                            localStorage.removeItem(key);
+                        }
+                        showCollapse(collapseEl);
+                    } else if (stored === 'true') {
+                        showCollapse(collapseEl);
+                    }
+
+                    // Bind persist listeners una sola vez
+                    if (!collapseEl.dataset.persistBound) {
+                        collapseEl.dataset.persistBound = 'true';
+                        collapseEl.addEventListener('shown.bs.collapse', () => localStorage.setItem(key, 'true'));
+                        collapseEl.addEventListener('hidden.bs.collapse', () => localStorage.setItem(key, 'false'));
+                    }
+                });
+            };
+
+            const markActiveLinksAndExpand = () => {
+                const sidebar = document.getElementById('sidebar');
+                if (!sidebar) return;
+
+                const currentPath = normalizePath(window.location.pathname);
+                const sidebarLinks = sidebar.querySelectorAll('.sidebar-link');
+
+                sidebarLinks.forEach(link => {
+                    let linkPath = '/';
+                    try {
+                        linkPath = normalizePath(new URL(link.href).pathname);
+                    } catch (_) {
+                        return;
+                    }
+
+                    const isActive = (linkPath === '/')
+                        ? currentPath === '/'
+                        : (currentPath === linkPath || currentPath.startsWith(linkPath + '/'));
+
+                    if (isActive) {
+                        link.classList.add('active');
+                        const parentCollapse = link.closest('.collapse');
+                        showCollapse(parentCollapse);
+                    }
+                });
+            };
+
+            const initSidebarShell = () => {
+                const sidebarToggle = document.getElementById('sidebarToggle');
+                const sidebar = document.getElementById('sidebar');
+                const sidebarOverlay = document.getElementById('sidebarOverlay');
+                const toggleIcon = document.getElementById('toggleIcon');
+
+                if (!sidebar || !sidebarToggle || !sidebarOverlay || !toggleIcon) return;
+                if (sidebar.dataset.shellInit === 'true') return;
+                sidebar.dataset.shellInit = 'true';
+
+                // Cargar estado del sidebar desde localStorage
+                const sidebarState = localStorage.getItem('sidebarCollapsed');
+                if (sidebarState === 'true') {
+                    sidebar.classList.add('collapsed');
+                    toggleIcon.classList.add('rotated');
+                }
+
+                // Toggle sidebar al hacer clic en el logo
+                sidebarToggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+
+                    if (window.innerWidth <= 768) {
+                        sidebar.classList.toggle('show');
+                        sidebarOverlay.classList.toggle('show');
+                    } else {
+                        sidebar.classList.toggle('collapsed');
+                        toggleIcon.classList.toggle('rotated');
+                        localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+                    }
+                });
+
+                // Cerrar sidebar al hacer clic en el overlay (móvil)
                 sidebarOverlay.addEventListener('click', function() {
                     sidebar.classList.remove('show');
                     sidebarOverlay.classList.remove('show');
                 });
-            }
 
-            // Marcar link activo
-            const currentPath = window.location.pathname.replace(/\/+$/, '') || '/';
-            const sidebarLinks = document.querySelectorAll('.sidebar-link');
-            
-            sidebarLinks.forEach(link => {
-                try {
-                    const linkPath = new URL(link.href).pathname.replace(/\/+$/, '') || '/';
-                    const isActive = (linkPath === '/') 
-                        ? currentPath === '/'
-                        : (currentPath === linkPath || currentPath.startsWith(linkPath + '/'));
-                    
-                    if (isActive) link.classList.add('active');
-                } catch (_) {}
-            });
-
-            // Responsive: resetear estado en cambio de tamaño
-            let resizeTimer;
-            window.addEventListener('resize', function() {
-                clearTimeout(resizeTimer);
-                resizeTimer = setTimeout(function() {
-                    if (window.innerWidth > 768) {
-                        sidebar.classList.remove('show');
-                        if (sidebarOverlay) sidebarOverlay.classList.remove('show');
-                    }
-                }, 250);
-            });
-            
-            // Detector de cambios en el sidebar (Livewire puede reemplazar el DOM)
-            const sidebar = document.getElementById('sidebar');
-            if (sidebar) {
-                const observer = new MutationObserver(() => {
-                    reinitializeBootstrapCollapses();
+                // Responsive: resetear overlay en cambio de tamaño
+                let resizeTimer;
+                window.addEventListener('resize', function() {
+                    clearTimeout(resizeTimer);
+                    resizeTimer = setTimeout(function() {
+                        if (window.innerWidth > 768) {
+                            sidebar.classList.remove('show');
+                            sidebarOverlay.classList.remove('show');
+                        }
+                    }, 250);
                 });
-                observer.observe(sidebar, { childList: true, subtree: true });
-            }
-        }
+            };
+
+            const initSidebar = () => {
+                initSidebarShell();
+
+                // Evita “flash” por re-render/hidratación: re-aplica después del render.
+                applySidebarCollapseState();
+                markActiveLinksAndExpand();
+            };
+
+            // Guard global: evita que "Principal" se cierre solo al cargar.
+            const bindPrincipalGuards = () => {
+                // NO HACER NADA - Este guard está roto, se elimina
+            };
+
+            document.addEventListener('DOMContentLoaded', initSidebar);
+            document.addEventListener('livewire:init', () => setTimeout(initSidebar, 0));
+            document.addEventListener('livewire:navigated', () => setTimeout(initSidebar, 0));
+        })();
     </script>
 
-    <!-- Bootstrap Bundle JS (con Popper) - Carga sincrónica -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
     <!-- Livewire Scripts (incluye Alpine.js automáticamente en v3) -->
-    <?php echo \Livewire\Mechanisms\FrontendAssets\FrontendAssets::scripts(); ?>
-
+    @livewireScripts
 </body>
 </html>
-<?php /**PATH D:\trabajo_final\rennova\resources\views/layouts/app.blade.php ENDPATH**/ ?>
