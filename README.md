@@ -163,55 +163,6 @@ php artisan serve
 
 La aplicación estará disponible en: **http://localhost:8000**
 
-## 🧩 Desarrollo mixto (recomendado): Artisan en Windows + PostgreSQL en Docker
-
-Este modo es ideal para desarrollar con VS Code usando `php artisan serve`, manteniendo la base de datos en Docker.
-
-### 1) Levantar solo la base de datos
-
-```bash
-docker compose up -d db
-```
-
-### 2) Detener el contenedor de la app (libera el puerto 8000)
-
-```bash
-docker compose stop app
-```
-
-### 3) Configurar el `.env` local
-
-En `rennova/.env` (en tu máquina), asegurate de usar:
-
-```env
-DB_CONNECTION=pgsql
-DB_HOST=127.0.0.1
-DB_PORT=5432
-DB_DATABASE=rennova
-DB_USERNAME=postgres
-DB_PASSWORD=postgres
-```
-
-### 4) Correr el servidor de desarrollo
-
-```bash
-cd rennova
-php artisan config:clear
-php artisan serve --host=127.0.0.1 --port=8000
-```
-
-Opcional: scripts listos para usar
-- `rennova/dev-host.ps1`: deja `db` arriba, frena `app` y arranca `artisan serve`
-- `rennova/dev-docker.ps1`: vuelve a levantar `app` + `db` en Docker
-
-### pgAdmin (con DB en Docker)
-
-- Host: `127.0.0.1`
-- Puerto: `5432`
-- Usuario: `postgres`
-- Contraseña: `postgres`
-- Base: `rennova`
-
 ## 🎯 Características Principales
 
 ### 🌦️ Análisis Climático Inteligente
