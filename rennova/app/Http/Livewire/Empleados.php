@@ -3,27 +3,35 @@
 namespace App\Http\Livewire;
 
 use Livewire\Component;
+use Livewire\WithPagination;
 use App\Models\Empleado;
 use App\Models\RolLaboral;
 
 class Empleados extends Component
 {
-    public $empleados, $empleado_id, $id_rol_laboral, $dni, $apellido, $nombre, $fecha_nacimiento, $fecha_inicio_actividades, $fecha_fin_actividades, $busqueda = '';
-    public $roles;
+    use WithPagination;
 
-    protected $rules = [
-        'id_rol_laboral' => 'required|exists:rol_laborals,id_rol_laboral',
-        'dni' => 'required|digits:8|unique:empleados,dni',
-        'apellido' => 'required|min:2',
-        'nombre' => 'required|min:2',
-        'fecha_nacimiento' => 'required|date',
-        'fecha_inicio_actividades' => 'required|date',
-        'fecha_fin_actividades' => 'nullable|date|after:fecha_inicio_actividades',
-    ];
+    public $empleado_id, $id_rol_laboral, $dni, $apellido, $nombre, $fecha_nacimiento, $fecha_inicio_actividades, $fecha_fin_actividades, $busqueda = '';
+    public $roles;
+    public $tab_activo = 'listado';
+
+    public function rules()
+    {
+        return [
+            'id_rol_laboral' => 'required|exists:rol_laborals,id_rol_laboral',
+            'dni' => $this->empleado_id 
+                ? 'nullable|digits:8|unique:empleados,dni,' . $this->empleado_id . ',id_empleado'
+                : 'required|digits:8|unique:empleados,dni',
+            'apellido' => 'required|min:2',
+            'nombre' => 'required|min:2',
+            'fecha_nacimiento' => 'required|date',
+            'fecha_inicio_actividades' => 'required|date',
+            'fecha_fin_actividades' => 'nullable|date|after:fecha_inicio_actividades',
+        ];
+    }
 
     protected $messages = [
         'id_rol_laboral.required' => 'Debe seleccionar un rol laboral.',
-        'dni.required' => 'El DNI es obligatorio.',
         'dni.digits' => 'El DNI debe tener 8 dígitos.',
         'dni.unique' => 'Este DNI ya está registrado.',
         'apellido.required' => 'El apellido es obligatorio.',
@@ -42,7 +50,7 @@ class Empleados extends Component
     public function render()
     {
         return view('livewire.empleados', [
-            'empleados' => $this->obtenerEmpleados(),
+            'empleados' => $this->obtenerEmpleados()->paginate(10),
         ]);
     }
 
@@ -62,7 +70,7 @@ class Empleados extends Component
             });
         }
 
-        return $query->orderBy('id_empleado', 'desc')->get();
+        return $query->orderBy('id_empleado', 'desc');
     }
 
     public function cargarEmpleados()
@@ -72,6 +80,7 @@ class Empleados extends Component
 
     public function updatedBusqueda()
     {
+        $this->resetPage();
         $this->cargarEmpleados();
     }
 
@@ -108,12 +117,14 @@ class Empleados extends Component
         $this->fecha_nacimiento = $empleado->fecha_nacimiento;
         $this->fecha_inicio_actividades = $empleado->fecha_inicio_actividades;
         $this->fecha_fin_actividades = $empleado->fecha_fin_actividades;
+        $this->tab_activo = 'nuevo';
     }
 
     public function eliminar($id)
     {
         Empleado::findOrFail($id)->delete();
         session()->flash('message', 'Empleado eliminado correctamente.');
+        $this->resetPage();
     }
 
     public function resetCampos()

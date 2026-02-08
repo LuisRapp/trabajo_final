@@ -9,13 +9,14 @@ use App\Models\TipoMantenimiento;
 use App\Models\NotificacionSistema;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Artisan;
 
 class Mantenimientos extends Component
 {
     public $mantenimientos, $mantenimiento_id, $id_maquinaria, $id_tipo_mantenimiento, $fecha_inicio, $fecha_programada, $estado, $busqueda = '';
     public $maquinarias, $tipos;
     public $kitPreventivo = [];
-    public $activeTab = 'nuevo';
+    public $tab_activo = 'listado';
     
     // Modal completar
     public $mostrarModalCompletar = false;
@@ -59,8 +60,7 @@ class Mantenimientos extends Component
         $this->tipos = TipoMantenimiento::where('activo', true)->orderBy('nombre')->get();
         $this->fecha_inicio = date('Y-m-d');
         $this->estado = 'programado';
-        // Pestaña por defecto: si hay órdenes, mostrar listado
-        $this->activeTab = \App\Models\Mantenimiento::count() > 0 ? 'listado' : 'nuevo';
+        $this->tab_activo = 'listado';
     }
 
     public function updatedIdMaquinaria()
@@ -190,6 +190,36 @@ class Mantenimientos extends Component
         $this->fecha_inicio = date('Y-m-d');
         $this->estado = 'programado';
         $this->kitPreventivo = [];
+    }
+
+    public function ejecutarDemo()
+    {
+        try {
+            $maquinariaId = $this->id_maquinaria;
+
+            if (!$maquinariaId) {
+                $maquinariaId = Maquinaria::whereNotNull('umbral_toneladas')
+                    ->orderBy('id_maquinaria')
+                    ->value('id_maquinaria');
+            }
+
+            if (!$maquinariaId) {
+                session()->flash('message', 'No hay maquinarias con umbral configurado para ejecutar la demo.');
+                return;
+            }
+
+            $exitCode = Artisan::call('mantenimiento:check-umbrales', [
+                '--maquinaria' => $maquinariaId,
+                '--simular' => true,
+            ]);
+
+            $mensaje = $exitCode === 0
+                ? "Demo ejecutada: maquinaria #{$maquinariaId} forzada al umbral y orden creada."
+                : 'Demo ejecutada con advertencias. Revise los logs para más detalle.';
+            session()->flash('message', $mensaje);
+        } catch (\Exception $e) {
+            session()->flash('message', 'Error al ejecutar demo: ' . $e->getMessage());
+        }
     }
 
     public function abrirModalCompletar($id)

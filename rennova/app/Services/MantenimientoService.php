@@ -20,10 +20,18 @@ class MantenimientoService
     {
         $mantenimiento = Mantenimiento::with(['maquinaria.tipoMaquinaria'])->findOrFail($mantenimientoId);
         
-        // Obtener kit de insumos requeridos
-        $kit = KitMantenimientoPreventivo::where('id_tipo_maquinaria', $mantenimiento->maquinaria->id_tipo_maquinaria)
+        // Obtener kit de insumos requeridos (prioriza kit por maquinaria)
+        $kit = KitMantenimientoPreventivo::where('id_maquinaria', $mantenimiento->id_maquinaria)
+            ->whereNull('deleted_at')
             ->with('insumo')
             ->get();
+
+        if ($kit->isEmpty()) {
+            $kit = KitMantenimientoPreventivo::where('id_tipo_maquinaria', $mantenimiento->maquinaria->id_tipo_maquinaria)
+                ->whereNull('deleted_at')
+                ->with('insumo')
+                ->get();
+        }
 
         $insuficientes = [];
         $kitCompleto = [];

@@ -12,15 +12,14 @@ Se ha implementado un sistema completo de gestión de mantenimientos preventivos
 
 1. **maquinarias**
    - `toneladas_acumuladas` (DECIMAL 12,2): Odómetro que nunca se resetea
+   - `umbral_toneladas` (DECIMAL 10,2): Umbral por maquinaria para generar mantenimiento preventivo
 
-2. **tipo_maquinarias**
-   - `umbral_toneladas` (DECIMAL 10,2): Umbral para generar mantenimiento preventivo
 
-3. **mantenimientos**
+2. **mantenimientos**
    - `toneladas_snapshot` (DECIMAL 12,2): Snapshot del odómetro al momento del mantenimiento
    - `costo_mano_obra` (DECIMAL 10,2): Costo de mano de obra
 
-4. **mantenimiento_insumos**
+3. **mantenimiento_insumos**
    - `costo_unitario` (DECIMAL 10,2): Costo del insumo al momento del uso
    - `subtotal` (DECIMAL 10,2): cantidad × costo_unitario
 
@@ -30,6 +29,7 @@ Se ha implementado un sistema completo de gestión de mantenimientos preventivos
 ```sql
 - id_kit (PK)
 - id_tipo_maquinaria (FK)
+- id_maquinaria (FK)
 - id_insumo (FK)
 - cantidad_requerida
 - es_obligatorio
@@ -74,7 +74,7 @@ event(new CargaRegistrada($carga, $maquinariaId, $toneladas));
 3. Si supera el `umbral_toneladas`:
    - Crea orden de mantenimiento en estado "programado"
    - Verifica stock de insumos del kit
-   - Notifica si falta stock (por ahora en logs, pendiente email)
+   - Notifica si falta stock (envia email de advertencia (StockInsuficiente))
 
 **Ejecución manual:**
 ```bash
@@ -237,7 +237,7 @@ Crea orden "programado"
       ↓
 Verifica stock del kit
       ↓
-Notifica si falta stock (Log + Email pendiente)
+Notifica si falta stock (Email StockInsuficiente)
 ```
 
 ### 3. Aprobación de Orden
@@ -285,8 +285,8 @@ dd($maquinaria->fresh()->toneladas_acumuladas);
 
 ### 2. Probar Comando de Umbrales
 ```bash
-# Primero configurar umbral en tipo_maquinaria
-UPDATE tipo_maquinarias SET umbral_toneladas = 100 WHERE id_tipo_maquinaria = 1;
+# Primero configurar umbral en maquinaria
+UPDATE maquinarias SET umbral_toneladas = 100 WHERE id_maquinaria = 1;
 
 # Ejecutar comando
 php artisan mantenimiento:check-umbrales

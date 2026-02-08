@@ -1,0 +1,101 @@
+#welcome-page {
+    background-color: #f1f5f9 !important;
+    font-family: "Manrope", ui-sans-serif, system-ui, sans-serif !important;
+    color: #0f172a !important;
+}
+
+#welcome-page h1,
+#welcome-page h2 {
+    letter-spacing: -0.02em !important;
+}
+
+#welcome-page .welcome-shell {
+    min-height: 100vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+@media (min-width: 1024px) {
+    #welcome-page .welcome-shell {
+        flex-direction: row !important;
+    }
+}
+
+#welcome-page .welcome-panel {
+    position: relative !important;
+    overflow: hidden !important;
+    background: linear-gradient(135deg, #f8fafc 0%, #ecfdf3 45%, #ffffff 100%) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 3rem 1.5rem !important;
+}
+
+#welcome-page .welcome-card {
+    width: 100% !important;
+    max-width: 28rem !important;
+    border-radius: 1.25rem !important;
+    border: 1px solid rgba(209, 250, 229, 0.7) !important;
+    background: rgba(255, 255, 255, 0.9) !important;
+    box-shadow: 0 28px 60px rgba(6, 95, 70, 0.12) !important;
+    padding: 2rem !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+}
+
+@media (min-width: 1024px) {
+    #welcome-page .welcome-card {
+        padding: 2.5rem !important;
+    }
+}
+
+#welcome-page .welcome-input {
+    width: 100% !important;
+    padding: 0.75rem 1rem 0.75rem 2.75rem !important;
+    border-radius: 0.9rem !important;
+    border: 1px solid #e2e8f0 !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05) !important;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease !important;
+}
+
+#welcome-page .welcome-input:focus {
+    outline: none !important;
+    border-color: #10b981 !important;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.18) !important;
+}
+
+#welcome-page input:-webkit-autofill,
+#welcome-page input:-webkit-autofill:hover,
+#welcome-page input:-webkit-autofill:focus,
+#welcome-page textarea:-webkit-autofill,
+#welcome-page select:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+    -webkit-text-fill-color: #0f172a !important;
+    transition: background-color 9999s ease-in-out 0s !important;
+}
+
+#welcome-page .welcome-checkbox {
+    width: 1rem !important;
+    height: 1rem !important;
+    border-radius: 0.25rem !important;
+    border: 1px solid #cbd5f5 !important;
+    accent-color: #10b981 !important;
+}
+
+#welcome-page .welcome-button {
+    width: 100% !important;
+    border-radius: 0.9rem !important;
+    padding: 0.85rem 1rem !important;
+    font-weight: 700 !important;
+    color: #ffffff !important;
+    background: linear-gradient(90deg, #059669 0%, #16a34a 50%, #059669 100%) !important;
+    box-shadow: 0 16px 30px rgba(5, 150, 105, 0.28) !important;
+    transition: transform 0.2s ease, filter 0.2s ease !important;
+}
+
+#welcome-page .welcome-button:hover {
+    filter: brightness(1.05) !important;
+    transform: translateY(-1px) !important;
+}

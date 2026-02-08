@@ -76,6 +76,12 @@ Route::middleware(['auth'])->group(function () {
 
     // --- ABMs PRINCIPALES (Ahora protegidos) ---
     Route::get('/lotes', [LoteController::class, 'index'])->name('lotes.index');
+    Route::get('/lotes/{loteId}/recomendaciones', function ($loteId) {
+        return view('lotes.recomendaciones', ['loteId' => (int) $loteId]);
+    })->name('lotes.recomendaciones');
+        Route::get('/lotes/{loteId}/tareas', function ($loteId) {
+            return view('lotes.planificar-tareas', ['loteId' => (int) $loteId]);
+        })->name('lotes.tareas');
     Route::get('/clientes', [ClienteController::class, 'index'])->name('clientes.index');
     Route::get('/proveedores', [ProveedorController::class, 'index'])->name('proveedores.index');
     Route::get('/categorias-madera', [CategoriaMaderaController::class, 'index'])->name('categorias-madera.index');
@@ -127,12 +133,16 @@ Route::middleware(['auth'])->group(function () {
     
     // Reportes - Estadísticas Forestales
     Route::get('/reportes/estadisticas-forestales', [ReporteController::class, 'estadisticasForestales'])->name('reportes.estadisticas-forestales');
+    Route::get('/reportes/estadisticas-forestales/pdf', [ReporteController::class, 'estadisticasForestalesPdf'])->name('reportes.estadisticas-forestales.pdf');
     
     // Liquidación de Pagos
     Route::view('/liquidacion-pagos', 'liquidacion-pagos.index')->name('liquidacion-pagos.index');
     
     // Asignaciones por Lote (Empleados y Maquinaria)
     Route::view('/asignaciones-lote', 'asignaciones-lote.index')->name('asignaciones-lote.index');
+
+    // Propuestas automáticas de asignación (basadas en histórico)
+    Route::view('/propuestas-asignacion', 'allocation-proposals.index')->name('allocation-proposals.index');
     
     // Gestión de Stock (FIFO) dentro del módulo Operaciones
     Route::view('/modulos/operaciones/gestionstock', 'modulos.operaciones.gestionstock')->name('modulos.operaciones.gestionstock');

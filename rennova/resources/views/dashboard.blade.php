@@ -12,38 +12,122 @@
     $data = $lote ? $svc->analizarYRecomendar($lote) : null;
     
     // Extraer datos
-    $diasPerdidos = $data['dias_perdidos'] ?? 0;
-    $deficitTn = $data['deficit_tn'] ?? 0;
-    $pronostico = $data['pronostico'] ?? [];
+    $datosCalc = $data['datos_calculados'] ?? [];
+    $diasPerdidos = $datosCalc['dias_perdidos'] ?? $data['total_dias_perdidos'] ?? 0;
+    $deficitTn = $datosCalc['volumen_riesgo'] ?? $data['deficit_tn'] ?? 0;
+    $accionPct = $datosCalc['aumento_necesario_pct'] ?? $data['accion_porcentaje'] ?? 0;
+    $estrategia = $data['estrategia'] ?? 'NORMAL';
+    $nivelUrgencia = $data['nivel_urgencia'] ?? 'BAJA';
+    $pronostico = $data['pronostico'] ?? $data['dias_detalle'] ?? [];
 @endphp
 
 <x-layouts.app :title="__('Dashboard')">
     <!-- Estilos inline para sobrescribir flux:main -->
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+
         flux\:main, [data-flux-main], .flux-main {
             max-width: none !important;
             width: 100% !important;
         }
+
+        :root {
+            --clima-ink: #0f172a;
+            --clima-muted: #475569;
+            --clima-ash: #94a3b8;
+            --clima-forest: #0f4f3f;
+            --clima-sun: #f6c35c;
+            --clima-mist: #eef2f7;
+        }
+
+        .clima-shell {
+            background:
+                radial-gradient(1200px 320px at 12% -20%, rgba(15, 79, 63, 0.12), transparent),
+                radial-gradient(1000px 400px at 100% 0%, rgba(246, 195, 92, 0.18), transparent),
+                #f8fafc;
+            min-height: calc(100vh - 2rem);
+            border-radius: 28px;
+            padding: 1.5rem;
+        }
+
+        .clima-title {
+            font-family: "Fraunces", serif;
+            letter-spacing: -0.02em;
+            color: var(--clima-ink);
+        }
+
+        .clima-body {
+            font-family: "IBM Plex Sans", sans-serif;
+            color: var(--clima-muted);
+        }
+
+        .clima-chip {
+            border-radius: 999px;
+            padding: 0.25rem 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+        }
+
+        .clima-card {
+            border-radius: 22px;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 14px 40px rgba(15, 23, 42, 0.06);
+        }
+
+        .clima-kpi {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border: 1px solid #e2e8f0;
+        }
+
+        .clima-kpi-number {
+            font-family: "Fraunces", serif;
+            color: var(--clima-ink);
+        }
+
+        .clima-status-normal { background: rgba(15, 79, 63, 0.12); color: var(--clima-forest); }
+        .clima-status-media { background: rgba(246, 195, 92, 0.2); color: #a16207; }
+        .clima-status-alta { background: rgba(220, 38, 38, 0.15); color: #b91c1c; }
+
+        .clima-day {
+            background: #fff;
+            border-radius: 18px;
+            border: 1px solid #e2e8f0;
+            padding: 1rem;
+        }
+
+        .clima-day-bar {
+            height: 6px;
+            border-radius: 999px;
+        }
     </style>
     
     <!-- Container Principal Moderno con ancho completo -->
-    <div class="!max-w-none w-full">
+    <div class="!max-w-none w-full clima-shell">
         
         <!-- Header Moderno -->
         <div class="mb-8">
-            <div class="bg-white rounded-2xl shadow-sm p-6 sm:p-8">
-                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <!-- T√≠tulo -->
+            <div class="clima-card p-6 sm:p-8">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                    <!-- TÌtulo -->
                     <div>
-                        <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight">Panel de Control</h1>
-                        <p class="text-gray-500 mt-1 text-sm">Gesti√≥n Forestal Rennova</p>
+                        <h1 class="text-3xl sm:text-4xl font-bold clima-title">Radar Clim·tico Operativo</h1>
+                        <p class="clima-body mt-2 text-sm">Decisiones inteligentes para el lote seleccionado.</p>
+                        <div class="flex flex-wrap items-center gap-2 mt-4">
+                            <span class="clima-chip {{ $nivelUrgencia === 'ALTA' || $nivelUrgencia === 'CRITICA' ? 'clima-status-alta' : ($nivelUrgencia === 'MEDIA' ? 'clima-status-media' : 'clima-status-normal') }}">
+                                {{ ucfirst(strtolower($nivelUrgencia)) }}
+                            </span>
+                            <span class="clima-chip bg-slate-100 text-slate-600">Estrategia: {{ str_replace('_', ' ', $estrategia) }}</span>
+                            <span class="clima-chip bg-emerald-50 text-emerald-700">Ventana: {{ count($pronostico) }} dÌas</span>
+                        </div>
                     </div>
                     
                     <!-- Controles -->
                     <form method="GET" action="{{ route('dashboard') }}" class="flex flex-col sm:flex-row gap-3">
                         <!-- Selector de Lotes -->
                         <div class="relative">
-                            <select name="lote" class="appearance-none bg-white border border-gray-200 rounded-xl px-4 py-3 pr-10 text-sm font-medium text-gray-700 hover:border-green-700 focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent transition-all duration-200 cursor-pointer">
+                            <select name="lote" class="appearance-none bg-white border border-gray-200 rounded-xl px-4 py-3 pr-10 text-sm font-medium text-gray-700 hover:border-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-700 focus:border-transparent transition-all duration-200 cursor-pointer">
                                 @if($lotes->count() > 0)
                                     @foreach($lotes as $op)
                                         <option value="{{ $op->id_lote }}" @selected(optional($lote)->id_lote === $op->id_lote)>
@@ -61,8 +145,8 @@
                             </div>
                         </div>
                         
-                        <!-- Bot√≥n Actualizar -->
-                        <button type="submit" class="bg-green-700 hover:bg-green-800 text-white font-medium px-6 py-3 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-center gap-2 active:scale-95">
+                        <!-- BotÛn Actualizar -->
+                        <button type="submit" class="bg-emerald-700 hover:bg-emerald-800 text-white font-medium px-6 py-3 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-center gap-2 active:scale-95">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                             </svg>
@@ -78,102 +162,142 @@
             <div class="space-y-6">
                 
                 <!-- KPIs Section -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     
-                    <!-- D√≠as Perdidos -->
-                    <div class="bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 p-6 sm:p-8">
-                        <div class="flex items-start justify-between mb-4">
+                    <!-- DÌas Perdidos -->
+                    <div class="clima-card clima-kpi p-6 sm:p-7">
+                        <div class="flex items-start justify-between">
                             <div>
-                                <p class="text-sm font-medium text-gray-500 uppercase tracking-wide">D√≠as Perdidos</p>
-                                <p class="text-5xl font-bold text-gray-900 mt-2">{{ $diasPerdidos }}</p>
+                                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">DÌas Perdidos</p>
+                                <p class="text-5xl font-bold mt-3 clima-kpi-number">{{ $diasPerdidos }}</p>
                             </div>
-                            <div class="bg-red-50 p-3 rounded-xl">
-                                <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div class="bg-rose-50 p-3 rounded-2xl">
+                                <svg class="w-6 h-6 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
                             </div>
                         </div>
-                        
-                        <!-- Indicador de rango -->
-                        <div class="mt-6 pt-6 border-t border-gray-100">
-                            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Per√≠odo</p>
+                        <div class="mt-6 pt-5 border-t border-slate-100">
+                            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">PerÌodo</p>
                             <div class="flex items-center justify-between">
-                                <span class="text-sm text-gray-700">{{ $data['rango_perdidos'] ?? '√öltimos 30 d√≠as' }}</span>
+                                <span class="text-sm text-slate-700">{{ $data['rango_perdidos'] ?? '⁄ltimos 7 dÌas' }}</span>
                                 @if($diasPerdidos > 5)
-                                    <span class="bg-red-100 text-red-700 text-xs font-semibold px-3 py-1 rounded-full">Alto</span>
+                                    <span class="clima-chip clima-status-alta">Alto</span>
                                 @elseif($diasPerdidos > 2)
-                                    <span class="bg-orange-100 text-orange-700 text-xs font-semibold px-3 py-1 rounded-full">Moderado</span>
+                                    <span class="clima-chip clima-status-media">Moderado</span>
                                 @else
-                                    <span class="bg-green-100 text-green-700 text-xs font-semibold px-3 py-1 rounded-full">Normal</span>
+                                    <span class="clima-chip clima-status-normal">Normal</span>
                                 @endif
                             </div>
                         </div>
                     </div>
 
-                    <!-- D√©ficit TN -->
-                    <div class="bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 p-6 sm:p-8">
-                        <div class="flex items-start justify-between mb-4">
+                    <!-- DÈficit TN -->
+                    <div class="clima-card clima-kpi p-6 sm:p-7">
+                        <div class="flex items-start justify-between">
                             <div>
-                                <p class="text-sm font-medium text-gray-500 uppercase tracking-wide">D√©ficit TN</p>
-                                <p class="text-5xl font-bold text-gray-900 mt-2">{{ $deficitTn }}</p>
+                                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">DÈficit TN</p>
+                                <p class="text-5xl font-bold mt-3 clima-kpi-number">{{ round((float) $deficitTn, 1) }}</p>
                             </div>
-                            <div class="bg-orange-50 p-3 rounded-xl">
-                                <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div class="bg-amber-50 p-3 rounded-2xl">
+                                <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"/>
                                 </svg>
                             </div>
                         </div>
-                        
-                        <!-- Acci√≥n recomendada -->
-                        @if(isset($data['accion_porcentaje']) && $data['accion_porcentaje'] > 0)
-                            <div class="mt-6 pt-6 border-t border-gray-100">
-                                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Acci√≥n Recomendada</p>
-                                <div class="flex items-center justify-between">
-                                    <span class="text-sm text-gray-700">Aumentar producci√≥n</span>
-                                    <span class="text-sm font-semibold text-orange-700">+{{ $data['accion_porcentaje'] }}%</span>
-                                </div>
-                                @if(isset($data['accion_dias']))
-                                    <p class="text-xs text-gray-500 mt-2">{{ $data['accion_dias'] }}</p>
-                                @endif
+                        <div class="mt-6 pt-5 border-t border-slate-100">
+                            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">AcciÛn Recomendada</p>
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-slate-700">Ajuste operativo</span>
+                                <span class="text-sm font-semibold text-amber-700">+{{ round((float) $accionPct, 0) }}%</span>
                             </div>
-                        @endif
+                        </div>
+                    </div>
+
+                    <!-- Resumen estrategia -->
+                    <div class="clima-card p-6 sm:p-7">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">RecomendaciÛn</p>
+                                <p class="text-xl font-semibold text-slate-900 mt-2">{{ str_replace('_', ' ', $estrategia) }}</p>
+                                <p class="text-sm text-slate-500 mt-2">{{ $data['recomendacion'] ?? 'Sin recomendaciones disponibles.' }}</p>
+                            </div>
+                            <div class="bg-emerald-50 p-3 rounded-2xl">
+                                <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Widget de Clima -->
-                <div class="bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 p-6 sm:p-8">
-                    <div class="flex items-center justify-between mb-6">
-                        <h2 class="text-xl font-bold text-gray-900">Pron√≥stico de Operatividad</h2>
-                        <span class="text-sm text-gray-500">Pr√≥ximos {{ count($pronostico) }} d√≠as</span>
+                <div class="clima-card p-6 sm:p-8">
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-6">
+                        <div>
+                            <h2 class="text-2xl font-bold clima-title">PronÛstico de Operatividad</h2>
+                            <p class="text-sm text-slate-500 mt-1">Lectura r·pida de ventanas operativas y restricciones.</p>
+                        </div>
+                        <span class="clima-chip bg-slate-100 text-slate-600">PrÛximos {{ count($pronostico) }} dÌas</span>
                     </div>
                     
-                    <!-- Cinta de d√≠as -->
-                    <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4">
+                    <!-- Cinta de dÌas -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4">
                         @foreach($pronostico as $dia)
                             @php
-                                $esOperativo = strtoupper($dia['estado'] ?? 'OPERATIVO') === 'OPERATIVO';
+                                $estadoDia = strtoupper($dia['estado'] ?? 'OPERATIVO');
+                                $esOperativo = $estadoDia === 'OPERATIVO';
+                                $esCondicional = $estadoDia === 'OPERATIVO_CONDICIONAL';
                                 $razon = $dia['razon'] ?? 'Normal';
-                                $diaCorto = mb_substr($dia['dia_semana'] ?? 'D√≠a', 0, 3);
+                                $diaCorto = mb_substr($dia['dia_semana'] ?? 'DÌa', 0, 3);
                                 $fecha = $dia['fecha_str'] ?? '';
+                                $lluviaDiurna = $dia['lluvia_diurna_mm'] ?? null;
+                                $lluviaMadrugada = $dia['lluvia_madrugada_mm'] ?? null;
+                                $isWeekend = isset($dia['razon']) && stripos((string) $dia['razon'], 'fin de semana') !== false;
                             @endphp
-                            <div class="flex flex-col items-center">
-                                <p class="text-sm font-semibold text-gray-900 mb-1">{{ ucfirst($diaCorto) }}</p>
-                                <p class="text-xs text-gray-500 mb-3">{{ $fecha }}</p>
-                                <div class="{{ $esOperativo ? 'bg-green-50' : 'bg-red-50' }} p-4 rounded-xl mb-3">
-                                    @if($esOperativo)
-                                        <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
-                                        </svg>
-                                    @else
-                                        <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
-                                        </svg>
-                                    @endif
+                            <div class="clima-day">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-sm font-semibold text-slate-900">{{ ucfirst($diaCorto) }}</p>
+                                        <p class="text-xs text-slate-500">{{ $fecha }}</p>
+                                    </div>
+                                    <span class="clima-chip {{ $esOperativo ? 'clima-status-normal' : ($esCondicional ? 'clima-status-media' : 'clima-status-alta') }}">
+                                        {{ $esOperativo ? 'Operativo' : ($esCondicional ? 'Condicional' : ($isWeekend ? 'No laboral' : 'Inactivo')) }}
+                                    </span>
                                 </div>
-                                <div class="w-full {{ $esOperativo ? 'bg-green-500' : 'bg-red-500' }} h-2 rounded-full"></div>
-                                <p class="text-xs font-medium {{ $esOperativo ? 'text-green-700' : 'text-red-700' }} mt-2">
-                                    {{ $esOperativo ? 'Operativo' : $razon }}
-                                </p>
+
+                                <div class="mt-4 flex items-center gap-3">
+                                    <div class="{{ $esOperativo ? 'bg-emerald-50' : ($esCondicional ? 'bg-amber-50' : 'bg-rose-50') }} p-3 rounded-2xl">
+                                        @if($esOperativo)
+                                            <svg class="w-7 h-7 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+                                            </svg>
+                                        @elseif($esCondicional)
+                                            <svg class="w-7 h-7 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h10a4 4 0 000-8 5 5 0 10-9 4"/>
+                                            </svg>
+                                        @else
+                                            <svg class="w-7 h-7 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                                            </svg>
+                                        @endif
+                                    </div>
+                                    <div class="text-xs text-slate-500">
+                                        @if($lluviaMadrugada !== null)
+                                            <div>Madrugada: {{ $lluviaMadrugada }} mm</div>
+                                        @endif
+                                        @if($lluviaDiurna !== null)
+                                            <div>Diurna: {{ $lluviaDiurna }} mm</div>
+                                        @endif
+                                    </div>
+                                </div>
+
+                                <div class="mt-4">
+                                    <div class="clima-day-bar {{ $esOperativo ? 'bg-emerald-500' : ($esCondicional ? 'bg-amber-400' : 'bg-rose-500') }}"></div>
+                                    <p class="text-xs font-medium mt-2 {{ $esOperativo ? 'text-emerald-700' : ($esCondicional ? 'text-amber-700' : 'text-rose-700') }}">
+                                        {{ $esOperativo ? 'Ventana limpia' : ($esCondicional ? 'PrecauciÛn' : $razon) }}
+                                    </p>
+                                </div>
                             </div>
                         @endforeach
                     </div>
@@ -183,46 +307,46 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     
                     <!-- Maquinaria -->
-                    <a href="{{ route('modulos.maquinaria') }}" class="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 p-8 hover:-translate-y-1 cursor-pointer">
+                    <a href="{{ route('modulos.maquinaria') }}" class="group clima-card hover:shadow-xl transition-all duration-300 p-8 hover:-translate-y-1 cursor-pointer">
                         <div class="flex flex-col items-center text-center">
                             <div class="bg-blue-50 group-hover:bg-blue-100 p-6 rounded-2xl mb-4 transition-colors duration-300">
                                 <svg class="w-12 h-12 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
                                 </svg>
                             </div>
-                            <h3 class="text-lg font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">Maquinaria</h3>
-                            <p class="text-sm text-gray-500">Gesti√≥n de equipos y mantenimientos</p>
+                            <h3 class="text-lg font-bold text-slate-900 mb-2 group-hover:text-blue-600 transition-colors">Maquinaria</h3>
+                            <p class="text-sm text-slate-500">Gesti√≥n de equipos y mantenimientos</p>
                         </div>
                     </a>
 
                     <!-- Inventario -->
-                    <a href="{{ route('modulos.inventario-forestal') }}" class="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 p-8 hover:-translate-y-1 cursor-pointer">
+                    <a href="{{ route('modulos.inventario-forestal') }}" class="group clima-card hover:shadow-xl transition-all duration-300 p-8 hover:-translate-y-1 cursor-pointer">
                         <div class="flex flex-col items-center text-center">
                             <div class="bg-purple-50 group-hover:bg-purple-100 p-6 rounded-2xl mb-4 transition-colors duration-300">
                                 <svg class="w-12 h-12 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
                                 </svg>
                             </div>
-                            <h3 class="text-lg font-bold text-gray-900 mb-2 group-hover:text-purple-600 transition-colors">Inventario</h3>
-                            <p class="text-sm text-gray-500">Control de stock y materiales</p>
+                            <h3 class="text-lg font-bold text-slate-900 mb-2 group-hover:text-purple-600 transition-colors">Inventario</h3>
+                            <p class="text-sm text-slate-500">Control de stock y materiales</p>
                         </div>
                     </a>
 
                     <!-- Personal -->
-                    <a href="{{ route('modulos.personal') }}" class="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 p-8 hover:-translate-y-1 cursor-pointer">
+                    <a href="{{ route('modulos.personal') }}" class="group clima-card hover:shadow-xl transition-all duration-300 p-8 hover:-translate-y-1 cursor-pointer">
                         <div class="flex flex-col items-center text-center">
                             <div class="bg-orange-50 group-hover:bg-orange-100 p-6 rounded-2xl mb-4 transition-colors duration-300">
                                 <svg class="w-12 h-12 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
                                 </svg>
                             </div>
-                            <h3 class="text-lg font-bold text-gray-900 mb-2 group-hover:text-orange-600 transition-colors">Personal</h3>
-                            <p class="text-sm text-gray-500">Gesti√≥n de empleados y asistencia</p>
+                            <h3 class="text-lg font-bold text-slate-900 mb-2 group-hover:text-orange-600 transition-colors">Personal</h3>
+                            <p class="text-sm text-slate-500">Gesti√≥n de empleados y asistencia</p>
                         </div>
                     </a>
 
                     <!-- Registrar Operaciones - CTA Principal -->
-                    <a href="{{ route('modulos.operaciones') }}" class="group bg-gradient-to-br from-green-700 to-green-800 rounded-2xl shadow-md hover:shadow-2xl transition-all duration-300 p-8 hover:-translate-y-1 cursor-pointer relative overflow-hidden">
+                    <a href="{{ route('modulos.operaciones') }}" class="group bg-gradient-to-br from-emerald-700 to-emerald-900 rounded-2xl shadow-md hover:shadow-2xl transition-all duration-300 p-8 hover:-translate-y-1 cursor-pointer relative overflow-hidden">
                         <!-- Efecto de brillo -->
                         <div class="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
                         
@@ -233,10 +357,10 @@
                                 </svg>
                             </div>
                             <h3 class="text-lg font-bold text-white mb-2 group-hover:scale-105 transition-transform">Registrar Operaciones</h3>
-                            <p class="text-sm text-green-100">A√±adir nueva operaci√≥n forestal</p>
+                            <p class="text-sm text-emerald-100">A√±adir nueva operaci√≥n forestal</p>
                         </div>
                         
-                        <!-- Badge "Acci√≥n Principal" -->
+                        <!-- Badge "AcciÛn Principal" -->
                         <div class="absolute top-4 right-4">
                             <span class="bg-white bg-opacity-20 text-white text-xs font-semibold px-2 py-1 rounded-full">‚òÖ</span>
                         </div>
@@ -253,7 +377,7 @@
                     </div>
                     <h3 class="text-xl font-bold text-gray-900 mb-2">No hay lotes configurados</h3>
                     <p class="text-gray-500 mb-6">Crea tu primer lote para comenzar a gestionar operaciones forestales</p>
-                    <a href="{{ route('lotes.index') }}" class="bg-green-700 hover:bg-green-800 text-white font-medium px-6 py-3 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
+                    <a href="{{ route('lotes.index') }}" class="bg-green-600 hover:bg-green-700 text-white font-medium px-6 py-3 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
                         Crear Lote
                     </a>
                 </div>
@@ -261,3 +385,6 @@
         @endif
     </div>
 </x-layouts.app>
+
+
+

@@ -13,6 +13,7 @@
             </button>
         </li>
         <li class="nav-item" role="presentation">
+            @canany(['crear-asignaciones-lote', 'editar-asignaciones-lote'])
             <button class="nav-link {{ !$mostrar_historial ? 'active' : '' }}" 
                     id="formulario-tab" 
                     data-bs-toggle="tab" 
@@ -23,6 +24,7 @@
                 <i class="bi bi-{{ $modo === 'editar' ? 'pencil-square' : 'plus-circle' }}"></i> 
                 {{ $modo === 'editar' ? 'Modificar Asignación' : 'Nueva Asignación' }}
             </button>
+            @endcanany
         </li>
     </ul>
 
@@ -34,9 +36,11 @@
             <div class="card shadow">
                 <div class="card-header bg-light d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="bi bi-list-check"></i> Historial de Asignaciones por Lote</h5>
+                    @can('crear-asignaciones-lote')
                     <button class="btn btn-primary btn-sm" wire:click="nuevaAsignacion">
                         <i class="bi bi-plus-circle"></i> Nueva Asignación
                     </button>
+                    @endcan
                 </div>
                 <div class="card-body">
                     @if (session()->has('message'))
@@ -71,7 +75,7 @@
                                             <small class="text-muted">{{ $lote->ubicacion }}</small>
                                         </td>
                                         <td>
-                                            <span class="badge bg-{{ $lote->estado === 'activo' ? 'success' : ($lote->estado === 'terminado' ? 'secondary' : 'warning') }}">
+                                            <span class="badge bg-{{ $lote->estado === 'activo' ? 'success' : ($lote->estado === 'cerrado' ? 'secondary' : 'warning') }}">
                                                 {{ ucfirst($lote->estado) }}
                                             </span>
                                         </td>
@@ -101,25 +105,31 @@
                                         </td>
                                         <td class="text-center">
                                             <div class="btn-group btn-group-sm" role="group">
+                                                @can('editar-asignaciones-lote')
                                                 <button class="btn btn-outline-primary" 
                                                         wire:click="editarAsignacion({{ $lote->id_lote }})"
                                                         title="Modificar asignaciones">
                                                     <i class="bi bi-pencil"></i>
                                                 </button>
-                                                @if($lote->estado !== 'terminado')
+                                                @endcan
+                                                @if($lote->estado !== 'cerrado')
+                                                    @can('editar-asignaciones-lote')
                                                     <button class="btn btn-outline-warning" 
                                                             wire:click="liberar({{ $lote->id_lote }})"
-                                                            onclick="return confirm('¿Marcar lote como terminado y liberar recursos?')"
+                                                            onclick="return confirm('¿Cerrar este lote y liberar recursos?')"
                                                             title="Finalizar y liberar">
                                                         <i class="bi bi-check-circle"></i>
                                                     </button>
+                                                    @endcan
                                                 @endif
+                                                @can('eliminar-asignaciones-lote')
                                                 <button class="btn btn-outline-danger" 
                                                         wire:click="eliminarAsignacion({{ $lote->id_lote }})"
                                                         onclick="return confirm('¿Eliminar todas las asignaciones de este lote?')"
                                                         title="Eliminar asignaciones">
                                                     <i class="bi bi-trash"></i>
                                                 </button>
+                                                @endcan
                                             </div>
                                         </td>
                                     </tr>
@@ -139,6 +149,7 @@
         </div>
 
         <!-- Pestaña 2: Formulario de Asignación -->
+        @canany(['crear-asignaciones-lote', 'editar-asignaciones-lote'])
         <div class="tab-pane fade {{ !$mostrar_historial ? 'show active' : '' }}" 
              id="formulario-asignacion" 
              role="tabpanel">
@@ -272,12 +283,14 @@
                     </div>
 
                     <div class="d-flex gap-2 mt-3">
+                        @canany(['crear-asignaciones-lote', 'editar-asignaciones-lote'])
                         <button class="btn btn-success" 
                                 wire:click="guardar" 
                                 wire:loading.attr="disabled" 
                                 @disabled(!$id_lote)>
                             <i class="bi bi-save"></i> Guardar asignaciones
                         </button>
+                        @endcanany
                         <button class="btn btn-secondary" wire:click="cancelar">
                             <i class="bi bi-x-circle"></i> Cancelar
                         </button>
@@ -288,6 +301,7 @@
                 </div>
             </div>
         </div>
+        @endcanany
     </div>
 </div>
 

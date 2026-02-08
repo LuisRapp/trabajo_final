@@ -9,9 +9,12 @@ use App\Models\KitMantenimientoPreventivo;
 use App\Models\Insumo;
 use App\Models\User;
 use App\Models\NotificacionSistema;
+use App\Models\MantenimientoPurchaseProposal;
+use App\Models\MantenimientoPurchaseProposalInsumo;
 use App\Models\TipoMantenimiento;
 use App\Notifications\MantenimientoCreado;
 use App\Notifications\StockInsuficiente;
+use App\Notifications\OrdenCompraMantenimientoNotification;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
@@ -20,6 +23,7 @@ class CheckMantenimientoUmbrales extends Command
 {
     protected $signature = 'mantenimiento:check-umbrales {--maquinaria=} {--simular}';
     protected $description = 'Verifica umbrales de toneladas y genera órdenes de mantenimiento preventivo';
+    protected float $ultimoEnvioMail = 0.0;
 
     public function handle()
     {
@@ -34,12 +38,12 @@ class CheckMantenimientoUmbrales extends Command
                     if ($maq->toneladas_acumuladas < $maq->umbral_toneladas) {
                         $maq->toneladas_acumuladas = $maq->umbral_toneladas + 5;
                         $maq->save();
-                        $this->info("⚙️ Simulación: Maquinaria {$maq->id_maquinaria} supera umbral ({$maq->toneladas_acumuladas}/{$maq->umbral_toneladas})");
+                        $this->info("Simulacion: Maquinaria {$maq->id_maquinaria} supera umbral ({$maq->toneladas_acumuladas}/{$maq->umbral_toneladas})");
                     } else {
-                        $this->info("⚙️ Simulación: Maquinaria {$maq->id_maquinaria} ya supera el umbral");
+                        $this->info("Simulacion: Maquinaria {$maq->id_maquinaria} ya supera el umbral");
                     }
                 } else {
-                    $this->warn("No se encontró la maquinaria ID {$maquinariaIdOpt} para simular");
+                    $this->warn("No se encontro la maquinaria ID {$maquinariaIdOpt} para simular");
                 }
             } catch (\Throwable $e) {
                 $this->warn("No se pudo simular umbral: {$e->getMessage()}");
@@ -144,22 +148,30 @@ class CheckMantenimientoUmbrales extends Command
                         'estado' => 'programado'
                     ]);
 
-                    // Obtener kit de insumos preventivos de la maquinaria específica
+                    // Obtener kit de insumos preventivos (prioriza kit por maquinaria)
                     $kit = KitMantenimientoPreventivo::where('id_maquinaria', $maquinaria->id_maquinaria)
                         ->whereNull('deleted_at')
                         ->with('insumo')
                         ->get();
+
+                    if ($kit->isEmpty()) {
+                        $kit = KitMantenimientoPreventivo::where('id_tipo_maquinaria', $maquinaria->id_tipo_maquinaria)
+                            ->whereNull('deleted_at')
+                            ->with('insumo')
+                            ->get();
+                    }
 
                     $faltaStock = false;
                     $insumosConProblema = [];
 
                     foreach ($kit as $item) {
                         $insumo = $item->insumo;
-                        $stockDisponible = $insumo->stock_disponible ?? 0;
+                        $stockDisponible = $insumo?->stock ?? 0;
 
                         if ($stockDisponible < $item->cantidad_requerida) {
                             $faltaStock = true;
                             $insumosConProblema[] = [
+                                'id_insumo' => $insumo->id_insumo,
                                 'insumo' => $insumo->nombre,
                                 'requerido' => $item->cantidad_requerida,
                                 'disponible' => $stockDisponible,
@@ -173,8 +185,11 @@ class CheckMantenimientoUmbrales extends Command
                     $ordenesGeneradas++;
                     $this->info("✓ Orden creada para Maquinaria {$maquinaria->id_maquinaria} (ID orden: {$mantenimiento->id_mantenimiento})");
 
-                    // Enviar notificación por email
-                    $this->enviarNotificacion(new MantenimientoCreado($mantenimiento));
+                    // Enviar notificacion por email
+                    $notification = $faltaStock
+                        ? new MantenimientoCreado($mantenimiento, $insumosConProblema)
+                        : new MantenimientoCreado($mantenimiento);
+                    $this->enviarNotificacion($notification);
 
                     // Crear notificación interna del sistema con plazo de 7 días
                     $this->crearNotificacionInterna(
@@ -189,10 +204,9 @@ class CheckMantenimientoUmbrales extends Command
                             'orden' => $mantenimiento->id_mantenimiento,
                             'insumos' => $insumosConProblema
                         ];
+                        $this->crearPropuestaCompraMantenimiento($mantenimiento, $insumosConProblema);
                         $this->warn("⚠ ADVERTENCIA: Falta stock para algunos insumos");
                         
-                        // Esperar 60 segundos antes del segundo email para evitar rate limit
-                        sleep(60);
                     }
 
                 } catch (\Exception $e) {
@@ -223,7 +237,6 @@ class CheckMantenimientoUmbrales extends Command
                 'advertencias' => $advertenciasStock
             ]);
             
-            // Enviar notificación de stock insuficiente
             $this->enviarNotificacion(new StockInsuficiente($advertenciasStock));
         }
 
@@ -247,17 +260,132 @@ class CheckMantenimientoUmbrales extends Command
             if ($userIds->isEmpty()) {
                 // Fallback: enviar a admin_email configurado
                 $adminEmail = config('mail.admin_email', 'admin@example.com');
-                Notification::route('mail', $adminEmail)->notify($notification);
-                $this->info("📧 Notificación enviada a {$adminEmail} (fallback)");
+                $this->enviarConReintento(function () use ($adminEmail, $notification) {
+                    $this->esperarParaEnviarMail();
+                    Notification::route('mail', $adminEmail)->notify($notification);
+                });
+                $this->info("Notificacion enviada a {$adminEmail} (fallback)");
             } else {
-                $users = User::whereIn('id', $userIds)->get();
-                Notification::send($users, $notification);
-                $this->info("📧 Notificación enviada a {$users->count()} usuario(s)");
+                $emails = User::whereIn('id', $userIds)->pluck('email')->filter()->values()->all();
+                if (empty($emails)) {
+                    $adminEmail = config('mail.admin_email', 'admin@example.com');
+                    $this->enviarConReintento(function () use ($adminEmail, $notification) {
+                        $this->esperarParaEnviarMail();
+                        Notification::route('mail', $adminEmail)->notify($notification);
+                    });
+                    $this->info("Notificacion enviada a {$adminEmail} (fallback)");
+                } else {
+                    $this->enviarConReintento(function () use ($emails, $notification) {
+                        $this->esperarParaEnviarMail();
+                        Notification::route('mail', $emails)->notify($notification);
+                    });
+                    $this->info("Notificacion enviada a " . count($emails) . " usuario(s)");
+                }
             }
         } catch (\Exception $e) {
             $this->warn("⚠ No se pudo enviar notificación: {$e->getMessage()}");
             Log::error("Error enviando notificación", ['error' => $e->getMessage()]);
         }
+    }
+
+    protected function crearPropuestaCompraMantenimiento(Mantenimiento $mantenimiento, array $insumosConProblema): void
+    {
+        if (empty($insumosConProblema)) {
+            return;
+        }
+
+        $proposal = MantenimientoPurchaseProposal::firstOrCreate(
+            ['id_mantenimiento' => $mantenimiento->id_mantenimiento],
+            [
+                'id_maquinaria' => $mantenimiento->id_maquinaria,
+                'status' => 'pending',
+            ]
+        );
+
+        if ($proposal->id_maquinaria !== $mantenimiento->id_maquinaria) {
+            $proposal->id_maquinaria = $mantenimiento->id_maquinaria;
+        }
+
+        MantenimientoPurchaseProposalInsumo::where('id_mantenimiento_purchase_proposal', $proposal->id_mantenimiento_purchase_proposal)
+            ->delete();
+
+        foreach ($insumosConProblema as $ins) {
+            if (empty($ins['id_insumo'])) {
+                continue;
+            }
+            MantenimientoPurchaseProposalInsumo::create([
+                'id_mantenimiento_purchase_proposal' => $proposal->id_mantenimiento_purchase_proposal,
+                'id_insumo' => $ins['id_insumo'],
+                'cantidad_requerida' => (float) ($ins['requerido'] ?? 0),
+                'stock_disponible' => (float) ($ins['disponible'] ?? 0),
+                'faltante' => (float) ($ins['faltante'] ?? 0),
+            ]);
+        }
+
+        $meta = $proposal->meta ?? [];
+        if (!empty($meta['purchase_order']['sent_at'] ?? null)) {
+            $proposal->save();
+            return;
+        }
+
+        $emails = array_values(array_filter((array) config('mail.purchase_order_emails', [])));
+        if (empty($emails)) {
+            $emails = [config('mail.admin_email', 'admin@example.com')];
+        }
+
+        $this->enviarConReintento(function () use ($emails, $proposal) {
+            $this->esperarParaEnviarMail();
+            Notification::route('mail', $emails)->notify(new OrdenCompraMantenimientoNotification($proposal));
+        });
+
+        $meta['purchase_order'] = [
+            'sent_at' => now()->toISOString(),
+            'recipients' => $emails,
+        ];
+        $proposal->meta = $meta;
+        $proposal->status = 'sent';
+        $proposal->save();
+    }
+
+    protected function enviarConReintento(callable $enviar): void
+    {
+        $intentos = 0;
+        $maxIntentos = 3;
+        $espera = 2;
+
+        while (true) {
+            try {
+                $enviar();
+                return;
+            } catch (\Exception $e) {
+                $intentos++;
+                $mensaje = $e->getMessage();
+                $esRateLimit = stripos($mensaje, 'Too many emails per second') !== false || stripos($mensaje, '550') !== false;
+                if (!$esRateLimit || $intentos >= $maxIntentos) {
+                    throw $e;
+                }
+                sleep($espera);
+                $espera *= 2;
+            }
+        }
+    }
+
+    protected function esperarParaEnviarMail(): void
+    {
+        $minInterval = 1.5;
+        $ahora = microtime(true);
+        $ultimoGlobal = cache()->get('mantenimiento_mail_last_sent_at');
+        $referencia = max((float) $this->ultimoEnvioMail, (float) $ultimoGlobal);
+
+        if ($referencia > 0) {
+            $delta = $ahora - $referencia;
+            if ($delta < $minInterval) {
+                usleep((int)(($minInterval - $delta) * 1000000));
+            }
+        }
+
+        $this->ultimoEnvioMail = microtime(true);
+        cache()->put('mantenimiento_mail_last_sent_at', $this->ultimoEnvioMail, 60);
     }
 
     /**

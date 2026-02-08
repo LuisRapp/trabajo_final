@@ -13,12 +13,14 @@
     <!-- Pestañas (Tabs) -->
     <ul class="nav nav-tabs mb-4" id="rolesTabs" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="nuevo-tab" data-bs-toggle="tab" data-bs-target="#nuevo-rol" type="button" role="tab">
+            @canany(['crear-roles-laborales', 'editar-roles-laborales'])
+            <button class="nav-link" id="nuevo-tab" data-bs-toggle="tab" data-bs-target="#nuevo-rol" type="button" role="tab">
                 <i class="bi bi-plus-circle"></i> Nuevo Rol
             </button>
+            @endcanany
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="listado-tab" data-bs-toggle="tab" data-bs-target="#listado-roles" type="button" role="tab">
+            <button class="nav-link active" id="listado-tab" data-bs-toggle="tab" data-bs-target="#listado-roles" type="button" role="tab">
                 <i class="bi bi-list-ul"></i> Listado de Roles
             </button>
         </li>
@@ -26,7 +28,8 @@
 
     <div class="tab-content" id="rolesTabContent">
         <!-- Tab 1: Formulario Nuevo Rol -->
-        <div class="tab-pane fade show active" id="nuevo-rol" role="tabpanel">
+        @canany(['crear-roles-laborales', 'editar-roles-laborales'])
+        <div class="tab-pane fade" id="nuevo-rol" role="tabpanel">
             <div class="card shadow mb-4">
                 <div class="card-header bg-light">
                     <h5 class="mb-0"><i class="bi bi-{{ $rol_id ? 'pencil-square' : 'plus-circle' }}"></i> {{ $rol_id ? 'Editar Rol' : 'Nuevo Rol' }}</h5>
@@ -46,17 +49,20 @@
                             <i class="bi bi-x-circle"></i> Cancelar
                         </button>
                     @endif
+                    @canany(['crear-roles-laborales', 'editar-roles-laborales'])
                     <button type="submit" class="btn btn-primary">
                         <i class="bi bi-check-circle"></i> {{ $rol_id ? 'Actualizar' : 'Guardar' }}
                     </button>
+                    @endcanany
                 </div>
             </form>
         </div>
     </div>
 </div>
+        @endcanany
 
 <!-- Tab 2: Listado de Roles -->
-<div class="tab-pane fade" id="listado-roles" role="tabpanel">
+<div class="tab-pane fade show active" id="listado-roles" role="tabpanel">
     <div class="card shadow">
         <div class="card-body">
             <!-- Buscador -->
@@ -94,12 +100,16 @@
                                 </td>
                                 <td class="text-center">
                                     <div class="btn-group btn-group-sm" role="group">
+                                        @can('editar-roles-laborales')
                                         <button class="btn btn-outline-primary" wire:click="editar({{ $rol->id_rol_laboral }})" onclick="cambiarAPestanaFormulario()" title="Editar">
                                             <i class="bi bi-pencil"></i>
                                         </button>
+                                        @endcan
+                                        @can('eliminar-roles-laborales')
                                         <button class="btn btn-outline-danger" wire:click="eliminar({{ $rol->id_rol_laboral }})" onclick="return confirm('¿Está seguro de eliminar este rol?')" title="Eliminar">
                                             <i class="bi bi-trash"></i>
                                         </button>
+                                        @endcan
                                     </div>
                                 </td>
                             </tr>

@@ -23,12 +23,24 @@
     <!-- Tabs -->
     <ul class="nav nav-tabs mb-4" role="tablist">
         <li class="nav-item">
-            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#roles-tab">
+            <button
+                type="button"
+                class="nav-link {{ $activeTab === 'roles' ? 'active' : '' }}"
+                wire:click="$set('activeTab', 'roles')"
+                aria-selected="{{ $activeTab === 'roles' ? 'true' : 'false' }}"
+                aria-controls="roles-tab"
+            >
                 <i class="bi bi-person-badge"></i> Roles y Permisos
             </button>
         </li>
         <li class="nav-item">
-            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#users-tab">
+            <button
+                type="button"
+                class="nav-link {{ $activeTab === 'users' ? 'active' : '' }}"
+                wire:click="$set('activeTab', 'users')"
+                aria-selected="{{ $activeTab === 'users' ? 'true' : 'false' }}"
+                aria-controls="users-tab"
+            >
                 <i class="bi bi-people"></i> Asignar Roles a Usuarios
             </button>
         </li>
@@ -36,7 +48,7 @@
 
     <div class="tab-content">
         <!-- Tab 1: Roles y Permisos -->
-        <div class="tab-pane fade show active" id="roles-tab">
+        <div class="tab-pane fade {{ $activeTab === 'roles' ? 'show active' : '' }}" id="roles-tab">
             <div class="row">
                 <!-- Lista de Roles -->
                 <div class="col-md-4">
@@ -140,7 +152,7 @@
         </div>
 
         <!-- Tab 2: Asignar Roles a Usuarios -->
-        <div class="tab-pane fade" id="users-tab">
+        <div class="tab-pane fade {{ $activeTab === 'users' ? 'show active' : '' }}" id="users-tab">
             <div class="row">
                 <!-- Lista de Usuarios -->
                 <div class="col-md-6">
@@ -151,7 +163,7 @@
                         <div class="card-body">
                             <!-- Búsqueda -->
                             <div class="mb-3">
-                                <input type="text" wire:model.live="busqueda" class="form-control" placeholder="Buscar usuario por nombre o email...">
+                                <input type="text" wire:model.live="busqueda" class="form-control" placeholder="Buscar usuario por nombre, apellido o email...">
                             </div>
 
                             <!-- Lista de Usuarios -->
@@ -162,7 +174,7 @@
                                          wire:click="selectUser({{ $user->id }})">
                                         <div class="d-flex justify-content-between align-items-center">
                                             <div>
-                                                <strong>{{ $user->name }}</strong>
+                                                <strong>{{ $this->displayUserName($user) }}</strong>
                                                 <br>
                                                 <small class="{{ $selectedUser == $user->id ? 'text-white-50' : 'text-muted' }}">
                                                     {{ $user->email }}

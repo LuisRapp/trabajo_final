@@ -9,6 +9,7 @@
 
     <div class="row g-4 justify-content-center">
         <!-- Empleados -->
+        @can('ver-empleados')
         <div class="col-12 col-md-6 col-lg-4 col-xl-3">
             <div class="card h-100 border-0 shadow-sm hover-elevate">
                 <div class="card-body text-center p-4">
@@ -18,8 +19,10 @@
                 </div>
             </div>
         </div>
+        @endcan
 
         <!-- Choferes -->
+        @can('ver-choferes')
         <div class="col-12 col-md-6 col-lg-4 col-xl-3">
             <div class="card h-100 border-0 shadow-sm hover-elevate">
                 <div class="card-body text-center p-4">
@@ -29,8 +32,10 @@
                 </div>
             </div>
         </div>
+        @endcan
 
         <!-- Adelantos -->
+        @can('ver-adelantos')
         <div class="col-12 col-md-6 col-lg-4 col-xl-3">
             <div class="card h-100 border-0 shadow-sm hover-elevate">
                 <div class="card-body text-center p-4">
@@ -40,8 +45,10 @@
                 </div>
             </div>
         </div>
+        @endcan
 
         <!-- Recibos -->
+        @can('ver-recibos')
         <div class="col-12 col-md-6 col-lg-4 col-xl-3">
             <div class="card h-100 border-0 shadow-sm hover-elevate">
                 <div class="card-body text-center p-4">
@@ -51,8 +58,10 @@
                 </div>
             </div>
         </div>
+        @endcan
 
         <!-- Liquidación -->
+        @can('ver-liquidacion-pagos')
         <div class="col-12 col-md-6 col-lg-4 col-xl-3">
             <div class="card h-100 border-0 shadow-sm hover-elevate">
                 <div class="card-body text-center p-4">
@@ -62,8 +71,10 @@
                 </div>
             </div>
         </div>
+        @endcan
 
         <!-- Asignaciones -->
+        @can('ver-asignaciones-lote')
         <div class="col-12 col-md-6 col-lg-4 col-xl-3">
             <div class="card h-100 border-0 shadow-sm hover-elevate">
                 <div class="card-body text-center p-4">
@@ -73,8 +84,10 @@
                 </div>
             </div>
         </div>
+        @endcan
 
         <!-- Roles -->
+        @can('ver-roles-laborales')
         <div class="col-12 col-md-6 col-lg-4 col-xl-3">
             <div class="card h-100 border-0 shadow-sm hover-elevate">
                 <div class="card-body text-center p-4">
@@ -84,8 +97,10 @@
                 </div>
             </div>
         </div>
+        @endcan
 
         <!-- Histórico Roles -->
+        @can('ver-roles-laborales')
         <div class="col-12 col-md-6 col-lg-4 col-xl-3">
             <div class="card h-100 border-0 shadow-sm hover-elevate">
                 <div class="card-body text-center p-4">
@@ -95,6 +110,7 @@
                 </div>
             </div>
         </div>
+        @endcan
     </div>
 </div>
 @endsection

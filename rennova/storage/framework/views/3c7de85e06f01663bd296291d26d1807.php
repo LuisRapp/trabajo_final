@@ -17,11 +17,11 @@
             --navbar-height: 38px;
             --sidebar-width: 220px;
             --footer-height: 40px;
-            --primary-color: #2A6041;
-            --primary-light: #C8D6AF;
-            --bg-light: #F4F7F6;
-            --sidebar-bg: #FFFFFF;
-            --sidebar-header-bg: #F4F7F6;
+            --primary-color: #0f172a;
+            --primary-light: #e2e8f0;
+            --bg-light: #f8fafc;
+            --sidebar-bg: #ffffff;
+            --sidebar-header-bg: #f1f5f9;
         }
 
         body {
@@ -47,7 +47,7 @@
             width: var(--sidebar-width);
             min-width: var(--sidebar-width);
             background: var(--sidebar-bg);
-            color: #343A40;
+            color: #0f172a;
             overflow-y: auto;
             box-shadow: 2px 0 8px rgba(0, 0, 0, 0.08);
             transition: margin-left 0.3s ease-in-out;
@@ -77,7 +77,7 @@
             display: flex;
             align-items: center;
             padding: 0.5rem 0.75rem;
-            color: #343A40;
+            color: #334155;
             text-decoration: none;
             transition: all 0.2s;
             border-left: 2px solid transparent;
@@ -206,11 +206,11 @@
             background: var(--sidebar-header-bg);
         }
         .sidebar::-webkit-scrollbar-thumb {
-            background: #C8D6AF;
+            background: #cbd5e1;
             border-radius: 3px;
         }
         .sidebar::-webkit-scrollbar-thumb:hover {
-            background: var(--primary-color);
+            background: #94a3b8;
         }
 
         /* Responsive */
@@ -252,7 +252,7 @@
         <?php echo $__env->make('partials.sidebar', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
         <!-- Main Content + Footer -->
-        <div class="page-wrapper flex-grow-1 d-flex flex-column bg-light" id="pageWrapper">
+        <div class="page-wrapper flex-grow-1 d-flex flex-column bg-slate-50" id="pageWrapper">
             <main class="main-content flex-fill" id="mainContent">
                 <div class="flex-fill">
                     <?php if(session('status')): ?>
@@ -379,12 +379,12 @@
             });
             
             // Detector de cambios en el sidebar (Livewire puede reemplazar el DOM)
-            const sidebar = document.getElementById('sidebar');
-            if (sidebar) {
+            const sidebarElement = document.getElementById('sidebar');
+            if (sidebarElement) {
                 const observer = new MutationObserver(() => {
                     reinitializeBootstrapCollapses();
                 });
-                observer.observe(sidebar, { childList: true, subtree: true });
+                observer.observe(sidebarElement, { childList: true, subtree: true });
             }
         }
     </script>

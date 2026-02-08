@@ -10,6 +10,7 @@ class Maquinarias extends Component
 {
     public $maquinarias, $maquinaria_id, $id_tipo_maquinaria, $modelo, $estado, $es_alquilada, $fecha_inicio_actividades, $umbral_toneladas, $busqueda = '';
     public $tipos;
+    public $tab_activo = 'listado';
 
     protected $rules = [
         'id_tipo_maquinaria' => 'required|exists:tipo_maquinarias,id_tipo_maquinaria',

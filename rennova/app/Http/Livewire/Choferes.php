@@ -10,6 +10,7 @@ class Choferes extends Component
 {
     public $choferes;
     public $clientes = [];
+    public $tab_activo = 'listado';
 
     public $chofer_id;
     public $id_cliente;

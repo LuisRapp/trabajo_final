@@ -83,7 +83,7 @@
                             </div>
                         </div>
                         
-                        <button type="submit" class="bg-green-700 hover:bg-green-800 text-white font-medium px-6 py-3 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-center gap-2 active:scale-95">
+                        <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-medium px-6 py-3 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-center gap-2 active:scale-95">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                             </svg>
@@ -263,7 +263,7 @@
                     </div>
                     <h3 class="text-xl font-bold text-gray-900 mb-2">No hay lotes configurados</h3>
                     <p class="text-gray-500 mb-6">Crea tu primer lote para comenzar</p>
-                    <a href="{{ route('lotes.index') }}" class="bg-green-700 hover:bg-green-800 text-white font-medium px-6 py-3 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
+                    <a href="{{ route('lotes.index') }}" class="bg-green-600 hover:bg-green-700 text-white font-medium px-6 py-3 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
                         Crear Lote
                     </a>
                 </div>

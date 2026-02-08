@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\User;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
@@ -55,7 +55,7 @@ new #[Layout('components.layouts.auth.login')] class extends Component {
     /**
      * Validate the user's credentials.
      */
-    protected function validateCredentials(): User
+    protected function validateCredentials(): Authenticatable
     {
         $user = Auth::getProvider()->retrieveByCredentials(['email' => $this->email, 'password' => $this->password]);
 

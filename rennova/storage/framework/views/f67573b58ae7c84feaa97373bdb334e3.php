@@ -1,9 +1,9 @@
-<nav class="navbar navbar-expand-lg navbar-dark shadow-sm" style="background-color: #2A6041;">
+<nav class="navbar navbar-expand-lg navbar-dark shadow-sm" style="background-color: #1f5f3b;">
     <div class="container-fluid">
         <button class="btn text-white me-2 p-0" id="sidebarToggle">
             <i class="bi bi-list" id="toggleIcon" style="font-size: 1.1rem;"></i>
         </button>
-        <a class="navbar-brand fw-bold" href="<?php echo e(route('dashboard')); ?>" style="font-size: 0.9rem;">Rennova</a>
+        <a class="navbar-brand fw-bold text-slate-100" href="<?php echo e(route('dashboard')); ?>" style="font-size: 0.9rem;">Rennova</a>
         <div class="ms-auto d-flex align-items-center gap-3">
             <?php if(auth()->check()): ?>
                 <?php

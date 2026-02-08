@@ -19,6 +19,7 @@ class Empleado extends Model implements Auditable
         'dni',
         'apellido',
         'nombre',
+        'email',
         'fecha_nacimiento',
         'fecha_inicio_actividades',
         'fecha_fin_actividades'

@@ -7,6 +7,7 @@ Este índice reúne la documentación clave del proyecto y cómo navegarla.
 
 ## Guías de Uso
 - Gestión de Mantenimientos (crear, completar, insumos, costos, stock): `./GUIA_MANTENIMIENTOS_USO.md`
+- Recomendaciones automáticas por Lote (planificación de tareas → recomendaciones → parte diario): `./GUIA_RECOMENDACIONES_POR_LOTE.md`
 
 ## Referencias y Docs Existentes
 - Sistema de Mantenimiento (docs previos): `../SISTEMA_MANTENIMIENTO_DOCS.md`

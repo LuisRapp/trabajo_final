@@ -13,12 +13,12 @@
     <!-- Pestañas (Tabs) -->
     <ul class="nav nav-tabs mb-4" id="historicoTabs" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="nuevo-tab" data-bs-toggle="tab" data-bs-target="#nuevo-historico" type="button" role="tab" aria-controls="nuevo-historico" aria-selected="true">
+            <button class="nav-link" id="nuevo-tab" data-bs-toggle="tab" data-bs-target="#nuevo-historico" type="button" role="tab" aria-controls="nuevo-historico" aria-selected="false">
                 <i class="bi bi-plus-circle"></i> Nuevo Histórico
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="listado-tab" data-bs-toggle="tab" data-bs-target="#listado-historicos" type="button" role="tab" aria-controls="listado-historicos" aria-selected="false">
+            <button class="nav-link active" id="listado-tab" data-bs-toggle="tab" data-bs-target="#listado-historicos" type="button" role="tab" aria-controls="listado-historicos" aria-selected="true">
                 <i class="bi bi-list-ul"></i> Listado de Históricos
             </button>
         </li>
@@ -27,7 +27,7 @@
     <!-- Contenido de las Pestañas -->
     <div class="tab-content" id="historicoTabContent">
         <!-- Pestaña 1: Nuevo Histórico (Formulario) -->
-        <div class="tab-pane fade show active" id="nuevo-historico" role="tabpanel" aria-labelledby="nuevo-tab">
+        <div class="tab-pane fade" id="nuevo-historico" role="tabpanel" aria-labelledby="nuevo-tab">
             <div class="card shadow">
                 <div class="card-header bg-light">
                     <h5 class="mb-0">
@@ -95,7 +95,7 @@
         </div>
 
         <!-- Pestaña 2: Listado de Históricos (Tabla) -->
-        <div class="tab-pane fade" id="listado-historicos" role="tabpanel" aria-labelledby="listado-tab">
+        <div class="tab-pane fade show active" id="listado-historicos" role="tabpanel" aria-labelledby="listado-tab">
             <div class="card shadow">
                 <div class="card-header bg-light d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Listado de Históricos</h5>

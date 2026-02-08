@@ -9,6 +9,7 @@
 
     <div class="row g-4 justify-content-center">
         <!-- Maquinarias -->
+        @can('ver-maquinarias')
         <div class="col-12 col-md-6 col-lg-4 col-xl-3">
             <div class="card h-100 border-0 shadow-sm hover-elevate">
                 <div class="card-body text-center p-4">
@@ -18,8 +19,10 @@
                 </div>
             </div>
         </div>
+        @endcan
 
         <!-- Mantenimientos -->
+        @can('ver-mantenimientos')
         <div class="col-12 col-md-6 col-lg-4 col-xl-3">
             <div class="card h-100 border-0 shadow-sm hover-elevate">
                 <div class="card-body text-center p-4">
@@ -29,8 +32,10 @@
                 </div>
             </div>
         </div>
+        @endcan
 
         <!-- Kits -->
+        @can('ver-kits-mantenimiento')
         <div class="col-12 col-md-6 col-lg-4 col-xl-3">
             <div class="card h-100 border-0 shadow-sm hover-elevate">
                 <div class="card-body text-center p-4">
@@ -40,8 +45,10 @@
                 </div>
             </div>
         </div>
+        @endcan
 
         <!-- Costos -->
+        @can('ver-historico-costos-maquinarias')
         <div class="col-12 col-md-6 col-lg-4 col-xl-3">
             <div class="card h-100 border-0 shadow-sm hover-elevate">
                 <div class="card-body text-center p-4">
@@ -51,8 +58,10 @@
                 </div>
             </div>
         </div>
+        @endcan
 
         <!-- Tipos -->
+        @can('ver-tipos-maquinaria')
         <div class="col-12 col-md-6 col-lg-4 col-xl-3">
             <div class="card h-100 border-0 shadow-sm hover-elevate">
                 <div class="card-body text-center p-4">
@@ -62,6 +71,7 @@
                 </div>
             </div>
         </div>
+        @endcan
 
         @can('configurar-notificaciones-mantenimiento')
         <!-- Notificaciones -->

@@ -4,18 +4,20 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Rennova - Gestión Forestal Inteligente</title>
+    <title>Rennova - Gestion Forestal Inteligente</title>
+    <link rel="stylesheet" href="https://fonts.bunny.net/css?family=manrope:400,500,600,700,800&display=swap">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <link rel="stylesheet" href="{{ asset('css/welcome.css') }}">
 </head>
-<body class="antialiased">
-    <div class="min-h-screen flex flex-col lg:flex-row">
-        <!-- Lado Izquierdo - Imagen (Oculto en móviles) -->
+<body id="welcome-page" class="antialiased !bg-slate-100">
+    <div class="welcome-shell min-h-screen flex flex-col lg:flex-row">
+        <!-- Lado Izquierdo - Imagen (Oculto en moviles) -->
         <div class="hidden lg:flex lg:w-1/2 relative overflow-hidden">
             <img src="{{ asset('images/welcome.jpeg') }}" alt="Operaciones Forestales" class="w-full h-full object-cover opacity-80">
-            
+
             <!-- Overlay verde oscuro -->
             <div class="absolute inset-0 bg-gradient-to-r from-green-950/90 to-green-900/80"></div>
-            
+
             <!-- Contenido -->
             <div class="absolute inset-0 flex flex-col items-center justify-center text-center px-8">
                 <!-- Logo -->
@@ -26,20 +28,24 @@
                         </svg>
                     </div>
                 </div>
-                
-                <!-- Título -->
+
+                <!-- Titulo -->
                 <h1 class="text-5xl font-bold text-white mb-2">Rennova</h1>
-                <h2 class="text-xl text-green-200 mb-6">Gestión Forestal Inteligente</h2>
-                
+                <h2 class="text-xl text-green-200 mb-6">Gestion Forestal Inteligente</h2>
             </div>
         </div>
 
         <!-- Lado Derecho - Login -->
-        <div id="login" class="w-full lg:w-1/2 bg-gradient-to-br from-gray-50 to-emerald-50 flex items-center justify-center px-6 py-12 lg:py-0">
-            <div class="w-full max-w-sm">
-                <!-- Encabezado móvil -->
-                <div class="lg:hidden text-center mb-12">
-                    <div class="inline-flex items-center justify-center w-16 h-16 bg-green-600 rounded-xl mb-4">
+        <div id="login" class="welcome-panel relative w-full lg:w-1/2 overflow-hidden !bg-gradient-to-br !from-slate-50 !via-emerald-50 !to-white flex items-center justify-center px-6 py-12 lg:py-0">
+            <div class="pointer-events-none absolute -top-24 -right-24 h-72 w-72 rounded-full bg-emerald-200/40 blur-3xl"></div>
+            <div class="pointer-events-none absolute bottom-0 left-0 h-64 w-64 rounded-full bg-green-300/30 blur-3xl"></div>
+
+            <div class="welcome-card relative z-10 w-full max-w-md !rounded-2xl !border !border-emerald-100/70 !bg-white/85 p-8 !shadow-2xl !shadow-emerald-900/10 !backdrop-blur lg:p-10">
+                <div class="absolute inset-x-0 -top-px h-1 rounded-t-2xl bg-gradient-to-r from-emerald-500 via-green-600 to-emerald-500"></div>
+
+                <!-- Encabezado movil -->
+                <div class="lg:hidden text-center mb-10">
+                    <div class="inline-flex items-center justify-center w-16 h-16 bg-green-600 rounded-2xl mb-4 shadow-lg shadow-green-600/20">
                         <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
                         </svg>
@@ -47,9 +53,9 @@
                     <h1 class="text-3xl font-bold text-gray-900">Rennova</h1>
                 </div>
 
-                <!-- Título -->
-                <h2 class="text-3xl font-bold text-gray-900 mb-2">Ingresar</h2>
-                <p class="text-gray-600 text-sm mb-8">Accede a tu plataforma de gestión forestal</p>
+                <!-- Titulo -->
+                <h2 class="text-3xl font-bold !text-gray-900 mb-2">Ingresar</h2>
+                <p class="!text-gray-600 text-sm mb-8">Accede a tu plataforma de gestion forestal</p>
 
                 <!-- Formulario -->
                 <form method="POST" action="{{ route('login') }}" class="space-y-5">
@@ -57,8 +63,8 @@
 
                     <!-- Email -->
                     <div>
-                        <label for="email" class="block text-sm font-semibold text-gray-700 mb-2">
-                            Correo Electrónico
+                        <label for="email" class="block text-sm font-semibold !text-gray-700 mb-2">
+                            Correo Electronico
                         </label>
                         <div class="relative">
                             <div class="pointer-events-none absolute inset-y-0 left-3 flex items-center">
@@ -67,14 +73,14 @@
                                     <path d="M3 7l9 6 9-6" />
                                 </svg>
                             </div>
-                            <input 
-                                type="email" 
-                                id="email" 
+                            <input
+                                type="email"
+                                id="email"
                                 name="email"
                                 value="{{ old('email') }}"
-                                required 
+                                required
                                 autofocus
-                                class="w-full pl-11 pr-4 py-2.5 bg-white text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent placeholder:text-gray-400 autofill:bg-white autofill:text-gray-900 @error('email') border-red-500 @enderror"
+                                class="welcome-input w-full pl-11 pr-4 py-3 !bg-white !text-gray-900 !border !border-gray-200 !rounded-xl !shadow-sm focus:outline-none focus:!ring-2 focus:!ring-emerald-500 focus:!border-transparent placeholder:text-gray-400 transition @error('email') !border-red-500 @enderror"
                                 placeholder="correo@ejemplo.com"
                             >
                         </div>
@@ -83,10 +89,10 @@
                         @enderror
                     </div>
 
-                    <!-- Contraseña -->
+                    <!-- Contrasena -->
                     <div>
-                        <label for="password" class="block text-sm font-semibold text-gray-700 mb-2">
-                            Contraseña
+                        <label for="password" class="block text-sm font-semibold !text-gray-700 mb-2">
+                            Contrasena
                         </label>
                         <div class="relative">
                             <div class="pointer-events-none absolute inset-y-0 left-3 flex items-center">
@@ -95,13 +101,13 @@
                                     <path d="M8 11V8a4 4 0 1 1 8 0v3" />
                                 </svg>
                             </div>
-                            <input 
-                                type="password" 
-                                id="password" 
+                            <input
+                                type="password"
+                                id="password"
                                 name="password"
                                 required
-                                class="w-full pl-11 pr-4 py-2.5 bg-white text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent placeholder:text-gray-400 autofill:bg-white autofill:text-gray-900 @error('password') border-red-500 @enderror"
-                                placeholder="••••••••"
+                                class="welcome-input w-full pl-11 pr-4 py-3 !bg-white !text-gray-900 !border !border-gray-200 !rounded-xl !shadow-sm focus:outline-none focus:!ring-2 focus:!ring-emerald-500 focus:!border-transparent placeholder:text-gray-400 transition @error('password') !border-red-500 @enderror"
+                                placeholder="********"
                             >
                         </div>
                         @error('password')
@@ -109,17 +115,26 @@
                         @enderror
                     </div>
 
-                   
+                    <!-- Recuerdame -->
+                    <div class="flex items-center justify-between">
+                        <label class="inline-flex items-center gap-2 text-sm !text-gray-700">
+                            <input
+                                type="checkbox"
+                                name="remember"
+                                class="welcome-checkbox h-4 w-4 !rounded !border !border-gray-300 !text-emerald-600 focus:!ring-emerald-500"
+                            >
+                            Recuerdame
+                        </label>
+                    </div>
 
-                    <!-- Botón -->
-                    <button 
+                    <!-- Boton -->
+                    <button
                         type="submit"
-                        class="w-full inline-flex items-center justify-center !bg-green-600 hover:!bg-green-700 !text-white font-bold py-2.5 rounded-lg shadow-md transition duration-200"
+                        class="welcome-button w-full inline-flex items-center justify-center !rounded-xl !bg-gradient-to-r !from-emerald-600 !via-green-600 !to-emerald-600 px-4 py-3 !text-white font-bold !shadow-lg !shadow-emerald-600/30 transition hover:brightness-110 focus:outline-none focus:!ring-2 focus:!ring-emerald-500 focus:!ring-offset-2"
                     >
                         Ingresar
                     </button>
                 </form>
-
             </div>
         </div>
     </div>

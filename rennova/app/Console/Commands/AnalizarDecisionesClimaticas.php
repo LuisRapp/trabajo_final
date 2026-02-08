@@ -124,7 +124,7 @@ class AnalizarDecisionesClimaticas extends Command
         }
 
         // Mostrar datos calculados en formato tabla (solo si es anticipación)
-        if ($resultado['estrategia'] === 'ANTICIPACION' && isset($resultado['datos_calculados'])) {
+        if (str_starts_with($resultado['estrategia'], 'ANTICIPACION') && isset($resultado['datos_calculados'])) {
             $this->newLine();
             $datos = $resultado['datos_calculados'];
             

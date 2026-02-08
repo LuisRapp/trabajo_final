@@ -13,12 +13,14 @@
     <!-- Pestañas (Tabs) -->
     <ul class="nav nav-tabs mb-4" id="historicoTabs" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="nuevo-tab" data-bs-toggle="tab" data-bs-target="#nuevo-historico" type="button" role="tab">
+            @canany(['crear-historico-costos-maquinarias', 'editar-historico-costos-maquinarias'])
+            <button class="nav-link" id="nuevo-tab" data-bs-toggle="tab" data-bs-target="#nuevo-historico" type="button" role="tab">
                 <i class="bi bi-plus-circle"></i> Nuevo Registro
             </button>
+            @endcanany
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="listado-tab" data-bs-toggle="tab" data-bs-target="#listado-historicos" type="button" role="tab">
+            <button class="nav-link active" id="listado-tab" data-bs-toggle="tab" data-bs-target="#listado-historicos" type="button" role="tab">
                 <i class="bi bi-list-ul"></i> Listado
             </button>
         </li>
@@ -26,7 +28,8 @@
 
     <div class="tab-content" id="historicoTabContent">
         <!-- Tab 1: Formulario -->
-        <div class="tab-pane fade show active" id="nuevo-historico" role="tabpanel">
+        @canany(['crear-historico-costos-maquinarias', 'editar-historico-costos-maquinarias'])
+        <div class="tab-pane fade" id="nuevo-historico" role="tabpanel">
             <div class="card shadow mb-4">
                 <div class="card-header bg-light">
                     <h5 class="mb-0"><i class="bi bi-{{ $historico_id ? 'pencil-square' : 'plus-circle' }}"></i> {{ $historico_id ? 'Editar Registro' : 'Nuevo Registro' }}</h5>
@@ -68,17 +71,20 @@
                                     <i class="bi bi-x-circle"></i> Cancelar
                                 </button>
                             @endif
+                            @canany(['crear-historico-costos-maquinarias', 'editar-historico-costos-maquinarias'])
                             <button type="submit" class="btn btn-primary">
                                 <i class="bi bi-check-circle"></i> {{ $historico_id ? 'Actualizar' : 'Guardar' }}
                             </button>
+                            @endcanany
                         </div>
                     </form>
                 </div>
             </div>
         </div>
+        @endcanany
 
         <!-- Tab 2: Listado -->
-        <div class="tab-pane fade" id="listado-historicos" role="tabpanel">
+        <div class="tab-pane fade show active" id="listado-historicos" role="tabpanel">
             <div class="card shadow">
                 <div class="card-body">
                     <!-- Buscador -->
@@ -115,12 +121,16 @@
                                         <td>{{ $historico->fecha_fin_vigencia ?? 'Vigente' }}</td>
                                         <td class="text-center">
                                             <div class="btn-group btn-group-sm" role="group">
+                                                @can('editar-historico-costos-maquinarias')
                                                 <button class="btn btn-outline-primary" wire:click="editar({{ $historico->id_costo }})" onclick="cambiarAPestanaFormulario()" title="Editar">
                                                     <i class="bi bi-pencil"></i>
                                                 </button>
+                                                @endcan
+                                                @can('eliminar-historico-costos-maquinarias')
                                                 <button class="btn btn-outline-danger" wire:click="eliminar({{ $historico->id_costo }})" onclick="return confirm('¿Eliminar este histórico?')" title="Eliminar">
                                                     <i class="bi bi-trash"></i>
                                                 </button>
+                                                @endcan
                                             </div>
                                         </td>
                                     </tr>

@@ -16,7 +16,9 @@ class ParteDiario extends Model implements Auditable
     protected $primaryKey = 'id_parte_diario';
     protected $fillable = [
         'id_lote',
+        'id_lote_tarea',
         'fecha',
+        'tipo_tarea',
         'es_dia_caido',
         'observaciones',
         'activo',
@@ -30,6 +32,11 @@ class ParteDiario extends Model implements Auditable
     public function lote()
     {
         return $this->belongsTo(Lote::class, 'id_lote');
+    }
+
+    public function loteTarea()
+    {
+        return $this->belongsTo(LoteTarea::class, 'id_lote_tarea');
     }
 
     public function empleados()

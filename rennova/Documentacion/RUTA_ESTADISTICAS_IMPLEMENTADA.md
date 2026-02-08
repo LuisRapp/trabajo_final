@@ -186,22 +186,6 @@ Dashboard → "Reportes" → "Ver costos e históricos"
 | `resources/views/index.blade.php` | Revertido | Volvemos a usar ruta correcta |
 
 ---
-
-## 🎉 CONCLUSIÓN
-
-**Ahora tienes:**
-- ✅ Ruta funcionando
-- ✅ Lógica de estadísticas en uso
-- ✅ Vista profesional y clara
-- ✅ Datos de rentabilidad por lote
-- ✅ Análisis global del sistema
-
-**El botón "Reportes" ahora apunta a una ruta REAL que:**
-1. Obtiene datos de lotes activos
-2. Calcula métricas usando ForestalStatsService
-3. Muestra estadísticas en tabla interactiva
-4. Proporciona análisis de rentabilidad
-
 ---
 
 **Status:** ✅ **COMPLETADO Y FUNCIONAL**

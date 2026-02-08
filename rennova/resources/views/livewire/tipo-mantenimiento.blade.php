@@ -13,12 +13,14 @@
     <!-- Pestañas (Tabs) -->
     <ul class="nav nav-tabs mb-4" id="tiposTabs" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="nuevo-tab" data-bs-toggle="tab" data-bs-target="#nuevo-tipo" type="button" role="tab">
+            @canany(['crear-tipos-mantenimiento', 'editar-tipos-mantenimiento'])
+            <button class="nav-link" id="nuevo-tab" data-bs-toggle="tab" data-bs-target="#nuevo-tipo" type="button" role="tab">
                 <i class="bi bi-plus-circle"></i> Nuevo Tipo
             </button>
+            @endcanany
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="listado-tab" data-bs-toggle="tab" data-bs-target="#listado-tipos" type="button" role="tab">
+            <button class="nav-link active" id="listado-tab" data-bs-toggle="tab" data-bs-target="#listado-tipos" type="button" role="tab">
                 <i class="bi bi-list-ul"></i> Listado de Tipos
             </button>
         </li>
@@ -26,7 +28,8 @@
 
     <div class="tab-content" id="tiposTabContent">
         <!-- Tab 1: Formulario Nuevo Tipo -->
-        <div class="tab-pane fade show active" id="nuevo-tipo" role="tabpanel">
+        @canany(['crear-tipos-mantenimiento', 'editar-tipos-mantenimiento'])
+        <div class="tab-pane fade" id="nuevo-tipo" role="tabpanel">
             <div class="card shadow mb-4">
                 <div class="card-header bg-light">
                     <h5 class="mb-0"><i class="bi bi-{{ $tipo_id ? 'pencil-square' : 'plus-circle' }}"></i> {{ $tipo_id ? 'Editar Tipo' : 'Nuevo Tipo' }}</h5>
@@ -46,17 +49,20 @@
                                     <i class="bi bi-x-circle"></i> Cancelar
                                 </button>
                             @endif
+                            @canany(['crear-tipos-mantenimiento', 'editar-tipos-mantenimiento'])
                             <button type="submit" class="btn btn-primary">
                                 <i class="bi bi-check-circle"></i> {{ $tipo_id ? 'Actualizar' : 'Guardar' }}
                             </button>
+                            @endcanany
                         </div>
                     </form>
                 </div>
             </div>
         </div>
+        @endcanany
 
         <!-- Tab 2: Listado de Tipos -->
-        <div class="tab-pane fade" id="listado-tipos" role="tabpanel">
+        <div class="tab-pane fade show active" id="listado-tipos" role="tabpanel">
             <div class="card shadow">
                 <div class="card-body">
                     <!-- Buscador -->
@@ -94,12 +100,16 @@
                                         </td>
                                         <td class="text-center">
                                             <div class="btn-group btn-group-sm" role="group">
+                                                @can('editar-tipos-mantenimiento')
                                                 <button class="btn btn-outline-primary" wire:click="editar({{ $tipo->id_tipo_mantenimiento }})" onclick="cambiarAPestanaFormulario()" title="Editar">
                                                     <i class="bi bi-pencil"></i>
                                                 </button>
+                                                @endcan
+                                                @can('eliminar-tipos-mantenimiento')
                                                 <button class="btn btn-outline-danger" wire:click="eliminar({{ $tipo->id_tipo_mantenimiento }})" onclick="return confirm('¿Está seguro de dar de baja este tipo?')" title="Dar de baja">
                                                     <i class="bi bi-trash"></i>
                                                 </button>
+                                                @endcan
                                             </div>
                                         </td>
                                     </tr>

@@ -20,12 +20,14 @@
     <!-- Pestañas (Tabs) -->
     <ul class="nav nav-tabs mb-4" id="preciosTabs" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="nuevo-tab" data-bs-toggle="tab" data-bs-target="#nuevo-precio" type="button" role="tab" aria-controls="nuevo-precio" aria-selected="true">
+            @canany(['crear-lista-precios', 'editar-lista-precios'])
+            <button class="nav-link" id="nuevo-tab" data-bs-toggle="tab" data-bs-target="#nuevo-precio" type="button" role="tab" aria-controls="nuevo-precio" aria-selected="false">
                 <i class="bi bi-plus-circle"></i> Nuevo Precio
             </button>
+            @endcanany
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="listado-tab" data-bs-toggle="tab" data-bs-target="#listado-precios" type="button" role="tab" aria-controls="listado-precios" aria-selected="false">
+            <button class="nav-link active" id="listado-tab" data-bs-toggle="tab" data-bs-target="#listado-precios" type="button" role="tab" aria-controls="listado-precios" aria-selected="true">
                 <i class="bi bi-list-ul"></i> Listado de Precios
             </button>
         </li>
@@ -34,7 +36,8 @@
     <!-- Contenido de las Pestañas -->
     <div class="tab-content" id="preciosTabContent">
         <!-- Pestaña 1: Nuevo Precio (Formulario) -->
-        <div class="tab-pane fade show active" id="nuevo-precio" role="tabpanel" aria-labelledby="nuevo-tab">
+        @canany(['crear-lista-precios', 'editar-lista-precios'])
+        <div class="tab-pane fade" id="nuevo-precio" role="tabpanel" aria-labelledby="nuevo-tab">
             <div class="card shadow">
                 <div class="card-header bg-light">
                     <h5 class="mb-0">
@@ -98,17 +101,20 @@
                                     <i class="bi bi-x-circle"></i> Cancelar
                                 </button>
                             @endif
+                            @canany(['crear-lista-precios', 'editar-lista-precios'])
                             <button type="submit" class="btn btn-primary">
                                 <i class="bi bi-check-circle"></i> {{ $precio_id ? 'Actualizar' : 'Guardar' }}
                             </button>
+                            @endcanany
                         </div>
                     </form>
                 </div>
             </div>
         </div>
+        @endcanany
 
         <!-- Pestaña 2: Listado de Precios (Tabla) -->
-        <div class="tab-pane fade" id="listado-precios" role="tabpanel" aria-labelledby="listado-tab">
+        <div class="tab-pane fade show active" id="listado-precios" role="tabpanel" aria-labelledby="listado-tab">
             <div class="card shadow">
                 <div class="card-header bg-light d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="bi bi-table"></i> Lista de Precios</h5>
@@ -174,12 +180,16 @@
                                             </td>
                                             <td class="text-center">
                                                 <div class="btn-group btn-group-sm" role="group">
+                                                    @can('editar-lista-precios')
                                                     <button class="btn btn-outline-primary" wire:click="editar({{ $precioItem->id }})" onclick="cambiarAPestanaFormulario()" title="Editar">
                                                         <i class="bi bi-pencil"></i>
                                                     </button>
+                                                    @endcan
+                                                    @can('eliminar-lista-precios')
                                                     <button class="btn btn-outline-danger" wire:click="eliminar({{ $precioItem->id }})" onclick="return confirm('¿Está seguro de eliminar este precio? Esta acción no se puede deshacer.')" title="Eliminar">
                                                         <i class="bi bi-trash"></i>
                                                     </button>
+                                                    @endcan
                                                 </div>
                                             </td>
                                         </tr>

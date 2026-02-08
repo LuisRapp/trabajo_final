@@ -69,9 +69,8 @@ Para cada maquinaria:
   2. ¿Supera el umbral configurado?
           ↓ SÍ
   3. Crea orden de mantenimiento (estado: "programado")
-  4. Guarda snapshot actual de toneladas
-  5. Verifica stock del kit preventivo
-  6. Envía notificaciones:
+  4. Verifica stock del kit preventivo (por maquinaria, fallback por tipo)
+  5. Envia notificaciones:
      - Email a usuarios configurados
      - Notificación interna (con fecha límite de 7 días)
      - Si falta stock: Email adicional de advertencia
@@ -159,15 +158,15 @@ Ya está configurado en [`docker/laravel-cron`](../docker/laravel-cron)
 | Tabla | Campo | Descripción |
 |-------|-------|-------------|
 | `maquinarias` | `toneladas_acumuladas` | Odómetro que nunca se resetea. Se incrementa con cada carga |
-| `tipo_maquinarias` | `umbral_toneladas` | Umbral para generar mantenimiento preventivo automático |
+| `maquinarias` | `umbral_toneladas` | Umbral por maquinaria para generar mantenimiento preventivo automatico |
 | `mantenimientos` | `toneladas_snapshot` | Snapshot del odómetro cuando se completa el mantenimiento |
 
 ### **Kit Preventivo**
 
 Tabla `kit_mantenimiento_preventivo`:
-- Define qué insumos necesita cada tipo de maquinaria
+- Define insumos por maquinaria (si no existe, se usa el kit por tipo)
 - Incluye cantidad requerida y si es obligatorio
-- El comando verifica si hay stock disponible antes de aprobar
+- El comando verifica stock disponible al crear la orden
 
 ### **Tipos de Notificaciones**
 
@@ -316,7 +315,7 @@ Si al verificar el kit preventivo falta stock:
 
 ✅ **Notificaciones multinivel**: Email + notificación interna
 
-✅ **Configurable por tipo**: Cada tipo de maquinaria puede tener su propio umbral
+✅ **Configurable por maquinaria (o por tipo como fallback)**: Cada maquinaria puede tener su propio umbral
 
 ---
 

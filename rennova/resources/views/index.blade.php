@@ -176,6 +176,56 @@
             </div>
         </div>
 
+        {{-- CAMINO DE RECOMENDACIÓN --}}
+        @php
+            $alerta = $pronosticoData['alerta'] ?? 'NORMAL';
+            $accionRecomendada = $pronosticoData['accion_recomendada'] ?? null;
+            $recomendacionDetallada = $pronosticoData['recomendacionDetallada'] ?? '';
+            $mapaAcciones = [
+                'AUMENTAR_PRODUCCION' => ['label' => 'Aumentar producción', 'color' => 'warning', 'icon' => 'bi-lightning-charge'],
+                'MANTENIMIENTO_PREVENTIVO' => ['label' => 'Mantenimiento preventivo', 'color' => 'info', 'icon' => 'bi-tools'],
+                'SUSPENSION_JORNADA' => ['label' => 'Suspender jornada', 'color' => 'danger', 'icon' => 'bi-pause-circle'],
+                'OPERACION_NORMAL' => ['label' => 'Operación normal', 'color' => 'success', 'icon' => 'bi-check-circle'],
+            ];
+            $mapaAlertas = [
+                'ACELERAR' => ['label' => 'Aumentar producción', 'color' => 'warning', 'icon' => 'bi-lightning-charge'],
+                'SUSPENDER' => ['label' => 'Suspender operaciones', 'color' => 'danger', 'icon' => 'bi-pause-circle'],
+                'NORMAL' => ['label' => 'Operación normal', 'color' => 'success', 'icon' => 'bi-check-circle'],
+            ];
+            $alertaInfo = $accionRecomendada && isset($mapaAcciones[$accionRecomendada])
+                ? $mapaAcciones[$accionRecomendada]
+                : ($mapaAlertas[$alerta] ?? $mapaAlertas['NORMAL']);
+        @endphp
+
+        <div class="card modern-card mb-2">
+            <div class="card-body p-3">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2 mb-2">
+                    <h2 class="fw-bold mb-0" style="font-size: 0.9rem;">Camino recomendado</h2>
+                    <span class="badge bg-{{ $alertaInfo['color'] }}">
+                        <i class="bi {{ $alertaInfo['icon'] }} me-1"></i>{{ $alertaInfo['label'] }}
+                    </span>
+                </div>
+
+                <div class="row g-2">
+                    <div class="col-12 col-md-4">
+                        <div class="p-3 rounded-3 bg-{{ $alertaInfo['color'] }} bg-opacity-10 h-100">
+                            <div class="text-uppercase text-muted fw-semibold" style="font-size: 0.65rem;">Estrategia</div>
+                            <div class="fw-bold text-{{ $alertaInfo['color'] }}" style="font-size: 1rem;">
+                                {{ $alertaInfo['label'] }}
+                            </div>
+                            <div class="small text-muted mt-1">Basado en clima y operatividad del lote seleccionado.</div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-8">
+                        <div class="p-3 rounded-3 bg-light h-100">
+                            <div class="text-uppercase text-muted fw-semibold" style="font-size: 0.65rem;">Detalle de recomendación</div>
+                            <div class="small text-muted" style="white-space: pre-wrap;">{{ $recomendacionDetallada ?: 'Sin detalle disponible.' }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         {{-- PRONÓSTICO DE OPERATIVIDAD --}}
         <div class="card modern-card mb-2">
             <div class="card-body p-2">

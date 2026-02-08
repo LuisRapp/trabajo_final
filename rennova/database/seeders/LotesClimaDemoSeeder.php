@@ -103,6 +103,16 @@ class LotesClimaDemoSeeder extends Seeder
                 'latitud' => -27.581005,
                 'longitud' => -56.689445,
             ],
+            [
+                'propietario' => 'Demo - Mantenimiento Preventivo',
+                'ubicacion' => 'Jardín América, Misiones',
+                'estado' => 'activo',
+                'condicion_compra' => 'propio',
+                'especie' => 'Pino',
+                'superficie' => 95.7,
+                'latitud' => -27.041149,
+                'longitud' => -55.227308,
+            ],
         ];
 
         foreach ($lotes as $lote) {

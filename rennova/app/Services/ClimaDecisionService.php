@@ -149,16 +149,23 @@ class ClimaDecisionService
         $diaCeroIndex = null;
         $totalDiasPerdidos = 0;
 
-        // Construir mapa de lluvia diurna (06:00–18:00) por fecha
-        $lluviaDiurnaPorFecha = [];
+        // Pre-procesar lluvia por franjas para evitar O(n^2)
+        $lluviaPorFecha = [];
         foreach ($horas as $hIndex => $horaStr) {
-            $hora = Carbon::parse($horaStr);
-            $fechaKey = $hora->toDateString();
-            $hour = (int) $hora->format('H');
+            $fechaKey = substr((string) $horaStr, 0, 10);
+            $hour = (int) substr((string) $horaStr, 11, 2);
+            $mm = $precipitacionHoraria[$hIndex] ?? 0;
 
-            if ($hour >= 6 && $hour < 18) {
-                $lluviaDiurnaPorFecha[$fechaKey] = ($lluviaDiurnaPorFecha[$fechaKey] ?? 0)
-                    + ($precipitacionHoraria[$hIndex] ?? 0);
+            if (!isset($lluviaPorFecha[$fechaKey])) {
+                $lluviaPorFecha[$fechaKey] = ['madrugada' => 0, 'diurna' => 0, 'nocturna' => 0];
+            }
+
+            if ($hour >= 0 && $hour < 6) {
+                $lluviaPorFecha[$fechaKey]['madrugada'] += $mm;
+            } elseif ($hour >= 6 && $hour < 18) {
+                $lluviaPorFecha[$fechaKey]['diurna'] += $mm;
+            } else {
+                $lluviaPorFecha[$fechaKey]['nocturna'] += $mm;
             }
         }
 
@@ -172,7 +179,16 @@ class ClimaDecisionService
             $esFinDeSemana = $fecha->isWeekend(); // Sábado (6) o Domingo (0)
 
             $fechaKey = $fecha->toDateString();
-            $lluviaDiurna = $lluviaDiurnaPorFecha[$fechaKey] ?? 0;
+            $madrugada = $lluviaPorFecha[$fechaKey]['madrugada'] ?? null;
+            $lluviaDiurna = $lluviaPorFecha[$fechaKey]['diurna'] ?? null;
+            $lluviaNocturna = $lluviaPorFecha[$fechaKey]['nocturna'] ?? null;
+            $hasHourly = array_key_exists($fechaKey, $lluviaPorFecha);
+            if (!$hasHourly) {
+                // Fallback conservador si falta data horaria
+                $madrugada = 0;
+                $lluviaDiurna = $mm;
+                $lluviaNocturna = 0;
+            }
             $lluviaAyer = ($index > 0) ? ($precipitaciones[$index - 1] ?? 0) : 0;
             $saturacionIndex = $mm + ($lluviaAyer * 0.5);
             $saturacionAlta = $saturacionIndex > 12;
@@ -188,20 +204,18 @@ class ClimaDecisionService
                 $razon = "Fin de semana (no laboral)";
                 // NO incrementar totalDiasPerdidos - los fines de semana no generan déficit
             }
-            // 1. Granularidad horaria para lluvia diaria alta
-            elseif ($mm > self::UMBRAL_LLUVIA && $lluviaDiurna > 5) {
+            // 1. Regla crítica: lluvia en madrugada o diurna
+            elseif ($madrugada > 2 || $lluviaDiurna > 5) {
                 $estado = 'INACTIVO';
-                $razon = "Lluvia diurna > 5mm (06-18)";
+                $razon = ($madrugada > 2)
+                    ? "Barro por lluvia de madrugada ({$madrugada} mm)"
+                    : "Lluvia diurna activa";
 
-                if ($diaCeroIndex === null && !$esHoy) {
+                if ($diaCeroIndex === null) {
                     $diaCeroIndex = $index;
                 }
 
                 $totalDiasPerdidos++;
-            }
-            elseif ($mm > self::UMBRAL_LLUVIA && $lluviaDiurna <= 5) {
-                $estado = 'OPERATIVO_CONDICIONAL';
-                $razon = "Lluvia nocturna";
             }
             else {
                 // 2. Barro por saturación + nubosidad + poco viento
@@ -209,13 +223,11 @@ class ClimaDecisionService
                     $estado = 'INACTIVO';
                     $razon = "Saturación alta + nubosidad + poco viento";
 
-                    if ($diaCeroIndex === null && !$esHoy) {
+                    if ($diaCeroIndex === null) {
                         $diaCeroIndex = $index;
                     }
 
                     $totalDiasPerdidos++;
-                } else {
-                    $estado = 'OPERATIVO';
                 }
             }
 
@@ -228,7 +240,9 @@ class ClimaDecisionService
                 'nubosidad' => round($cloudCover, 0),
                 'viento_max' => round($vientoMax, 1),
                 'et0' => round($et0, 1),
-                'lluvia_diurna_mm' => round($lluviaDiurna, 1),
+                'lluvia_madrugada_mm' => round((float) $madrugada, 1),
+                'lluvia_diurna_mm' => round((float) $lluviaDiurna, 1),
+                'lluvia_nocturna_mm' => round((float) $lluviaNocturna, 1),
                 'saturacion_index' => round($saturacionIndex, 2),
                 'estado' => $estado,
                 'razon' => $razon,
@@ -244,7 +258,7 @@ class ClimaDecisionService
         if ($diaCeroIndex !== null) {
             // Contar días operativos ANTES del primer día de lluvia
             for ($i = 0; $i < $diaCeroIndex; $i++) {
-                if (in_array($diasDetalle[$i]['estado'], ['OPERATIVO', 'OPERATIVO_CONDICIONAL'], true) && !$diasDetalle[$i]['es_hoy']) {
+                if (in_array($diasDetalle[$i]['estado'], ['OPERATIVO', 'OPERATIVO_CONDICIONAL'], true)) {
                     $diasOperativosPrevios++;
                 }
             }
@@ -259,7 +273,7 @@ class ClimaDecisionService
         
         // Contar TODOS los días operativos en la ventana de 7 días
         foreach ($diasDetalle as $dia) {
-            if (in_array($dia['estado'], ['OPERATIVO', 'OPERATIVO_CONDICIONAL'], true) && !$dia['es_hoy']) {
+            if (in_array($dia['estado'], ['OPERATIVO', 'OPERATIVO_CONDICIONAL'], true)) {
                 $totalDiasOperativos++;
             }
         }
@@ -291,6 +305,7 @@ class ClimaDecisionService
         $diasPosterior = $analisisDias['dias_operativos_posterior'];
         $totalDiasOperativos = $analisisDias['total_dias_operativos'];
         $metaDiaria = $analisisDias['meta_diaria'];
+        $diaCeroIndex = $analisisDias['dia_cero_index'];
 
         // CASO 1: No hay días perdidos por lluvia → Operación normal
         if ($diasPerdidos === 0 || $volumenRiesgo == 0) {
@@ -310,7 +325,12 @@ class ClimaDecisionService
             ];
         }
 
-        // CASO 2: Hay días operativos disponibles (antes o después) → Planificación estratégica
+        // CASO 2: Lluvia inminente y sin días previos → Reacción inmediata
+        if ($diaCeroIndex !== null && $diasPrevios === 0) {
+            return $this->estrategiaReaccion($lote, $analisisDias);
+        }
+
+        // CASO 3: Hay días operativos disponibles (antes o después) → Planificación estratégica
         if ($totalDiasOperativos > 0) {
             $aumentoNecesario = $volumenRiesgo / $totalDiasOperativos;
             $porcentajeAumento = ($aumentoNecesario / $metaDiaria) * 100;
@@ -366,7 +386,7 @@ class ClimaDecisionService
             }
         }
 
-        // CASO 3: No hay días operativos disponibles → Suspensión
+        // CASO 4: No hay días operativos disponibles → Suspensión
         return $this->estrategiaReaccion($lote, $analisisDias);
     }
 

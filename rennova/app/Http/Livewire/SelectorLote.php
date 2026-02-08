@@ -124,6 +124,9 @@ class SelectorLote extends Component
 
     private function esLoteDemoLluvia(Lote $lote): bool
     {
+        if (!app()->environment(['local', 'testing'])) {
+            return false;
+        }
         $nombre = strtolower((string) ($lote->nombre ?? $lote->propietario ?? ''));
         return str_contains($nombre, 'lluvia');
     }

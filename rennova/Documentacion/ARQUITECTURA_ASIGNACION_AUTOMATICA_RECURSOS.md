@@ -1,7 +1,7 @@
 # Arquitectura (Revisada) – Asignación Automática de Recursos basada en Historial Real (en **días**)
 
 Fecha: 31/01/2026  
-Stack: Laravel 11 + MySQL  
+Stack: Laravel 11 + PostgreSQL (implementación portable)  
 Objetivo: Al pasar un Lote a “Explotación”, estimar **duración esperada (en días)** y **recursos** (persona‑día / máquina‑día / insumos), usando **datos históricos reales**.
 
 Decisiones adoptadas:
@@ -35,8 +35,12 @@ Registrar `tipo_tarea` directamente en `lotes` se vuelve ambiguo cuando:
 - En el mismo lote ocurren **Raleo + Poda**, o **Tala Rasa + Limpieza**, etc.
 - Las tareas tienen perfiles de consumo muy diferentes.
 
-### Recomendación de modelado (sin código, solo diseño)
-Introduce una entidad explícita **Tarea de Lote** (unidad de análisis y planificación):
+### Recomendación de modelado (diseño)
+Introduce una entidad explícita **Tarea de Lote** (unidad de análisis y planificación).
+
+**Nota (estado actual de la implementación MVP):** no se creó `lote_tareas`. En su lugar, se resolvió con:
+- `parte_diarios.tipo_tarea` (enum en PHP) como “tarea del día”.
+- Regla: **1 Parte Diario por (lote, fecha)** ⇒ **1 tarea por día (por lote)**.
 
 **Entidad sugerida:** `lote_tareas`
 - `id_lote_tarea`
@@ -120,9 +124,31 @@ Definición KPI por tarea (con 3C + 1 tarea por Parte Diario):
 
 ## 4) Flujo lógico revisado (alineado a días y múltiples tareas)
 ### 4.1 Disparador
-Evento: `LotStatusUpdated` cuando `lote.estado` cambia a “Explotación” (p.ej. `en_proceso`).
+Evento: cuando `lote.estado` cambia a “Explotación” (p.ej. `en_proceso`).
+
+Implementación:
+- Trigger en modelo: [rennova/app/Models/Lote.php](rennova/app/Models/Lote.php)
+- Job en cola: [rennova/app/Jobs/GenerateAllocationProposalsForLote.php](rennova/app/Jobs/GenerateAllocationProposalsForLote.php)
 
 Pero: el usuario debe definir/seleccionar **la(s) tareas** a ejecutar.
+
+En el MVP actual, como `parte_diarios.tipo_tarea` es por día, las propuestas se generan por **(lote, tipo_tarea)** usando el histórico y se almacenan en `allocation_proposals`.
+
+Idempotencia:
+- El Job es único por lote durante una ventana temporal (evita encolados duplicados).
+- Además, por cada `(lote, tipo_tarea)` se evita regenerar si ya existe una propuesta creada en el día.
+
+### 4.1.1 Operación (Colas)
+
+Recomendación: ejecutar el cálculo en cola para no bloquear la request que cambia el estado del lote.
+
+Configuración recomendada:
+- `QUEUE_CONNECTION=database`
+- `CACHE_STORE=database`
+
+Worker:
+- `php artisan queue:work`
+- Para probar un único Job (útil en desarrollo): `php artisan queue:work --once`
 
 ### 4.2 Creación/selección de Tareas
 En vez de “la tarea vive en el lote”, el lote **tiene** tareas:
