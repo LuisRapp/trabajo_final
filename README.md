@@ -1,14 +1,16 @@
-# 🌾 Sistema Rennova
+#  Sistema Rennova
 
-Sistema integral de gestión agrícola desarrollado con Laravel 11, Livewire 3 y PostgreSQL. Incluye gestión de lotes, mantenimientos, análisis climático inteligente, cálculo de costos y liquidación de pagos.
+Sistema integral de gestión agrícola desarrollado con Laravel 12, Livewire 3 y PostgreSQL. Incluye gestión de lotes, mantenimientos, análisis climático inteligente, cálculo de costos y liquidación de pagos.
 
-## 📋 Requisitos Previos
+Ultima actualizacion: 8 de febrero de 2026.
+
+##  Requisitos Previos
 
 - **Docker** y **Docker Compose** instalados
 - **Git** para clonar el repositorio
 - Puertos disponibles: `8000` (aplicación) y `5432` (PostgreSQL)
 
-## 🚀 Instalación Rápida con Docker
+##  Instalación Rápida con Docker
 
 ### 1. Clonar el Repositorio
 
@@ -58,7 +60,7 @@ Abre tu navegador en: **http://localhost:8000**
 - Usuario: `admin@rennova.com`
 - Contraseña: `password`
 
-## 🛠️ Comandos Útiles
+## ️ Comandos Útiles
 
 ### Gestión de Contenedores
 
@@ -72,7 +74,7 @@ docker-compose logs -f app
 # Detener contenedores
 docker-compose down
 
-# Detener y eliminar volúmenes (⚠️ borra la BD)
+# Detener y eliminar volúmenes (️ borra la BD)
 docker-compose down -v
 
 # Reiniciar contenedores
@@ -104,7 +106,7 @@ docker-compose exec app php artisan route:list
 docker-compose exec app php artisan schedule:run
 ```
 
-## 📦 Instalación sin Docker (Desarrollo Local)
+##  Instalación sin Docker (Desarrollo Local)
 
 Si prefieres ejecutar la aplicación localmente sin Docker:
 
@@ -163,44 +165,44 @@ php artisan serve
 
 La aplicación estará disponible en: **http://localhost:8000**
 
-## 🎯 Características Principales
+##  Características Principales
 
-### 🌦️ Análisis Climático Inteligente
+### ️ Análisis Climático Inteligente
 - Motor de decisiones climáticas con 3 fases (Anticipación, Bloqueo, Reacción)
 - Integración con Open-Meteo API
 - Predicciones de lluvia para planificación de actividades
 - Documentación: [`Documentacion/README_CLIMA_DECISION_SERVICE.md`](./rennova/Documentacion/README_CLIMA_DECISION_SERVICE.md)
 
-### 💰 Gestión de Costos y Pagos
+###  Gestión de Costos y Pagos
 - Cálculo automático de costos operacionales
 - Liquidación de pagos a empleados (jornal, destajo, días caídos)
 - Reportes de costos por lote y actividad
 - Documentación: [`Documentacion/SISTEMA_CALCULO_COSTOS.md`](./rennova/Documentacion/SISTEMA_CALCULO_COSTOS.md)
 
-### 🔧 Sistema de Mantenimientos
+###  Sistema de Mantenimientos
 - Mantenimientos preventivos y correctivos
 - Notificaciones automáticas por email
 - Historial completo de mantenimientos
 - Documentación: [`Documentacion/SISTEMA_MANTENIMIENTO_DOCS.md`](./rennova/Documentacion/SISTEMA_MANTENIMIENTO_DOCS.md)
 
-### 📊 Parte Diario
+###  Parte Diario
 - Registro de actividades diarias por lote
 - Control de horas trabajadas y empleados
 - Seguimiento de insumos y maquinaria
 - Validaciones automáticas de disponibilidad
 
-### 📈 Estadísticas y Reportes
+###  Estadísticas y Reportes
 - Dashboard con métricas clave
 - Reportes de producción por lote
 - Análisis de costos y rentabilidad
 - Gráficos interactivos
 
-### 🔐 Sistema de Permisos
+###  Sistema de Permisos
 - Roles y permisos granulares (Spatie Permission)
 - Control de acceso por módulo
 - Auditoría de acciones de usuarios
 
-## ⚙️ Tareas Programadas
+## ️ Tareas Programadas
 
 El sistema ejecuta automáticamente las siguientes tareas:
 
@@ -210,7 +212,7 @@ El sistema ejecuta automáticamente las siguientes tareas:
 
 Documentación: [`Documentacion/TAREAS_PROGRAMADAS_SCHEDULER.md`](./rennova/Documentacion/TAREAS_PROGRAMADAS_SCHEDULER.md)
 
-## 📚 Documentación Completa
+##  Documentación Completa
 
 Toda la documentación del proyecto se encuentra en [`rennova/Documentacion/`](./rennova/Documentacion/):
 
@@ -219,7 +221,7 @@ Toda la documentación del proyecto se encuentra en [`rennova/Documentacion/`](.
 - **[TROUBLESHOOTING.md](./rennova/Documentacion/TROUBLESHOOTING.md)**: Solución de problemas comunes
 - **[GUIA_DESPLIEGUE_PRODUCCION.md](./rennova/Documentacion/GUIA_DESPLIEGUE_PRODUCCION.md)**: Guía para despliegue en producción
 
-## 🧪 Ejecutar Pruebas
+##  Ejecutar Pruebas
 
 El proyecto incluye scripts de prueba en la carpeta `rennova/`:
 
@@ -236,7 +238,7 @@ docker-compose exec app php pruebas_caja_negra.php
 
 Documentación de pruebas: [`Documentacion/INDICE_PRUEBAS.md`](./rennova/Documentacion/INDICE_PRUEBAS.md)
 
-## 🔍 Estructura del Proyecto
+##  Estructura del Proyecto
 
 ```
 trabajo_final/
@@ -259,7 +261,7 @@ trabajo_final/
     └── docker/                # Archivos de configuración Docker
 ```
 
-## 🐛 Solución de Problemas
+##  Solución de Problemas
 
 ### Error de conexión a la base de datos
 
@@ -292,7 +294,7 @@ docker-compose exec app composer install
 docker-compose exec app php artisan migrate --seed
 ```
 
-## 📧 Configuración de Notificaciones Email
+##  Configuración de Notificaciones Email
 
 Por defecto, el sistema usa Mailtrap para desarrollo. Para configurar otro servicio:
 
@@ -314,7 +316,7 @@ docker-compose exec app php artisan config:clear
 
 Documentación: [`Documentacion/INSTRUCCIONES_NOTIFICACIONES_EMAIL.md`](./rennova/Documentacion/INSTRUCCIONES_NOTIFICACIONES_EMAIL.md)
 
-## 🤝 Contribuir
+##  Contribuir
 
 1. Fork el proyecto
 2. Crea una rama para tu feature (`git checkout -b feature/nueva-funcionalidad`)
@@ -322,15 +324,15 @@ Documentación: [`Documentacion/INSTRUCCIONES_NOTIFICACIONES_EMAIL.md`](./rennov
 4. Push a la rama (`git push origin feature/nueva-funcionalidad`)
 5. Abre un Pull Request
 
-## 📝 Licencia
+##  Licencia
 
 Este proyecto es un trabajo final académico.
 
-## 👥 Autor
+##  Autor
 
 Luis Rapp - [LuisRapp](https://github.com/LuisRapp)
 
-## 🙏 Agradecimientos
+##  Agradecimientos
 
 - Laravel Framework
 - Livewire

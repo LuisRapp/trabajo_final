@@ -7,7 +7,7 @@ use App\Models\Maquinaria;
 use App\Models\Mantenimiento;
 use App\Models\KitMantenimientoPreventivo;
 use App\Models\Insumo;
-use App\Models\User;
+use App\Models\Usuario;
 use App\Models\NotificacionSistema;
 use App\Models\MantenimientoPurchaseProposal;
 use App\Models\MantenimientoPurchaseProposalInsumo;
@@ -266,7 +266,7 @@ class CheckMantenimientoUmbrales extends Command
                 });
                 $this->info("Notificacion enviada a {$adminEmail} (fallback)");
             } else {
-                $emails = User::whereIn('id', $userIds)->pluck('email')->filter()->values()->all();
+                $emails = Usuario::whereIn('id', $userIds)->pluck('email')->filter()->values()->all();
                 if (empty($emails)) {
                     $adminEmail = config('mail.admin_email', 'admin@example.com');
                     $this->enviarConReintento(function () use ($adminEmail, $notification) {

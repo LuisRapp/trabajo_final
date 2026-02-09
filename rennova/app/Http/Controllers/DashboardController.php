@@ -297,16 +297,21 @@ class DashboardController extends Controller
             ];
         }
 
-        // Regla adicional: día posterior a lluvia puede quedar inactivo por suelo húmedo
-        foreach ($diasDetalle as $i => $dia) {
+        // Regla adicional: solo el día inmediato posterior a lluvia real (sin encadenar)
+        $diasDetalleBase = $diasDetalle;
+        foreach ($diasDetalleBase as $i => $dia) {
             if ($i === 0) {
                 continue;
             }
 
-            $ayer = $diasDetalle[$i - 1];
+            $ayer = $diasDetalleBase[$i - 1];
             $hoy = $diasDetalle[$i];
-            $esFinDeSemanaHoy = $hoy['razon'] && stripos($hoy['razon'], 'fin de semana') !== false;
-            $ayerFueLluvia = $ayer['estado'] === 'INACTIVO' && (!isset($ayer['razon']) || stripos($ayer['razon'], 'fin de semana') === false);
+            $razonHoy = $this->normalizarTexto((string) ($hoy['razon'] ?? ''));
+            $esFinDeSemanaHoy = $razonHoy !== '' && stripos($razonHoy, 'fin de semana') !== false;
+            $razonAyer = $this->normalizarTexto((string) ($ayer['razon'] ?? ''));
+            $ayerFueLluvia = $ayer['estado'] === 'INACTIVO'
+                && ($razonAyer === '' || stripos($razonAyer, 'fin de semana') === false)
+                && stripos($razonAyer, 'suelo humedo') === false;
 
             if ($ayerFueLluvia && !$esFinDeSemanaHoy && in_array($hoy['estado'], ['OPERATIVO', 'OPERATIVO_CONDICIONAL'], true)) {
                 $diasDetalle[$i]['estado'] = 'INACTIVO';

@@ -1,4 +1,6 @@
-# 🌦️ Guía Completa: API del Clima y Toma de Decisiones
+# ️ Guia Completa: API del Clima y Toma de Decisiones
+
+Ultima actualizacion: 8 de febrero de 2026.
 
 ## Índice
 1. [Flujo General (3 Fases)](#flujo-general-3-fases)
@@ -163,8 +165,8 @@ Aumento Necesario = Volumen Riesgo / Días Operativos Previos
 
 | Condición | Decisión | Acción |
 |-----------|----------|--------|
-| `% Aumento < 25%` | ✅ **VIABLE** | Aumentar producción inmediatamente |
-| `% Aumento ≥ 25%` | ⚠️ **LÍMITE** | Aumento muy agresivo, requiere revisión manual |
+| `% Aumento < 25%` |  **VIABLE** | Aumentar producción inmediatamente |
+| `% Aumento ≥ 25%` | ️ **LÍMITE** | Aumento muy agresivo, requiere revisión manual |
 
 ### Ejemplo Práctico 1 (Viable)
 
@@ -177,7 +179,7 @@ Volumen Riesgo = 50 × 2 = 100 toneladas
 Aumento Necesario = 100 / 4 = 25 toneladas/día
 % Aumento = (25 / 50) × 100 = 50%
 
-❌ NO VIABLE (50% > 25%)
+ NO VIABLE (50% > 25%)
 ```
 
 ### Ejemplo Práctico 2 (Límite)
@@ -191,22 +193,22 @@ Volumen Riesgo = 60 × 2 = 120 toneladas
 Aumento Necesario = 120 / 6 = 20 toneladas/día
 % Aumento = (20 / 60) × 100 = 33.3%
 
-⚠️ AL LÍMITE (33.3% > 25%)
+️ AL LÍMITE (33.3% > 25%)
 ```
 
 ### Recomendación Generada
 
 ```
-📋 ESTRATEGIA: ANTICIPACIÓN [MEDIA]
+ ESTRATEGIA: ANTICIPACIÓN [MEDIA]
 
-⚠️ ALERTA DE LLUVIA EN 6 DÍAS (09/12/2025)
+️ ALERTA DE LLUVIA EN 6 DÍAS (09/12/2025)
 
-📊 ANÁLISIS:
+ ANÁLISIS:
    • Pronóstico de lluvia: 15.3 mm
    • Días que se perderán: 2
    • Costo estimado: $12,450.00
 
-💡 RECOMENDACIÓN:
+ RECOMENDACIÓN:
 
    Aumentar la producción hoy en un 12% para compensar 
    las pérdidas esperadas. Distribuir el aumento en los 
@@ -231,18 +233,18 @@ Se activa cuando hay **0 días operativos previos** (lluvia es inminente).
 #### OPCIÓN 1: Mantenimiento Preventivo
 
 ```
-✅ Mejor cuando:
+ Mejor cuando:
    • Hay equipos con mantenimiento pendiente
    • Condiciones climáticas permitirán secar el área después
    • Personal técnico disponible
 
-📋 Actividades:
+ Actividades:
    • Reparación de maquinaria
    • Revisión técnica de equipos
    • Cambio de aceites/filtros
    • Mantenimiento preventivo
 
-💰 Costos:
+ Costos:
    • Se pagan solo jornales (no destajo)
    • Evita daño a equipos por inactividad
 ```
@@ -250,17 +252,17 @@ Se activa cuando hay **0 días operativos previos** (lluvia es inminente).
 #### OPCIÓN 2: Suspensión de Jornada
 
 ```
-✅ Mejor cuando:
+ Mejor cuando:
    • Emergencia climática (lluvia muy intensa)
    • No hay mantenimiento urgente
    • Necesidad de minimizar costos
 
-⛔ Actividades:
+ Actividades:
    • Cerrar operaciones completamente
    • Personal se queda en casa
    • Maquinaria sin movimiento
 
-💰 Costos:
+ Costos:
    • Pago mínimo (solo jornal legal)
    • Reducción máxima de gastos
 ```
@@ -268,18 +270,18 @@ Se activa cuando hay **0 días operativos previos** (lluvia es inminente).
 ### Ejemplo de Reacción
 
 ```
-🌲 Lote: Rapp - Las Tunas
+ Lote: Rapp - Las Tunas
 
-   📋 REACCIÓN [ALTA URGENCIA]
+    REACCIÓN [ALTA URGENCIA]
 
-   🚨 LLUVIA INMEDIATA (Mañana a partir de las 14hs)
+    LLUVIA INMEDIATA (Mañana a partir de las 14hs)
    
-   📊 DATOS:
+    DATOS:
       • Pronóstico: 28.5 mm de lluvia
       • Impacto: 3 días sin operar
       • Costo estimado: $18,750.00
 
-   💡 DECISIÓN RECOMENDADA: MANTENIMIENTO PREVENTIVO
+    DECISIÓN RECOMENDADA: MANTENIMIENTO PREVENTIVO
 
       Ejecutar mantenimiento preventivo durante los 3 días 
       de lluvia. Se ha identificado que la cortadora necesita
@@ -291,7 +293,7 @@ Se activa cuando hay **0 días operativos previos** (lluvia es inminente).
 
 ---
 
-## 🌐 Integración Open-Meteo API
+##  Integración Open-Meteo API
 
 ### Descripción
 Open-Meteo es un API meteorológico **gratuito** que proporciona pronósticos climáticos precisos sin requerer autenticación.
@@ -366,7 +368,7 @@ curl "https://api.open-meteo.com/v1/forecast?latitude=-25.695139&longitude=-54.4
 
 ---
 
-## 💰 Cálculo de Costos
+##  Cálculo de Costos
 
 ### Meta Diaria Estimada
 
@@ -414,7 +416,7 @@ Costo Total Riesgo = $2,850.00 × 2 = $5,700.00
 
 ---
 
-## 🔧 Constantes de Configuración
+##  Constantes de Configuración
 
 ```php
 const UMBRAL_LLUVIA = 10;              // mm (lluvia que impide operaciones)
@@ -432,7 +434,7 @@ const DIAS_FORECAST = 7;               // Pronóstico a 7 días
 
 ---
 
-## 🖥️ Uso del Sistema
+## ️ Uso del Sistema
 
 ### Comando Artisan
 
@@ -453,31 +455,31 @@ Analiza solo el lote con ID=5.
 ### Output del Comando
 
 ```
-🌦️  Sistema de Decisiones Climáticas Inteligentes
+️  Sistema de Decisiones Climáticas Inteligentes
 ═══════════════════════════════════════════════════
 
-📍 Analizando 3 lote(s)...
+ Analizando 3 lote(s)...
 
-🌲 Lote Rapp - Las Tunas
+ Lote Rapp - Las Tunas
 
-   📋 ANTICIPACION   MEDIA 
+    ANTICIPACION   MEDIA 
 
-   ⚠️ ALERTA DE LLUVIA EN 6 DÍAS (09/12/2025)
-   📅 Fecha: 05/12/2025
-   🌧️  Lluvia pronosticada: 15.3 mm
-   💰 Riesgo de pérdida: $12,450.00
-   💡 Sugerencia: Aumentar producción hoy para compensar.
+   ️ ALERTA DE LLUVIA EN 6 DÍAS (09/12/2025)
+    Fecha: 05/12/2025
+   ️  Lluvia pronosticada: 15.3 mm
+    Riesgo de pérdida: $12,450.00
+    Sugerencia: Aumentar producción hoy para compensar.
 
 ───────────────────────────────────────────────────
 
 ═══════════════════════════════════════════════════
-📊 RESUMEN DE ANÁLISIS
+ RESUMEN DE ANÁLISIS
 ═══════════════════════════════════════════════════
    Total de lotes analizados: 3
    Estrategias de Anticipación: 2
    Estrategias de Reacción: 1
 
-💡 ACCIÓN REQUERIDA: Revisar alertas de anticipación y ajustar producción HOY.
+ ACCIÓN REQUERIDA: Revisar alertas de anticipación y ajustar producción HOY.
 ```
 
 ### Uso Programático
@@ -524,7 +526,7 @@ if ($resultado['success']) {
 
 ---
 
-## 📁 Archivos Clave
+##  Archivos Clave
 
 ### Servicio Principal
 - **Archivo**: `app/Services/ClimaDecisionService.php`
@@ -557,7 +559,7 @@ if ($resultado['success']) {
 
 ---
 
-## 🧪 Ejecutar Pruebas
+##  Ejecutar Pruebas
 
 Para verificar que el sistema funciona correctamente:
 
@@ -587,7 +589,7 @@ Schedule::command('clima:decisiones')->everyTwoHours();
 
 ---
 
-## 🔍 Troubleshooting
+##  Troubleshooting
 
 ### Error: "El lote no tiene coordenadas GPS configuradas"
 
@@ -621,7 +623,7 @@ tail -f storage/logs/laravel.log
 
 ---
 
-## 📈 Mejoras Futuras
+##  Mejoras Futuras
 
 - [ ] Notificaciones automáticas por email/SMS
 - [ ] Dashboard web con visualización de pronósticos
@@ -632,7 +634,7 @@ tail -f storage/logs/laravel.log
 
 ---
 
-## 📚 Referencias
+##  Referencias
 
 - **Open-Meteo API**: https://open-meteo.com/en/docs
 - **Laravel HTTP Client**: https://laravel.com/docs/12.x/http-client
@@ -641,7 +643,7 @@ tail -f storage/logs/laravel.log
 
 ---
 
-## 🤝 Ejemplo de Flujo Completo
+##  Ejemplo de Flujo Completo
 
 ### Escenario: Lote en Misiones con lluvia pronosticada
 
@@ -663,7 +665,7 @@ DÍA 1 (Hoy):
 │  ├─ Volumen riesgo: 50 × 2 = 100 toneladas
 │  ├─ Aumento necesario: 100 / 1 = 100 toneladas
 │  ├─ % Aumento: (100 / 50) × 100 = 200%
-│  └─ Decisión: ❌ NO VIABLE (200% > 25%)
+│  └─ Decisión:  NO VIABLE (200% > 25%)
 │
 └─ Acción Recomendada:
    "Anticipación no es viable. Aumento demasiado agresivo.

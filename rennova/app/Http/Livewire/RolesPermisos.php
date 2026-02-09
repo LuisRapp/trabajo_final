@@ -6,7 +6,6 @@ use Livewire\Component;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
-use App\Models\User;
 use App\Models\Usuario;
 
 class RolesPermisos extends Component
@@ -30,7 +29,7 @@ class RolesPermisos extends Component
             return $model;
         }
 
-        return User::class;
+        return Usuario::class;
     }
 
     protected function userSearchColumns(string $userModel): array
@@ -79,22 +78,6 @@ class RolesPermisos extends Component
             });
         }
         $users = $query->with('roles')->get();
-
-        if ($users->isEmpty() && $userModel !== Usuario::class && class_exists(Usuario::class)) {
-            $userModel = Usuario::class;
-            $query = $userModel::query();
-            if ($this->busqueda) {
-                $columns = $this->userSearchColumns($userModel);
-                $operator = $this->userSearchOperator();
-                $query->where(function ($query) use ($columns, $operator) {
-                    foreach ($columns as $index => $column) {
-                        $method = $index === 0 ? 'where' : 'orWhere';
-                        $query->{$method}($column, $operator, '%' . $this->busqueda . '%');
-                    }
-                });
-            }
-            $users = $query->with('roles')->get();
-        }
 
         $this->userModelClassName = $userModel;
         

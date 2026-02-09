@@ -33,6 +33,7 @@
         </div>
         <div class="p-6">
             <!--[if BLOCK]><![endif]--><?php if(!$mostrar_liquidacion): ?>
+                <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->any(['crear-liquidacion-pagos', 'editar-liquidacion-pagos'])): ?>
                 <form wire:submit.prevent="calcularLiquidacion" class="grid grid-cols-1 md:grid-cols-12 gap-4">
                     <div class="md:col-span-5">
                         <label for="id_empleado" class="block text-sm font-semibold text-slate-700 mb-2">Empleado *</label>
@@ -118,6 +119,7 @@ unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
                         <p class="mt-2 text-xs text-slate-500">Esta opción genera recibos para todos los empleados activos del período seleccionado.</p>
                     </div>
                 </form>
+                <?php endif; ?>
             <?php else: ?>
                 <div class="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4 text-blue-800">
                     <h5 class="mb-1 flex items-center gap-2 font-semibold">
@@ -311,9 +313,11 @@ unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
                                     </div>
 
                                     <div class="flex flex-col gap-2">
+                                        <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->any(['crear-liquidacion-pagos', 'editar-liquidacion-pagos'])): ?>
                                         <button type="submit" class="inline-flex items-center justify-center gap-2 rounded-lg bg-green-700 px-4 py-3 text-white font-semibold shadow-sm hover:bg-green-800">
                                             <i class="bi bi-check-circle"></i> Generar Recibo
                                         </button>
+                                        <?php endif; ?>
                                         <button type="button" wire:click="nuevaLiquidacion" class="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-200 px-4 py-3 text-slate-700 font-semibold hover:bg-slate-300">
                                             <i class="bi bi-x-circle"></i> Cancelar
                                         </button>

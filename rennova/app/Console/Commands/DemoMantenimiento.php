@@ -11,7 +11,7 @@ use App\Models\TipoMantenimiento;
 use App\Models\Insumo;
 use App\Models\UnidadMedida;
 use App\Models\NotificacionSistema;
-use App\Models\User;
+use App\Models\Usuario;
 use App\Notifications\MantenimientoCreado;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -110,9 +110,9 @@ class DemoMantenimiento extends Command
             // PASO 6: Enviar notificación por email
             $this->info("\n📧 PASO 6: Enviando notificación por email...");
             try {
-                $admin = User::where('email', 'admin@rennova.local')->first();
+                $admin = Usuario::where('email', 'admin@rennova.local')->first();
                 if (!$admin) {
-                    $admin = User::first();
+                    $admin = Usuario::first();
                 }
                 
                 if ($admin) {
@@ -128,7 +128,7 @@ class DemoMantenimiento extends Command
             // PASO 7: Crear notificación interna del sistema
             $this->info("\n🔔 PASO 7: Creando notificación interna...");
             
-            $usuarios = User::where('email', '!=', null)->limit(3)->get();
+            $usuarios = Usuario::where('email', '!=', null)->limit(3)->get();
             foreach ($usuarios as $usuario) {
                 NotificacionSistema::create([
                     'user_id' => $usuario->id,

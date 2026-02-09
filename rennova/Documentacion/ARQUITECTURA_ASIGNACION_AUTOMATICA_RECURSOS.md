@@ -1,7 +1,7 @@
 # Arquitectura (Revisada) – Asignación Automática de Recursos basada en Historial Real (en **días**)
 
 Fecha: 31/01/2026  
-Stack: Laravel 11 + PostgreSQL (implementación portable)  
+Stack: Laravel 12 + PostgreSQL (implementación portable)  
 Objetivo: Al pasar un Lote a “Explotación”, estimar **duración esperada (en días)** y **recursos** (persona‑día / máquina‑día / insumos), usando **datos históricos reales**.
 
 Decisiones adoptadas:

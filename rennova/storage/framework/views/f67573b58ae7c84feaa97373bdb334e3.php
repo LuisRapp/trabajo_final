@@ -24,8 +24,14 @@ if (isset($__slots)) unset($__slots);
 ?>
             <?php endif; ?>
             <div class="dropdown">
+                <?php
+                    $user = auth()->user();
+                    $displayName = $user?->name
+                        ?? trim(($user?->nombre ?? '') . ' ' . ($user?->apellido ?? ''))
+                        ?: 'Usuario';
+                ?>
                 <a class="text-white text-decoration-none dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" style="font-size: 0.8rem;">
-                    <i class="bi bi-person-circle me-1" style="font-size: 0.9rem;"></i> <?php echo e(Auth::user()->name ?? 'Usuario'); ?>
+                    <i class="bi bi-person-circle me-1" style="font-size: 0.9rem;"></i> <?php echo e($displayName); ?>
 
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end" style="font-size: 0.85rem;">

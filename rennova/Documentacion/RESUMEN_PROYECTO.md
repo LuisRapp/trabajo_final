@@ -1,5 +1,7 @@
 # Resumen del Proyecto
 
+Ultima actualizacion: 8 de febrero de 2026.
+
 Este documento resume el estado actual del proyecto, su arquitectura, módulos principales, flujos de trabajo, modelos y tablas relevantes, configuración del entorno, pruebas realizadas, problemas resueltos y mejoras pendientes.
 
 ## 1. Resumen Ejecutivo

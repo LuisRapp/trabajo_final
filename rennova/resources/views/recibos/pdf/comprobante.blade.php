@@ -86,25 +86,23 @@
             <tr>
                 <td><strong>Empleado</strong></td>
                 <td>{{ $empleado_nombre }}</td>
-                <td><strong>Rol</strong></td>
-                <td>{{ $empleado_rol }}</td>
+                <td><strong>DNI</strong></td>
+                <td>{{ $empleado_dni ?? 'N/A' }}</td>
             </tr>
             <tr>
+                <td><strong>Tarea</strong></td>
+                <td>{{ $empleado_rol }}</td>
                 <td><strong>Período</strong></td>
                 <td>{{ $periodo }}</td>
-                <td><strong>Estado</strong></td>
-                <td>
-                    <span class="badge">{{ $recibo->activo ? 'Activo' : 'Inactivo' }}</span>
-                </td>
             </tr>
         </tbody>
     </table>
 
-    <div class="section-title">Observaciones</div>
+    <div class="section-title">Detalle</div>
     <table>
         <tbody>
             <tr>
-                <td>{{ $recibo->observaciones ?? 'Sin observaciones' }}</td>
+                <td>{{ $recibo->observaciones ?? 'Sin detalle' }}</td>
             </tr>
         </tbody>
     </table>

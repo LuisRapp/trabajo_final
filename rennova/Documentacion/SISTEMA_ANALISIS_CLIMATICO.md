@@ -1,12 +1,14 @@
-# Sistema de Análisis Climático y Predicción de Días Caídos
+# Sistema de Analisis Climatico y Prediccion de Dias Caidos
 
-## 📋 Descripción General
+Ultima actualizacion: 8 de febrero de 2026.
+
+##  Descripción General
 
 Sistema integrado con **Open-Meteo API** para predecir días de lluvia en lotes forestales y calcular el costo de oportunidad perdido. Permite tomar decisiones proactivas para aumentar la producción y compensar pérdidas anticipadas.
 
 ---
 
-## 🎯 Objetivos
+##  Objetivos
 
 1. **Predicción climática**: Consultar pronóstico de lluvia para lotes con coordenadas GPS
 2. **Análisis de riesgo**: Identificar días con lluvia superior al umbral (10mm)
@@ -15,7 +17,7 @@ Sistema integrado con **Open-Meteo API** para predecir días de lluvia en lotes 
 
 ---
 
-## 🏗️ Arquitectura del Sistema
+## ️ Arquitectura del Sistema
 
 ### Componentes Implementados
 
@@ -48,7 +50,7 @@ Sistema integrado con **Open-Meteo API** para predecir días de lluvia en lotes 
 
 ---
 
-## 🔧 Instalación y Configuración
+##  Instalación y Configuración
 
 ### Paso 1: Ejecutar Migración
 
@@ -76,7 +78,7 @@ php artisan migrate
 
 ---
 
-## 🚀 Uso del Sistema
+##  Uso del Sistema
 
 ### Ejecución Manual
 
@@ -95,15 +97,15 @@ php artisan clima:analizar --dias=14
 
 #### Sin alertas:
 ```
-🌦️  Iniciando análisis climático para los próximos 7 días...
+️  Iniciando análisis climático para los próximos 7 días...
 
-📍 Analizando 1 lote(s) con coordenadas GPS...
+ Analizando 1 lote(s) con coordenadas GPS...
 
-🌲 Lote: Rapp - Las tunas
-   ✅ Sin riesgo de lluvia significativa (< 10mm)
+ Lote: Rapp - Las tunas
+    Sin riesgo de lluvia significativa (< 10mm)
 
 ═══════════════════════════════════════════════════
-📊 RESUMEN DEL ANÁLISIS CLIMÁTICO
+ RESUMEN DEL ANÁLISIS CLIMÁTICO
 ═══════════════════════════════════════════════════
    Lotes analizados: 1
    Alertas generadas: 0
@@ -112,26 +114,26 @@ php artisan clima:analizar --dias=14
 
 #### Con alertas:
 ```
-🌲 Lote: Rapp - Las tunas
-   ⚠️  ALERTA CLIMÁTICA - Lote Rapp (Las tunas)
-       📅 Fecha: 05/12/2025
-       🌧️  Lluvia pronosticada: 15.3 mm
-       💰 Riesgo de pérdida: $12,450.00
-       💡 Sugerencia: Aumentar producción hoy para compensar.
+ Lote: Rapp - Las tunas
+   ️  ALERTA CLIMÁTICA - Lote Rapp (Las tunas)
+        Fecha: 05/12/2025
+       ️  Lluvia pronosticada: 15.3 mm
+        Riesgo de pérdida: $12,450.00
+        Sugerencia: Aumentar producción hoy para compensar.
 
 ═══════════════════════════════════════════════════
-📊 RESUMEN DEL ANÁLISIS CLIMÁTICO
+ RESUMEN DEL ANÁLISIS CLIMÁTICO
 ═══════════════════════════════════════════════════
    Lotes analizados: 1
    Alertas generadas: 1
    Costo evitable estimado: $12,450.00
 
-💡 RECOMENDACIÓN: Considere aumentar la producción hoy para compensar las pérdidas estimadas.
+ RECOMENDACIÓN: Considere aumentar la producción hoy para compensar las pérdidas estimadas.
 ```
 
 ---
 
-## 📊 Cálculo de Costos
+##  Cálculo de Costos
 
 ### Lógica Implementada
 
@@ -157,7 +159,7 @@ Costo Día Caído = Σ(Jornal Empleados) + Σ(Alquiler Maquinaria × 10 ton)
 
 ---
 
-## 🌐 Integración con Open-Meteo API
+##  Integración con Open-Meteo API
 
 ### Endpoint Utilizado
 
@@ -200,7 +202,7 @@ if ($mm >= self::UMBRAL_LLUVIA) {
 
 ---
 
-## 📝 Logging y Alertas
+##  Logging y Alertas
 
 ### Registro en Logs
 
@@ -233,7 +235,7 @@ Log::warning('Alerta Climática', [
 
 ---
 
-## 🔄 Automatización (Opcional)
+##  Automatización (Opcional)
 
 ### Configuración en Cron
 
@@ -284,7 +286,7 @@ Configurar cron para ejecutar scheduler:
 
 ---
 
-## 🧪 Scripts de Prueba
+##  Scripts de Prueba
 
 ### 1. Prueba Básica
 
@@ -318,7 +320,7 @@ php test_alerta_clima_forzada.php
 
 ---
 
-## 🔍 Troubleshooting
+##  Troubleshooting
 
 ### Error: "No hay lotes activos con coordenadas GPS"
 
@@ -358,7 +360,7 @@ php test_alerta_clima_forzada.php
 
 ---
 
-## 📈 Mejoras Futuras
+##  Mejoras Futuras
 
 ### 1. Notificaciones por Email
 
@@ -396,7 +398,7 @@ $lote->umbral_lluvia ?? self::UMBRAL_LLUVIA
 
 ---
 
-## 📚 Referencias
+##  Referencias
 
 - **Open-Meteo API Docs**: https://open-meteo.com/en/docs
 - **Laravel HTTP Client**: https://laravel.com/docs/12.x/http-client
@@ -405,7 +407,7 @@ $lote->umbral_lluvia ?? self::UMBRAL_LLUVIA
 
 ---
 
-## ✅ Checklist de Implementación
+##  Checklist de Implementación
 
 - [x] Migración de coordenadas a lotes
 - [x] Actualización de modelo Lote
@@ -422,7 +424,7 @@ $lote->umbral_lluvia ?? self::UMBRAL_LLUVIA
 
 ---
 
-## 🤝 Soporte
+##  Soporte
 
 Para consultas o issues, revisar:
 1. Logs en `storage/logs/laravel.log`

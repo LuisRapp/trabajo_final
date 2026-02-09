@@ -1,4 +1,6 @@
-# Guía IU: Recomendaciones automáticas por Lote
+# Guia IU: Recomendaciones automaticas por Lote
+
+Ultima actualizacion: 8 de febrero de 2026.
 
 Este documento describe **cómo se usa la IU** para obtener recomendaciones automáticas (empleados/maquinarias/insumos) en el **contexto del Lote**, basadas en **histórico real**.
 

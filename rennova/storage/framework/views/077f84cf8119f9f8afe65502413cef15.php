@@ -1,5 +1,5 @@
 <div>
-    <div class="mx-auto max-w-7xl px-4 py-8" x-data="{ tab: 'nuevo' }">
+    <div class="mx-auto max-w-7xl px-4 py-8" x-data="{ tab: 'listado' }">
     <div class="mb-8 flex items-center justify-between">
         <h1 class="flex items-center gap-2 text-3xl font-bold text-slate-800">
             <i class="bi bi-geo-alt"></i> Lotes
@@ -28,12 +28,14 @@
     <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
 
     <div class="mb-6 flex gap-0">
+        <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->any(['crear-lotes', 'editar-lotes'])): ?>
         <button type="button" @click="tab = 'nuevo'; $wire.$refresh()"
             class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border border-r-0 rounded-l-lg transition-all"
             :class="tab === 'nuevo' ? 'text-white' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'"
             :style="tab === 'nuevo' ? 'background-color: #2d7a4f; border-color: #2d7a4f' : ''">
             <i class="bi bi-plus-circle"></i> Nuevo Lote
         </button>
+        <?php endif; ?>
         <button type="button" @click="tab = 'listado'; $wire.$refresh()"
             class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border rounded-r-lg transition-all"
             :class="tab === 'listado' ? 'text-white' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'"
@@ -43,6 +45,7 @@
     </div>
 
     <div>
+        <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->any(['crear-lotes', 'editar-lotes'])): ?>
         <div x-show="tab === 'nuevo'" x-transition>
             <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-md">
                 <div class="border-b border-slate-200 bg-slate-50 px-6 py-4">
@@ -223,16 +226,19 @@ unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
                                 class="lotes-form-btn lotes-form-btn--secondary">
                                 <i class="bi bi-x-circle"></i> Cancelar
                             </button>
+                            <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->any(['crear-lotes', 'editar-lotes'])): ?>
                             <button type="submit"
                                 class="lotes-form-btn lotes-form-btn--primary">
                                 <i class="bi bi-check-circle"></i> <?php echo e($lote_id ? 'Actualizar' : 'Guardar'); ?>
 
                             </button>
+                            <?php endif; ?>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
+        <?php endif; ?>
 
         <div x-show="tab === 'listado'" x-transition>
             <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-md">
@@ -340,6 +346,7 @@ unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
                                                     Pausado
                                                 </span>
                                             <?php else: ?>
+                                                <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('editar-lotes')): ?>
                                                 <button type="button" 
                                                     wire:click="openLaunchpad(<?php echo e($lote->id_lote); ?>)"
                                                     class="<?php echo e($accionClass); ?>">
@@ -359,9 +366,11 @@ unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
                                                         <span>Finalizar</span>
                                                     </button>
                                                 <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+                                                <?php endif; ?>
                                             <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
 
                                             
+                                            <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->any(['editar-lotes', 'eliminar-lotes'])): ?>
                                             <div x-data="{ open: false }" class="relative">
                                                 <button @click="open = !open" class="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 transition-colors">
                                                     <i class="bi bi-three-dots-vertical text-lg"></i>
@@ -369,17 +378,22 @@ unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
                                                 <div x-show="open" @click.away="open = false" x-transition
                                                     class="absolute right-0 z-20 mt-2 w-44 origin-top-right rounded-lg border border-slate-100 bg-white shadow-xl ring-1 ring-black ring-opacity-5">
                                                     <div class="py-1">
+                                                        <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('editar-lotes')): ?>
                                                         <button wire:click="editar(<?php echo e($lote->id_lote); ?>)" onclick="cambiarAPestanaFormulario()"
                                                             class="flex w-full items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
                                                             <i class="bi bi-pencil me-3"></i> Editar
                                                         </button>
+                                                        <?php endif; ?>
+                                                        <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('eliminar-lotes')): ?>
                                                         <button wire:click="eliminar(<?php echo e($lote->id_lote); ?>)" onclick="return confirm('¿Está seguro de eliminar este lote?')"
                                                             class="flex w-full items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50">
                                                             <i class="bi bi-trash me-3"></i> Eliminar
                                                         </button>
+                                                        <?php endif; ?>
                                                     </div>
                                                 </div>
                                             </div>
+                                            <?php endif; ?>
                                         </div>
                                     </td>
                                 </tr>

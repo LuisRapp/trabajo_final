@@ -86,25 +86,23 @@
             <tr>
                 <td><strong>Empleado</strong></td>
                 <td><?php echo e($empleado_nombre); ?></td>
-                <td><strong>Rol</strong></td>
-                <td><?php echo e($empleado_rol); ?></td>
+                <td><strong>DNI</strong></td>
+                <td><?php echo e($empleado_dni ?? 'N/A'); ?></td>
             </tr>
             <tr>
+                <td><strong>Tarea</strong></td>
+                <td><?php echo e($empleado_rol); ?></td>
                 <td><strong>Período</strong></td>
                 <td><?php echo e($periodo); ?></td>
-                <td><strong>Estado</strong></td>
-                <td>
-                    <span class="badge"><?php echo e($recibo->activo ? 'Activo' : 'Inactivo'); ?></span>
-                </td>
             </tr>
         </tbody>
     </table>
 
-    <div class="section-title">Observaciones</div>
+    <div class="section-title">Detalle</div>
     <table>
         <tbody>
             <tr>
-                <td><?php echo e($recibo->observaciones ?? 'Sin observaciones'); ?></td>
+                <td><?php echo e($recibo->observaciones ?? 'Sin detalle'); ?></td>
             </tr>
         </tbody>
     </table>

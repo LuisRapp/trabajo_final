@@ -5,7 +5,7 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use App\Models\Mantenimiento;
 use App\Models\NotificacionSistema;
-use App\Models\User;
+use App\Models\Usuario;
 use App\Notifications\MantenimientoProgramadoRecordatorio;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
@@ -113,7 +113,7 @@ class CheckMantenimientosProgramados extends Command
                 });
                 $this->info("📧 Recordatorio enviado a {$adminEmail} (fallback)");
             } else {
-                $users = User::whereIn('id', $userIds)->get();
+                $users = Usuario::whereIn('id', $userIds)->get();
                 foreach ($users as $user) {
                     $this->enviarConReintento(function () use ($user, $mantenimientos, $pendientesProgramar) {
                         $this->esperarParaEnviarMail();

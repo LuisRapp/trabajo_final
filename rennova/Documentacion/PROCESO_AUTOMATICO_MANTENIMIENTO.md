@@ -1,12 +1,14 @@
-# 🔧 Proceso Automático de Mantenimiento de Maquinaria
+#  Proceso Automatico de Mantenimiento de Maquinaria
 
-## 📋 Descripción General
+Ultima actualizacion: 8 de febrero de 2026.
+
+##  Descripción General
 
 El sistema Rennova cuenta con un **proceso completamente automatizado** para gestionar el mantenimiento preventivo de la maquinaria, basado en un "odómetro" de toneladas procesadas. Este proceso elimina la necesidad de seguimiento manual y garantiza que las máquinas reciban mantenimiento cuando realmente lo necesitan.
 
 ---
 
-## 🔄 Flujo Completo del Proceso
+##  Flujo Completo del Proceso
 
 ### **Fase 1: Actualización en Tiempo Real**
 
@@ -108,7 +110,7 @@ if ($toneladasDesdeUltimo >= $maquinaria->umbral_toneladas) {
 
 ---
 
-## ⚙️ Configuración del Sistema
+## ️ Configuración del Sistema
 
 ### **1. Configuración de la Programación**
 
@@ -151,7 +153,7 @@ Ya está configurado en [`docker/laravel-cron`](../docker/laravel-cron)
 
 ---
 
-## 📊 Datos y Configuración
+##  Datos y Configuración
 
 ### **Campos de Base de Datos**
 
@@ -183,7 +185,7 @@ El sistema genera **dos tipos de notificaciones**:
 
 ---
 
-## 🧪 Comandos de Prueba
+##  Comandos de Prueba
 
 ### **Ejecución Manual del Comando**
 
@@ -235,7 +237,7 @@ grep "check-umbrales" storage/logs/laravel.log
 
 ---
 
-## 🔔 Sistema de Notificaciones
+##  Sistema de Notificaciones
 
 ### **Configuración de Destinatarios**
 
@@ -266,7 +268,7 @@ Si al verificar el kit preventivo falta stock:
 
 ---
 
-## 📈 Ejemplo de Flujo Completo
+##  Ejemplo de Flujo Completo
 
 ### **Escenario Real:**
 
@@ -282,12 +284,12 @@ Si al verificar el kit preventivo falta stock:
 
 3. **Día 16 - 2:00 AM (Verificación Automática):**
    ```
-   ✓ Comando ejecuta
-   ✓ Detecta: 105 >= 100
-   ✓ Crea orden #1234 (estado: programado)
-   ✓ Verifica kit preventivo
-   ✓ Envía email a supervisor@empresa.com
-   ✓ Crea notificación interna (límite: 23/01/2026)
+    Comando ejecuta
+    Detecta: 105 >= 100
+    Crea orden #1234 (estado: programado)
+    Verifica kit preventivo
+    Envía email a supervisor@empresa.com
+    Crea notificación interna (límite: 23/01/2026)
    ```
 
 4. **Día 16 - 8:00 AM (Usuario revisa):**
@@ -303,23 +305,23 @@ Si al verificar el kit preventivo falta stock:
 
 ---
 
-## 🎯 Ventajas del Sistema Automático
+##  Ventajas del Sistema Automático
 
-✅ **Sin intervención manual**: El sistema detecta automáticamente cuándo se necesita mantenimiento
+ **Sin intervención manual**: El sistema detecta automáticamente cuándo se necesita mantenimiento
 
-✅ **Basado en uso real**: No depende de calendario, sino de toneladas procesadas
+ **Basado en uso real**: No depende de calendario, sino de toneladas procesadas
 
-✅ **Anticipación de problemas**: Verifica stock antes de ejecutar
+ **Anticipación de problemas**: Verifica stock antes de ejecutar
 
-✅ **Trazabilidad completa**: Auditoría de todas las acciones
+ **Trazabilidad completa**: Auditoría de todas las acciones
 
-✅ **Notificaciones multinivel**: Email + notificación interna
+ **Notificaciones multinivel**: Email + notificación interna
 
-✅ **Configurable por maquinaria (o por tipo como fallback)**: Cada maquinaria puede tener su propio umbral
+ **Configurable por maquinaria (o por tipo como fallback)**: Cada maquinaria puede tener su propio umbral
 
 ---
 
-## 🚨 Troubleshooting
+##  Troubleshooting
 
 ### **Las órdenes no se crean automáticamente**
 
@@ -379,7 +381,7 @@ grep "Odómetro actualizado" storage/logs/laravel.log
 
 ---
 
-## 📚 Documentación Relacionada
+##  Documentación Relacionada
 
 - [Manual de Mantenimientos](MANUAL_MANTENIMIENTOS.md)
 - [Guía de Uso: Mantenimientos](GUIA_MANTENIMIENTOS_USO.md)
@@ -389,7 +391,7 @@ grep "Odómetro actualizado" storage/logs/laravel.log
 
 ---
 
-## 📞 Contacto y Soporte
+##  Contacto y Soporte
 
 Para más información sobre el sistema de mantenimiento automático, consultar:
 - Documentación técnica: `Documentacion/SISTEMA_MANTENIMIENTO_DOCS.md`

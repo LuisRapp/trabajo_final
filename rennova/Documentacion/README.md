@@ -1,8 +1,11 @@
-# 📚 Documentación del Sistema Rennova
+#  Documentacion del Sistema Rennova
 
-## Índice de Documentación
+Ultima actualizacion: 8 de febrero de 2026.
+Punto de entrada recomendado: `INDEX.md`.
 
-### 🌦️ Sistemas Climáticos y Análisis
+## Indice de Documentacion
+
+### ️ Sistemas Climáticos y Análisis
 
 - **[SISTEMA_ANALISIS_CLIMATICO.md](./SISTEMA_ANALISIS_CLIMATICO.md)**  
   Sistema básico de análisis climático con Open-Meteo API para predecir días de lluvia.
@@ -11,11 +14,11 @@
   Motor inteligente de decisiones climáticas con 3 fases: Anticipación, Bloqueo y Reacción.
 
 - **[README_ANALISIS_CLIMATICO.md](./README_ANALISIS_CLIMATICO.md)**  
-  Documentación adicional sobre análisis climático.
+  Guia rapida de analisis climatico.
 
 ---
 
-### 💰 Sistema de Costos y Pagos
+###  Sistema de Costos y Pagos
 
 - **[SISTEMA_CALCULO_COSTOS.md](./SISTEMA_CALCULO_COSTOS.md)**  
   Sistema completo de cálculo de costos operacionales (mano de obra, insumos, maquinaria).
@@ -31,20 +34,20 @@
 
 ---
 
-### 🔧 Sistema de Mantenimientos
+###  Sistema de Mantenimientos
 
 - **[SISTEMA_MANTENIMIENTO_DOCS.md](./SISTEMA_MANTENIMIENTO_DOCS.md)**  
-  Arquitectura y funcionamiento del sistema de mantenimientos preventivos y correctivos.
+  Referencia tecnica del sistema de mantenimientos.
 
 - **[MANUAL_MANTENIMIENTOS.md](./MANUAL_MANTENIMIENTOS.md)**  
-  Manual de uso del sistema de mantenimientos.
+  Documento consolidado en la guia de uso y el proceso automatico.
 
 - **[GUIA_MANTENIMIENTOS_USO.md](./GUIA_MANTENIMIENTOS_USO.md)**  
   Guía práctica para gestión de mantenimientos.
 
 ---
 
-### 🔔 Sistema de Notificaciones
+###  Sistema de Notificaciones
 
 - **[SISTEMA_NOTIFICACIONES_INTERNAS.md](./SISTEMA_NOTIFICACIONES_INTERNAS.md)**  
   Sistema de notificaciones internas del sistema.
@@ -52,42 +55,40 @@
 - **[INSTRUCCIONES_NOTIFICACIONES_EMAIL.md](./INSTRUCCIONES_NOTIFICACIONES_EMAIL.md)**  
   Configuración y uso de notificaciones por email.
 
-- **[PRUEBA_NOTIFICACIONES.md](./PRUEBA_NOTIFICACIONES.md)**  
-  Casos de prueba para el sistema de notificaciones.
+- Ver pruebas en `INDICE_PRUEBAS.md`.
 
 ---
 
-### 🎨 Optimizaciones de UI/UX
+###  Optimizaciones de UI/UX
 
 - **[OPTIMIZACIONES_AVANZADAS_UI.md](./OPTIMIZACIONES_AVANZADAS_UI.md)**  
   Optimizaciones de rendimiento en interfaces (computed properties, Alpine.js, etc.).
 
-- **[MEJORAS_PARTE_DIARIO.md](./MEJORAS_PARTE_DIARIO.md)**  
-  Mejoras implementadas en el módulo de Parte Diario.
+- Ver tambien `OPTIMIZACION_RENDIMIENTO.md`.
 
 ---
 
-### 🔐 Permisos y Seguridad
+###  Permisos y Seguridad
 
 - **[SPATIE_PERMISSION_SETUP.md](./SPATIE_PERMISSION_SETUP.md)**  
   Configuración del sistema de roles y permisos con Spatie Permission.
 
 ---
 
-### 📖 Documentación General
+###  Documentacion General
 
 - **[RESUMEN_PROYECTO.md](./RESUMEN_PROYECTO.md)**  
   Resumen general del proyecto y funcionalidades principales.
 
 - **[INDEX.md](./INDEX.md)**  
-  Índice general de documentación.
+  Indice general de documentacion.
 
 - **[TROUBLESHOOTING.md](./TROUBLESHOOTING.md)**  
   Solución de problemas comunes.
 
 ---
 
-## 🧪 Scripts de Prueba Activos
+##  Scripts de Prueba Activos
 
 Los siguientes scripts de prueba están disponibles en la raíz del proyecto:
 
@@ -99,7 +100,7 @@ Los siguientes scripts de prueba están disponibles en la raíz del proyecto:
 
 ---
 
-## 🗂️ Scripts Auxiliares
+## ️ Scripts Auxiliares
 
 Los siguientes scripts auxiliares están disponibles en `scripts/`:
 
@@ -109,15 +110,15 @@ Los siguientes scripts auxiliares están disponibles en `scripts/`:
 
 ---
 
-## 📅 Última Actualización
+##  Ultima Actualizacion
 
 **Fecha**: 3 de diciembre de 2025  
-**Versión del Sistema**: Laravel 12.x + Livewire 3.x  
+**Version del Sistema**: Laravel 12.x + Livewire 3.x  
 **Estado**: Documentación organizada y actualizada
 
 ---
 
-## 💡 Cómo Usar Esta Documentación
+##  Como Usar Esta Documentacion
 
 1. **Desarrollo de nuevas funcionalidades**: Revisar documentos de sistemas relacionados
 2. **Troubleshooting**: Consultar TROUBLESHOOTING.md y documentos específicos
@@ -126,7 +127,7 @@ Los siguientes scripts auxiliares están disponibles en `scripts/`:
 
 ---
 
-## 🔗 Enlaces Útiles
+##  Enlaces Útiles
 
 - **Repositorio**: trabajo_final (LuisRapp/ABMs)
 - **Framework**: Laravel 12.x

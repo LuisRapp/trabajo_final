@@ -1,12 +1,18 @@
-# Sistema de Mantenimiento Preventivo - Documentación
+# Sistema de Mantenimiento Preventivo - Documentacion
 
-## 📋 RESUMEN DE IMPLEMENTACIÓN
+Ultima actualizacion: 8 de febrero de 2026.
+
+Nota: Este documento es la referencia tecnica. Para el flujo de uso y el proceso automatico, ver:
+- GUIA_MANTENIMIENTOS_USO.md
+- PROCESO_AUTOMATICO_MANTENIMIENTO.md
+
+##  RESUMEN DE IMPLEMENTACIÓN
 
 Se ha implementado un sistema completo de gestión de mantenimientos preventivos y correctivos basado en odómetro de toneladas procesadas.
 
 ---
 
-## 🗄️ ESTRUCTURA DE BASE DE DATOS
+## ️ ESTRUCTURA DE BASE DE DATOS
 
 ### Nuevos Campos Agregados:
 
@@ -38,7 +44,7 @@ Se ha implementado un sistema completo de gestión de mantenimientos preventivos
 
 ---
 
-## ⚙️ COMPONENTES IMPLEMENTADOS
+## ️ COMPONENTES IMPLEMENTADOS
 
 ### 1. Evento y Listener (Actualización Inmediata)
 
@@ -194,7 +200,7 @@ fetch(`/mantenimientos/${id}/approve`, {
 
 ---
 
-## 📦 MODELOS ACTUALIZADOS
+##  MODELOS ACTUALIZADOS
 
 ### Nuevos Modelos:
 - `App\Models\KitMantenimientoPreventivo`
@@ -210,7 +216,7 @@ Todos los modelos implementan `OwenIt\Auditing\Auditable` para trazabilidad auto
 
 ---
 
-## 🔄 FLUJO COMPLETO DEL SISTEMA
+##  FLUJO COMPLETO DEL SISTEMA
 
 ### 1. Registro de Producción (ParteDiario)
 ```
@@ -268,7 +274,7 @@ Estado = "completado"
 
 ---
 
-## 🧪 PRUEBAS SUGERIDAS
+##  PRUEBAS SUGERIDAS
 
 ### 1. Probar Actualización de Odómetro
 ```php
@@ -324,7 +330,7 @@ POST /mantenimientos/1/complete
 
 ---
 
-## 🚨 PENDIENTE / TODO
+##  PENDIENTE / TODO
 
 1. **Notificaciones por Email:**
    - Implementar envío cuando el comando detecte falta de stock
@@ -353,7 +359,7 @@ POST /mantenimientos/1/complete
 
 ---
 
-## 📚 REFERENCIAS
+##  REFERENCIAS
 
 - **Auditoría:** `owen-it/laravel-auditing` (ya instalado)
 - **Eventos Laravel:** https://laravel.com/docs/events
@@ -362,7 +368,7 @@ POST /mantenimientos/1/complete
 
 ---
 
-## 🛠️ COMANDOS ÚTILES
+## ️ COMANDOS ÚTILES
 
 ```bash
 # Ejecutar migraciones
@@ -386,4 +392,4 @@ php artisan cache:clear
 
 **Implementado el:** 10 de noviembre de 2025
 **Versión:** 1.0
-**Estado:** ✅ Base implementada - Pendiente UI y notificaciones
+Estado: base implementada; pendiente UI y notificaciones.

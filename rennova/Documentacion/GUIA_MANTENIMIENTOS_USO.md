@@ -1,4 +1,6 @@
-# Guía de Uso: Mantenimientos
+# Guia de Uso: Mantenimientos
+
+Ultima actualizacion: 8 de febrero de 2026.
 
 Esta guía describe el flujo completo de creación y finalización de órdenes de mantenimiento, incluyendo el uso de insumos y cálculo de costos.
 

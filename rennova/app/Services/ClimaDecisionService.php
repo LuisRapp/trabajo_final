@@ -193,6 +193,11 @@ class ClimaDecisionService
             $saturacionIndex = $mm + ($lluviaAyer * 0.5);
             $saturacionAlta = $saturacionIndex > 12;
             $secadoActivo = ($vientoMax > 15) || ($et0 > 4);
+            $ayerKey = $index > 0 ? Carbon::parse($fechas[$index - 1])->toDateString() : null;
+            $madrugadaAyer = $ayerKey ? ($lluviaPorFecha[$ayerKey]['madrugada'] ?? 0) : 0;
+            $lluviaDiurnaAyer = $ayerKey ? ($lluviaPorFecha[$ayerKey]['diurna'] ?? 0) : 0;
+            $lluviaRealAyer = ($lluviaAyer >= self::UMBRAL_LLUVIA) && ($madrugadaAyer > 2 || $lluviaDiurnaAyer > 5);
+            $lluviaRealHoy = ($mm >= self::UMBRAL_LLUVIA) && ($madrugada > 2 || $lluviaDiurna > 5);
 
             // Analizar estado del día
             $estado = 'OPERATIVO';
@@ -204,8 +209,8 @@ class ClimaDecisionService
                 $razon = "Fin de semana (no laboral)";
                 // NO incrementar totalDiasPerdidos - los fines de semana no generan déficit
             }
-            // 1. Regla crítica: lluvia en madrugada o diurna
-            elseif ($madrugada > 2 || $lluviaDiurna > 5) {
+            // 1. Lluvia real en ventana operativa
+            elseif ($lluviaRealHoy) {
                 $estado = 'INACTIVO';
                 $razon = ($madrugada > 2)
                     ? "Barro por lluvia de madrugada ({$madrugada} mm)"
@@ -218,8 +223,13 @@ class ClimaDecisionService
                 $totalDiasPerdidos++;
             }
             else {
-                // 2. Barro por saturación + nubosidad + poco viento
-                if ($saturacionAlta && $cloudCover > self::UMBRAL_NUBOSIDAD && !$secadoActivo) {
+                // 2. Lluvia nocturna (operativo condicional)
+                if ($mm >= self::UMBRAL_LLUVIA && $lluviaDiurna <= 5) {
+                    $estado = 'OPERATIVO_CONDICIONAL';
+                    $razon = "Lluvia nocturna";
+                }
+                // 3. Barro por saturación + nubosidad + poco viento (solo si ayer hubo lluvia real)
+                elseif ($saturacionAlta && $cloudCover > self::UMBRAL_NUBOSIDAD && !$secadoActivo && $lluviaRealAyer) {
                     $estado = 'INACTIVO';
                     $razon = "Saturación alta + nubosidad + poco viento";
 

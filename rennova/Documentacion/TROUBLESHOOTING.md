@@ -1,5 +1,7 @@
 # Troubleshooting
 
+Ultima actualizacion: 8 de febrero de 2026.
+
 ## Livewire
 - Error: `MultipleRootElementsDetected`
   - Causa: la vista del componente tiene más de un elemento raíz.

@@ -198,6 +198,7 @@ class LiquidacionPagos extends Component
                     'recibo' => $recibo,
                     'empleado_nombre' => trim(($empleado->apellido ?? '') . ' ' . ($empleado->nombre ?? '')) ?: 'N/A',
                     'empleado_rol' => $empleado->rolLaboral->nombre ?? $empleado->rolLaboral->descripcion ?? 'N/A',
+                    'empleado_dni' => $empleado->dni ?? null,
                 ];
             }
 
@@ -220,6 +221,7 @@ class LiquidacionPagos extends Component
                             'recibo' => $item['recibo'],
                             'empleado_nombre' => $item['empleado_nombre'],
                             'empleado_rol' => $item['empleado_rol'],
+                            'empleado_dni' => $item['empleado_dni'],
                             'periodo' => $periodo,
                                     'generado_por' => $generadoPor,
                                     'fecha_generacion' => $fechaGeneracion,
@@ -301,6 +303,7 @@ class LiquidacionPagos extends Component
             try {
                 $empleadoNombre = trim(($this->empleado_seleccionado->apellido ?? '') . ' ' . ($this->empleado_seleccionado->nombre ?? ''));
                 $empleadoRol = $this->empleado_seleccionado->rolLaboral->nombre ?? $this->empleado_seleccionado->rolLaboral->descripcion ?? 'N/A';
+                $empleadoDni = $this->empleado_seleccionado->dni ?? null;
                 $periodo = Carbon::parse($this->fecha_inicio)->format('d/m/Y') . ' a ' . Carbon::parse($this->fecha_fin)->format('d/m/Y');
 
                 $generadoPor = auth()->user()->name ?? auth()->user()->email ?? 'Usuario';
@@ -313,6 +316,7 @@ class LiquidacionPagos extends Component
                     'recibo' => $recibo,
                     'empleado_nombre' => $empleadoNombre ?: 'N/A',
                     'empleado_rol' => $empleadoRol,
+                    'empleado_dni' => $empleadoDni,
                     'periodo' => $periodo,
                     'generado_por' => $generadoPor,
                     'fecha_generacion' => $fechaGeneracion,
@@ -330,7 +334,7 @@ class LiquidacionPagos extends Component
                 $body .= "Monto bruto: ARS " . number_format($this->monto_bruto, 2) . "\n";
                 $body .= "Descuentos: ARS " . number_format($this->descuentos ?? 0, 2) . "\n";
                 $body .= "Monto neto: ARS " . number_format($this->monto_neto, 2) . "\n";
-                $body .= "Observaciones: " . ($this->observaciones ?? 'Sin observaciones') . "\n";
+                $body .= "Detalle: " . ($this->observaciones ?? 'Sin detalle') . "\n";
                 $body .= "Fecha emisión: " . Carbon::parse($recibo->fecha_emision)->format('d/m/Y H:i') . "\n";
 
                 Mail::raw($body, function ($message) use ($recibo, $empleadoNombre, $pdfOutput, $pdfFilename) {
