@@ -28,11 +28,13 @@
     <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
 
     <div class="mb-6 flex gap-0">
+        <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('crear-ventas')): ?>
         <button type="button" wire:click="$set('tab_activo','nuevo')"
             class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border border-r-0 rounded-l-lg transition-all <?php echo e($tab_activo === 'nuevo' ? 'text-white' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'); ?>"
             style="<?php echo e($tab_activo === 'nuevo' ? 'background-color: #2d7a4f; border-color: #2d7a4f' : ''); ?>">
             <i class="bi bi-plus-circle"></i> Nueva Venta
         </button>
+        <?php endif; ?>
         <button type="button" wire:click="$set('tab_activo','historial')"
             class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border rounded-r-lg transition-all <?php echo e($tab_activo === 'historial' ? 'text-white' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'); ?>"
             style="<?php echo e($tab_activo === 'historial' ? 'background-color: #2d7a4f; border-color: #2d7a4f' : ''); ?>">
@@ -41,6 +43,7 @@
     </div>
 
     <!--[if BLOCK]><![endif]--><?php if($tab_activo === 'nuevo'): ?>
+    <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('crear-ventas')): ?>
     <div>
         <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
             <div class="bg-slate-100 border-b border-slate-200 px-6 py-4">
@@ -132,6 +135,7 @@
             </div>
         <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
     </div>
+    <?php endif; ?>
     <?php elseif($tab_activo === 'historial'): ?>
     <div>
         <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
@@ -286,20 +290,26 @@
                         <button type="button" class="inline-flex items-center gap-2 px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors font-medium text-sm" wire:click="cancelarEdicion">
                             <i class="bi bi-x-circle"></i> Cancelar
                         </button>
+                        <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('editar-ventas')): ?>
                         <button type="button" class="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-colors font-medium text-sm" style="background-color: #2d7a4f;" onmouseover="this.style.backgroundColor='#245c3d'" onmouseout="this.style.backgroundColor='#2d7a4f'" wire:click="guardarEdicion">
                             <i class="bi bi-check-circle"></i> Guardar Cambios
                         </button>
+                        <?php endif; ?>
                     <?php else: ?>
                         <button type="button" class="inline-flex items-center gap-2 px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors font-medium text-sm" wire:click="cerrarModal">
                             <i class="bi bi-x-circle"></i> Cerrar
                         </button>
                         <!--[if BLOCK]><![endif]--><?php if($venta_seleccionada->activo): ?>
+                            <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('editar-ventas')): ?>
                             <button type="button" class="inline-flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium text-sm" wire:click="activarEdicion">
                                 <i class="bi bi-pencil"></i> Editar
                             </button>
+                            <?php endif; ?>
+                            <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('eliminar-ventas')): ?>
                             <button type="button" class="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium text-sm" wire:click="darDeBaja(<?php echo e($venta_seleccionada->id_recibo); ?>)" onclick="return confirm('¿Está seguro de dar de baja esta venta?')">
                                 <i class="bi bi-trash"></i> Dar de Baja
                             </button>
+                            <?php endif; ?>
                         <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
                     <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
                 </div>

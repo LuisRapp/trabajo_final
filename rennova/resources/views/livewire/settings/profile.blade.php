@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\User;
+use App\Models\Usuario;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\Rule;
@@ -35,7 +35,7 @@ new class extends Component {
                 'lowercase',
                 'email',
                 'max:255',
-                Rule::unique(User::class)->ignore($user->id)
+                Rule::unique(Usuario::class)->ignore($user->id)
             ],
         ]);
 

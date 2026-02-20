@@ -20,11 +20,13 @@
 
     <!-- Tabs -->
     <div class="mb-6 flex gap-0">
+        <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->any(['crear-adelantos', 'editar-adelantos'])): ?>
         <button type="button" wire:click="$set('tab_activo','nuevo')"
             class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border border-r-0 rounded-l-lg transition-all <?php echo e($tab_activo === 'nuevo' ? 'text-white' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'); ?>"
             style="<?php echo e($tab_activo === 'nuevo' ? 'background-color: #2d7a4f; border-color: #2d7a4f' : ''); ?>">
             <i class="bi bi-plus-circle"></i> Nuevo Adelanto
         </button>
+        <?php endif; ?>
         <button type="button" wire:click="$set('tab_activo','listado')"
             class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border rounded-r-lg transition-all <?php echo e($tab_activo === 'listado' ? 'text-white' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'); ?>"
             style="<?php echo e($tab_activo === 'listado' ? 'background-color: #2d7a4f; border-color: #2d7a4f' : ''); ?>">
@@ -34,6 +36,7 @@
 
     <!-- Tab 1: Nuevo Adelanto -->
     <!--[if BLOCK]><![endif]--><?php if($tab_activo === 'nuevo'): ?>
+        <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->any(['crear-adelantos', 'editar-adelantos'])): ?>
         <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
             <div class="bg-slate-100 border-b border-slate-200 px-6 py-4">
                 <h5 class="text-lg font-semibold text-slate-800 mb-0">
@@ -130,14 +133,17 @@ unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
                                 <i class="bi bi-x-circle"></i> Cancelar
                             </button>
                         <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+                        <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->any(['crear-adelantos', 'editar-adelantos'])): ?>
                         <button type="submit" class="px-6 py-3 bg-green-700 text-white rounded-lg hover:bg-green-800 transition-colors font-medium">
                             <i class="bi bi-check-circle"></i> <?php echo e($adelanto_id ? 'Actualizar' : 'Guardar'); ?>
 
                         </button>
+                        <?php endif; ?>
                     </div>
                 </form>
             </div>
         </div>
+        <?php endif; ?>
     <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
 
     <!-- Tab 2: Listado de Adelantos -->
@@ -184,12 +190,16 @@ unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
                                     </td>
                                     <td class="px-3 py-3 text-center">
                                         <div class="flex gap-1 justify-center">
+                                            <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('editar-adelantos')): ?>
                                             <button type="button" class="inline-flex items-center px-2 py-1 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded transition-colors border border-blue-200" wire:click="editar(<?php echo e($adelanto->id_adelanto); ?>)" title="Editar">
                                                 <i class="bi bi-pencil text-sm"></i>
                                             </button>
+                                            <?php endif; ?>
+                                            <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('eliminar-adelantos')): ?>
                                             <button type="button" class="inline-flex items-center px-2 py-1 bg-red-50 text-red-700 hover:bg-red-100 rounded transition-colors border border-red-200" wire:click="eliminar(<?php echo e($adelanto->id_adelanto); ?>)" onclick="return confirm('¿Está seguro de eliminar este adelanto?')" title="Eliminar">
                                                 <i class="bi bi-trash text-sm"></i>
                                             </button>
+                                            <?php endif; ?>
                                         </div>
                                     </td>
                                 </tr>

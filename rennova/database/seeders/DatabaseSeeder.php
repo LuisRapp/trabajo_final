@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
+use App\Models\Usuario;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Database\Seeders\AdminUserSeeder;
@@ -29,10 +29,12 @@ class DatabaseSeeder extends Seeder
                 LoteEscenarioSuspensionSeeder::class,
             ]);
 
-            $admin = User::factory()->create([
-                'name' => 'Demo Admin',
+            $admin = Usuario::factory()->create([
+                'nombre' => 'Demo',
+                'apellido' => 'Admin',
                 'email' => 'demo@example.com',
                 'password' => bcrypt('demo1234'),
+                'activo' => true,
             ]);
 
             // Asignar rol de Administrador

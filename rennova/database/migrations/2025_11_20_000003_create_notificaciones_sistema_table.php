@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('notificaciones_sistema', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('user_id')->constrained('usuarios')->onDelete('cascade');
             $table->unsignedBigInteger('mantenimiento_id')->nullable();
             $table->foreign('mantenimiento_id')->references('id_mantenimiento')->on('mantenimientos')->onDelete('cascade');
             $table->enum('tipo', ['umbral_alcanzado', 'stock_insuficiente', 'recordatorio_programado', 'mantenimiento_vencido']);

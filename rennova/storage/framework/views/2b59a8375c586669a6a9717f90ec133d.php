@@ -15,13 +15,13 @@
     <ul class="nav nav-tabs mb-4" id="usuariosTabs" role="tablist">
         <li class="nav-item" role="presentation">
             <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->any(['crear-usuarios', 'editar-usuarios'])): ?>
-            <button class="nav-link active" id="nuevo-tab" data-bs-toggle="tab" data-bs-target="#nuevo-usuario" type="button" role="tab">
+            <button class="nav-link" id="nuevo-tab" data-bs-toggle="tab" data-bs-target="#nuevo-usuario" type="button" role="tab">
                 <i class="bi bi-plus-circle"></i> Nuevo Usuario
             </button>
             <?php endif; ?>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="listado-tab" data-bs-toggle="tab" data-bs-target="#listado-usuarios" type="button" role="tab">
+            <button class="nav-link active" id="listado-tab" data-bs-toggle="tab" data-bs-target="#listado-usuarios" type="button" role="tab">
                 <i class="bi bi-list-ul"></i> Listado de Usuarios
             </button>
         </li>
@@ -30,7 +30,7 @@
     <div class="tab-content" id="usuariosTabContent">
         <!-- Tab 1: Formulario Nuevo Usuario -->
         <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->any(['crear-usuarios', 'editar-usuarios'])): ?>
-        <div class="tab-pane fade show active" id="nuevo-usuario" role="tabpanel">
+        <div class="tab-pane fade" id="nuevo-usuario" role="tabpanel">
             <div class="card shadow mb-4">
                 <div class="card-header bg-light">
                     <h5 class="mb-0"><i class="bi bi-<?php echo e($usuario_id ? 'pencil-square' : 'plus-circle'); ?>"></i> <?php echo e($usuario_id ? 'Editar Usuario' : 'Nuevo Usuario'); ?></h5>
@@ -185,7 +185,7 @@ unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
         <?php endif; ?>
 
 <!-- Tab 2: Listado de Usuarios -->
-<div class="tab-pane fade" id="listado-usuarios" role="tabpanel">
+<div class="tab-pane fade show active" id="listado-usuarios" role="tabpanel">
     <div class="card shadow">
         <div class="card-body">
             <!-- Buscador -->

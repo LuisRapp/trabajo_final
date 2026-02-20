@@ -12,6 +12,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (DB::connection()->getDriverName() !== 'pgsql') {
+            return;
+        }
+
         DB::unprepared('
             CREATE OR REPLACE FUNCTION calcular_costo_fifo(
                 p_id_insumo BIGINT,
@@ -154,6 +158,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (DB::connection()->getDriverName() !== 'pgsql') {
+            return;
+        }
+
         DB::unprepared('DROP FUNCTION IF EXISTS calcular_costo_fifo(BIGINT, NUMERIC);');
         DB::unprepared('DROP FUNCTION IF EXISTS obtener_stock_disponible(BIGINT);');
         DB::unprepared('DROP FUNCTION IF EXISTS obtener_precio_promedio(BIGINT);');

@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use Tests\TestCase;
-use App\Models\User;
+use App\Models\Usuario;
 use App\Models\Lote;
 use App\Models\Maquinaria;
 use App\Models\TipoMaquinaria;
@@ -31,7 +31,7 @@ class SystemWhiteBoxTest extends TestCase
 {
     use RefreshDatabase, WithFaker;
 
-    protected User $usuario;
+    protected Usuario $usuario;
     protected Lote $lote;
     protected TipoMaquinaria $tipoMaquinaria;
     protected Maquinaria $maquinaria;
@@ -43,7 +43,7 @@ class SystemWhiteBoxTest extends TestCase
         parent::setUp();
         
         // Crear usuario de prueba
-        $this->usuario = User::factory()->create();
+        $this->usuario = Usuario::factory()->create();
         $this->actingAs($this->usuario);
 
         // Crear configuración de tipo de maquinaria

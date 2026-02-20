@@ -51,8 +51,12 @@ return new class extends Migration
             $table->index('fecha_compra');
         });
         
-        // Check constraint: cantidad_disponible no puede ser negativa ni mayor a cantidad_inicial
-        DB::statement('ALTER TABLE lotes_inventario ADD CONSTRAINT chk_cantidad_disponible CHECK (cantidad_disponible >= 0 AND cantidad_disponible <= cantidad_inicial)');
+        $driver = DB::connection()->getDriverName();
+
+        // Check constraint: cantidad_disponible no puede ser negativa ni mayor a cantidad_inicial (solo PostgreSQL).
+        if ($driver === 'pgsql') {
+            DB::statement('ALTER TABLE lotes_inventario ADD CONSTRAINT chk_cantidad_disponible CHECK (cantidad_disponible >= 0 AND cantidad_disponible <= cantidad_inicial)');
+        }
     }
 
     /**

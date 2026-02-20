@@ -10,7 +10,7 @@
                     <strong><i class="bi bi-clock-history"></i> Registro de Cambios</strong>
                 </div>
                 <div class="col-auto">
-                    <button type="button" class="btn btn-sm btn-light" data-bs-toggle="collapse" data-bs-target="#filtrosAuditoria">
+                    <button type="button" class="btn btn-sm btn-light" wire:click="toggleFiltros" aria-controls="filtrosAuditoria" aria-expanded="{{ $mostrarFiltros ? 'true' : 'false' }}">
                         <i class="bi bi-funnel"></i> Filtros
                     </button>
                 </div>
@@ -18,8 +18,13 @@
         </div>
         <div class="card-body">
             <!-- Filtros Colapsables -->
-            <div class="collapse show" id="filtrosAuditoria">
+            @if($mostrarFiltros)
+            <div id="filtrosAuditoria">
                 <div class="row g-3 mb-3 pb-3 border-bottom">
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Buscar</label>
+                        <input type="text" wire:model.live.debounce.400ms="busqueda" class="form-control" placeholder="URL, IP o tag...">
+                    </div>
                     <div class="col-md-3">
                         <label class="form-label fw-semibold">Modelo</label>
                         <select wire:model.live="filtroModelo" class="form-select">
@@ -47,9 +52,15 @@
                             @endforeach
                         </select>
                     </div>
+                </div>
+                <div class="row g-3 mb-3">
                     <div class="col-md-2">
                         <label class="form-label fw-semibold">Desde</label>
                         <input type="date" wire:model.live="filtroFechaDesde" class="form-control">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold">Hasta</label>
+                        <input type="date" wire:model.live="filtroFechaHasta" class="form-control">
                     </div>
                     <div class="col-md-2 d-flex align-items-end">
                         <button type="button" wire:click="limpiarFiltros" class="btn btn-outline-secondary w-100">
@@ -58,6 +69,7 @@
                     </div>
                 </div>
             </div>
+            @endif
 
             <!-- Tabla de Auditorías -->
             <div class="table-responsive">

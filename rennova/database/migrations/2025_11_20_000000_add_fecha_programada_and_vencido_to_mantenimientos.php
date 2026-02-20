@@ -12,10 +12,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Modificar enum de estado para incluir 'vencido'
-        DB::statement("ALTER TABLE mantenimientos DROP CONSTRAINT IF EXISTS mantenimientos_estado_check");
-        DB::statement("ALTER TABLE mantenimientos ALTER COLUMN estado TYPE VARCHAR(20)");
-        DB::statement("ALTER TABLE mantenimientos ADD CONSTRAINT mantenimientos_estado_check CHECK (estado IN ('programado', 'en curso', 'completado', 'vencido'))");
+        $driver = DB::connection()->getDriverName();
+
+        // Modificar enum de estado para incluir 'vencido' (solo para PostgreSQL).
+        if ($driver === 'pgsql') {
+            DB::statement("ALTER TABLE mantenimientos DROP CONSTRAINT IF EXISTS mantenimientos_estado_check");
+            DB::statement("ALTER TABLE mantenimientos ALTER COLUMN estado TYPE VARCHAR(20)");
+            DB::statement("ALTER TABLE mantenimientos ADD CONSTRAINT mantenimientos_estado_check CHECK (estado IN ('programado', 'en curso', 'completado', 'vencido'))");
+        }
         
         // Agregar campo fecha_programada
         Schema::table('mantenimientos', function (Blueprint $table) {
@@ -32,10 +36,14 @@ return new class extends Migration
         Schema::table('mantenimientos', function (Blueprint $table) {
             $table->dropColumn('fecha_programada');
         });
-        
-        // Revertir enum de estado
-        DB::statement("ALTER TABLE mantenimientos DROP CONSTRAINT mantenimientos_estado_check");
-        DB::statement("ALTER TABLE mantenimientos ALTER COLUMN estado TYPE VARCHAR(20)");
-        DB::statement("ALTER TABLE mantenimientos ADD CONSTRAINT mantenimientos_estado_check CHECK (estado IN ('programado', 'en curso', 'completado'))");
+
+        $driver = DB::connection()->getDriverName();
+
+        // Revertir enum de estado (solo para PostgreSQL).
+        if ($driver === 'pgsql') {
+            DB::statement("ALTER TABLE mantenimientos DROP CONSTRAINT mantenimientos_estado_check");
+            DB::statement("ALTER TABLE mantenimientos ALTER COLUMN estado TYPE VARCHAR(20)");
+            DB::statement("ALTER TABLE mantenimientos ADD CONSTRAINT mantenimientos_estado_check CHECK (estado IN ('programado', 'en curso', 'completado'))");
+        }
     }
 };

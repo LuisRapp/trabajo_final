@@ -24,11 +24,13 @@
     <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
 
     <div class="mb-6 flex gap-0">
+        <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->any(['crear-mantenimientos', 'editar-mantenimientos'])): ?>
         <button type="button" wire:click="$set('tab_activo','nuevo')"
             class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border border-r-0 rounded-l-lg transition-all <?php echo e($tab_activo === 'nuevo' ? 'text-white' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'); ?>"
             style="<?php echo e($tab_activo === 'nuevo' ? 'background-color: #2d7a4f; border-color: #2d7a4f' : ''); ?>">
             <i class="bi bi-plus-circle"></i> Nuevo Mantenimiento
         </button>
+        <?php endif; ?>
         <button type="button" wire:click="$set('tab_activo','listado')"
             class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border rounded-r-lg transition-all <?php echo e($tab_activo === 'listado' ? 'text-white' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'); ?>"
             style="<?php echo e($tab_activo === 'listado' ? 'background-color: #2d7a4f; border-color: #2d7a4f' : ''); ?>">
@@ -37,6 +39,7 @@
     </div>
 
     <!--[if BLOCK]><![endif]--><?php if($tab_activo === 'nuevo'): ?>
+        <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->any(['crear-mantenimientos', 'editar-mantenimientos'])): ?>
         <div>
             <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
                 <div class="bg-slate-100 border-b border-slate-200 px-6 py-4">
@@ -216,15 +219,18 @@ unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
                                     <i class="bi bi-x-circle"></i> Cancelar
                                 </button>
                             <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+                            <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->any(['crear-mantenimientos', 'editar-mantenimientos'])): ?>
                             <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-colors font-medium text-sm" style="background-color: #2d7a4f;" onmouseover="this.style.backgroundColor='#245c3d'" onmouseout="this.style.backgroundColor='#2d7a4f'">
                                 <i class="bi bi-check-circle"></i> <?php echo e($mantenimiento_id ? 'Actualizar' : 'Crear Orden'); ?>
 
                             </button>
+                            <?php endif; ?>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
+        <?php endif; ?>
     <?php elseif($tab_activo === 'listado'): ?>
         <div>
             <div class="bg-white rounded-lg shadow-sm border border-slate-200">
@@ -293,24 +299,32 @@ unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
                                             ?>
                                             <div class="flex gap-1 justify-center">
                                                 <!--[if BLOCK]><![endif]--><?php if($isProgramado): ?>
+                                                    <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('confirmar-mantenimiento')): ?>
                                                     <button type="button" wire:click="confirmarMantenimiento(<?php echo e($mantenimiento->id_mantenimiento); ?>)" title="Confirmar realización" class="inline-flex items-center px-2 py-1 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded transition-colors border border-blue-200">
                                                         <i class="bi bi-check2-circle text-sm"></i>
                                                     </button>
+                                                    <?php endif; ?>
                                                 <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
                                                 <!--[if BLOCK]><![endif]--><?php if($isVencido): ?>
+                                                    <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('reprogramar-mantenimiento')): ?>
                                                     <button type="button" wire:click="reprogramarMantenimiento(<?php echo e($mantenimiento->id_mantenimiento); ?>)" title="Reprogramar" class="inline-flex items-center px-2 py-1 bg-amber-50 text-amber-700 hover:bg-amber-100 rounded transition-colors border border-amber-200">
                                                         <i class="bi bi-calendar-plus text-sm"></i>
                                                     </button>
+                                                    <?php endif; ?>
                                                 <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+                                                <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('editar-mantenimientos')): ?>
                                                 <button type="button" wire:click.prevent="abrirModalCompletar(<?php echo e($mantenimiento->id_mantenimiento); ?>)" title="Completar" class="inline-flex items-center px-2 py-1 bg-green-50 text-green-700 hover:bg-green-100 rounded transition-colors border border-green-200 <?php echo e(($isCompletado || $isVencido) ? 'opacity-50 cursor-not-allowed' : ''); ?>" <?php if($isCompletado || $isVencido): ?> disabled <?php endif; ?>>
                                                     <i class="bi bi-check-circle text-sm"></i>
                                                 </button>
                                                 <button type="button" wire:click="editar(<?php echo e($mantenimiento->id_mantenimiento); ?>)" title="Editar" class="inline-flex items-center px-2 py-1 bg-purple-50 text-purple-700 hover:bg-purple-100 rounded transition-colors border border-purple-200">
                                                     <i class="bi bi-pencil text-sm"></i>
                                                 </button>
+                                                <?php endif; ?>
+                                                <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('eliminar-mantenimientos')): ?>
                                                 <button type="button" wire:click="eliminar(<?php echo e($mantenimiento->id_mantenimiento); ?>)" onclick="return confirm('¿Está seguro de eliminar este mantenimiento?')" title="Eliminar" class="inline-flex items-center px-2 py-1 bg-red-50 text-red-700 hover:bg-red-100 rounded transition-colors border border-red-200">
                                                     <i class="bi bi-trash text-sm"></i>
                                                 </button>
+                                                <?php endif; ?>
                                             </div>
                                         </td>
                                     </tr>
@@ -331,7 +345,7 @@ unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
     <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
 
     <!-- CSS y Modal - preservados del original -->
-    <?php if (! $__env->hasRenderedOnce('68893cbd-198e-411e-8aa0-106f6645f07c')): $__env->markAsRenderedOnce('68893cbd-198e-411e-8aa0-106f6645f07c'); ?>
+    <?php if (! $__env->hasRenderedOnce('3549bdb8-9c68-49d9-8858-e76c4c64413b')): $__env->markAsRenderedOnce('3549bdb8-9c68-49d9-8858-e76c4c64413b'); ?>
         <style>
             .lw-modal-overlay {
                 position: fixed;
