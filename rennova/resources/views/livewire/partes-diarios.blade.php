@@ -142,6 +142,62 @@
                         </div>
                     </div>
 
+                    @if($id_lote && $fecha)
+                        @php
+                            $estado = strtoupper($clima_estado ?? 'OPERATIVO');
+                            $estadoLabel = $estado === 'INACTIVO'
+                                ? 'No operativo'
+                                : ($estado === 'OPERATIVO_CONDICIONAL' ? 'Operativo condicional' : 'Operativo');
+                            $estadoClass = $estado === 'INACTIVO'
+                                ? 'bg-rose-100 text-rose-800'
+                                : ($estado === 'OPERATIVO_CONDICIONAL' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800');
+                        @endphp
+                        <div class="mb-6">
+                            <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                                <div class="flex flex-wrap items-center gap-3">
+                                    <span class="inline-flex items-center px-3 py-1 rounded text-xs font-semibold {{ $estadoClass }}">
+                                        Estado pronostico: {{ $estadoLabel }}
+                                    </span>
+                                    @if($clima_es_fin_de_semana)
+                                        <span class="inline-flex items-center px-3 py-1 rounded text-xs font-semibold bg-slate-200 text-slate-700">
+                                            Fin de semana
+                                        </span>
+                                    @endif
+                                    @if($clima_fuente === 'fallback')
+                                        <span class="inline-flex items-center px-3 py-1 rounded text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                                            Fallback: sin datos de API
+                                        </span>
+                                    @endif
+                                </div>
+                                @if($clima_razon)
+                                    <p class="text-sm text-slate-600 mt-2">Motivo: {{ $clima_razon }}</p>
+                                @endif
+                            </div>
+                        </div>
+
+                        @if(!$es_dia_caido && $clima_requiere_override)
+                            <div class="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4">
+                                <div class="flex items-start gap-3">
+                                    <i class="bi bi-exclamation-triangle-fill text-amber-600 mt-0.5"></i>
+                                    <div class="flex-1">
+                                        <p class="font-semibold text-amber-900">Dia no operativo</p>
+                                        <p class="text-sm text-amber-800 mt-1">
+                                            Para registrar produccion en este dia necesitas confirmar la operacion y dejar un motivo.
+                                        </p>
+                                        <div class="mt-3 flex items-center gap-2">
+                                            <input type="checkbox" id="climaOverrideSwitch" wire:model.live="clima_override_confirmado" class="w-4 h-4 rounded border-slate-300 text-amber-600 focus:ring-amber-600">
+                                            <label for="climaOverrideSwitch" class="text-sm text-amber-900">Confirmo operar en dia no operativo</label>
+                                        </div>
+                                        <div class="mt-3">
+                                            <label class="block text-xs font-semibold text-amber-900 mb-1">Motivo de confirmacion</label>
+                                            <textarea wire:model="clima_override_motivo" rows="2" class="w-full px-3 py-2 border border-amber-200 rounded text-sm focus:border-amber-400 focus:ring-1 focus:ring-amber-300 focus:outline-none" placeholder="Ej: compromiso logístico, entrega urgente"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+                    @endif
+
                     <!-- Fila 2: Observaciones -->
                     <div class="grid grid-cols-1 gap-4">
                         <div>

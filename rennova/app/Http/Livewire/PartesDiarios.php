@@ -17,6 +17,7 @@ use App\Models\CategoriaMadera;
 use App\Models\Cliente;
 use App\Models\LoteTarea;
 use App\Enums\TaskType;
+use App\Services\ClimaOperativoService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -36,6 +37,13 @@ class PartesDiarios extends Component
     public $actividad_realizada;
     public $es_dia_caido = false;
     public $motivo_dia_caido;
+    public $clima_estado;
+    public $clima_razon;
+    public $clima_fuente;
+    public $clima_es_fin_de_semana = false;
+    public $clima_requiere_override = false;
+    public $clima_override_confirmado = false;
+    public $clima_override_motivo;
     public $observaciones;
     public $busqueda = '';
     public $busqueda_fecha = '';
@@ -181,6 +189,8 @@ class PartesDiarios extends Component
         $this->id_lote_tarea = null;
         $this->nueva_tarea_tipo_tarea = null;
         $this->nueva_tarea_superficie_afectada_ha = null;
+
+        $this->revisarClima();
     }
 
     public function crearTareaRapida()
@@ -354,6 +364,12 @@ class PartesDiarios extends Component
     {
         $this->resetPage();
     }
+
+    public function updatedFecha()
+    {
+        $this->actualizarJornalPorEmpleado();
+        $this->revisarClima();
+    }
     
     public function updatedEsDiaCaido()
     {
@@ -362,10 +378,85 @@ class PartesDiarios extends Component
             $this->cargas = [];
             $this->carga_empleados = [];
             $this->total_toneladas = 0;
+            $this->clima_override_confirmado = false;
+            $this->clima_override_motivo = '';
         } else {
             $this->jornales = [];
             $this->motivo_dia_caido = '';
         }
+    }
+
+    private function revisarClima(): void
+    {
+        $this->clima_estado = null;
+        $this->clima_razon = null;
+        $this->clima_fuente = null;
+        $this->clima_es_fin_de_semana = false;
+        $this->clima_requiere_override = false;
+
+        if (!$this->id_lote || !$this->fecha) {
+            $this->clima_override_confirmado = false;
+            $this->clima_override_motivo = '';
+            return;
+        }
+
+        $fecha = Carbon::parse($this->fecha);
+        $this->clima_es_fin_de_semana = $fecha->isWeekend();
+
+        $lote = Lote::find($this->id_lote);
+        if (!$lote) {
+            return;
+        }
+
+        $climaDia = app(ClimaOperativoService::class)->obtenerEstadoDia($lote, $fecha);
+        $estadoPronostico = $climaDia->estado_pronostico ?? $climaDia->estado_operativo ?? 'OPERATIVO';
+        $this->clima_estado = strtoupper((string) $estadoPronostico);
+        $this->clima_razon = $climaDia->razon_pronostico ?? $climaDia->razon ?? null;
+        $this->clima_fuente = $climaDia->fuente_pronostico ?? $climaDia->fuente ?? null;
+
+        $noOperativo = $this->clima_estado === 'INACTIVO';
+        $this->clima_requiere_override = $noOperativo || $this->clima_es_fin_de_semana;
+
+        if (!$this->clima_requiere_override) {
+            $this->clima_override_confirmado = false;
+            $this->clima_override_motivo = '';
+        }
+    }
+
+    private function resolverClimaOperacion(): array
+    {
+        if (!$this->id_lote || !$this->fecha) {
+            return [
+                'requiere_override' => false,
+                'estado' => null,
+                'razon' => null,
+                'fuente' => null,
+            ];
+        }
+
+        $fecha = Carbon::parse($this->fecha);
+        $esFinDeSemana = $fecha->isWeekend();
+
+        $lote = Lote::find($this->id_lote);
+        if (!$lote) {
+            return [
+                'requiere_override' => $esFinDeSemana,
+                'estado' => null,
+                'razon' => null,
+                'fuente' => null,
+            ];
+        }
+
+        $climaDia = app(ClimaOperativoService::class)->obtenerEstadoDia($lote, $fecha);
+        $estado = strtoupper((string) ($climaDia->estado_pronostico ?? $climaDia->estado_operativo ?? 'OPERATIVO'));
+        $requiere = $esFinDeSemana || $estado === 'INACTIVO';
+
+        return [
+            'requiere_override' => $requiere,
+            'estado' => $estado,
+            'razon' => $climaDia->razon ?? null,
+            'fuente' => $climaDia->fuente ?? null,
+        ];
     }
     
     // ============ GESTIÓN DE CARGAS (DESTAJO) ============
@@ -629,7 +720,19 @@ class PartesDiarios extends Component
             session()->flash('error', "No se pueden crear partes con más de 7 días de antigüedad. Fecha mínima: {$fechaMinima}.");
             return;
         }
-        
+
+        $climaInfo = $this->resolverClimaOperacion();
+        $this->clima_requiere_override = (bool) ($climaInfo['requiere_override'] ?? false);
+        if (!$this->es_dia_caido && $this->clima_requiere_override) {
+            if (!$this->clima_override_confirmado) {
+                session()->flash('error', 'El dia seleccionado esta marcado como no operativo. Debe confirmar la operacion para continuar.');
+                return;
+            }
+            if (!trim((string) $this->clima_override_motivo)) {
+                session()->flash('error', 'Debe indicar un motivo de confirmacion para operar en dia no operativo.');
+                return;
+            }
+        }
         // Validaciones adicionales
         if (!$this->es_dia_caido && empty($this->cargas)) {
             session()->flash('error', 'Debe registrar al menos una carga para modo producción.');
@@ -675,6 +778,16 @@ class PartesDiarios extends Component
                 throw new \InvalidArgumentException('La tarea seleccionada no corresponde al lote.');
             }
 
+            $parteExistente = $this->parte_id ? ParteDiario::find($this->parte_id) : null;
+            $overrideAplicado = !$this->es_dia_caido && (bool) $this->clima_override_confirmado;
+            $overrideMotivo = $overrideAplicado ? trim((string) $this->clima_override_motivo) : null;
+            $overrideConfirmadoPor = $overrideAplicado
+                ? ($parteExistente?->clima_override_confirmado_por ?? auth()->id())
+                : null;
+            $overrideConfirmadoAt = $overrideAplicado
+                ? ($parteExistente?->clima_override_confirmado_at ?? now())
+                : null;
+
             $parteDiario = ParteDiario::updateOrCreate(
                 ['id_parte_diario' => $this->parte_id],
                 [
@@ -684,6 +797,10 @@ class PartesDiarios extends Component
                     // Se mantiene tipo_tarea por compatibilidad y para queries legacy
                     'tipo_tarea' => (string) $tarea->tipo_tarea,
                     'es_dia_caido' => $this->es_dia_caido,
+                    'clima_override' => $overrideAplicado,
+                    'clima_override_motivo' => $overrideMotivo,
+                    'clima_override_confirmado_por' => $overrideConfirmadoPor,
+                    'clima_override_confirmado_at' => $overrideConfirmadoAt,
                     'observaciones' => $this->observaciones,
                     'activo' => true,
                 ]
@@ -845,6 +962,8 @@ class PartesDiarios extends Component
         $this->tipo_tarea = $parte->tipo_tarea;
         $this->es_dia_caido = (bool) $parte->es_dia_caido;
         $this->observaciones = $parte->observaciones;
+        $this->clima_override_confirmado = (bool) ($parte->clima_override ?? false);
+        $this->clima_override_motivo = $parte->clima_override_motivo;
         $this->tab_activo = 'nuevo';
 
         // Cargar CARGAS si es producción
@@ -930,6 +1049,7 @@ class PartesDiarios extends Component
 
         // Asegurar que el mapa de jornales vigentes esté actualizado
         $this->actualizarJornalPorEmpleado();
+        $this->revisarClima();
     }
 
     public function eliminar($id)
@@ -943,7 +1063,9 @@ class PartesDiarios extends Component
     {
         $this->reset([
             'parte_id', 'id_lote', 'id_lote_tarea', 'fecha', 'tipo_tarea', 'actividad_realizada', 'es_dia_caido', 
-            'motivo_dia_caido', 'observaciones', 'cargas', 'jornales', 'movimientos',
+            'motivo_dia_caido', 'clima_estado', 'clima_razon', 'clima_fuente', 'clima_es_fin_de_semana',
+            'clima_requiere_override', 'clima_override_confirmado', 'clima_override_motivo',
+            'observaciones', 'cargas', 'jornales', 'movimientos',
             'carga_id_categoria_madera', 'carga_ticket', 'carga_peso_bruto', 'carga_tara',
             'carga_peso_neto', 'carga_id_chofer', 'carga_destino', 'carga_empleados', 'carga_maquinarias',
             'busqueda_chofer', 'busqueda_cliente', 'empleados_asignados_ids', 'maquinarias_asignadas_ids',
@@ -1016,3 +1138,4 @@ class PartesDiarios extends Component
         return Cliente::orderBy('razon_social')->get();
     }
 }
+

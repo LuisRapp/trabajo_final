@@ -134,6 +134,7 @@ Route::middleware(['auth'])->group(function () {
     // Reportes - Estadísticas Forestales
     Route::get('/reportes/estadisticas-forestales', [ReporteController::class, 'estadisticasForestales'])->name('reportes.estadisticas-forestales');
     Route::get('/reportes/estadisticas-forestales/pdf', [ReporteController::class, 'estadisticasForestalesPdf'])->name('reportes.estadisticas-forestales.pdf');
+    Route::get('/reportes/clima-lluvias/pdf', [ReporteController::class, 'climaLluviasPdf'])->name('reportes.clima-lluvias.pdf');
     
     // Liquidación de Pagos
     Route::view('/liquidacion-pagos', 'liquidacion-pagos.index')->name('liquidacion-pagos.index');
@@ -168,4 +169,5 @@ Route::middleware(['auth'])->group(function () {
     Route::view('/roles-permisos', 'roles-permisos.index')->middleware(['permission:gestionar-permisos'])->name('roles-permisos.index');
 
 });
+
 

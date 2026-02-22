@@ -192,34 +192,32 @@ class Mantenimientos extends Component
         $this->kitPreventivo = [];
     }
 
-    public function ejecutarDemo()
+    public function ejecutarFlujoPresentacion()
     {
         try {
-            $maquinariaId = $this->id_maquinaria;
-
-            if (!$maquinariaId) {
-                $maquinariaId = Maquinaria::whereNotNull('umbral_toneladas')
-                    ->orderBy('id_maquinaria')
-                    ->value('id_maquinaria');
-            }
-
-            if (!$maquinariaId) {
-                session()->flash('message', 'No hay maquinarias con umbral configurado para ejecutar la demo.');
-                return;
-            }
-
-            $exitCode = Artisan::call('mantenimiento:check-umbrales', [
-                '--maquinaria' => $maquinariaId,
+            $params = [
+                '--forzar-flujo' => true,
                 '--simular' => true,
-            ]);
+            ];
+
+            if (!empty($this->id_maquinaria)) {
+                $params['--maquinaria'] = (int) $this->id_maquinaria;
+            }
+
+            $exitCode = Artisan::call('mantenimiento:check-umbrales', $params);
 
             $mensaje = $exitCode === 0
-                ? "Demo ejecutada: maquinaria #{$maquinariaId} forzada al umbral y orden creada."
-                : 'Demo ejecutada con advertencias. Revise los logs para más detalle.';
+                ? 'Flujo de presentacion ejecutado correctamente (orden, asignacion y compra si aplica).'
+                : 'El flujo de presentacion finalizo con advertencias. Revisar logs.';
             session()->flash('message', $mensaje);
-        } catch (\Exception $e) {
-            session()->flash('message', 'Error al ejecutar demo: ' . $e->getMessage());
+        } catch (\Throwable $e) {
+            session()->flash('error', 'Error al ejecutar flujo de presentacion: ' . $e->getMessage());
         }
+    }
+
+    public function ejecutarDemo()
+    {
+        $this->ejecutarFlujoPresentacion();
     }
 
     public function abrirModalCompletar($id)
@@ -529,3 +527,4 @@ class Mantenimientos extends Component
         }
     }
 }
+

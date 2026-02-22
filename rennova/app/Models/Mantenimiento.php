@@ -37,4 +37,14 @@ class Mantenimiento extends Model implements Auditable
     {
         return $this->hasMany(MantenimientoInsumo::class, 'id_mantenimiento');
     }
+
+    public function empleados()
+    {
+        return $this->belongsToMany(
+            Empleado::class,
+            'mantenimiento_empleado',
+            'id_mantenimiento',
+            'id_empleado'
+        )->withPivot('rol_origen')->withTimestamps();
+    }
 }

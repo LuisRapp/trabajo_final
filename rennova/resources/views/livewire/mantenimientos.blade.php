@@ -5,9 +5,9 @@
         </h1>
         <div class="flex items-center gap-2">
             <button type="button"
-                wire:click="ejecutarDemo"
+                wire:click="ejecutarFlujoPresentacion"
                 class="inline-flex items-center gap-2 rounded-full bg-amber-100 px-3 py-1.5 text-xs font-semibold text-amber-800 transition hover:bg-amber-200">
-                <i class="bi bi-play-circle"></i> Demo mantenimiento
+                <i class="bi bi-play-circle"></i> Ejecutar flujo presentacion
             </button>
         </div>
     </div>

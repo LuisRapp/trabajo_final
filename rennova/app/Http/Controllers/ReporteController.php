@@ -7,6 +7,7 @@ use App\Models\Lote;
 use App\Models\ParteDiario;
 use App\Models\Carga;
 use App\Models\Recibo;
+use App\Models\ClimaDiaLote;
 use App\Services\ForestalStatsService;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -14,6 +15,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Dompdf\Dompdf;
 use Dompdf\Options;
+use Illuminate\Validation\Rule;
 
 class ReporteController extends Controller
 {
@@ -721,5 +723,117 @@ class ReporteController extends Controller
             'total_lotes' => $lotes->count(),
             'rentabilidad_promedio' => $rentabilidad,
         ];
+    }
+
+    /**
+     * Generar PDF de dias con lluvia (clima real)
+     */
+    public function climaLluviasPdf(Request $request)
+    {
+        $idLote = $request->get('id_lote');
+
+        $request->validate([
+            'id_lote' => $idLote ? 'exists:lotes,id_lote' : 'nullable',
+            'desde' => [
+                Rule::requiredIf($request->filled('hasta')),
+                'nullable',
+                'date',
+                'before_or_equal:today',
+            ],
+            'hasta' => [
+                Rule::requiredIf($request->filled('desde')),
+                'nullable',
+                'date',
+                'before_or_equal:today',
+            ],
+        ]);
+
+        $fechaDesde = $request->get('desde')
+            ? Carbon::parse($request->get('desde'))
+            : Carbon::now()->subDays(30);
+
+        $fechaHasta = $request->get('hasta')
+            ? Carbon::parse($request->get('hasta'))
+            : Carbon::now();
+
+        if ($fechaHasta->lessThan($fechaDesde)) {
+            [$fechaDesde, $fechaHasta] = [$fechaHasta, $fechaDesde];
+        }
+
+        $periodo = $fechaDesde->format('d/m/Y') . ' - ' . $fechaHasta->format('d/m/Y');
+        $generadoPor = auth()->user()->name ?? auth()->user()->email ?? 'Usuario';
+        $fechaHora = Carbon::now()->format('d/m/Y H:i');
+
+        $loteSeleccionado = $idLote ? Lote::find($idLote) : null;
+
+        $registros = ClimaDiaLote::with('lote')
+            ->whereNotNull('estado_real')
+            ->where('estado_real', 'INACTIVO')
+            ->whereBetween('fecha', [$fechaDesde->toDateString(), $fechaHasta->toDateString()])
+            ->when($idLote, function ($query) use ($idLote) {
+                $query->where('id_lote', $idLote);
+            })
+            ->orderBy('fecha')
+            ->get();
+
+        $totalRegistros = $registros->count();
+        $totalLotes = $idLote ? ($loteSeleccionado ? 1 : 0) : $registros->pluck('id_lote')->unique()->count();
+        $diasPorLote = $registros
+            ->groupBy('id_lote')
+            ->map(function ($items) {
+                $lote = $items->first()->lote;
+                $mmTotal = $items->sum(function ($item) {
+                    $snapshot = is_array($item->snapshot) ? $item->snapshot : [];
+                    return (float) ($snapshot['real_precipitacion_mm'] ?? 0);
+                });
+                return [
+                    'lote' => $lote?->ubicacion ?? $lote?->propietario ?? ('Lote ' . $items->first()->id_lote),
+                    'cantidad' => $items->count(),
+                    'mm_total' => round($mmTotal, 1),
+                ];
+            })
+            ->sortByDesc('cantidad')
+            ->values()
+            ->all();
+
+        $data = [
+            'reporte_nombre' => 'Reporte de Dias con Lluvia (Clima Real)',
+            'periodo' => $periodo,
+            'generado_por' => $generadoPor,
+            'fecha_hora' => $fechaHora,
+            'registros' => $registros,
+            'total_registros' => $totalRegistros,
+            'total_lotes' => $totalLotes,
+            'dias_por_lote' => $diasPorLote,
+            'lote_seleccionado' => $loteSeleccionado,
+        ];
+
+        $options = new Options();
+        $options->set('isRemoteEnabled', true);
+        $options->set('isPhpEnabled', true);
+        $options->set('defaultFont', 'DejaVu Sans');
+
+        $dompdf = new Dompdf($options);
+        $html = view('reportes.pdf.clima-lluvias', $data)->render();
+        $dompdf->loadHtml($html, 'UTF-8');
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->render();
+
+        $canvas = $dompdf->getCanvas();
+        $canvas->page_script('
+            $font = $fontMetrics->get_font("DejaVu Sans", "normal");
+            $size = 10;
+            $text = "Pagina $PAGE_NUM de $PAGE_COUNT";
+            $width = $fontMetrics->getTextWidth($text, $font, $size);
+            $x = ($pdf->get_width() - $width) / 2;
+            $y = $pdf->get_height() - 32;
+            $pdf->text($x, $y, $text, $font, $size, [127, 140, 141]);
+        ');
+
+        $filename = 'reporte-lluvias-' . Carbon::now()->format('Ymd_His') . '.pdf';
+
+        return response($dompdf->output(), 200)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
     }
 }

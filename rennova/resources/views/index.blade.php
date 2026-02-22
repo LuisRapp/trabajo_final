@@ -334,6 +334,41 @@
                 </div>
             </a>
         </div>
+
+        {{-- Reporte de Lluvias - PDF --}}
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="card modern-card h-100">
+                <div class="card-body p-2">
+                    <div class="text-center mb-2">
+                        <div class="kpi-icon" style="background: rgba(59, 130, 246, 0.12); margin: 0 auto;">
+                            <i class="bi bi-cloud-rain" style="color: #3B82F6; font-size: 1.2rem;"></i>
+                        </div>
+                        <h5 class="fw-bold mb-1 text-dark" style="font-size: 0.9rem;">Reporte de Lluvias</h5>
+                        <p class="text-muted mb-2" style="font-size: 0.7rem;">Exportar PDF</p>
+                    </div>
+                    <form action="{{ route('reportes.clima-lluvias.pdf') }}" method="GET">
+                        <div class="mb-2">
+                            <label class="form-label mb-1" style="font-size: 0.7rem;">Lote</label>
+                            <select name="id_lote" class="form-select form-select-sm">
+                                <option value="">Todos</option>
+                                @foreach($lotes as $lote)
+                                    <option value="{{ $lote->id_lote }}">{{ $lote->propietario }} - {{ $lote->ubicacion }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label mb-1" style="font-size: 0.7rem;">Desde</label>
+                            <input type="date" name="desde" max="{{ \Carbon\Carbon::now()->toDateString() }}" class="form-control form-control-sm" value="{{ \Carbon\Carbon::now()->subDays(30)->toDateString() }}">
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label mb-1" style="font-size: 0.7rem;">Hasta</label>
+                            <input type="date" name="hasta" max="{{ \Carbon\Carbon::now()->toDateString() }}" class="form-control form-control-sm" value="{{ \Carbon\Carbon::now()->toDateString() }}">
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-primary w-100">Descargar PDF</button>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
 
 @endsection
