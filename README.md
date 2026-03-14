@@ -1,7 +1,7 @@
 <<<<<<< ABMs
-# 🌾 Sistema Rennova
+# Sistema Rennova
 
-Sistema integral de gestión agrícola desarrollado con Laravel 11, Livewire 3 y PostgreSQL. Incluye gestión de lotes, mantenimientos, análisis climático inteligente, cálculo de costos y liquidación de pagos.
+Sistema integral de gestión forestal desarrollado con Laravel 11, Livewire 3 y PostgreSQL. Incluye gestión de lotes, mantenimientos, análisis climático inteligente, cálculo de costos y liquidación de pagos.
 
 ## 📋 Requisitos Previos
 
@@ -328,10 +328,4 @@ Luis Rapp - [LuisRapp](https://github.com/LuisRapp)
 
 Rapp Luis Marcelo  
 UNaM
-
-🌲 Proyecto: Sistema de Gestión Forestal Rennova
-
-Este proyecto consiste en el desarrollo de un sistema de software destinado a la gestión integral de una empresa forestal.
-El sistema permite administrar inventarios forestales, maquinaria, operaciones, personal y finanzas, brindando herramientas para optimizar la planificación, el control y la trazabilidad de las actividades.
-Su objetivo principal es mejorar la eficiencia operativa y apoyar la toma de decisiones estratégicas mediante la digitalización y centralización de la información.
 >>>>>>> main
