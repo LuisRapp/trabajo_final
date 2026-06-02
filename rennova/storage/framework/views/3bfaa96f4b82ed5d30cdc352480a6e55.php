@@ -13,7 +13,7 @@
         <h1 class="text-3xl font-bold"><i class="bi bi-clipboard-check mr-3"></i>Partes Diarios</h1>
     </div>
 
-    <?php if(session()->has('message')): ?>
+    <!--[if BLOCK]><![endif]--><?php if(session()->has('message')): ?>
         <div x-data="{ open: true }" x-show="open" x-transition class="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg flex items-start gap-3">
             <i class="bi bi-check-circle-fill text-green-600 mt-0.5"></i>
             <div class="flex-1">
@@ -23,7 +23,7 @@
                 <i class="bi bi-x-lg"></i>
             </button>
         </div>
-    <?php endif; ?>
+    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
 
     <?php if(session()->has('error')): ?>
         <div x-data="{ open: true }" x-show="open" x-transition class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
@@ -35,7 +35,7 @@
                 <i class="bi bi-x-lg"></i>
             </button>
         </div>
-    <?php endif; ?>
+    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
 
     <!-- Tabs -->
     <div class="mb-6 flex gap-0">
@@ -54,7 +54,7 @@
     </div>
 
     <!-- Pestaña 1: Nuevo Parte Diario -->
-    <?php if($tab_activo === 'nuevo'): ?>
+    <!--[if BLOCK]><![endif]--><?php if($tab_activo === 'nuevo'): ?>
         <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->any(['crear-partes-diarios', 'editar-partes-diarios'])): ?>
         <div id="nuevo-parte" role="tabpanel" aria-labelledby="nuevo-tab" class="tab-pane-content">
             
@@ -81,18 +81,18 @@ if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>">
                                 <option value="">Seleccione un lote...</option>
-                                <?php $__currentLoopData = $this->lotes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $lote): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <!--[if BLOCK]><![endif]--><?php $__currentLoopData = $this->lotes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $lote): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                     <option value="<?php echo e($lote->id_lote); ?>"><?php echo e($lote->propietario); ?> - <?php echo e($lote->ubicacion); ?></option>
-                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><!--[if ENDBLOCK]><![endif]-->
                             </select>
-                            <?php $__errorArgs = ['id_lote'];
+                            <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['id_lote'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
 $message = $__bag->first($__errorArgs[0]); ?> <div class="text-red-600 text-sm mt-1"><?php echo e($message); ?></div> <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
-unset($__errorArgs, $__bag); ?>
+unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
                             <div wire:loading wire:target="id_lote" class="text-slate-600 text-sm mt-1">
                                 <i class="bi bi-arrow-repeat animate-spin"></i> Cargando maquinarias y empleados...
                             </div>
@@ -109,27 +109,27 @@ if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>">
                                 <option value="">Seleccione una tarea...</option>
-                                <?php $__currentLoopData = $this->loteTareas; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $tarea): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <!--[if BLOCK]><![endif]--><?php $__currentLoopData = $this->loteTareas; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $tarea): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                     <option value="<?php echo e($tarea->id_lote_tarea); ?>">
                                         #<?php echo e($tarea->id_lote_tarea); ?> - <?php echo e($tarea->tipo_tarea_label); ?> (<?php echo e($tarea->estado); ?>)
                                     </option>
-                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><!--[if ENDBLOCK]><![endif]-->
                             </select>
-                            <?php $__errorArgs = ['id_lote_tarea'];
+                            <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['id_lote_tarea'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
 $message = $__bag->first($__errorArgs[0]); ?> <div class="text-red-600 text-sm mt-1"><?php echo e($message); ?></div> <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
-unset($__errorArgs, $__bag); ?>
-                            <?php if(!$id_lote): ?>
+unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
+                            <!--[if BLOCK]><![endif]--><?php if(!$id_lote): ?>
                                 <div class="text-slate-500 text-sm mt-2">Seleccioná un lote para cargar las tareas.</div>
                             <?php elseif($this->loteTareas->isEmpty()): ?>
                                 <div class="text-slate-500 text-sm mt-2">Este lote no tiene tareas cargadas.</div>
-                            <?php endif; ?>
+                            <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
 
-                            <?php if($id_lote && $this->loteTareas->isEmpty()): ?>
+                            <!--[if BLOCK]><![endif]--><?php if($id_lote && $this->loteTareas->isEmpty()): ?>
                                 <div class="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3" wire:key="tarea-rapida-<?php echo e($id_lote); ?>">
                                     <div class="text-sm font-semibold text-slate-800 mb-2">No hay tareas para este lote</div>
                                     <div class="grid grid-cols-1 md:grid-cols-3 gap-2 items-end">
@@ -137,9 +137,9 @@ unset($__errorArgs, $__bag); ?>
                                             <label class="block text-xs font-semibold text-slate-600 mb-1">Tipo</label>
                                             <select wire:model.live="nueva_tarea_tipo_tarea" class="w-full px-3 py-2 border border-slate-300 rounded text-sm focus:border-green-700 focus:ring-1 focus:ring-green-600 focus:outline-none">
                                                 <option value="">Seleccione...</option>
-                                                <?php $__currentLoopData = $this->taskTypes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $taskType): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                <!--[if BLOCK]><![endif]--><?php $__currentLoopData = $this->taskTypes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $taskType): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                                     <option value="<?php echo e($taskType->value); ?>"><?php echo e($taskType->label()); ?></option>
-                                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><!--[if ENDBLOCK]><![endif]-->
                                             </select>
                                         </div>
                                         <div>
@@ -155,7 +155,7 @@ unset($__errorArgs, $__bag); ?>
                                         </div>
                                     </div>
                                 </div>
-                            <?php endif; ?>
+                            <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
                         </div>
 
                         <div>
@@ -172,14 +172,14 @@ $message = $__bag->first($__errorArgs[0]); ?> ring-2 ring-red-500 <?php unset($m
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>">
-                            <?php $__errorArgs = ['fecha'];
+                            <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['fecha'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
 $message = $__bag->first($__errorArgs[0]); ?> <div class="text-red-600 text-sm mt-1"><?php echo e($message); ?></div> <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
-unset($__errorArgs, $__bag); ?>
+unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
                         </div>
 
                         <div>
@@ -196,7 +196,7 @@ unset($__errorArgs, $__bag); ?>
                         </div>
                     </div>
 
-                    <?php if($id_lote && $fecha): ?>
+                    <!--[if BLOCK]><![endif]--><?php if($id_lote && $fecha): ?>
                         <?php
                             $estado = strtoupper($clima_estado ?? 'OPERATIVO');
                             $estadoLabel = $estado === 'INACTIVO'
@@ -213,24 +213,24 @@ unset($__errorArgs, $__bag); ?>
                                         Estado pronostico: <?php echo e($estadoLabel); ?>
 
                                     </span>
-                                    <?php if($clima_es_fin_de_semana): ?>
+                                    <!--[if BLOCK]><![endif]--><?php if($clima_es_fin_de_semana): ?>
                                         <span class="inline-flex items-center px-3 py-1 rounded text-xs font-semibold bg-slate-200 text-slate-700">
                                             Fin de semana
                                         </span>
-                                    <?php endif; ?>
-                                    <?php if($clima_fuente === 'fallback'): ?>
+                                    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+                                    <!--[if BLOCK]><![endif]--><?php if($clima_fuente === 'fallback'): ?>
                                         <span class="inline-flex items-center px-3 py-1 rounded text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
                                             Fallback: sin datos de API
                                         </span>
-                                    <?php endif; ?>
+                                    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
                                 </div>
-                                <?php if($clima_razon): ?>
+                                <!--[if BLOCK]><![endif]--><?php if($clima_razon): ?>
                                     <p class="text-sm text-slate-600 mt-2">Motivo: <?php echo e($clima_razon); ?></p>
-                                <?php endif; ?>
+                                <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
                             </div>
                         </div>
 
-                    <?php endif; ?>
+                    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
 
                     <!-- Fila 2: Observaciones -->
                     <div class="grid grid-cols-1 gap-4">
@@ -243,97 +243,97 @@ unset($__errorArgs, $__bag); ?>
             </div>
 
             <!-- SECCIÓN 2: Registro de Producción (Si NO es día caído) -->
-            <?php if(!$es_dia_caido): ?>
+            <!--[if BLOCK]><![endif]--><?php if(!$es_dia_caido): ?>
                 <div class="bg-white rounded-lg shadow-md mb-6 overflow-hidden border border-slate-200">
                     <div class="bg-blue-600 text-white px-6 py-4">
                         <h5 class="text-lg font-semibold mb-0"><i class="bi bi-truck mr-2"></i>Registro de Producción</h5>
                     </div>
                     <div class="p-6">
                         <!-- Errores generales de validación de carga -->
-                        <?php if($errors->has('carga_id_categoria_madera') || $errors->has('carga_ticket') || $errors->has('carga_peso_bruto') || $errors->has('carga_tara') || $errors->has('carga_peso_neto') || $errors->has('carga_id_chofer') || $errors->has('carga_destino') || $errors->has('carga_empleados') || $errors->has('carga_maquinarias')): ?>
+                        <!--[if BLOCK]><![endif]--><?php if($errors->has('carga_id_categoria_madera') || $errors->has('carga_ticket') || $errors->has('carga_peso_bruto') || $errors->has('carga_tara') || $errors->has('carga_peso_neto') || $errors->has('carga_id_chofer') || $errors->has('carga_destino') || $errors->has('carga_empleados') || $errors->has('carga_maquinarias')): ?>
                             <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
                                 <div class="flex items-start gap-2">
                                     <i class="bi bi-exclamation-triangle text-red-600 mt-0.5"></i>
                                     <div>
                                         <strong class="text-red-800">Errores en la carga:</strong>
                                         <ul class="list-disc list-inside mt-2 text-red-700 text-sm">
-                                            <?php $__errorArgs = ['carga_id_categoria_madera'];
+                                            <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['carga_id_categoria_madera'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
 $message = $__bag->first($__errorArgs[0]); ?> <li><?php echo e($message); ?></li> <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
-unset($__errorArgs, $__bag); ?>
-                                            <?php $__errorArgs = ['carga_ticket'];
+unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
+                                            <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['carga_ticket'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
 $message = $__bag->first($__errorArgs[0]); ?> <li><?php echo e($message); ?></li> <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
-unset($__errorArgs, $__bag); ?>
-                                            <?php $__errorArgs = ['carga_peso_bruto'];
+unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
+                                            <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['carga_peso_bruto'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
 $message = $__bag->first($__errorArgs[0]); ?> <li><?php echo e($message); ?></li> <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
-unset($__errorArgs, $__bag); ?>
-                                            <?php $__errorArgs = ['carga_tara'];
+unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
+                                            <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['carga_tara'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
 $message = $__bag->first($__errorArgs[0]); ?> <li><?php echo e($message); ?></li> <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
-unset($__errorArgs, $__bag); ?>
-                                            <?php $__errorArgs = ['carga_peso_neto'];
+unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
+                                            <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['carga_peso_neto'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
 $message = $__bag->first($__errorArgs[0]); ?> <li><?php echo e($message); ?></li> <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
-unset($__errorArgs, $__bag); ?>
-                                            <?php $__errorArgs = ['carga_id_chofer'];
+unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
+                                            <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['carga_id_chofer'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
 $message = $__bag->first($__errorArgs[0]); ?> <li><?php echo e($message); ?></li> <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
-unset($__errorArgs, $__bag); ?>
-                                            <?php $__errorArgs = ['carga_destino'];
+unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
+                                            <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['carga_destino'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
 $message = $__bag->first($__errorArgs[0]); ?> <li><?php echo e($message); ?></li> <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
-unset($__errorArgs, $__bag); ?>
-                                            <?php $__errorArgs = ['carga_empleados'];
+unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
+                                            <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['carga_empleados'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
 $message = $__bag->first($__errorArgs[0]); ?> <li><?php echo e($message); ?></li> <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
-unset($__errorArgs, $__bag); ?>
-                                            <?php $__errorArgs = ['carga_maquinarias'];
+unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
+                                            <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['carga_maquinarias'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
 $message = $__bag->first($__errorArgs[0]); ?> <li><?php echo e($message); ?></li> <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
-unset($__errorArgs, $__bag); ?>
+unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
                                         </ul>
                                     </div>
                                 </div>
                             </div>
-                        <?php endif; ?>
+                        <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
 
                         <!-- Formulario agregar carga -->
                         <div class="border border-slate-300 rounded-lg p-4 mb-4 bg-slate-50">
@@ -352,18 +352,18 @@ if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>">
                                         <option value="">Seleccione...</option>
-                                        <?php $__currentLoopData = $this->categoriasMadera; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $cat): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                        <!--[if BLOCK]><![endif]--><?php $__currentLoopData = $this->categoriasMadera; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $cat): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                             <option value="<?php echo e($cat->id_categoria_madera); ?>"><?php echo e($cat->nombre); ?></option>
-                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><!--[if ENDBLOCK]><![endif]-->
                                     </select>
-                                    <?php $__errorArgs = ['carga_id_categoria_madera'];
+                                    <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['carga_id_categoria_madera'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
 $message = $__bag->first($__errorArgs[0]); ?> <div class="text-red-600 text-sm mt-1"><?php echo e($message); ?></div> <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
-unset($__errorArgs, $__bag); ?>
+unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
                                 </div>
                                 <div class="md:col-span-4">
                                     <label class="block text-sm font-semibold text-slate-700 mb-2">Maquinarias <span class="text-red-500">*</span></label>
@@ -379,7 +379,7 @@ $message = $__bag->first($__errorArgs[0]); ?> ring-2 ring-red-500 <?php unset($m
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>">
-                                            <?php $__empty_1 = true; $__currentLoopData = $this->maquinariasFiltrada; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $maq): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                                            <!--[if BLOCK]><![endif]--><?php $__empty_1 = true; $__currentLoopData = $this->maquinariasFiltrada; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $maq): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                                                 <div class="flex items-center mb-2">
                                                     <input type="checkbox" value="<?php echo e($maq->id_maquinaria); ?>" id="maq-<?php echo e($maq->id_maquinaria); ?>" wire:model="carga_maquinarias" class="w-4 h-4 rounded border-slate-300 text-green-600">
                                                     <label for="maq-<?php echo e($maq->id_maquinaria); ?>" class="ml-2 text-sm text-slate-700">
@@ -390,16 +390,16 @@ unset($__errorArgs, $__bag); ?>">
                                                 <div class="text-slate-500 text-sm p-2">
                                                     <i class="bi bi-info-circle"></i> Seleccione un lote para ver maquinarias disponibles
                                                 </div>
-                                            <?php endif; ?>
+                                            <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
                                         </div>
-                                        <?php $__errorArgs = ['carga_maquinarias'];
+                                        <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['carga_maquinarias'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
 $message = $__bag->first($__errorArgs[0]); ?> <div class="text-red-600 text-sm mt-1"><?php echo e($message); ?></div> <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
-unset($__errorArgs, $__bag); ?>
+unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
                                     </div>
                                 </div>
                             </div>
@@ -417,20 +417,20 @@ if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>" placeholder="Buscar chofer...">
                                     <select wire:model="carga_id_chofer" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 focus:outline-none" size="3">
-                                        <?php $__empty_1 = true; $__currentLoopData = $this->choferesFiltrados; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $chofer): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                                        <!--[if BLOCK]><![endif]--><?php $__empty_1 = true; $__currentLoopData = $this->choferesFiltrados; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $chofer): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                                             <option value="<?php echo e($chofer->id_chofer); ?>"><?php echo e($chofer->apellido); ?>, <?php echo e($chofer->nombre); ?></option>
                                         <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                                             <option value="" disabled>No hay resultados</option>
-                                        <?php endif; ?>
+                                        <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
                                     </select>
-                                    <?php $__errorArgs = ['carga_id_chofer'];
+                                    <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['carga_id_chofer'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
 $message = $__bag->first($__errorArgs[0]); ?> <div class="text-red-600 text-sm mt-1"><?php echo e($message); ?></div> <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
-unset($__errorArgs, $__bag); ?>
+unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
                                 </div>
                                 <div>
                                     <label class="block text-sm font-semibold text-slate-700 mb-2">Destino (Cliente) <span class="text-red-500">*</span></label>
@@ -443,20 +443,20 @@ if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>" placeholder="Buscar cliente...">
                                     <select wire:model="carga_destino" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 focus:outline-none" size="3">
-                                        <?php $__empty_1 = true; $__currentLoopData = $this->clientesFiltrados; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $cliente): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                                        <!--[if BLOCK]><![endif]--><?php $__empty_1 = true; $__currentLoopData = $this->clientesFiltrados; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $cliente): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                                             <option value="<?php echo e($cliente->id_cliente); ?>"><?php echo e($cliente->razon_social); ?></option>
                                         <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                                             <option value="" disabled>No hay resultados</option>
-                                        <?php endif; ?>
+                                        <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
                                     </select>
-                                    <?php $__errorArgs = ['carga_destino'];
+                                    <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['carga_destino'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
 $message = $__bag->first($__errorArgs[0]); ?> <div class="text-red-600 text-sm mt-1"><?php echo e($message); ?></div> <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
-unset($__errorArgs, $__bag); ?>
+unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
                                 </div>
                             </div>
 
@@ -472,14 +472,14 @@ $message = $__bag->first($__errorArgs[0]); ?> ring-2 ring-red-500 <?php unset($m
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>" placeholder="TKT-12345">
-                                    <?php $__errorArgs = ['carga_ticket'];
+                                    <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['carga_ticket'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
 $message = $__bag->first($__errorArgs[0]); ?> <div class="text-red-600 text-sm mt-1"><?php echo e($message); ?></div> <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
-unset($__errorArgs, $__bag); ?>
+unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
                                 </div>
                                 <div>
                                     <label class="block text-sm font-semibold text-slate-700 mb-2">Bruto (Ton) <span class="text-red-500">*</span></label>
@@ -491,14 +491,14 @@ $message = $__bag->first($__errorArgs[0]); ?> ring-2 ring-red-500 <?php unset($m
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>" placeholder="0.00">
-                                    <?php $__errorArgs = ['carga_peso_bruto'];
+                                    <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['carga_peso_bruto'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
 $message = $__bag->first($__errorArgs[0]); ?> <div class="text-red-600 text-sm mt-1"><?php echo e($message); ?></div> <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
-unset($__errorArgs, $__bag); ?>
+unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
                                 </div>
                                 <div>
                                     <label class="block text-sm font-semibold text-slate-700 mb-2">Tara (Ton) <span class="text-red-500">*</span></label>
@@ -510,26 +510,26 @@ $message = $__bag->first($__errorArgs[0]); ?> ring-2 ring-red-500 <?php unset($m
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>" placeholder="0.00">
-                                    <?php $__errorArgs = ['carga_tara'];
+                                    <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['carga_tara'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
 $message = $__bag->first($__errorArgs[0]); ?> <div class="text-red-600 text-sm mt-1"><?php echo e($message); ?></div> <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
-unset($__errorArgs, $__bag); ?>
+unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
                                 </div>
                                 <div>
                                     <label class="block text-sm font-semibold text-blue-600 mb-2">Neto (Ton) <span class="text-sm">Calculado</span></label>
                                     <input type="text" value="<?php echo e(is_numeric($carga_peso_neto) ? number_format((float) $carga_peso_neto, 2, '.', '') : '0.00'); ?>" class="w-full px-4 py-3 border border-slate-300 rounded-lg bg-slate-100 text-slate-700" readonly>
-                                    <?php $__errorArgs = ['carga_peso_neto'];
+                                    <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['carga_peso_neto'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
 $message = $__bag->first($__errorArgs[0]); ?> <div class="text-red-600 text-sm mt-1 block"><?php echo e($message); ?></div> <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
-unset($__errorArgs, $__bag); ?>
+unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
                                 </div>
                             </div>
 
@@ -549,7 +549,7 @@ $message = $__bag->first($__errorArgs[0]); ?> ring-2 ring-red-500 <?php unset($m
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>">
-                                            <?php $__empty_1 = true; $__currentLoopData = $this->empleadosFiltrados; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $emp): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                                            <!--[if BLOCK]><![endif]--><?php $__empty_1 = true; $__currentLoopData = $this->empleadosFiltrados; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $emp): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                                                 <div class="flex items-center mb-2">
                                                     <input type="checkbox" value="<?php echo e($emp->id_empleado); ?>" id="emp-<?php echo e($emp->id_empleado); ?>" wire:model="carga_empleados" class="w-4 h-4 rounded border-slate-300 text-green-600">
                                                     <label for="emp-<?php echo e($emp->id_empleado); ?>" class="ml-2 text-sm text-slate-700">
@@ -560,16 +560,16 @@ unset($__errorArgs, $__bag); ?>">
                                                 <div class="text-slate-500 text-sm p-2">
                                                     <i class="bi bi-info-circle"></i> Seleccione un lote para ver empleados disponibles
                                                 </div>
-                                            <?php endif; ?>
+                                            <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
                                         </div>
-                                        <?php $__errorArgs = ['carga_empleados'];
+                                        <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['carga_empleados'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
 $message = $__bag->first($__errorArgs[0]); ?> <div class="text-red-600 text-sm mt-1"><?php echo e($message); ?></div> <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
-unset($__errorArgs, $__bag); ?>
+unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
                                     </div>
                                 </div>
                             </div>
@@ -583,7 +583,7 @@ unset($__errorArgs, $__bag); ?>
                         </div>
 
                         <!-- Listado cargas -->
-                        <?php if(count($cargas) > 0): ?>
+                        <!--[if BLOCK]><![endif]--><?php if(count($cargas) > 0): ?>
                             <div class="overflow-x-auto">
                                 <table class="w-full border-collapse text-sm">
                                     <thead class="bg-slate-100 border-b border-slate-300">
@@ -599,7 +599,7 @@ unset($__errorArgs, $__bag); ?>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <?php $__currentLoopData = $cargas; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $carga): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                        <!--[if BLOCK]><![endif]--><?php $__currentLoopData = $cargas; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $carga): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                             <tr class="border-b border-slate-200 hover:bg-slate-50">
                                                 <td class="px-4 py-2"><span class="inline-block px-3 py-1 bg-slate-200 text-slate-800 text-xs font-medium rounded"><?php echo e($carga['ticket']); ?></span></td>
                                                 <td class="px-4 py-2">
@@ -626,7 +626,7 @@ unset($__errorArgs, $__bag); ?>
                                                     </button>
                                                 </td>
                                             </tr>
-                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><!--[if ENDBLOCK]><![endif]-->
                                     </tbody>
                                     <tfoot class="bg-slate-100 border-t border-slate-300 font-semibold">
                                         <tr>
@@ -640,13 +640,13 @@ unset($__errorArgs, $__bag); ?>
                             <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg text-blue-800 text-sm">
                                 <i class="bi bi-info-circle mr-2"></i> Sin cargas registradas. Agregue al menos una carga.
                             </div>
-                        <?php endif; ?>
+                        <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
                     </div>
                 </div>
-            <?php endif; ?>
+            <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
 
             <!-- SECCIÓN 3: Jornales (Si ES día caído) -->
-            <?php if($es_dia_caido): ?>
+            <!--[if BLOCK]><![endif]--><?php if($es_dia_caido): ?>
                 <div class="bg-white rounded-lg shadow-md mb-6 overflow-hidden border border-slate-200">
                     <div class="bg-yellow-500 text-slate-900 px-6 py-4">
                         <h5 class="text-lg font-semibold mb-0"><i class="bi bi-cash-coin mr-2"></i>Asignación de Jornales</h5>
@@ -666,24 +666,24 @@ if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>">
                                         <option value="">Seleccione...</option>
-                                        <?php $__currentLoopData = $this->empleadosFiltrados; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $emp): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                        <!--[if BLOCK]><![endif]--><?php $__currentLoopData = $this->empleadosFiltrados; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $emp): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                             <option value="<?php echo e($emp->id_empleado); ?>">
                                                 <?php echo e($emp->apellido); ?>, <?php echo e($emp->nombre); ?> - <?php echo e($emp->rolLaboral->nombre ?? 'Sin rol'); ?>
 
-                                                <?php if(isset($jornal_por_empleado[$emp->id_empleado])): ?>
+                                                <!--[if BLOCK]><![endif]--><?php if(isset($jornal_por_empleado[$emp->id_empleado])): ?>
                                                     (Jornal: $<?php echo e(number_format($jornal_por_empleado[$emp->id_empleado], 2)); ?>)
-                                                <?php endif; ?>
+                                                <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
                                             </option>
-                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><!--[if ENDBLOCK]><![endif]-->
                                     </select>
-                                    <?php $__errorArgs = ['jornal_id_empleado'];
+                                    <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['jornal_id_empleado'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
 $message = $__bag->first($__errorArgs[0]); ?> <div class="text-red-600 text-sm mt-1"><?php echo e($message); ?></div> <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
-unset($__errorArgs, $__bag); ?>
+unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
                                 </div>
                                 <div class="md:col-span-2">
                                     <button type="button" wire:click.prevent="agregarJornal" class="w-full px-6 py-3 bg-yellow-500 text-slate-900 rounded-lg font-semibold hover:bg-yellow-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" wire:loading.attr="disabled" wire:target="agregarJornal">
@@ -694,7 +694,7 @@ unset($__errorArgs, $__bag); ?>
                             </div>
                         </div>
 
-                        <?php if(count($jornales) > 0): ?>
+                        <!--[if BLOCK]><![endif]--><?php if(count($jornales) > 0): ?>
                             <div class="overflow-x-auto">
                                 <table class="w-full border-collapse text-sm">
                                     <thead class="bg-slate-100 border-b border-slate-300">
@@ -706,7 +706,7 @@ unset($__errorArgs, $__bag); ?>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <?php $__currentLoopData = $jornales; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $jornal): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                        <!--[if BLOCK]><![endif]--><?php $__currentLoopData = $jornales; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $jornal): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                             <tr class="border-b border-slate-200 hover:bg-slate-50">
                                                 <td class="px-4 py-2"><?php echo e($jornal['nombre_completo'] ?? '-'); ?></td>
                                                 <td class="px-4 py-2"><span class="inline-block px-3 py-1 bg-slate-200 text-slate-800 text-xs font-medium rounded"><?php echo e($jornal['rol'] ?? '-'); ?></span></td>
@@ -717,7 +717,7 @@ unset($__errorArgs, $__bag); ?>
                                                     </button>
                                                 </td>
                                             </tr>
-                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><!--[if ENDBLOCK]><![endif]-->
                                     </tbody>
                                     <tfoot class="bg-slate-100 border-t border-slate-300 font-semibold">
                                         <tr>
@@ -731,10 +731,10 @@ unset($__errorArgs, $__bag); ?>
                             <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800 text-sm">
                                 <i class="bi bi-info-circle mr-2"></i> Sin empleados asignados. Agregue al menos un empleado.
                             </div>
-                        <?php endif; ?>
+                        <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
                     </div>
                 </div>
-            <?php endif; ?>
+            <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
 
             <!-- SECCIÓN 4: Movimientos de Insumos -->
             <div class="bg-white rounded-lg shadow-md mb-6 overflow-hidden border border-slate-200">
@@ -745,42 +745,42 @@ unset($__errorArgs, $__bag); ?>
                     <div id="alertaMovimiento"></div>
                     
                     <!-- Errores generales de validación de movimiento -->
-                    <?php if($errors->has('movimiento_id_insumo') || $errors->has('movimiento_cantidad') || $errors->has('movimiento_motivo')): ?>
+                    <!--[if BLOCK]><![endif]--><?php if($errors->has('movimiento_id_insumo') || $errors->has('movimiento_cantidad') || $errors->has('movimiento_motivo')): ?>
                         <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
                             <div class="flex items-start gap-2">
                                 <i class="bi bi-exclamation-triangle text-red-600 mt-0.5"></i>
                                 <div>
                                     <strong class="text-red-800">Errores en el movimiento:</strong>
                                     <ul class="list-disc list-inside mt-2 text-red-700 text-sm">
-                                        <?php $__errorArgs = ['movimiento_id_insumo'];
+                                        <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['movimiento_id_insumo'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
 $message = $__bag->first($__errorArgs[0]); ?> <li><?php echo e($message); ?></li> <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
-unset($__errorArgs, $__bag); ?>
-                                        <?php $__errorArgs = ['movimiento_cantidad'];
+unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
+                                        <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['movimiento_cantidad'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
 $message = $__bag->first($__errorArgs[0]); ?> <li><?php echo e($message); ?></li> <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
-unset($__errorArgs, $__bag); ?>
-                                        <?php $__errorArgs = ['movimiento_motivo'];
+unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
+                                        <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['movimiento_motivo'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
 $message = $__bag->first($__errorArgs[0]); ?> <li><?php echo e($message); ?></li> <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
-unset($__errorArgs, $__bag); ?>
+unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
                                     </ul>
                                 </div>
                             </div>
                         </div>
-                    <?php endif; ?>
+                    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
                     
                     <div class="border border-slate-300 rounded-lg p-4 mb-4 bg-slate-50">
                         <h6 class="font-semibold mb-4 text-slate-900"><i class="bi bi-box-arrow-right mr-2"></i>Registrar Consumo</h6>
@@ -796,23 +796,23 @@ if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>">
                                     <option value="">Seleccione...</option>
-                                    <?php $__currentLoopData = $this->insumos; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $insumo): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <!--[if BLOCK]><![endif]--><?php $__currentLoopData = $this->insumos; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $insumo): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                         <option value="<?php echo e($insumo->id_insumo); ?>"><?php echo e($insumo->nombre); ?></option>
-                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><!--[if ENDBLOCK]><![endif]-->
                                 </select>
-                                <?php if($stock_disponible_insumo !== null): ?>
+                                <!--[if BLOCK]><![endif]--><?php if($stock_disponible_insumo !== null): ?>
                                     <small class="text-slate-600 mt-1 block">
                                         Stock disponible: <strong class="<?php echo e($stock_disponible_insumo > 0 ? 'text-green-600' : 'text-red-600'); ?>"><?php echo e($stock_disponible_insumo); ?></strong>
                                     </small>
-                                <?php endif; ?>
-                                <?php $__errorArgs = ['movimiento_id_insumo'];
+                                <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+                                <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['movimiento_id_insumo'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
 $message = $__bag->first($__errorArgs[0]); ?> <div class="text-red-600 text-sm mt-1"><?php echo e($message); ?></div> <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
-unset($__errorArgs, $__bag); ?>
+unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
                             </div>
                             <div>
                                 <label class="block text-sm font-semibold text-slate-700 mb-2">Cantidad <span class="text-red-500">*</span></label>
@@ -826,14 +826,14 @@ $message = $__bag->first($__errorArgs[0]); ?> ring-2 ring-red-500 <?php unset($m
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>" placeholder="0.00">
-                                <?php $__errorArgs = ['movimiento_cantidad'];
+                                <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['movimiento_cantidad'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
 $message = $__bag->first($__errorArgs[0]); ?> <div class="text-red-600 text-sm mt-1"><?php echo e($message); ?></div> <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
-unset($__errorArgs, $__bag); ?>
+unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
                             </div>
                             <div>
                                 <label class="block text-sm font-semibold text-slate-700 mb-2">Motivo <span class="text-red-500">*</span></label>
@@ -849,14 +849,14 @@ unset($__errorArgs, $__bag); ?>">
                                     <option value="Mantenimiento">Mantenimiento</option>
                                     <option value="Varios">Varios</option>
                                 </select>
-                                <?php $__errorArgs = ['movimiento_motivo'];
+                                <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['movimiento_motivo'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
 $message = $__bag->first($__errorArgs[0]); ?> <div class="text-red-600 text-sm mt-1"><?php echo e($message); ?></div> <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
-unset($__errorArgs, $__bag); ?>
+unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
                             </div>
                             <div class="flex items-end">
                                 <button type="button" wire:click.prevent="agregarMovimiento" class="w-full px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" wire:loading.attr="disabled" wire:target="agregarMovimiento">
@@ -867,7 +867,7 @@ unset($__errorArgs, $__bag); ?>
                         </div>
                     </div>
 
-                    <?php if(count($movimientos) > 0): ?>
+                    <!--[if BLOCK]><![endif]--><?php if(count($movimientos) > 0): ?>
                         <div class="overflow-x-auto">
                             <table class="w-full border-collapse text-sm">
                                 <thead class="bg-slate-100 border-b border-slate-300">
@@ -880,7 +880,7 @@ unset($__errorArgs, $__bag); ?>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <?php $__currentLoopData = $movimientos; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $mov): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <!--[if BLOCK]><![endif]--><?php $__currentLoopData = $movimientos; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $mov): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                         <tr class="border-b border-slate-200 hover:bg-slate-50">
                                             <td class="px-4 py-2"><strong><?php echo e($mov['nombre_insumo']); ?></strong></td>
                                             <td class="px-4 py-2"><?php echo e(number_format($mov['cantidad'], 2)); ?> <?php echo e($mov['unidad'] ?? ''); ?></td>
@@ -892,7 +892,7 @@ unset($__errorArgs, $__bag); ?>
                                                 </button>
                                             </td>
                                         </tr>
-                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><!--[if ENDBLOCK]><![endif]-->
                                 </tbody>
                             </table>
                         </div>
@@ -900,7 +900,7 @@ unset($__errorArgs, $__bag); ?>
                         <div class="p-4 bg-slate-100 border border-slate-300 rounded-lg text-slate-700 text-sm">
                             <i class="bi bi-info-circle mr-2"></i> Sin movimientos registrados. Esta sección es opcional.
                         </div>
-                    <?php endif; ?>
+                    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
                 </div>
             </div>
 
@@ -935,7 +935,7 @@ unset($__errorArgs, $__bag); ?>
             </div>
         </div>
         <?php endif; ?>
-    <?php endif; ?>
+    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
 
     
     <div
@@ -1013,7 +1013,7 @@ unset($__errorArgs, $__bag); ?>
     </div>
 
     <!-- Pestaña 2: Listado -->
-    <?php if($tab_activo === 'listado'): ?>
+    <!--[if BLOCK]><![endif]--><?php if($tab_activo === 'listado'): ?>
         <div id="listado-partes" role="tabpanel" aria-labelledby="listado-tab" class="tab-pane-content">
             <div class="bg-white rounded-lg shadow-md overflow-hidden border border-slate-200">
                 <div class="bg-slate-100 px-6 py-4 border-b border-slate-200">
@@ -1031,7 +1031,7 @@ unset($__errorArgs, $__bag); ?>
                         </div>
                     </div>
                     
-                    <?php if($partes && count($partes) > 0): ?>
+                    <!--[if BLOCK]><![endif]--><?php if($partes && count($partes) > 0): ?>
                         <div class="overflow-x-auto">
                             <table class="w-full border-collapse text-sm">
                                 <thead class="bg-slate-100 border-b border-slate-300">
@@ -1045,17 +1045,17 @@ unset($__errorArgs, $__bag); ?>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <?php $__currentLoopData = $partes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $parte): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <!--[if BLOCK]><![endif]--><?php $__currentLoopData = $partes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $parte): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                         <tr class="border-b border-slate-200 hover:bg-slate-50">
                                             <td class="px-4 py-2"><span class="inline-block px-3 py-1 bg-slate-200 text-slate-800 text-xs font-medium rounded">#<?php echo e($parte->id_parte_diario); ?></span></td>
                                             <td class="px-4 py-2"><?php echo e($parte->lote?->propietario ?? '-'); ?></td>
                                             <td class="px-4 py-2"><?php echo e($parte->fecha ? \Carbon\Carbon::parse($parte->fecha)->format('d/m/Y') : '-'); ?></td>
                                             <td class="px-4 py-2">
-                                                <?php if($parte->es_dia_caido): ?>
+                                                <!--[if BLOCK]><![endif]--><?php if($parte->es_dia_caido): ?>
                                                     <span class="inline-block px-3 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded"><i class="bi bi-calendar-x mr-1"></i>Día Caído</span>
                                                 <?php else: ?>
                                                     <span class="inline-block px-3 py-1 bg-green-100 text-green-800 text-xs font-medium rounded"><i class="bi bi-truck mr-1"></i>Producción</span>
-                                                <?php endif; ?>
+                                                <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
                                             </td>
                                             <td class="px-4 py-2"><small><?php echo e($parte->observaciones ? \Illuminate\Support\Str::limit($parte->observaciones, 40) : '-'); ?></small></td>
                                             <td class="px-4 py-2 text-center">
@@ -1073,24 +1073,26 @@ unset($__errorArgs, $__bag); ?>
                                                 </div>
                                             </td>
                                         </tr>
-                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><!--[if ENDBLOCK]><![endif]-->
                                 </tbody>
                             </table>
                         </div>
-                        <?php if(isset($partes)): ?>
+                        <!--[if BLOCK]><![endif]--><?php if(isset($partes)): ?>
                             <div class="mt-6">
                                 <?php echo e($partes->links('pagination::tailwind')); ?>
 
                             </div>
-                        <?php endif; ?>
+                        <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
                     <?php else: ?>
                         <div class="text-center py-12">
                             <i class="bi bi-inbox text-6xl text-slate-300 block mb-4"></i>
                             <p class="text-slate-600">No hay partes diarios registrados.</p>
                         </div>
-                    <?php endif; ?>
+                    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
                 </div>
             </div>
         </div>
-    <?php endif; ?>
-</div><?php /**PATH D:\trabajo_final\rennova\resources\views\livewire\partes-diarios.blade.php ENDPATH**/ ?>
+    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+</div>
+
+<?php /**PATH D:\trabajo_final\rennova\resources\views/livewire/partes-diarios.blade.php ENDPATH**/ ?>

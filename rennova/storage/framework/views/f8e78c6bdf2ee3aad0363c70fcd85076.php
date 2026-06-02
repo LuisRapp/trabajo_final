@@ -5,9 +5,9 @@
         </h1>
         <div class="flex items-center gap-2">
             <button type="button"
-                wire:click="ejecutarDemo"
+                wire:click="ejecutarFlujoPresentacion"
                 class="inline-flex items-center gap-2 rounded-full bg-amber-100 px-3 py-1.5 text-xs font-semibold text-amber-800 transition hover:bg-amber-200">
-                <i class="bi bi-play-circle"></i> Demo mantenimiento
+                <i class="bi bi-play-circle"></i> Ejecutar flujo presentacion
             </button>
         </div>
     </div>
@@ -345,7 +345,7 @@ unset($__errorArgs, $__bag); ?>
     <?php endif; ?>
 
     <!-- CSS y Modal - preservados del original -->
-    <?php if (! $__env->hasRenderedOnce('7f41e0a2-6e48-4eb9-a49c-66ff4ec68d93')): $__env->markAsRenderedOnce('7f41e0a2-6e48-4eb9-a49c-66ff4ec68d93'); ?>
+    <?php if (! $__env->hasRenderedOnce('a1fdaded-f128-4638-82db-a56336fc27d3')): $__env->markAsRenderedOnce('a1fdaded-f128-4638-82db-a56336fc27d3'); ?>
         <style>
             .lw-modal-overlay {
                 position: fixed;

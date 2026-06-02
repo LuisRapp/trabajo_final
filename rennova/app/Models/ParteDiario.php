@@ -53,6 +53,11 @@ class ParteDiario extends Model implements Auditable
         return $this->hasMany(Carga::class, 'id_parte_diario');
     }
 
+    public function movimientosStock()
+    {
+        return $this->hasMany(MovimientoStock::class, 'id_parte_diario');
+    }
+
     /**
      * Calcular y guardar todos los costos del parte diario.
      * 
@@ -98,8 +103,14 @@ class ParteDiario extends Model implements Auditable
         // ===== B. COSTO INSUMOS =====
         // Buscar movimientos de stock tipo 'salida' vinculados a este parte
         $movimientos = MovimientoStock::where('tipo', 'salida')
-            ->whereDate('fecha', $this->fecha)
-            ->where('motivo', 'LIKE', 'Parte Diario #' . $this->id_parte_diario . '%')
+            ->where(function ($query) {
+                $query->where('id_parte_diario', $this->id_parte_diario)
+                    ->orWhere(function ($fallback) {
+                        $fallback->whereNull('id_parte_diario')
+                            ->whereDate('fecha', $this->fecha)
+                            ->where('motivo', 'LIKE', 'Parte Diario #' . $this->id_parte_diario . '%');
+                    });
+            })
             ->get();
 
         foreach ($movimientos as $mov) {

@@ -277,12 +277,6 @@ class PartesDiarios extends Component
         return $this->maquinariasFiltradaCache;
     }
 
-    public function updatedFecha()
-    {
-        // Cuando cambia la fecha del parte, recalcular jornal vigente por empleado
-        $this->actualizarJornalPorEmpleado();
-    }
-    
     public function updatedCargaPesoBruto()
     {
         $this->calcularPesoNeto();
@@ -875,9 +869,13 @@ class PartesDiarios extends Component
             // 3. Guardar Movimientos de Insumos (siempre se guardan)
             // Si estamos en edición, eliminar movimientos previos de este parte para no duplicar
             if ($this->parte_id) {
-                MovimientoStock::whereDate('fecha', $this->fecha)
-                    ->where('motivo', 'ILIKE', 'Parte Diario #' . $parteDiarioId . ' - %')
-                    ->delete();
+                MovimientoStock::where(function ($query) use ($parteDiarioId) {
+                    $query->where('id_parte_diario', $parteDiarioId)
+                        ->orWhere(function ($fallback) use ($parteDiarioId) {
+                            $fallback->whereNull('id_parte_diario')
+                                ->where('motivo', 'ILIKE', 'Parte Diario #' . $parteDiarioId . ' - %');
+                        });
+                })->delete();
             }
             
             // Registrar movimientos con cálculo FIFO automático para salidas
@@ -892,7 +890,8 @@ class PartesDiarios extends Component
                             $movData['id_insumo'],
                             $movData['cantidad'],
                             $motivo,
-                            $this->fecha
+                            $this->fecha,
+                            $parteDiarioId
                         );
                         
                         // Opcional: guardar detalle del costo FIFO en log para auditoría
@@ -1010,8 +1009,14 @@ class PartesDiarios extends Component
 
         // Cargar MOVIMIENTOS vinculados a este parte (por motivo y fecha)
         $this->movimientos = [];
-        $movs = MovimientoStock::whereDate('fecha', $this->fecha)
-            ->where('motivo', 'ILIKE', 'Parte Diario #' . $parte->id_parte_diario . ' - %')
+        $movs = MovimientoStock::where(function ($query) use ($parte) {
+                $query->where('id_parte_diario', $parte->id_parte_diario)
+                    ->orWhere(function ($fallback) use ($parte) {
+                        $fallback->whereNull('id_parte_diario')
+                            ->whereDate('fecha', $this->fecha)
+                            ->where('motivo', 'ILIKE', 'Parte Diario #' . $parte->id_parte_diario . ' - %');
+                    });
+            })
             ->get();
         
         // Agrupar múltiples movimientos FIFO del mismo insumo en uno solo para edición

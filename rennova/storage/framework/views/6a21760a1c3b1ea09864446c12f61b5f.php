@@ -340,6 +340,41 @@
                 </div>
             </a>
         </div>
+
+        
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="card modern-card h-100">
+                <div class="card-body p-2">
+                    <div class="text-center mb-2">
+                        <div class="kpi-icon" style="background: rgba(59, 130, 246, 0.12); margin: 0 auto;">
+                            <i class="bi bi-cloud-rain" style="color: #3B82F6; font-size: 1.2rem;"></i>
+                        </div>
+                        <h5 class="fw-bold mb-1 text-dark" style="font-size: 0.9rem;">Reporte de Lluvias</h5>
+                        <p class="text-muted mb-2" style="font-size: 0.7rem;">Exportar PDF</p>
+                    </div>
+                    <form action="<?php echo e(route('reportes.clima-lluvias.pdf')); ?>" method="GET">
+                        <div class="mb-2">
+                            <label class="form-label mb-1" style="font-size: 0.7rem;">Lote</label>
+                            <select name="id_lote" class="form-select form-select-sm">
+                                <option value="">Todos</option>
+                                <?php $__currentLoopData = $lotes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $lote): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <option value="<?php echo e($lote->id_lote); ?>"><?php echo e($lote->propietario); ?> - <?php echo e($lote->ubicacion); ?></option>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                            </select>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label mb-1" style="font-size: 0.7rem;">Desde</label>
+                            <input type="date" name="desde" max="<?php echo e(\Carbon\Carbon::now()->toDateString()); ?>" class="form-control form-control-sm" value="<?php echo e(\Carbon\Carbon::now()->subDays(30)->toDateString()); ?>">
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label mb-1" style="font-size: 0.7rem;">Hasta</label>
+                            <input type="date" name="hasta" max="<?php echo e(\Carbon\Carbon::now()->toDateString()); ?>" class="form-control form-control-sm" value="<?php echo e(\Carbon\Carbon::now()->toDateString()); ?>">
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-primary w-100">Descargar PDF</button>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
 
 <?php $__env->stopSection(); ?>

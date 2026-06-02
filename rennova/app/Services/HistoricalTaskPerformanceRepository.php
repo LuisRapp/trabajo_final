@@ -258,8 +258,8 @@ class HistoricalTaskPerformanceRepository
         // 3) asignar consumo a tarea: total_diario * (peso_tarea / peso_total_dia)
         // 4) mediana de asignaciones diarias para esa tarea
         //
-        // Nota: No existe FK directa entre movimiento_stocks y parte_diarios/tarea,
-        // por eso se hace asignación por fecha y ponderación.
+        // Nota: La FK a parte_diarios puede estar presente, pero este cálculo
+        // usa asignación por fecha y ponderación para cubrir historiales legacy.
         $sql = <<<'SQL'
             with daily_insumo as (
                 select ms.fecha, sum(ms.cantidad) as qty
