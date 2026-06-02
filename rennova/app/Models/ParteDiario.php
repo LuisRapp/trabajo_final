@@ -4,13 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Contracts\Auditable;
 use Carbon\Carbon;
 
 
 class ParteDiario extends Model implements Auditable
 {
-    use HasFactory, \OwenIt\Auditing\Auditable;
+    use HasFactory, \OwenIt\Auditing\Auditable, SoftDeletes;
 
     protected $table = 'parte_diarios';
     protected $primaryKey = 'id_parte_diario';
@@ -29,12 +30,12 @@ class ParteDiario extends Model implements Auditable
 
     public function lote()
     {
-        return $this->belongsTo(Lote::class, 'id_lote');
+        return $this->belongsTo(Lote::class, 'id_lote')->withTrashed();
     }
 
     public function empleados()
     {
-        return $this->belongsToMany(Empleado::class, 'parte_diario_empleado', 'id_parte_diario', 'id_empleado')->withTimestamps();
+        return $this->belongsToMany(Empleado::class, 'parte_diario_empleado', 'id_parte_diario', 'id_empleado')->withTrashed()->withTimestamps();
     }
 
     public function cargas()
