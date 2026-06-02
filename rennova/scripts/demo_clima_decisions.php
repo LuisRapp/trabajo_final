@@ -97,6 +97,30 @@ function getLoteDemo(): Lote
     return $lote;
 }
 
+function buildHourly(array $fechas, array $precipitaciones): array
+{
+    $times = [];
+    $values = [];
+
+    foreach ($fechas as $i => $fechaStr) {
+        $base = Carbon::parse($fechaStr)->startOfDay();
+        $mm = $precipitaciones[$i] ?? 0;
+        $diurnaTotal = min(6, $mm); // asegura lluvia diurna > 5mm si mm >= 10
+        $perHour = $diurnaTotal > 0 ? ($diurnaTotal / 12) : 0;
+
+        for ($h = 0; $h < 24; $h++) {
+            $times[] = $base->copy()->addHours($h)->format('Y-m-d\TH:00');
+            if ($h >= 6 && $h < 18) {
+                $values[] = $perHour;
+            } else {
+                $values[] = 0.0;
+            }
+        }
+    }
+
+    return ['time' => $times, 'precipitation' => $values];
+}
+
 function escenario(string $nombre, array $precipitaciones, array $nubosidades)
 {
     $svc = app(ClimaDecisionService::class);
@@ -104,11 +128,21 @@ function escenario(string $nombre, array $precipitaciones, array $nubosidades)
     $map = tap($ref->getMethod('mapearDiasInactivos'))->setAccessible(true);
 
     $fechas = collect(range(0, 6))->map(fn ($i) => now()->addDays($i)->toDateString())->all();
+    $hourly = buildHourly($fechas, $precipitaciones);
+    $vientos = array_fill(0, 7, 12.0);
+    $et0s = array_fill(0, 7, 3.2);
+
     $pronostico = [
         'daily' => [
             'time' => $fechas,
             'precipitation_sum' => $precipitaciones,
             'cloudcover_mean' => $nubosidades,
+            'wind_speed_10m_max' => $vientos,
+            'et0_fao_evapotranspiration' => $et0s,
+        ],
+        'hourly' => [
+            'time' => $hourly['time'],
+            'precipitation' => $hourly['precipitation'],
         ],
     ];
 

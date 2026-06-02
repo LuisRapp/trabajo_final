@@ -13,12 +13,14 @@
     <!-- Pestañas (Tabs) -->
     <ul class="nav nav-tabs mb-4" id="categoriasTabs" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="nuevo-tab" data-bs-toggle="tab" data-bs-target="#nuevo-categoria" type="button" role="tab">
+            @canany(['crear-categorias-madera', 'editar-categorias-madera'])
+            <button class="nav-link" id="nuevo-tab" data-bs-toggle="tab" data-bs-target="#nuevo-categoria" type="button" role="tab">
                 <i class="bi bi-plus-circle"></i> Nueva Categoría
             </button>
+            @endcanany
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="listado-tab" data-bs-toggle="tab" data-bs-target="#listado-categorias" type="button" role="tab">
+            <button class="nav-link active" id="listado-tab" data-bs-toggle="tab" data-bs-target="#listado-categorias" type="button" role="tab">
                 <i class="bi bi-list-ul"></i> Listado de Categorías
             </button>
         </li>
@@ -26,7 +28,8 @@
 
     <div class="tab-content" id="categoriasTabContent">
         <!-- Tab 1: Formulario Nueva Categoría -->
-        <div class="tab-pane fade show active" id="nuevo-categoria" role="tabpanel">
+        @canany(['crear-categorias-madera', 'editar-categorias-madera'])
+        <div class="tab-pane fade" id="nuevo-categoria" role="tabpanel">
             <div class="card shadow mb-4">
                 <div class="card-header bg-light">
                     <h5 class="mb-0"><i class="bi bi-{{ $categoria_id ? 'pencil-square' : 'plus-circle' }}"></i> {{ $categoria_id ? 'Editar Categoría' : 'Nueva Categoría' }}</h5>
@@ -51,17 +54,20 @@
                             <i class="bi bi-x-circle"></i> Cancelar
                         </button>
                     @endif
+                    @canany(['crear-categorias-madera', 'editar-categorias-madera'])
                     <button type="submit" class="btn btn-primary">
                         <i class="bi bi-check-circle"></i> {{ $categoria_id ? 'Actualizar' : 'Guardar' }}
                     </button>
+                    @endcanany
                 </div>
             </form>
         </div>
     </div>
 </div>
+        @endcanany
 
 <!-- Tab 2: Listado de Categorías -->
-<div class="tab-pane fade" id="listado-categorias" role="tabpanel">
+<div class="tab-pane fade show active" id="listado-categorias" role="tabpanel">
     <div class="card shadow">
         <div class="card-body">
             <!-- Buscador -->
@@ -93,12 +99,16 @@
                                 <td>{{ $categoria->descripcion ?? '-' }}</td>
                                 <td class="text-center">
                                     <div class="btn-group btn-group-sm" role="group">
+                                        @can('editar-categorias-madera')
                                         <button class="btn btn-outline-primary" wire:click="editar({{ $categoria->id_categoria_madera }})" onclick="cambiarAPestanaFormulario()" title="Editar">
                                             <i class="bi bi-pencil"></i>
                                         </button>
+                                        @endcan
+                                        @can('eliminar-categorias-madera')
                                         <button class="btn btn-outline-danger" wire:click="eliminar({{ $categoria->id_categoria_madera }})" onclick="return confirm('¿Está seguro de eliminar esta categoría?')" title="Eliminar">
                                             <i class="bi bi-trash"></i>
                                         </button>
+                                        @endcan
                                     </div>
                                 </td>
                             </tr>

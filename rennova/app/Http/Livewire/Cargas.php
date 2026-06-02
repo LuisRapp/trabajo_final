@@ -3,6 +3,7 @@
 namespace App\Http\Livewire;
 
 use Livewire\Component;
+use Livewire\WithPagination;
 use App\Models\Carga;
 use App\Models\Lote;
 use App\Models\CategoriaMadera;
@@ -10,10 +11,12 @@ use App\Models\ParteDiario;
 
 class Cargas extends Component
 {
-    public $cargas = [];
+    use WithPagination;
     public $lotes = [];
     public $categorias = [];
     public $partes = [];
+    public $tab_activo = 'listado';
+    public $pagina = 15;
 
     public $carga_id, $id_lote, $id_categoria_madera, $id_chofer, $id_parte_diario, $ticket, $peso_bruto, $tara, $peso_neto, $destino, $fecha_carga;
     public $busqueda = '';
@@ -36,10 +39,9 @@ class Cargas extends Component
         $this->lotes = Lote::all();
         $this->categorias = CategoriaMadera::all();
         $this->partes = ParteDiario::all();
-        $this->cargarCargas();
     }
 
-    public function cargarCargas()
+    public function getCargas()
     {
         $query = Carga::with(['lote', 'parteDiario', 'categoriaMadera', 'chofer']);
 
@@ -65,18 +67,19 @@ class Cargas extends Component
             });
         }
 
-        $this->cargas = $query->orderBy('id_carga', 'desc')->get();
+        return $query->orderBy('id_carga', 'desc')->paginate($this->pagina);
     }
 
     public function render()
     {
-        $this->cargarCargas();
-        return view('livewire.cargas');
+        return view('livewire.cargas', [
+            'cargas' => $this->getCargas()
+        ]);
     }
 
     public function updatedBusqueda()
     {
-        $this->cargarCargas();
+        $this->resetPage();
     }
 
     public function guardar()
@@ -112,9 +115,9 @@ class Cargas extends Component
                 'fecha_carga' => $this->fecha_carga,
             ]
         );
-        $this->cargarCargas();
         session()->flash('message', $this->carga_id ? 'Carga actualizada correctamente.' : 'Carga creada correctamente.');
         $this->resetCampos();
+        $this->resetPage();
         $this->dispatch('cargaGuardada');
     }
 
@@ -137,9 +140,9 @@ class Cargas extends Component
     public function eliminar($id)
     {
         Carga::findOrFail($id)->delete();
-        $this->cargarCargas();
         session()->flash('message', 'Carga eliminada correctamente.');
         $this->resetCampos();
+        $this->resetPage();
     }
 
     public function resetCampos()

@@ -19,13 +19,32 @@ return new class extends Migration
         });
 
         // Migrar datos: copiar umbral_toneladas del tipo_maquinaria a cada maquinaria
-        DB::statement("
-            UPDATE maquinarias m
-            SET umbral_toneladas = tm.umbral_toneladas
-            FROM tipo_maquinarias tm
-            WHERE m.id_tipo_maquinaria = tm.id_tipo_maquinaria
-            AND tm.umbral_toneladas IS NOT NULL
-        ");
+        $driver = DB::connection()->getDriverName();
+
+        if ($driver === 'sqlite') {
+            DB::statement(<<<'SQL'
+                UPDATE maquinarias
+                SET umbral_toneladas = (
+                    SELECT tm.umbral_toneladas
+                    FROM tipo_maquinarias tm
+                    WHERE tm.id_tipo_maquinaria = maquinarias.id_tipo_maquinaria
+                )
+                WHERE EXISTS (
+                    SELECT 1
+                    FROM tipo_maquinarias tm
+                    WHERE tm.id_tipo_maquinaria = maquinarias.id_tipo_maquinaria
+                      AND tm.umbral_toneladas IS NOT NULL
+                )
+            SQL);
+        } else {
+            DB::statement(<<<'SQL'
+                UPDATE maquinarias m
+                SET umbral_toneladas = tm.umbral_toneladas
+                FROM tipo_maquinarias tm
+                WHERE m.id_tipo_maquinaria = tm.id_tipo_maquinaria
+                AND tm.umbral_toneladas IS NOT NULL
+            SQL);
+        }
     }
 
     /**

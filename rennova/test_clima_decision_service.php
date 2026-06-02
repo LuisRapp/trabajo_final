@@ -79,16 +79,26 @@ try {
         if (isset($resultado1['dias_detalle'])) {
             echo "📅 PRONÓSTICO DETALLADO (7 DÍAS):\n";
             echo "\n";
-            printf("%-12s %-10s %-8s %-10s %-15s\n", "Fecha", "Día", "Lluvia", "Nubosidad", "Estado");
-            echo str_repeat("─", 63) . "\n";
+            printf("%-12s %-10s %-8s %-10s %-8s %-6s %-10s %-18s\n", "Fecha", "Día", "Lluvia", "Lluvia 6-18", "Viento", "ET0", "Nubosidad", "Estado");
+            echo str_repeat("─", 110) . "\n";
             
             foreach ($resultado1['dias_detalle'] as $dia) {
-                $iconoEstado = $dia['estado'] === 'OPERATIVO' ? '✅' : '⚠️ ';
+                $iconoEstado = match ($dia['estado']) {
+                    'OPERATIVO' => '✅',
+                    'OPERATIVO_CONDICIONAL' => '🟡',
+                    default => '⚠️ ',
+                };
+                $lluviaDiurna = $dia['lluvia_diurna_mm'] ?? 0;
+                $vientoMax = $dia['viento_max'] ?? 0;
+                $et0 = $dia['et0'] ?? 0;
                 printf(
-                    "%-12s %-10s %6.1fmm %8d%% %s %s\n",
+                    "%-12s %-10s %6.1fmm %10.1fmm %6.1f %6.1f %8d%% %s %s\n",
                     $dia['fecha_str'],
                     substr($dia['dia_semana'], 0, 9),
                     $dia['precipitacion_mm'],
+                    $lluviaDiurna,
+                    $vientoMax,
+                    $et0,
                     $dia['nubosidad'],
                     $iconoEstado,
                     $dia['estado']

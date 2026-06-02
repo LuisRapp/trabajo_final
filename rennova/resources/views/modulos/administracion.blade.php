@@ -13,6 +13,7 @@
 
     <div class="row g-4">
         <!-- Usuarios -->
+        @can('gestionar-usuarios')
         <div class="col-12 col-md-6 col-xl-4">
             <div class="card h-100 border-0 shadow-sm hover-elevate">
                 <div class="card-body p-4">
@@ -31,8 +32,10 @@
                 </div>
             </div>
         </div>
+        @endcan
 
         <!-- Roles y Permisos -->
+        @can('gestionar-permisos')
         <div class="col-12 col-md-6 col-xl-4">
             <div class="card h-100 border-0 shadow-sm hover-elevate">
                 <div class="card-body p-4">
@@ -51,8 +54,10 @@
                 </div>
             </div>
         </div>
+        @endcan
 
         <!-- Auditorías -->
+        @can('ver-auditoria')
         <div class="col-12 col-md-6 col-xl-4">
             <div class="card h-100 border-0 shadow-sm hover-elevate">
                 <div class="card-body p-4">
@@ -71,6 +76,7 @@
                 </div>
             </div>
         </div>
+        @endcan
 
         <!-- Configuración de Mantenimiento -->
         @can('configurar-mantenimiento')

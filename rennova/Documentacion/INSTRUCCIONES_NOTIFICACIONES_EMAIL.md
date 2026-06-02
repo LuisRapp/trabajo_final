@@ -1,6 +1,8 @@
-# 📧 Sistema de Notificaciones por Email - Mantenimiento Preventivo
+#  Sistema de Notificaciones por Email - Mantenimiento Preventivo
 
-## 🎯 Funcionalidad Implementada
+Ultima actualizacion: 8 de febrero de 2026.
+
+##  Funcionalidad Implementada
 
 El sistema automáticamente:
 
@@ -10,7 +12,7 @@ El sistema automáticamente:
    - Se genera una nueva orden de mantenimiento automáticamente
    - Falta stock de insumos para el kit de mantenimiento
 
-## 📋 Archivos Principales
+##  Archivos Principales
 
 - **Command**: `app/Console/Commands/CheckMantenimientoUmbrales.php`
 - **Notificaciones**:
@@ -18,7 +20,7 @@ El sistema automáticamente:
   - `app/Notifications/StockInsuficiente.php`
 - **Scheduler**: `routes/console.php` (configurado para ejecutar diariamente)
 
-## ⚙️ Configuración
+## ️ Configuración
 
 ### 1. Configurar Email en `.env`
 
@@ -65,7 +67,7 @@ O en `config/mail.php`:
 'admin_email' => env('MAIL_ADMIN_EMAIL', 'admin@example.com'),
 ```
 
-## 🧪 Pruebas
+##  Pruebas
 
 ### Probar Manualmente el Comando
 
@@ -102,7 +104,7 @@ php artisan mantenimiento:check-umbrales
 tail -f storage/logs/laravel.log | grep -A 50 "MantenimientoCreado"
 ```
 
-## 📅 Programación Automática (Scheduler)
+##  Programación Automática (Scheduler)
 
 El comando se ejecuta automáticamente **todos los días a las 2:00 AM**.
 
@@ -128,7 +130,7 @@ php artisan schedule:run
 php artisan schedule:list
 ```
 
-## 📧 Contenido de las Notificaciones
+##  Contenido de las Notificaciones
 
 ### 1. Notificación: Mantenimiento Creado
 **Asunto**: Nueva Orden de Mantenimiento Generada
@@ -141,7 +143,7 @@ php artisan schedule:list
 - Enlace directo a la orden
 
 ### 2. Notificación: Stock Insuficiente
-**Asunto**: ⚠️ Advertencia: Stock Insuficiente para Mantenimientos
+**Asunto**: ️ Advertencia: Stock Insuficiente para Mantenimientos
 
 **Contenido**:
 - Lista de órdenes generadas
@@ -149,7 +151,7 @@ php artisan schedule:list
 - Cantidad faltante vs disponible
 - Enlace a la gestión de órdenes
 
-## 🔍 Lógica del Sistema
+##  Lógica del Sistema
 
 ### Flujo de Verificación:
 
@@ -179,7 +181,7 @@ php artisan schedule:list
 7. Enviar email(s) al administrador
 ```
 
-## 🛠️ Troubleshooting
+## ️ Troubleshooting
 
 ### Problema: No se envían emails
 
@@ -209,7 +211,7 @@ php artisan schedule:list
 3. Verificar que la hora del servidor sea correcta
 4. Revisar logs: `storage/logs/laravel.log`
 
-## 📊 Monitoreo
+##  Monitoreo
 
 ### Ver logs en tiempo real:
 ```bash
@@ -243,7 +245,7 @@ AND m.estado = 'operativa'
 ORDER BY porcentaje DESC;
 ```
 
-## 🎯 Próximos Pasos Opcionales
+##  Próximos Pasos Opcionales
 
 1. **Múltiples destinatarios**: Modificar para enviar a varios administradores
 2. **Notificaciones en la app**: Agregar notificaciones in-app además de email
@@ -251,7 +253,7 @@ ORDER BY porcentaje DESC;
 4. **Plantillas personalizadas**: Crear templates HTML más atractivos
 5. **Dashboard de alertas**: Visualizar próximas máquinas que alcanzarán umbral
 
-## 📞 Contacto
+##  Contacto
 
 Para dudas sobre el sistema de notificaciones, consultar:
 - Documentación de Laravel Notifications: https://laravel.com/docs/notifications

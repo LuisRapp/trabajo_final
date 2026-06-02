@@ -7,6 +7,9 @@ use App\Models\Empleado;
 use App\Models\Recibo;
 use App\Models\Adelanto;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Mail;
+use Dompdf\Dompdf;
+use Dompdf\Options;
 
 class LiquidacionPagos extends Component
 {
@@ -30,6 +33,7 @@ class LiquidacionPagos extends Component
     // Control de flujo
     public $mostrar_liquidacion = false;
     public $recibo_generado = false;
+    public $liquidar_todos = false;
 
     protected $rules = [
         'id_empleado' => 'required|exists:empleados,id_empleado',
@@ -64,6 +68,11 @@ class LiquidacionPagos extends Component
 
     public function calcularLiquidacion()
     {
+        if ($this->liquidar_todos) {
+            $this->liquidarTodos();
+            return;
+        }
+
         $this->validate([
             'id_empleado' => 'required|exists:empleados,id_empleado',
             'fecha_inicio' => 'required|date',
@@ -114,6 +123,128 @@ class LiquidacionPagos extends Component
 
         $this->mostrar_liquidacion = true;
         $this->recibo_generado = false;
+    }
+
+    public function liquidarTodos()
+    {
+        $this->validate([
+            'fecha_inicio' => 'required|date',
+            'fecha_fin' => 'required|date|after_or_equal:fecha_inicio',
+        ]);
+
+        $empleados = Empleado::with('rolLaboral')
+            ->whereNull('fecha_fin_actividades')
+            ->orderBy('apellido')
+            ->get();
+
+        if ($empleados->isEmpty()) {
+            session()->flash('error', 'No hay empleados activos para liquidar.');
+            return;
+        }
+
+        $periodo = Carbon::parse($this->fecha_inicio)->format('d/m/Y') . ' a ' . Carbon::parse($this->fecha_fin)->format('d/m/Y');
+        $recibosParaEmail = [];
+
+        try {
+            \DB::beginTransaction();
+                    $generadoPor = auth()->user()->name ?? auth()->user()->email ?? 'Usuario';
+                    $fechaGeneracion = Carbon::now()->format('d/m/Y H:i');
+
+            foreach ($empleados as $empleado) {
+                $calculo = $empleado->calcularPagoRango($this->fecha_inicio, $this->fecha_fin);
+
+                $adelantosPendientes = Adelanto::where('id_empleado', $empleado->id_empleado)
+                    ->where('estado', 'pendiente')
+                    ->whereBetween('fecha_emision', [$this->fecha_inicio, $this->fecha_fin])
+                    ->where('activo', true)
+                    ->get();
+
+                $totalAdelantos = $adelantosPendientes->sum('monto');
+
+                $montoBruto = $calculo['total_pagar_final'];
+                $descuentos = $totalAdelantos;
+                $montoNeto = max(0, $montoBruto - $descuentos);
+
+                $obs_base = sprintf(
+                    'Liquidación período %s a %s - %d días caídos + %.2f ton',
+                    Carbon::parse($this->fecha_inicio)->format('d/m/Y'),
+                    Carbon::parse($this->fecha_fin)->format('d/m/Y'),
+                    $calculo['cantidad_dias_caidos'],
+                    $calculo['total_peso_toneladas'] ?? 0
+                );
+
+                if ($totalAdelantos > 0) {
+                    $obs_base .= sprintf(' | Adelantos: $%.2f', $totalAdelantos);
+                }
+
+                $recibo = Recibo::create([
+                    'id_empleado' => $empleado->id_empleado,
+                    'fecha_emision' => now(),
+                    'monto_bruto' => $montoBruto,
+                    'descuentos' => $descuentos,
+                    'monto' => $montoNeto,
+                    'observaciones' => $obs_base,
+                    'activo' => true,
+                ]);
+
+                if ($adelantosPendientes->isNotEmpty()) {
+                    foreach ($adelantosPendientes as $adelanto) {
+                        $adelanto->estado = 'pagado';
+                        $adelanto->save();
+                    }
+                }
+
+                $recibosParaEmail[] = [
+                    'recibo' => $recibo,
+                    'empleado_nombre' => trim(($empleado->apellido ?? '') . ' ' . ($empleado->nombre ?? '')) ?: 'N/A',
+                    'empleado_rol' => $empleado->rolLaboral->nombre ?? $empleado->rolLaboral->descripcion ?? 'N/A',
+                    'empleado_dni' => $empleado->dni ?? null,
+                ];
+            }
+
+            \DB::commit();
+
+            try {
+                $options = new Options();
+                $options->set('defaultFont', 'DejaVu Sans');
+
+                $body = "Se generaron " . count($recibosParaEmail) . " comprobantes de pago.\n";
+                $body .= "Período: {$periodo}\n";
+
+                        Mail::raw($body, function ($message) use ($recibosParaEmail, $periodo, $options, $generadoPor, $fechaGeneracion) {
+                    $message->to('contabilidad@rennova.com')
+                        ->subject('Comprobantes de pago - Liquidación masiva (' . $periodo . ')');
+
+                    foreach ($recibosParaEmail as $item) {
+                        $dompdf = new Dompdf($options);
+                        $html = view('recibos.pdf.comprobante', [
+                            'recibo' => $item['recibo'],
+                            'empleado_nombre' => $item['empleado_nombre'],
+                            'empleado_rol' => $item['empleado_rol'],
+                            'empleado_dni' => $item['empleado_dni'],
+                            'periodo' => $periodo,
+                                    'generado_por' => $generadoPor,
+                                    'fecha_generacion' => $fechaGeneracion,
+                        ])->render();
+                        $dompdf->loadHtml($html, 'UTF-8');
+                        $dompdf->setPaper('A4', 'portrait');
+                        $dompdf->render();
+
+                        $pdfOutput = $dompdf->output();
+                        $pdfFilename = 'comprobante-recibo-' . $item['recibo']->id_recibo . '.pdf';
+                        $message->attachData($pdfOutput, $pdfFilename, ['mime' => 'application/pdf']);
+                    }
+                });
+            } catch (\Throwable $mailException) {
+                session()->flash('error', 'Se generaron los recibos, pero no se pudo enviar el correo a contabilidad.');
+            }
+
+            session()->flash('message', 'Se generaron ' . count($recibosParaEmail) . ' recibos y se enviaron a contabilidad.');
+            $this->dispatch('reciboGenerado');
+        } catch (\Throwable $e) {
+            \DB::rollBack();
+            session()->flash('error', 'Error al liquidar a todos: ' . $e->getMessage());
+        }
     }
 
     public function updatedDescuentos()
@@ -167,6 +298,57 @@ class LiquidacionPagos extends Component
             $mensaje = 'Recibo #' . $recibo->id_recibo . ' generado correctamente.';
             if (count($this->adelantos_pendientes) > 0) {
                 $mensaje .= ' Se marcaron ' . count($this->adelantos_pendientes) . ' adelanto(s) como pagado(s).';
+            }
+
+            try {
+                $empleadoNombre = trim(($this->empleado_seleccionado->apellido ?? '') . ' ' . ($this->empleado_seleccionado->nombre ?? ''));
+                $empleadoRol = $this->empleado_seleccionado->rolLaboral->nombre ?? $this->empleado_seleccionado->rolLaboral->descripcion ?? 'N/A';
+                $empleadoDni = $this->empleado_seleccionado->dni ?? null;
+                $periodo = Carbon::parse($this->fecha_inicio)->format('d/m/Y') . ' a ' . Carbon::parse($this->fecha_fin)->format('d/m/Y');
+
+                $generadoPor = auth()->user()->name ?? auth()->user()->email ?? 'Usuario';
+                $fechaGeneracion = Carbon::now()->format('d/m/Y H:i');
+
+                $options = new Options();
+                $options->set('defaultFont', 'DejaVu Sans');
+                $dompdf = new Dompdf($options);
+                $html = view('recibos.pdf.comprobante', [
+                    'recibo' => $recibo,
+                    'empleado_nombre' => $empleadoNombre ?: 'N/A',
+                    'empleado_rol' => $empleadoRol,
+                    'empleado_dni' => $empleadoDni,
+                    'periodo' => $periodo,
+                    'generado_por' => $generadoPor,
+                    'fecha_generacion' => $fechaGeneracion,
+                ])->render();
+                $dompdf->loadHtml($html, 'UTF-8');
+                $dompdf->setPaper('A4', 'portrait');
+                $dompdf->render();
+                $pdfOutput = $dompdf->output();
+                $pdfFilename = 'comprobante-recibo-' . $recibo->id_recibo . '.pdf';
+
+                $body = "Se generó un comprobante de pago.\n\n";
+                $body .= "Recibo: #{$recibo->id_recibo}\n";
+                $body .= "Empleado: " . ($empleadoNombre ?: 'N/A') . "\n";
+                $body .= "Período: {$periodo}\n";
+                $body .= "Monto bruto: ARS " . number_format($this->monto_bruto, 2) . "\n";
+                $body .= "Descuentos: ARS " . number_format($this->descuentos ?? 0, 2) . "\n";
+                $body .= "Monto neto: ARS " . number_format($this->monto_neto, 2) . "\n";
+                $body .= "Detalle: " . ($this->observaciones ?? 'Sin detalle') . "\n";
+                $body .= "Fecha emisión: " . Carbon::parse($recibo->fecha_emision)->format('d/m/Y H:i') . "\n";
+
+                Mail::raw($body, function ($message) use ($recibo, $empleadoNombre, $pdfOutput, $pdfFilename) {
+                    $asunto = 'Comprobante de pago - Recibo #' . $recibo->id_recibo;
+                    if (!empty($empleadoNombre)) {
+                        $asunto .= ' - ' . $empleadoNombre;
+                    }
+
+                    $message->to('contabilidad@rennova.com')
+                        ->subject($asunto)
+                        ->attachData($pdfOutput, $pdfFilename, ['mime' => 'application/pdf']);
+                });
+            } catch (\Throwable $mailException) {
+                session()->flash('error', 'El recibo se generó, pero no se pudo enviar el correo a contabilidad.');
             }
             
             session()->flash('message', $mensaje);

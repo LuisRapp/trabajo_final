@@ -13,12 +13,12 @@
     <!-- Pestañas (Tabs) -->
     <ul class="nav nav-tabs mb-4" id="kitsTabs" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="nuevo-tab" data-bs-toggle="tab" data-bs-target="#nuevo-kit" type="button" role="tab">
+            <button class="nav-link" id="nuevo-tab" data-bs-toggle="tab" data-bs-target="#nuevo-kit" type="button" role="tab">
                 <i class="bi bi-plus-circle"></i> Nuevo Kit
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="listado-tab" data-bs-toggle="tab" data-bs-target="#listado-kits" type="button" role="tab">
+            <button class="nav-link active" id="listado-tab" data-bs-toggle="tab" data-bs-target="#listado-kits" type="button" role="tab">
                 <i class="bi bi-list-ul"></i> Listado de Kits
             </button>
         </li>
@@ -26,7 +26,7 @@
 
     <div class="tab-content" id="kitsTabContent">
         <!-- Tab 1: Formulario Nuevo Kit -->
-        <div class="tab-pane fade show active" id="nuevo-kit" role="tabpanel">
+        <div class="tab-pane fade" id="nuevo-kit" role="tabpanel">
             <div class="card shadow mb-4">
                 <div class="card-header bg-light">
                     <h5 class="mb-0"><i class="bi bi-{{ $kit_id ? 'pencil-square' : 'plus-circle' }}"></i> {{ $kit_id ? 'Editar Kit' : 'Nuevo Kit' }}</h5>
@@ -66,7 +66,7 @@
         </div>
 
         <!-- Tab 2: Listado de Kits -->
-        <div class="tab-pane fade" id="listado-kits" role="tabpanel">
+        <div class="tab-pane fade show active" id="listado-kits" role="tabpanel">
             <div class="card shadow">
                 <div class="card-body">
                     <!-- Buscador -->

@@ -1,6 +1,8 @@
-# Sistema de Análisis Climático - Guía Rápida
+# Sistema de Analisis Climatico - Guia Rapida
 
-## 🚀 Inicio Rápido
+Ultima actualizacion: 8 de febrero de 2026.
+
+##  Inicio Rápido
 
 ### 1. Agregar coordenadas a un lote
 
@@ -23,37 +25,34 @@ php artisan clima:analizar --dias=3
 ### 3. Probar sistema
 
 ```bash
-# Test básico (agrega coordenadas y ejecuta comando)
-php test_analisis_clima.php
-
-# Test con múltiples zonas
-php test_alerta_clima_forzada.php
+# Ejecutar analisis y revisar salida en consola y logs
+php artisan clima:analizar
 ```
 
 ---
 
-## 📋 Output Esperado
+##  Output Esperado
 
 ### Sin alertas:
 ```
-🌦️  Iniciando análisis climático para los próximos 7 días...
-📍 Analizando 1 lote(s) con coordenadas GPS...
-🌲 Lote: Rapp - Las tunas
-   ✅ Sin riesgo de lluvia significativa (< 10mm)
+️  Iniciando análisis climático para los próximos 7 días...
+ Analizando 1 lote(s) con coordenadas GPS...
+ Lote: Rapp - Las tunas
+    Sin riesgo de lluvia significativa (< 10mm)
 ```
 
 ### Con alertas:
 ```
-⚠️  ALERTA CLIMÁTICA - Lote Rapp (Las tunas)
-    📅 Fecha: 05/12/2025
-    🌧️  Lluvia pronosticada: 15.3 mm
-    💰 Riesgo de pérdida: $12,450.00
-    💡 Sugerencia: Aumentar producción hoy para compensar.
+️  ALERTA CLIMÁTICA - Lote Rapp (Las tunas)
+     Fecha: 05/12/2025
+    ️  Lluvia pronosticada: 15.3 mm
+     Riesgo de pérdida: $12,450.00
+     Sugerencia: Aumentar producción hoy para compensar.
 ```
 
 ---
 
-## 🔧 Configuración
+##  Configuración
 
 | Componente | Ubicación |
 |-----------|-----------|
@@ -66,7 +65,7 @@ php test_alerta_clima_forzada.php
 
 ---
 
-## 📊 Lógica de Cálculo
+##  Lógica de Cálculo
 
 ```
 Costo Día Caído = Σ(Jornal Empleados Activos) + Σ(Alquiler Maquinaria × 10 ton)
@@ -76,7 +75,7 @@ Costo Día Caído = Σ(Jornal Empleados Activos) + Σ(Alquiler Maquinaria × 10 
 
 ---
 
-## 🌐 API Utilizada
+##  API Utilizada
 
 **Open-Meteo Forecast API**  
 Endpoint: `https://api.open-meteo.com/v1/forecast`
@@ -91,19 +90,12 @@ Documentación: https://open-meteo.com/en/docs
 
 ---
 
-## 🔄 Automatización (Opcional)
+##  Automatización (Opcional)
 
 ### Laravel Scheduler
 
-Editar `app/Console/Kernel.php`:
-
-```php
-protected function schedule(Schedule $schedule)
-{
-    $schedule->command('clima:analizar --dias=7')
-             ->dailyAt('06:00');
-}
-```
+Las tareas se configuran en `routes/console.php`. Ver tambien:
+`TAREAS_PROGRAMADAS_SCHEDULER.md`.
 
 Configurar cron:
 ```bash
@@ -112,7 +104,7 @@ Configurar cron:
 
 ---
 
-## 🐛 Troubleshooting
+##  Troubleshooting
 
 | Problema | Solución |
 |----------|----------|
@@ -122,20 +114,20 @@ Configurar cron:
 
 ---
 
-## 📚 Documentación Completa
+##  Documentación Completa
 
 Ver archivo: `SISTEMA_ANALISIS_CLIMATICO.md`
 
 ---
 
-## ✅ Checklist
+##  Checklist
 
 - [x] Migración ejecutada
 - [x] Modelo actualizado
 - [x] UI funcional
 - [x] Comando implementado
 - [x] API integrada
-- [x] Tests creados
+- [ ] Tests dedicados
 - [x] Documentación completa
 - [ ] Automatización configurada (manual)
 - [ ] Notificaciones email (opcional)

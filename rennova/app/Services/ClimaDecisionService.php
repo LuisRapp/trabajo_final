@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\ClimaDiaLote;
 use App\Models\Lote;
 use App\Models\Maquinaria;
 use App\Models\ParteDiario;
@@ -22,6 +23,7 @@ class ClimaDecisionService
     const UMBRAL_NUBOSIDAD = 60; // %
     const MAX_AUMENTO_PRODUCCION = 1.25; // Máximo 25% extra
     const DIAS_FORECAST = 7;
+    const TIMEZONE = 'America/Argentina/Buenos_Aires';
 
     /**
      * Método principal: Analiza clima y genera recomendaciones
@@ -41,6 +43,7 @@ class ClimaDecisionService
         try {
             // Validar que el lote tenga coordenadas
             if (!$lote->latitud || !$lote->longitud) {
+                $this->persistirFallback($lote, 'Lote sin coordenadas GPS configuradas.');
                 return [
                     'success' => false,
                     'error' => 'El lote no tiene coordenadas GPS configuradas.',
@@ -52,6 +55,7 @@ class ClimaDecisionService
             $pronostico = $this->obtenerPronosticoCompleto($lote);
 
             if (!$pronostico) {
+                $this->persistirFallback($lote, 'No se pudo obtener el pronÃ³stico climÃ¡tico.');
                 return [
                     'success' => false,
                     'error' => 'No se pudo obtener el pronóstico climático.',
@@ -61,6 +65,7 @@ class ClimaDecisionService
 
             // 2. PASO A: Mapeo de Días Inactivos (Futuro)
             $analisisDias = $this->mapearDiasInactivos($pronostico);
+            $this->persistirDiasDetalle($lote, $analisisDias['dias_detalle'], 'api', null);
 
             // 3. Determinar estrategia según ventanas operativas disponibles
             return $this->determinarEstrategia($lote, $analisisDias);
@@ -82,7 +87,7 @@ class ClimaDecisionService
 
     /**
      * Obtiene pronóstico completo de Open-Meteo API
-     * Incluye precipitation_sum y cloudcover_mean para 7 días
+     * Incluye daily + hourly (precipitación horaria) para 7 días
      */
     private function obtenerPronosticoCompleto(Lote $lote): ?array
     {
@@ -91,8 +96,9 @@ class ClimaDecisionService
         $params = [
             'latitude' => $lote->latitud,
             'longitude' => $lote->longitud,
-            'daily' => 'precipitation_sum,cloudcover_mean',
-            'timezone' => 'America/Argentina/Buenos_Aires',
+            'daily' => 'precipitation_sum,cloudcover_mean,wind_speed_10m_max,et0_fao_evapotranspiration',
+            'hourly' => 'precipitation',
+            'timezone' => self::TIMEZONE,
             'forecast_days' => self::DIAS_FORECAST,
         ];
 
@@ -115,70 +121,131 @@ class ClimaDecisionService
     }
 
     /**
-     * PASO A: Mapeo de Días Inactivos
+     * PASO A: Mapeo de Días Inactivos (actualizado)
      * 
-     * Analiza los 7 días y marca como INACTIVO:
-     * 1. Días con lluvia > 10mm
-     * 2. Días siguientes a lluvia con nubosidad > 60% (barro)
+     * Reglas clave para reducir falsos positivos:
+     * 1) Granularidad horaria: si precipitación diaria > 10mm, solo es INACTIVO
+     *    si la lluvia acumulada entre 06:00 y 18:00 supera 5mm.
+     * 2) Saturación de suelo: Saturacion_Index = Lluvia_Hoy + (Lluvia_Ayer * 0.5)
+     *    Riesgo si > 12mm.
+     * 3) Factor de secado: si viento_max > 15 km/h O ET0 > 4mm, puede ser OPERATIVO
+     *    aunque esté nublado. Solo INACTIVO si saturación alta + nubosidad alta + poco viento.
      * 
      * @return array [
      *   'dias_detalle' => array de cada día con estado,
      *   'total_dias_perdidos' => int,
      *   'volumen_riesgo' => float,
-     *   'dia_cero_index' => int|null (primer día de lluvia),
-     *   'dias_operativos_previos' => int (días secos antes del Día Cero)
+     *   'dia_cero_index' => int|null (primer día INACTIVO por clima),
+     *   'dias_operativos_previos' => int (días operativos antes del Día Cero)
      * ]
      */
-    private function mapearDiasInactivos(array $pronostico): array
+    private function mapearDiasInactivos(array $pronostico, bool $ignorarFinDeSemana = false): array
     {
         $fechas = $pronostico['daily']['time'] ?? [];
         $precipitaciones = $pronostico['daily']['precipitation_sum'] ?? [];
-        $nubosidades = $pronostico['daily']['cloudcover_mean'] ?? [];
+        $nubosidades = $pronostico['daily']['cloudcover_mean']
+            ?? $pronostico['daily']['cloud_cover_mean']
+            ?? [];
+        $vientosMax = $pronostico['daily']['wind_speed_10m_max'] ?? [];
+        $et0s = $pronostico['daily']['et0_fao_evapotranspiration'] ?? [];
+
+        $horas = $pronostico['hourly']['time'] ?? [];
+        $precipitacionHoraria = $pronostico['hourly']['precipitation'] ?? [];
 
         $diasDetalle = [];
         $diaCeroIndex = null;
         $totalDiasPerdidos = 0;
-        $huboDiaLluvia = false;
+
+        // Pre-procesar lluvia por franjas para evitar O(n^2)
+        $lluviaPorFecha = [];
+        foreach ($horas as $hIndex => $horaStr) {
+            $fechaKey = substr((string) $horaStr, 0, 10);
+            $hour = (int) substr((string) $horaStr, 11, 2);
+            $mm = $precipitacionHoraria[$hIndex] ?? 0;
+
+            if (!isset($lluviaPorFecha[$fechaKey])) {
+                $lluviaPorFecha[$fechaKey] = ['madrugada' => 0, 'diurna' => 0, 'nocturna' => 0];
+            }
+
+            if ($hour >= 0 && $hour < 6) {
+                $lluviaPorFecha[$fechaKey]['madrugada'] += $mm;
+            } elseif ($hour >= 6 && $hour < 18) {
+                $lluviaPorFecha[$fechaKey]['diurna'] += $mm;
+            } else {
+                $lluviaPorFecha[$fechaKey]['nocturna'] += $mm;
+            }
+        }
 
         foreach ($fechas as $index => $fechaStr) {
             $fecha = Carbon::parse($fechaStr);
             $mm = $precipitaciones[$index] ?? 0;
             $cloudCover = $nubosidades[$index] ?? 0;
+            $vientoMax = $vientosMax[$index] ?? 0;
+            $et0 = $et0s[$index] ?? 0;
             $esHoy = $fecha->isToday();
             $esFinDeSemana = $fecha->isWeekend(); // Sábado (6) o Domingo (0)
+
+            $fechaKey = $fecha->toDateString();
+            $madrugada = $lluviaPorFecha[$fechaKey]['madrugada'] ?? null;
+            $lluviaDiurna = $lluviaPorFecha[$fechaKey]['diurna'] ?? null;
+            $lluviaNocturna = $lluviaPorFecha[$fechaKey]['nocturna'] ?? null;
+            $hasHourly = array_key_exists($fechaKey, $lluviaPorFecha);
+            if (!$hasHourly) {
+                // Fallback conservador si falta data horaria
+                $madrugada = 0;
+                $lluviaDiurna = $mm;
+                $lluviaNocturna = 0;
+            }
+            $lluviaAyer = ($index > 0) ? ($precipitaciones[$index - 1] ?? 0) : 0;
+            $saturacionIndex = $mm + ($lluviaAyer * 0.5);
+            $saturacionAlta = $saturacionIndex > 12;
+            $secadoActivo = ($vientoMax > 15) || ($et0 > 4);
+            $ayerKey = $index > 0 ? Carbon::parse($fechas[$index - 1])->toDateString() : null;
+            $madrugadaAyer = $ayerKey ? ($lluviaPorFecha[$ayerKey]['madrugada'] ?? 0) : 0;
+            $lluviaDiurnaAyer = $ayerKey ? ($lluviaPorFecha[$ayerKey]['diurna'] ?? 0) : 0;
+            $lluviaRealAyer = ($lluviaAyer >= self::UMBRAL_LLUVIA) && ($madrugadaAyer > 2 || $lluviaDiurnaAyer > 5);
+            $lluviaRealHoy = ($mm >= self::UMBRAL_LLUVIA) && ($madrugada > 2 || $lluviaDiurna > 5);
 
             // Analizar estado del día
             $estado = 'OPERATIVO';
             $razon = null;
 
             // 0. Verificar si es fin de semana (NO cuenta como día perdido, solo es no laboral)
-            if ($esFinDeSemana) {
+            if ($esFinDeSemana && !$ignorarFinDeSemana) {
                 $estado = 'INACTIVO';
                 $razon = "Fin de semana (no laboral)";
                 // NO incrementar totalDiasPerdidos - los fines de semana no generan déficit
             }
-            // 1. Verificar lluvia directa
-            elseif ($mm >= self::UMBRAL_LLUVIA) {
+            // 1. Lluvia real en ventana operativa
+            elseif ($lluviaRealHoy) {
                 $estado = 'INACTIVO';
-                $razon = "Lluvia pronosticada: {$mm}mm";
-                
-                // Marcar Día Cero (primer día de lluvia)
-                if ($diaCeroIndex === null && !$esHoy) {
+                $razon = ($madrugada > 2)
+                    ? "Barro por lluvia de madrugada ({$madrugada} mm)"
+                    : "Lluvia diurna activa";
+
+                if ($diaCeroIndex === null) {
                     $diaCeroIndex = $index;
                 }
-                
-                $huboDiaLluvia = true;
+
                 $totalDiasPerdidos++;
             }
-            // 2. Verificar efecto de barro (días después de lluvia con alta nubosidad)
-            elseif ($huboDiaLluvia && $cloudCover > self::UMBRAL_NUBOSIDAD) {
-                $estado = 'INACTIVO';
-                $razon = "Barro post-lluvia (Nubosidad: {$cloudCover}%)";
-                $totalDiasPerdidos++;
-            }
-            // 3. Si pasó la nubosidad crítica, resetear flag de lluvia
-            elseif ($huboDiaLluvia && $cloudCover <= self::UMBRAL_NUBOSIDAD) {
-                $huboDiaLluvia = false; // Terreno se secó
+            else {
+                // 2. Lluvia nocturna (operativo condicional)
+                if ($mm >= self::UMBRAL_LLUVIA && $lluviaDiurna <= 5) {
+                    $estado = 'OPERATIVO_CONDICIONAL';
+                    $razon = "Lluvia nocturna";
+                }
+                // 3. Barro por saturación + nubosidad + poco viento (solo si ayer hubo lluvia real)
+                elseif ($saturacionAlta && $cloudCover > self::UMBRAL_NUBOSIDAD && !$secadoActivo && $lluviaRealAyer) {
+                    $estado = 'INACTIVO';
+                    $razon = "Saturación alta + nubosidad + poco viento";
+
+                    if ($diaCeroIndex === null) {
+                        $diaCeroIndex = $index;
+                    }
+
+                    $totalDiasPerdidos++;
+                }
             }
 
             $diasDetalle[] = [
@@ -188,6 +255,12 @@ class ClimaDecisionService
                 'es_hoy' => $esHoy,
                 'precipitacion_mm' => round($mm, 1),
                 'nubosidad' => round($cloudCover, 0),
+                'viento_max' => round($vientoMax, 1),
+                'et0' => round($et0, 1),
+                'lluvia_madrugada_mm' => round((float) $madrugada, 1),
+                'lluvia_diurna_mm' => round((float) $lluviaDiurna, 1),
+                'lluvia_nocturna_mm' => round((float) $lluviaNocturna, 1),
+                'saturacion_index' => round($saturacionIndex, 2),
                 'estado' => $estado,
                 'razon' => $razon,
                 'index' => $index,
@@ -202,14 +275,14 @@ class ClimaDecisionService
         if ($diaCeroIndex !== null) {
             // Contar días operativos ANTES del primer día de lluvia
             for ($i = 0; $i < $diaCeroIndex; $i++) {
-                if ($diasDetalle[$i]['estado'] === 'OPERATIVO' && !$diasDetalle[$i]['es_hoy']) {
+                if (in_array($diasDetalle[$i]['estado'], ['OPERATIVO', 'OPERATIVO_CONDICIONAL'], true)) {
                     $diasOperativosPrevios++;
                 }
             }
             
             // Contar días operativos DESPUÉS de la ventana de lluvia
             for ($i = $diaCeroIndex + 1; $i < count($diasDetalle); $i++) {
-                if ($diasDetalle[$i]['estado'] === 'OPERATIVO') {
+                if (in_array($diasDetalle[$i]['estado'], ['OPERATIVO', 'OPERATIVO_CONDICIONAL'], true)) {
                     $diasOperativosPosterior++;
                 }
             }
@@ -217,7 +290,7 @@ class ClimaDecisionService
         
         // Contar TODOS los días operativos en la ventana de 7 días
         foreach ($diasDetalle as $dia) {
-            if ($dia['estado'] === 'OPERATIVO' && !$dia['es_hoy']) {
+            if (in_array($dia['estado'], ['OPERATIVO', 'OPERATIVO_CONDICIONAL'], true)) {
                 $totalDiasOperativos++;
             }
         }
@@ -249,6 +322,7 @@ class ClimaDecisionService
         $diasPosterior = $analisisDias['dias_operativos_posterior'];
         $totalDiasOperativos = $analisisDias['total_dias_operativos'];
         $metaDiaria = $analisisDias['meta_diaria'];
+        $diaCeroIndex = $analisisDias['dia_cero_index'];
 
         // CASO 1: No hay días perdidos por lluvia → Operación normal
         if ($diasPerdidos === 0 || $volumenRiesgo == 0) {
@@ -268,7 +342,12 @@ class ClimaDecisionService
             ];
         }
 
-        // CASO 2: Hay días operativos disponibles (antes o después) → Planificación estratégica
+        // CASO 2: Lluvia inminente y sin días previos → Reacción inmediata
+        if ($diaCeroIndex !== null && $diasPrevios === 0) {
+            return $this->estrategiaReaccion($lote, $analisisDias);
+        }
+
+        // CASO 3: Hay días operativos disponibles (antes o después) → Planificación estratégica
         if ($totalDiasOperativos > 0) {
             $aumentoNecesario = $volumenRiesgo / $totalDiasOperativos;
             $porcentajeAumento = ($aumentoNecesario / $metaDiaria) * 100;
@@ -324,7 +403,7 @@ class ClimaDecisionService
             }
         }
 
-        // CASO 3: No hay días operativos disponibles → Suspensión
+        // CASO 4: No hay días operativos disponibles → Suspensión
         return $this->estrategiaReaccion($lote, $analisisDias);
     }
 
@@ -636,5 +715,341 @@ class ClimaDecisionService
         }
 
         return round($costoTotal, 2);
+    }
+
+    public function sincronizarPronostico(Lote $lote): array
+    {
+        if (!$lote->latitud || !$lote->longitud) {
+            $this->persistirFallback($lote, 'Lote sin coordenadas GPS configuradas.');
+            return [
+                'success' => false,
+                'error' => 'El lote no tiene coordenadas GPS configuradas.',
+            ];
+        }
+
+        $pronostico = $this->obtenerPronosticoCompleto($lote);
+
+        if (!$pronostico) {
+            $this->persistirFallback($lote, 'No se pudo obtener el pronostico climatico.');
+            return [
+                'success' => false,
+                'error' => 'No se pudo obtener el pronostico climatico.',
+            ];
+        }
+
+        $analisisDias = $this->mapearDiasInactivos($pronostico);
+        $this->persistirDiasDetalle($lote, $analisisDias['dias_detalle'], 'api', null);
+
+        return [
+            'success' => true,
+            'dias_detalle' => $analisisDias['dias_detalle'],
+        ];
+    }
+
+    public function sincronizarReal(Lote $lote, $fecha = null): array
+    {
+        if (!$lote->latitud || !$lote->longitud) {
+            $this->persistirRealFallback($lote, $fecha, 'Lote sin coordenadas GPS configuradas.');
+            return [
+                'success' => false,
+                'error' => 'El lote no tiene coordenadas GPS configuradas.',
+            ];
+        }
+
+        $fechaObjetivo = $fecha
+            ? Carbon::parse($fecha)
+            : Carbon::now(self::TIMEZONE)->subDay();
+
+        $startDate = $fechaObjetivo->copy()->subDay()->toDateString();
+        $endDate = $fechaObjetivo->toDateString();
+
+        $historico = $this->obtenerHistoricoCompleto($lote, $startDate, $endDate);
+        $fuente = 'archive';
+
+        if (!$historico) {
+            $historico = $this->obtenerPronosticoPasado($lote, 2, 1);
+            $fuente = 'forecast';
+        }
+
+        if (!$historico) {
+            $this->persistirRealFallback($lote, $fechaObjetivo, 'No se pudo obtener el historico climatico.');
+            return [
+                'success' => false,
+                'error' => 'No se pudo obtener el historico climatico.',
+            ];
+        }
+
+        $analisisDias = $this->mapearDiasInactivos($historico, true);
+        $this->persistirDiaReal($lote, $analisisDias['dias_detalle'], $fechaObjetivo, $fuente, null);
+
+        return [
+            'success' => true,
+            'fecha' => $fechaObjetivo->toDateString(),
+        ];
+    }
+
+    private function persistirFallback(Lote $lote, ?string $apiError): void
+    {
+        $hoy = Carbon::today(self::TIMEZONE);
+        $diasDetalle = [];
+
+        for ($i = 0; $i < self::DIAS_FORECAST; $i++) {
+            $fecha = $hoy->copy()->addDays($i);
+            $diasDetalle[] = [
+                'fecha' => $fecha,
+                'fecha_str' => $fecha->format('d/m/Y'),
+                'estado' => 'OPERATIVO',
+                'razon' => 'Fallback: sin datos de clima',
+                'precipitacion_mm' => null,
+                'nubosidad' => null,
+                'viento_max' => null,
+                'et0' => null,
+                'lluvia_madrugada_mm' => null,
+                'lluvia_diurna_mm' => null,
+                'lluvia_nocturna_mm' => null,
+                'saturacion_index' => null,
+            ];
+        }
+
+        $this->persistirDiasDetalle($lote, $diasDetalle, 'fallback', $apiError);
+    }
+
+    private function persistirDiaReal(Lote $lote, array $diasDetalle, Carbon $fechaObjetivo, string $fuente, ?string $apiError): void
+    {
+        $fechaStr = $fechaObjetivo->toDateString();
+        $diaObjetivo = null;
+
+        foreach ($diasDetalle as $dia) {
+            $fecha = $dia['fecha'] ?? null;
+            $diaStr = $fecha instanceof Carbon
+                ? $fecha->toDateString()
+                : Carbon::parse((string) $fecha)->toDateString();
+
+            if ($diaStr === $fechaStr) {
+                $diaObjetivo = $dia;
+                break;
+            }
+        }
+
+        if (!$diaObjetivo) {
+            $this->persistirRealFallback($lote, $fechaObjetivo, 'No se encontro el dia en el historico.');
+            return;
+        }
+
+        $estado = strtoupper((string) ($diaObjetivo['estado'] ?? 'OPERATIVO'));
+        $razon = $diaObjetivo['razon'] ?? null;
+        $precipitacionMm = $diaObjetivo['precipitacion_mm'] ?? null;
+
+        $registro = ClimaDiaLote::where('id_lote', $lote->id_lote)
+            ->whereDate('fecha', $fechaStr)
+            ->first();
+
+        $snapshot = is_array($registro?->snapshot) ? $registro->snapshot : [];
+        $snapshot['real_precipitacion_mm'] = $precipitacionMm;
+
+        $data = [
+            'estado_real' => $estado,
+            'razon_real' => $razon,
+            'fuente_real' => $fuente,
+            'api_error_real' => $apiError,
+            'real_actualizado_at' => now(),
+            'snapshot' => $snapshot,
+        ];
+
+        if ($registro) {
+            $registro->fill($data)->save();
+            return;
+        }
+
+        ClimaDiaLote::create([
+            'id_lote' => $lote->id_lote,
+            'fecha' => $fechaStr,
+            'estado_operativo' => $estado,
+            'razon' => $razon,
+            'fuente' => $fuente,
+            'api_error' => null,
+            'snapshot' => [
+                'real_precipitacion_mm' => $precipitacionMm,
+            ],
+            'estado_pronostico' => $estado,
+            'razon_pronostico' => $razon,
+            'fuente_pronostico' => $fuente,
+            'api_error_pronostico' => null,
+            'pronostico_actualizado_at' => now(),
+            'estado_real' => $estado,
+            'razon_real' => $razon,
+            'fuente_real' => $fuente,
+            'api_error_real' => $apiError,
+            'real_actualizado_at' => now(),
+        ]);
+    }
+
+    private function persistirRealFallback(Lote $lote, $fecha, ?string $apiError): void
+    {
+        $fechaObjetivo = $fecha ? Carbon::parse($fecha) : Carbon::now(self::TIMEZONE)->subDay();
+        $fechaStr = $fechaObjetivo->toDateString();
+
+        $registro = ClimaDiaLote::where('id_lote', $lote->id_lote)
+            ->whereDate('fecha', $fechaStr)
+            ->first();
+
+        if ($registro && $registro->estado_real) {
+            return;
+        }
+
+        $data = [
+            'estado_real' => null,
+            'razon_real' => 'Sin datos reales',
+            'fuente_real' => 'fallback',
+            'api_error_real' => $apiError,
+            'real_actualizado_at' => now(),
+        ];
+
+        if ($registro) {
+            $registro->fill($data)->save();
+            return;
+        }
+
+        ClimaDiaLote::create([
+            'id_lote' => $lote->id_lote,
+            'fecha' => $fechaStr,
+            'estado_operativo' => 'OPERATIVO',
+            'razon' => 'Fallback real: sin datos',
+            'fuente' => 'fallback',
+            'api_error' => $apiError,
+            'snapshot' => null,
+            'estado_pronostico' => 'OPERATIVO',
+            'razon_pronostico' => 'Fallback real: sin datos',
+            'fuente_pronostico' => 'fallback',
+            'api_error_pronostico' => $apiError,
+            'pronostico_actualizado_at' => now(),
+            'estado_real' => null,
+            'razon_real' => 'Sin datos reales',
+            'fuente_real' => 'fallback',
+            'api_error_real' => $apiError,
+            'real_actualizado_at' => now(),
+        ]);
+    }
+
+    private function persistirDiasDetalle(Lote $lote, array $diasDetalle, string $fuente, ?string $apiError): void
+    {
+        foreach ($diasDetalle as $dia) {
+            $fecha = $dia['fecha'] ?? null;
+            $fechaStr = $fecha instanceof Carbon
+                ? $fecha->toDateString()
+                : Carbon::parse((string) $fecha)->toDateString();
+
+            $estado = strtoupper((string) ($dia['estado'] ?? 'OPERATIVO'));
+            $razon = $dia['razon'] ?? null;
+
+            $snapshot = [
+                'precipitacion_mm' => $dia['precipitacion_mm'] ?? null,
+                'nubosidad' => $dia['nubosidad'] ?? null,
+                'viento_max' => $dia['viento_max'] ?? null,
+                'et0' => $dia['et0'] ?? null,
+                'lluvia_madrugada_mm' => $dia['lluvia_madrugada_mm'] ?? null,
+                'lluvia_diurna_mm' => $dia['lluvia_diurna_mm'] ?? null,
+                'lluvia_nocturna_mm' => $dia['lluvia_nocturna_mm'] ?? null,
+                'saturacion_index' => $dia['saturacion_index'] ?? null,
+            ];
+
+            $existente = ClimaDiaLote::where('id_lote', $lote->id_lote)
+                ->whereDate('fecha', $fechaStr)
+                ->first();
+
+            $fuenteActual = $existente?->fuente_pronostico ?? $existente?->fuente;
+            if ($existente && $fuenteActual === 'api' && $fuente === 'fallback') {
+                continue;
+            }
+
+            $data = [
+                'id_lote' => $lote->id_lote,
+                'fecha' => $fechaStr,
+                'estado_operativo' => $estado,
+                'razon' => $razon,
+                'fuente' => $fuente,
+                'api_error' => $fuente === 'fallback' ? $apiError : null,
+                'snapshot' => $snapshot,
+                'estado_pronostico' => $estado,
+                'razon_pronostico' => $razon,
+                'fuente_pronostico' => $fuente,
+                'api_error_pronostico' => $fuente === 'fallback' ? $apiError : null,
+                'pronostico_actualizado_at' => now(),
+            ];
+
+            if ($existente) {
+                $existente->fill($data)->save();
+            } else {
+                ClimaDiaLote::create($data);
+            }
+        }
+    }
+
+    /**
+     * Obtiene historial climatico (observado/reanalisis) para un rango de fechas
+     */
+    private function obtenerHistoricoCompleto(Lote $lote, string $startDate, string $endDate): ?array
+    {
+        $url = "https://archive-api.open-meteo.com/v1/archive";
+
+        $params = [
+            'latitude' => $lote->latitud,
+            'longitude' => $lote->longitud,
+            'daily' => 'precipitation_sum,cloud_cover_mean,wind_speed_10m_max,et0_fao_evapotranspiration',
+            'hourly' => 'precipitation',
+            'timezone' => self::TIMEZONE,
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+        ];
+
+        try {
+            $response = Http::timeout(10)->get($url, $params);
+
+            if (!$response->successful()) {
+                throw new \Exception("API respondiÃ³ con status {$response->status()}");
+            }
+
+            return $response->json();
+        } catch (\Exception $e) {
+            Log::error("Error al consultar Open-Meteo HistÃ³rico", [
+                'lote_id' => $lote->id_lote,
+                'error' => $e->getMessage(),
+            ]);
+            return null;
+        }
+    }
+
+    /**
+     * Obtiene datos pasados usando el Forecast API (fallback del histÃ³rico)
+     */
+    private function obtenerPronosticoPasado(Lote $lote, int $pastDays, int $forecastDays): ?array
+    {
+        $url = "https://api.open-meteo.com/v1/forecast";
+
+        $params = [
+            'latitude' => $lote->latitud,
+            'longitude' => $lote->longitud,
+            'daily' => 'precipitation_sum,cloudcover_mean,wind_speed_10m_max,et0_fao_evapotranspiration',
+            'hourly' => 'precipitation',
+            'timezone' => self::TIMEZONE,
+            'past_days' => $pastDays,
+            'forecast_days' => $forecastDays,
+        ];
+
+        try {
+            $response = Http::timeout(10)->get($url, $params);
+
+            if (!$response->successful()) {
+                throw new \Exception("API respondiÃ³ con status {$response->status()}");
+            }
+
+            return $response->json();
+        } catch (\Exception $e) {
+            Log::error("Error al consultar Open-Meteo Forecast (past_days)", [
+                'lote_id' => $lote->id_lote,
+                'error' => $e->getMessage(),
+            ]);
+            return null;
+        }
     }
 }

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Lote;
 use App\Models\ParteDiario;
 use App\Models\Carga;
+use App\Models\Recibo;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -17,15 +18,27 @@ class ForestalStatsService
     /**
      * Promedio ponderado de ventas (precio unitario real)
      */
-    public function getPrecioPromedioVenta(Lote $lote): float
+    public function getPrecioPromedioVenta(Lote $lote, ?string $desde = null, ?string $hasta = null): float
     {
+        $fechaDesde = $desde ? Carbon::parse($desde) : null;
+        $fechaHasta = $hasta ? Carbon::parse($hasta) : null;
+        $cacheKey = "stats.precio_promedio_venta.{$lote->id_lote}." . ($fechaDesde ? $fechaDesde->format('Ymd') : 'na') . '.' . ($fechaHasta ? $fechaHasta->format('Ymd') : 'na');
+
         return Cache::remember(
-            "stats.precio_promedio_venta.{$lote->id_lote}",
+            $cacheKey,
             self::CACHE_TTL,
-            function () use ($lote) {
-                $row = DB::table('venta_cargas as vc')
+            function () use ($lote, $fechaDesde, $fechaHasta) {
+                $query = DB::table('venta_cargas as vc')
                     ->join('cargas as c', 'vc.id_carga', '=', 'c.id_carga')
-                    ->where('c.id_lote', $lote->id_lote)
+                    ->where('c.id_lote', $lote->id_lote);
+
+                if ($fechaDesde && $fechaHasta) {
+                    $query->whereBetween('c.fecha_carga', [$fechaDesde->toDateString(), $fechaHasta->toDateString()]);
+                } elseif ($fechaDesde) {
+                    $query->whereDate('c.fecha_carga', '>=', $fechaDesde->toDateString());
+                }
+
+                $row = $query
                     ->selectRaw('SUM(COALESCE(vc.subtotal, vc.precio_unitario * vc.peso_toneladas)) as monto_total')
                     ->selectRaw('SUM(vc.peso_toneladas) as ton_total')
                     ->first();
@@ -45,18 +58,33 @@ class ForestalStatsService
     /**
      * Costo promedio por tonelada (gastos + mano de obra) / toneladas
      */
-    public function getCostoPromedioPorTn(Lote $lote, ?string $desde = null): float
+    public function getCostoPromedioPorTn(
+        Lote $lote,
+        ?string $desde = null,
+        ?string $hasta = null,
+        bool $incluirLiquidaciones = false,
+        bool $usarManoObraPartes = true
+    ): float
     {
         $fechaDesde = $desde ? Carbon::parse($desde) : Carbon::now()->subMonths(6);
+        $fechaHasta = $hasta ? Carbon::parse($hasta) : null;
+        $cacheKey = "stats.costo_prom_tn.{$lote->id_lote}.{$fechaDesde->format('Ymd')}." . ($fechaHasta ? $fechaHasta->format('Ymd') : 'na') . '.liq' . ($incluirLiquidaciones ? '1' : '0') . '.mo' . ($usarManoObraPartes ? '1' : '0');
 
         return Cache::remember(
-            "stats.costo_prom_tn.{$lote->id_lote}.{$fechaDesde->format('Ymd')}",
+            $cacheKey,
             self::CACHE_TTL,
-            function () use ($lote, $fechaDesde) {
+            function () use ($lote, $fechaDesde, $fechaHasta, $incluirLiquidaciones, $usarManoObraPartes) {
                 // Costos vienen de parte_diarios (calculados por insumos/consumos + mano de obra + maquinaria)
-                $rows = ParteDiario::query()
-                    ->where('id_lote', $lote->id_lote)
-                    ->whereDate('fecha', '>=', $fechaDesde->toDateString())
+                $partesQuery = ParteDiario::query()
+                    ->where('id_lote', $lote->id_lote);
+
+                if ($fechaHasta) {
+                    $partesQuery->whereBetween('fecha', [$fechaDesde->toDateString(), $fechaHasta->toDateString()]);
+                } else {
+                    $partesQuery->whereDate('fecha', '>=', $fechaDesde->toDateString());
+                }
+
+                $rows = $partesQuery
                     ->selectRaw('SUM(COALESCE(costo_insumos,0) + COALESCE(costo_maquinaria,0)) as gastos_insumos_maquinaria')
                     ->selectRaw('SUM(COALESCE(costo_mano_obra,0)) as mano_obra')
                     ->selectRaw('SUM(COALESCE(costo_total_dia,0)) as costo_total')
@@ -65,18 +93,41 @@ class ForestalStatsService
                     ->first();
 
                 $totalGastos = (float) ($rows->gastos_insumos_maquinaria ?? 0);
-                $costoManoObra = (float) ($rows->mano_obra ?? 0);
+                $costoManoObra = $usarManoObraPartes
+                    ? (float) ($rows->mano_obra ?? 0)
+                    : 0.0;
 
-                $totalTon = DB::table('cargas')
-                    ->where('id_lote', $lote->id_lote)
-                    ->whereDate('fecha_carga', '>=', $fechaDesde->toDateString())
-                    ->sum(DB::raw('peso_neto / 1000.0'));
+                $liquidacionesPeriodo = 0.0;
+                if ($incluirLiquidaciones) {
+                    $empleadosIds = $lote->empleados()->pluck('empleados.id_empleado');
+                    if ($empleadosIds->isNotEmpty()) {
+                        $recibosQuery = Recibo::whereIn('id_empleado', $empleadosIds);
+                        if ($fechaHasta) {
+                            $recibosQuery->whereBetween('fecha_emision', [$fechaDesde->toDateString(), $fechaHasta->toDateString()]);
+                        } else {
+                            $recibosQuery->whereDate('fecha_emision', '>=', $fechaDesde->toDateString());
+                        }
+
+                        $liquidacionesPeriodo = (float) ($recibosQuery->sum('monto') ?? 0);
+                    }
+                }
+
+                $cargasQuery = DB::table('cargas')
+                    ->where('id_lote', $lote->id_lote);
+
+                if ($fechaHasta) {
+                    $cargasQuery->whereBetween('fecha_carga', [$fechaDesde->toDateString(), $fechaHasta->toDateString()]);
+                } else {
+                    $cargasQuery->whereDate('fecha_carga', '>=', $fechaDesde->toDateString());
+                }
+
+                $totalTon = $cargasQuery->sum(DB::raw('peso_neto / 1000.0'));
 
                 if ($totalTon <= 0) {
                     return 0.0;
                 }
 
-                $numerador = $totalGastos + $costoManoObra;
+                $numerador = $totalGastos + $costoManoObra + $liquidacionesPeriodo;
                 return round($numerador / $totalTon, 2);
             }
         );
@@ -85,14 +136,24 @@ class ForestalStatsService
     /**
      * Punto de equilibrio diario en toneladas
      */
-    public function getPuntoEquilibrioDiario(Lote $lote): float
+    public function getPuntoEquilibrioDiario(
+        Lote $lote,
+        ?string $desde = null,
+        ?string $hasta = null,
+        bool $incluirLiquidaciones = false,
+        bool $usarManoObraPartes = true
+    ): float
     {
+        $fechaDesde = $desde ? Carbon::parse($desde) : null;
+        $fechaHasta = $hasta ? Carbon::parse($hasta) : null;
+        $cacheKey = "stats.punto_equilibrio.{$lote->id_lote}." . ($fechaDesde ? $fechaDesde->format('Ymd') : 'na') . '.' . ($fechaHasta ? $fechaHasta->format('Ymd') : 'na') . '.liq' . ($incluirLiquidaciones ? '1' : '0') . '.mo' . ($usarManoObraPartes ? '1' : '0');
+
         return Cache::remember(
-            "stats.punto_equilibrio.{$lote->id_lote}",
+            $cacheKey,
             self::CACHE_TTL,
-            function () use ($lote) {
-                $precioUnit = $this->getPrecioPromedioVenta($lote);
-                $costoUnit = $this->getCostoPromedioPorTn($lote);
+            function () use ($lote, $desde, $hasta, $incluirLiquidaciones, $usarManoObraPartes) {
+                $precioUnit = $this->getPrecioPromedioVenta($lote, $desde, $hasta);
+                $costoUnit = $this->getCostoPromedioPorTn($lote, $desde, $hasta, $incluirLiquidaciones, $usarManoObraPartes);
 
                 // Estimar costos fijos diarios desde parte_diarios último mes
                 $fijos = ParteDiario::query()

@@ -3,7 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Models\User;
+use App\Models\Usuario;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 use Illuminate\Support\Facades\Hash;
@@ -13,11 +13,13 @@ class SuperAdminSeeder extends Seeder
     public function run(): void
     {
         // Crear usuario Super Admin
-        $superAdmin = User::firstOrCreate(
+        $superAdmin = Usuario::firstOrCreate(
             ['email' => 'superadmin@rennova.com'],
             [
-                'name' => 'Super Admin',
+                'nombre' => 'Super',
+                'apellido' => 'Admin',
                 'password' => Hash::make('admin123'),
+                'activo' => true,
             ]
         );
 

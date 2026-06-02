@@ -23,6 +23,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'cargas' => 'Cargas',
             'maquinarias' => 'Maquinarias',
             'mantenimientos' => 'Mantenimientos',
+            'kits-mantenimiento' => 'Kits de Mantenimiento',
             'insumos' => 'Insumos',
             'empleados' => 'Empleados',
             'adelantos' => 'Adelantos',
@@ -40,6 +41,12 @@ class RolesAndPermissionsSeeder extends Seeder
             'lista-precios' => 'Lista de Precios',
             'reportes' => 'Reportes',
             'auditoria' => 'Auditoría',
+            'notificaciones' => 'Notificaciones',
+            'asignaciones-lote' => 'Asignaciones por Lote',
+            'propuestas-asignacion' => 'Propuestas de Asignación',
+            'liquidacion-pagos' => 'Liquidación de Pagos',
+            'historico-costos-maquinarias' => 'Histórico Costos Maquinarias',
+            'gestion-stock' => 'Gestión Stock',
         ];
 
         // Crear permisos para cada módulo

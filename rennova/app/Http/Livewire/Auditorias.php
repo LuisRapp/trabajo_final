@@ -11,6 +11,10 @@ class Auditorias extends Component
 {
     use WithPagination;
 
+    protected $paginationTheme = 'bootstrap';
+
+    public bool $mostrarFiltros = true;
+
     public $busqueda = '';
     public $filtroModelo = '';
     public $filtroEvento = '';
@@ -40,6 +44,21 @@ class Auditorias extends Component
         $this->resetPage();
     }
 
+    public function updatingFiltroUsuario()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingFiltroFechaDesde()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingFiltroFechaHasta()
+    {
+        $this->resetPage();
+    }
+
     public function limpiarFiltros()
     {
         $this->busqueda = '';
@@ -49,6 +68,11 @@ class Auditorias extends Component
         $this->filtroFechaDesde = '';
         $this->filtroFechaHasta = '';
         $this->resetPage();
+    }
+
+    public function toggleFiltros(): void
+    {
+        $this->mostrarFiltros = ! $this->mostrarFiltros;
     }
 
     public function render()
@@ -112,7 +136,7 @@ class Auditorias extends Component
             ->map(function($audit) {
                 return [
                     'id' => $audit->user_id,
-                    'nombre' => $audit->user->name ?? 'Usuario #' . $audit->user_id
+                    'nombre' => $audit->user?->name ?? 'Usuario #' . $audit->user_id
                 ];
             })
             ->unique('id')

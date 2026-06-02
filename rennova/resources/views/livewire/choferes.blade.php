@@ -1,173 +1,183 @@
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="mb-0"><i class="bi bi-person-badge"></i> Choferes</h1>
+<div class="mx-auto max-w-7xl px-4 py-8">
+    <div class="mb-8 flex items-center justify-between">
+        <h1 class="flex items-center gap-2 text-3xl font-bold text-slate-800">
+            <i class="bi bi-person-badge"></i> Choferes
+        </h1>
     </div>
 
     @if (session()->has('message'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="bi bi-check-circle-fill"></i> {{ session('message') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <div x-data="{ open: true }" x-show="open" x-transition
+            class="mb-6 flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-4 text-green-700 shadow-sm" role="alert">
+            <i class="bi bi-check-circle-fill"></i>
+            <span class="flex-1 font-medium">{{ session('message') }}</span>
+            <button type="button" class="text-green-600 hover:text-green-800" @click="open = false">
+                <i class="bi bi-x-lg"></i>
+            </button>
         </div>
     @endif
 
-    <!-- Pestañas (Tabs) -->
-    <ul class="nav nav-tabs mb-4" id="choferesTabs" role="tablist">
-        <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="nuevo-tab" data-bs-toggle="tab" data-bs-target="#nuevo-chofer" type="button" role="tab" aria-controls="nuevo-chofer" aria-selected="true">
-                <i class="bi bi-plus-circle"></i> Nuevo Chofer
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="listado-tab" data-bs-toggle="tab" data-bs-target="#listado-choferes" type="button" role="tab" aria-controls="listado-choferes" aria-selected="false">
-                <i class="bi bi-list-ul"></i> Listado de Choferes
-            </button>
-        </li>
-    </ul>
+    <div class="mb-6 flex gap-0">
+        @canany(['crear-choferes', 'editar-choferes'])
+        <button type="button" wire:click="$set('tab_activo','nuevo')"
+            class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border border-r-0 rounded-l-lg transition-all {{ $tab_activo === 'nuevo' ? 'text-white' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}"
+            style="{{ $tab_activo === 'nuevo' ? 'background-color: #2d7a4f; border-color: #2d7a4f' : '' }}">
+            <i class="bi bi-plus-circle"></i> Nuevo Chofer
+        </button>
+        @endcanany
+        <button type="button" wire:click="$set('tab_activo','listado')"
+            class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border rounded-r-lg transition-all {{ $tab_activo === 'listado' ? 'text-white' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}"
+            style="{{ $tab_activo === 'listado' ? 'background-color: #2d7a4f; border-color: #2d7a4f' : '' }}">
+            <i class="bi bi-list-ul"></i> Listado de Choferes
+        </button>
+    </div>
 
-    <!-- Contenido de las Pestañas -->
-    <div class="tab-content" id="choferesTabContent">
-        <!-- Pestaña 1: Nuevo Chofer (Formulario) -->
-        <div class="tab-pane fade show active" id="nuevo-chofer" role="tabpanel" aria-labelledby="nuevo-tab">
-            <div class="card shadow">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0">
+    @if($tab_activo === 'nuevo')
+        @canany(['crear-choferes', 'editar-choferes'])
+        <div>
+            <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+                <div class="bg-slate-100 border-b border-slate-200 px-6 py-4">
+                    <h5 class="flex items-center gap-2 text-lg font-semibold text-slate-800 mb-0">
                         <i class="bi bi-{{ $chofer_id ? 'pencil-square' : 'plus-circle' }}"></i> 
                         {{ $chofer_id ? 'Modificar Chofer' : 'Nuevo Chofer' }}
                     </h5>
                 </div>
-                <div class="card-body">
+                <div class="p-6">
                     <form wire:submit.prevent="guardar">
-                        <div class="row g-3 mb-4">
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">Cliente <span class="text-danger">*</span></label>
-                                <select class="form-select @error('id_cliente') is-invalid @enderror" wire:model="id_cliente">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-2">Cliente <span class="text-red-500">*</span></label>
+                                <select wire:model="id_cliente" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('id_cliente') ring-2 ring-red-500 @enderror">
                                     <option value="">Seleccione un cliente...</option>
                                     @foreach($clientes as $cliente)
                                         <option value="{{ $cliente->id_cliente }}">{{ $cliente->razon_social ?? $cliente->nombre }}</option>
                                     @endforeach
                                 </select>
-                                @error('id_cliente') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                                <small class="text-muted">El chofer estará asociado a este cliente</small>
+                                @error('id_cliente') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
+                                <small class="text-slate-500 text-xs">El chofer estará asociado a este cliente</small>
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">Apellido <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control @error('apellido') is-invalid @enderror" placeholder="Apellido del chofer" wire:model="apellido">
-                                @error('apellido') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                            </div>
-                        </div>
-                        <div class="row g-3 mb-4">
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">Nombre <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control @error('nombre') is-invalid @enderror" placeholder="Nombre del chofer" wire:model="nombre">
-                                @error('nombre') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">DNI <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control @error('dni') is-invalid @enderror" placeholder="DNI del chofer" wire:model="dni">
-                                @error('dni') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-2">Apellido <span class="text-red-500">*</span></label>
+                                <input type="text" wire:model="apellido" placeholder="Apellido del chofer" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('apellido') ring-2 ring-red-500 @enderror">
+                                @error('apellido') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
                             </div>
                         </div>
-                        <div class="row g-3 mb-4">
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">Teléfono</label>
-                                <input type="text" class="form-control @error('telefono') is-invalid @enderror" placeholder="Teléfono de contacto" wire:model="telefono">
-                                @error('telefono') <div class="invalid-feedback">{{ $message }}</div> @enderror
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-2">Nombre <span class="text-red-500">*</span></label>
+                                <input type="text" wire:model="nombre" placeholder="Nombre del chofer" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('nombre') ring-2 ring-red-500 @enderror">
+                                @error('nombre') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">Dirección</label>
-                                <input type="text" class="form-control @error('direccion') is-invalid @enderror" placeholder="Dirección del chofer" wire:model="direccion">
-                                @error('direccion') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                            </div>
-                        </div>
-                        <div class="row g-3 mb-4">
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">Estado</label>
-                                <div class="form-check form-switch mt-2">
-                                    <input class="form-check-input" type="checkbox" role="switch" id="estado" wire:model="estado">
-                                    <label class="form-check-label" for="estado">
-                                        <span class="badge {{ $estado ? 'bg-success' : 'bg-secondary' }}">{{ $estado ? 'Activo' : 'Inactivo' }}</span>
-                                    </label>
-                                </div>
-                                <small class="text-muted">Los choferes inactivos no aparecerán en los formularios de carga</small>
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-2">DNI <span class="text-red-500">*</span></label>
+                                <input type="text" wire:model="dni" placeholder="DNI del chofer" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('dni') ring-2 ring-red-500 @enderror">
+                                @error('dni') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
                             </div>
                         </div>
-                        <div class="d-flex gap-2 justify-content-end">
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-2">Teléfono</label>
+                                <input type="text" wire:model="telefono" placeholder="Teléfono de contacto" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('telefono') ring-2 ring-red-500 @enderror">
+                                @error('telefono') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-2">Dirección</label>
+                                <input type="text" wire:model="direccion" placeholder="Dirección del chofer" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('direccion') ring-2 ring-red-500 @enderror">
+                                @error('direccion') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
+                            </div>
+                        </div>
+
+                        <div class="mb-6">
+                            <label class="block text-sm font-semibold text-slate-700 mb-3">Estado</label>
+                            <div class="flex items-center gap-3">
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" wire:model="estado" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                                </label>
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold {{ $estado ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-slate-100 text-slate-600 border border-slate-200' }}">
+                                    {{ $estado ? 'Activo' : 'Inactivo' }}
+                                </span>
+                            </div>
+                            <small class="text-slate-500 text-xs mt-2 block">Los choferes inactivos no aparecerán en los formularios de carga</small>
+                        </div>
+
+                        <div class="flex gap-2 justify-end">
                             @if ($chofer_id)
-                                <button type="button" wire:click="resetCampos" class="btn btn-secondary">
+                                <button type="button" wire:click="resetCampos" class="inline-flex items-center gap-2 px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors font-medium text-sm">
                                     <i class="bi bi-x-circle"></i> Cancelar
                                 </button>
                             @endif
-                            <button type="submit" class="btn btn-primary">
+                            @canany(['crear-choferes', 'editar-choferes'])
+                            <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-colors font-medium text-sm" style="background-color: #2d7a4f;" onmouseover="this.style.backgroundColor='#245c3d'" onmouseout="this.style.backgroundColor='#2d7a4f'">
                                 <i class="bi bi-check-circle"></i> {{ $chofer_id ? 'Actualizar' : 'Guardar' }}
                             </button>
+                            @endcanany
                         </div>
                     </form>
                 </div>
             </div>
         </div>
-
-        <!-- Pestaña 2: Listado de Choferes (Tabla) -->
-        <div class="tab-pane fade" id="listado-choferes" role="tabpanel" aria-labelledby="listado-tab">
-            <div class="card shadow">
-                <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Listado de Choferes</h5>
-                </div>
-                <div class="card-body">
+        @endcanany
+    @elseif($tab_activo === 'listado')
+        <div>
+            <div class="bg-white rounded-lg shadow-sm border border-slate-200">
+                <div class="p-6">
                     <!-- Buscador -->
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <div class="input-group">
-                                <span class="input-group-text bg-light">
-                                    <i class="bi bi-search"></i>
-                                </span>
-                                <input type="text" wire:model.live="busqueda" class="form-control" placeholder="Buscar por cliente, apellido, nombre, DNI, teléfono o dirección...">
-                            </div>
+                    <div class="mb-6">
+                        <div class="flex items-center gap-2 px-4 py-3 border border-slate-300 rounded-lg bg-slate-50">
+                            <i class="bi bi-search text-slate-500"></i>
+                            <input type="text" wire:model.live="busqueda" placeholder="Buscar por cliente, apellido, nombre, DNI, teléfono o dirección..." class="flex-1 bg-slate-50 border-0 focus:ring-0 focus:outline-none text-slate-700 placeholder-slate-400">
                         </div>
                     </div>
-                </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Cliente</th>
-                                    <th>Apellido y Nombre</th>
-                                    <th>DNI</th>
-                                    <th>Teléfono</th>
-                                    <th>Estado</th>
-                                    <th class="text-end">Acciones</th>
+
+                    <!-- Tabla -->
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b border-slate-200 bg-slate-50">
+                                    <th class="px-3 py-3 text-left text-xs font-semibold uppercase text-slate-600">ID</th>
+                                    <th class="px-3 py-3 text-left text-xs font-semibold uppercase text-slate-600">Cliente</th>
+                                    <th class="px-3 py-3 text-left text-xs font-semibold uppercase text-slate-600">Apellido y Nombre</th>
+                                    <th class="px-3 py-3 text-left text-xs font-semibold uppercase text-slate-600">DNI</th>
+                                    <th class="px-3 py-3 text-left text-xs font-semibold uppercase text-slate-600">Teléfono</th>
+                                    <th class="px-3 py-3 text-left text-xs font-semibold uppercase text-slate-600">Estado</th>
+                                    <th class="px-3 py-3 text-center text-xs font-semibold uppercase text-slate-600">Acciones</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody class="divide-y divide-slate-200">
                                 @forelse($choferes as $c)
-                                    <tr>
-                                        <td><span class="badge bg-secondary">{{ $c->id_chofer }}</span></td>
-                                        <td>{{ $c->cliente?->razon_social ?? $c->cliente?->nombre ?? 'Sin cliente' }}</td>
-                                        <td>{{ $c->apellido }}, {{ $c->nombre }}</td>
-                                        <td>{{ $c->dni }}</td>
-                                        <td>{{ $c->telefono ?? '-' }}</td>
-                                        <td>
-                                            <span class="badge bg-{{ $c->estado ? 'success' : 'secondary' }}">
+                                    <tr class="hover:bg-slate-50 transition-colors">
+                                        <td class="px-3 py-3"><span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">{{ $c->id_chofer }}</span></td>
+                                        <td class="px-3 py-3 text-slate-600">{{ $c->cliente?->razon_social ?? $c->cliente?->nombre ?? 'Sin cliente' }}</td>
+                                        <td class="px-3 py-3 text-slate-600">{{ $c->apellido }}, {{ $c->nombre }}</td>
+                                        <td class="px-3 py-3 text-slate-600">{{ $c->dni }}</td>
+                                        <td class="px-3 py-3 text-slate-600">{{ $c->telefono ?? '-' }}</td>
+                                        <td class="px-3 py-3">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $c->estado ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-slate-100 text-slate-600 border border-slate-200' }}">
                                                 {{ $c->estado ? 'Activo' : 'Inactivo' }}
                                             </span>
                                         </td>
-                                        <td class="text-end">
-                                            <div class="btn-group btn-group-sm" role="group">
-                                                <button class="btn btn-outline-primary" wire:click="editar({{ $c->id_chofer }})" onclick="cambiarAPestanaFormulario()" title="Editar">
-                                                    <i class="bi bi-pencil"></i>
+                                        <td class="px-3 py-3 text-center">
+                                            <div class="flex gap-1 justify-center">
+                                                @can('editar-choferes')
+                                                <button wire:click="editar({{ $c->id_chofer }})" @click="$set('tab_activo', 'nuevo')" title="Editar" class="inline-flex items-center px-2 py-1 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded transition-colors border border-blue-200">
+                                                    <i class="bi bi-pencil text-sm"></i>
                                                 </button>
-                                                <button class="btn btn-outline-danger" wire:click="eliminar({{ $c->id_chofer }})" onclick="return confirm('¿Está seguro de eliminar este chofer?')" title="Eliminar">
-                                                    <i class="bi bi-trash"></i>
+                                                @endcan
+                                                @can('eliminar-choferes')
+                                                <button wire:click="eliminar({{ $c->id_chofer }})" onclick="return confirm('¿Está seguro de eliminar este chofer?')" title="Eliminar" class="inline-flex items-center px-2 py-1 bg-red-50 text-red-700 hover:bg-red-100 rounded transition-colors border border-red-200">
+                                                    <i class="bi bi-trash text-sm"></i>
                                                 </button>
+                                                @endcan
                                             </div>
                                         </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="7" class="text-center py-5 text-muted">
-                                            <i class="bi bi-inbox" style="font-size: 3rem;"></i>
-                                            <p class="mb-0 mt-2">No hay choferes registrados.</p>
+                                        <td colspan="7" class="px-3 py-8 text-center">
+                                            <i class="bi bi-inbox text-slate-300 block mb-2" style="font-size: 2rem;"></i>
+                                            <p class="text-slate-500 font-medium">No hay choferes registrados.</p>
                                         </td>
                                     </tr>
                                 @endforelse
@@ -177,49 +187,14 @@
                 </div>
             </div>
         </div>
-    </div>
+    @endif
 </div>
 
-<!-- JavaScript para cambiar de pestaña al editar -->
+<!-- JavaScript para cambiar entre pestañas -->
 <script>
-    function cambiarAPestanaFormulario() {
-        // Activar la pestaña del formulario
-        const nuevoTab = document.getElementById('nuevo-tab');
-        const nuevoTabInstance = new bootstrap.Tab(nuevoTab);
-        nuevoTabInstance.show();
-        
-        // Scroll suave al inicio de la página
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    // Listener para volver a la pestaña de listado después de guardar
     document.addEventListener('livewire:init', () => {
         Livewire.on('choferGuardado', () => {
-            // Cambiar a la pestaña de listado después de guardar
-            const listadoTab = document.getElementById('listado-tab');
-            const listadoTabInstance = new bootstrap.Tab(listadoTab);
-            listadoTabInstance.show();
-            
-            // Scroll al inicio
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        });
-    });
-
-    // Cambiar título del tab cuando se está editando
-    document.addEventListener('livewire:initialized', () => {
-        Livewire.hook('message.processed', (message, component) => {
-            const nuevoTabButton = document.getElementById('nuevo-tab');
-            
-            // Detectar si hay un chofer_id cargado (modo edición)
-            if (component.fingerprint.name === 'choferes') {
-                const isEditing = document.querySelector('form input[wire\\:model="chofer_id"]')?.value;
-                
-                if (isEditing) {
-                    nuevoTabButton.innerHTML = '<i class="bi bi-pencil-square"></i> Modificar Chofer';
-                } else {
-                    nuevoTabButton.innerHTML = '<i class="bi bi-plus-circle"></i> Nuevo Chofer';
-                }
-            }
+            // Livewire actualizará automáticamente
         });
     });
 </script>

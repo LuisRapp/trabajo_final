@@ -9,13 +9,14 @@ use App\Models\TipoMantenimiento;
 use App\Models\NotificacionSistema;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Artisan;
 
 class Mantenimientos extends Component
 {
     public $mantenimientos, $mantenimiento_id, $id_maquinaria, $id_tipo_mantenimiento, $fecha_inicio, $fecha_programada, $estado, $busqueda = '';
     public $maquinarias, $tipos;
     public $kitPreventivo = [];
-    public $activeTab = 'nuevo';
+    public $tab_activo = 'listado';
     
     // Modal completar
     public $mostrarModalCompletar = false;
@@ -59,8 +60,7 @@ class Mantenimientos extends Component
         $this->tipos = TipoMantenimiento::where('activo', true)->orderBy('nombre')->get();
         $this->fecha_inicio = date('Y-m-d');
         $this->estado = 'programado';
-        // Pestaña por defecto: si hay órdenes, mostrar listado
-        $this->activeTab = \App\Models\Mantenimiento::count() > 0 ? 'listado' : 'nuevo';
+        $this->tab_activo = 'listado';
     }
 
     public function updatedIdMaquinaria()
@@ -190,6 +190,34 @@ class Mantenimientos extends Component
         $this->fecha_inicio = date('Y-m-d');
         $this->estado = 'programado';
         $this->kitPreventivo = [];
+    }
+
+    public function ejecutarFlujoPresentacion()
+    {
+        try {
+            $params = [
+                '--forzar-flujo' => true,
+                '--simular' => true,
+            ];
+
+            if (!empty($this->id_maquinaria)) {
+                $params['--maquinaria'] = (int) $this->id_maquinaria;
+            }
+
+            $exitCode = Artisan::call('mantenimiento:check-umbrales', $params);
+
+            $mensaje = $exitCode === 0
+                ? 'Flujo de presentacion ejecutado correctamente (orden, asignacion y compra si aplica).'
+                : 'El flujo de presentacion finalizo con advertencias. Revisar logs.';
+            session()->flash('message', $mensaje);
+        } catch (\Throwable $e) {
+            session()->flash('error', 'Error al ejecutar flujo de presentacion: ' . $e->getMessage());
+        }
+    }
+
+    public function ejecutarDemo()
+    {
+        $this->ejecutarFlujoPresentacion();
     }
 
     public function abrirModalCompletar($id)
@@ -499,3 +527,4 @@ class Mantenimientos extends Component
         }
     }
 }
+

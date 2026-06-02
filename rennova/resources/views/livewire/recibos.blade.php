@@ -13,12 +13,14 @@
     <!-- Pestañas (Tabs) -->
     <ul class="nav nav-tabs mb-4" id="recibosTabs" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="nuevo-tab" data-bs-toggle="tab" data-bs-target="#nuevo-recibo" type="button" role="tab" aria-controls="nuevo-recibo" aria-selected="true">
+            @canany(['crear-recibos', 'editar-recibos'])
+            <button class="nav-link" id="nuevo-tab" data-bs-toggle="tab" data-bs-target="#nuevo-recibo" type="button" role="tab" aria-controls="nuevo-recibo" aria-selected="false">
                 <i class="bi bi-plus-circle"></i> Nuevo Comprobante
             </button>
+            @endcanany
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="listado-tab" data-bs-toggle="tab" data-bs-target="#listado-recibos" type="button" role="tab" aria-controls="listado-recibos" aria-selected="false">
+            <button class="nav-link active" id="listado-tab" data-bs-toggle="tab" data-bs-target="#listado-recibos" type="button" role="tab" aria-controls="listado-recibos" aria-selected="true">
                 <i class="bi bi-list-ul"></i> Listado de Comprobantes
             </button>
         </li>
@@ -26,7 +28,8 @@
 
     <div class="tab-content" id="recibosTabContent">
         <!-- Pestaña 1: Nuevo Recibo (Formulario) -->
-        <div class="tab-pane fade show active" id="nuevo-recibo" role="tabpanel" aria-labelledby="nuevo-tab">
+        @canany(['crear-recibos', 'editar-recibos'])
+        <div class="tab-pane fade" id="nuevo-recibo" role="tabpanel" aria-labelledby="nuevo-tab">
             <div class="card shadow mb-4">
                 <div class="card-header bg-light">
                     <h5 class="mb-0"><i class="bi bi-{{ $recibo_id ? 'pencil-square' : 'plus-circle' }}"></i> {{ $recibo_id ? 'Editar Recibo' : 'Nuevo Recibo' }}</h5>
@@ -87,17 +90,20 @@
                             <i class="bi bi-x-circle"></i> Cancelar
                         </button>
                     @endif
+                    @canany(['crear-recibos', 'editar-recibos'])
                     <button type="submit" class="btn btn-primary">
                         <i class="bi bi-check-circle"></i> {{ $recibo_id ? 'Actualizar' : 'Guardar' }}
                     </button>
+                    @endcanany
                 </div>
             </form>
                 </div>
             </div>
         </div>
+        @endcanany
 
         <!-- Pestaña 2: Listado de Recibos (Tabla) -->
-        <div class="tab-pane fade" id="listado-recibos" role="tabpanel" aria-labelledby="listado-tab">
+        <div class="tab-pane fade show active" id="listado-recibos" role="tabpanel" aria-labelledby="listado-tab">
             <div class="card shadow">
                 <div class="card-header bg-light d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Listado de Recibos</h5>
@@ -148,12 +154,16 @@
                                 </td>
                                 <td class="text-center">
                                     <div class="btn-group btn-group-sm" role="group">
+                                        @can('editar-recibos')
                                         <button class="btn btn-outline-primary" wire:click="editar({{ $recibo->id_recibo }})" onclick="cambiarAPestanaFormulario()" title="Editar">
                                             <i class="bi bi-pencil"></i>
                                         </button>
+                                        @endcan
+                                        @can('eliminar-recibos')
                                         <button class="btn btn-outline-danger" wire:click="eliminar({{ $recibo->id_recibo }})" onclick="return confirm('¿Está seguro de eliminar este recibo?')" title="Eliminar">
                                             <i class="bi bi-trash"></i>
                                         </button>
+                                        @endcan
                                     </div>
                                 </td>
                             </tr>

@@ -11,6 +11,7 @@ class Insumos extends Component
 {
     public $insumos, $insumo_id, $nombre, $descripcion, $id_unidad_medida, $id_proveedor, $busqueda = '';
     public $unidades, $proveedores;
+    public $tab_activo = 'listado';
 
     protected $rules = [
         'nombre' => 'required|min:3',

@@ -1,83 +1,26 @@
-# Motor de Decisiones Climáticas - ClimaDecisionService
+# Motor de Decisiones Climaticas - ClimaDecisionService
 
-## 📋 Descripción General
+Ultima actualizacion: 8 de febrero de 2026.
 
-Sistema inteligente de 3 fases (Anticipación, Bloqueo, Reacción) que analiza el pronóstico climático de Open-Meteo para tomar decisiones operativas proactivas en lotes forestales.
+Resumen breve del motor de decisiones climaticas. Para el detalle completo y la logica actualizada, usar:
+`GUIA_API_CLIMA_Y_DECISIONES.md`.
 
----
+## Objetivo
 
-## 🎯 Objetivo
+- Anticipacion: aumentar produccion antes de dias de lluvia.
+- Bloqueo: detectar dias no operativos (lluvia y barro).
+- Reaccion: usar el tiempo de lluvia en mantenimiento o suspender jornada.
 
-Maximizar productividad y minimizar pérdidas económicas mediante:
-1. **Anticipación**: Aumentar producción antes de días de lluvia
-2. **Bloqueo**: Identificar períodos de inactividad (lluvia + barro)
-3. **Reacción**: Optimizar uso del tiempo durante lluvias (mantenimiento/suspensión)
+## Codigo Principal
 
----
+- Servicio: `app/Services/ClimaDecisionService.php`
+- Comando asociado: `php artisan clima:decisiones`
+- API: Open-Meteo (pronostico 7 dias)
 
-## 🏗️ Arquitectura del Sistema
+## Documentacion Canonica
 
-### Constantes de Configuración
-
-```php
-const UMBRAL_LLUVIA = 10; // mm (lluvia moderada que impide operaciones)
-const UMBRAL_NUBOSIDAD = 60; // % (indica terreno húmedo/barro)
-const MAX_AUMENTO_PRODUCCION = 1.25; // Máximo 25% extra permitido
-const DIAS_FORECAST = 7; // Pronóstico a 7 días
-```
-
----
-
-## 🔄 Flujo de Decisión (3 Fases)
-
-### **Método Principal**: `analizarYRecomendar(Lote $lote)`
-
-```
-┌─────────────────────────────────────────┐
-│  1. Validar coordenadas GPS del lote   │
-└──────────────┬──────────────────────────┘
-               ↓
-┌─────────────────────────────────────────┐
-│  2. Obtener pronóstico Open-Meteo API  │
-│     - precipitation_sum (mm)            │
-│     - cloudcover_mean (%)               │
-└──────────────┬──────────────────────────┘
-               ↓
-┌─────────────────────────────────────────┐
-│  PASO A: Mapear Días Inactivos         │
-│  - Día lluvia (>10mm) → INACTIVO        │
-│  - Día post-lluvia nublado → INACTIVO  │
-│  - Calcular: Día Cero, Volumen Riesgo  │
-└──────────────┬──────────────────────────┘
-               ↓
-         ¿Hay días previos
-          operativos?
-               │
-       ┌───────┴───────┐
-       │               │
-      SÍ              NO
-       │               │
-       ↓               ↓
-┌──────────────┐  ┌──────────────┐
-│  PASO B:     │  │  PASO C:     │
-│  ANTICIPACIÓN│  │  REACCIÓN    │
-└──────────────┘  └──────────────┘
-```
-
----
-
-## 📊 PASO A: Mapeo de Días Inactivos
-
-### Objetivo
-Identificar días que no serán operativos por lluvia o barro
-
-### Lógica
-
-```php
-foreach (próximos 7 días) {
-    if (lluvia >= 10mm) {
-        estado = 'INACTIVO';
-        razon = "Lluvia: Xmm";
+- Guia completa: `GUIA_API_CLIMA_Y_DECISIONES.md`
+- Analisis climatico (comando y costos): `SISTEMA_ANALISIS_CLIMATICO.md`
         marcar DÍA CERO (primer día de lluvia);
         huboDiaLluvia = true;
     }
@@ -110,7 +53,7 @@ foreach (próximos 7 días) {
 
 ---
 
-## 🚀 PASO B: Estrategia de Anticipación
+##  PASO B: Estrategia de Anticipación
 
 ### Objetivo
 Redistribuir volumen en riesgo entre días operativos previos al Día Cero
@@ -129,12 +72,12 @@ $aumento_necesario = $volumen_riesgo / $dias_operativos_previos;
 $porcentaje_aumento = ($aumento_necesario / $meta_diaria) * 100;
 
 if ($porcentaje_aumento <= 25%) {
-    // ✅ ESCENARIO 1: Aumento VIABLE
+    //  ESCENARIO 1: Aumento VIABLE
     $recomendacion = "Aumentar {$porcentaje}% durante {$dias_previos} días";
     $cobertura = "100%";
 }
 else {
-    // ⚠️ ESCENARIO 2: Aumento al LÍMITE
+    // ️ ESCENARIO 2: Aumento al LÍMITE
     $aumento_maximo = $meta_diaria * 0.25;
     $volumen_recuperable = $aumento_maximo * $dias_previos;
     $deficit_residual = $volumen_riesgo - $volumen_recuperable;
@@ -147,15 +90,15 @@ else {
 ### Output de Ejemplo - Escenario 1 (Viable)
 
 ```
-⚠️ ALERTA DE LLUVIA EN 6 DÍAS (09/12/2025)
+️ ALERTA DE LLUVIA EN 6 DÍAS (09/12/2025)
 
-📊 ESTRATEGIA DE ANTICIPACIÓN:
+ ESTRATEGIA DE ANTICIPACIÓN:
    • Aumentar producción un 20% durante los próximos 5 días
    • Meta diaria ajustada: 100.68 toneladas
    • Volumen a recuperar: 83.9 toneladas
    • Días perdidos proyectados: 1
 
-💡 ACCIÓN INMEDIATA:
+ ACCIÓN INMEDIATA:
    Coordinar con capataz para aumentar ritmo de trabajo hoy y mañana.
    Esta anticipación permitirá cubrir el 100% del déficit proyectado.
 ```
@@ -163,25 +106,25 @@ else {
 ### Output de Ejemplo - Escenario 2 (Límite)
 
 ```
-🚨 LLUVIA INMINENTE EN 2 DÍAS (05/12/2025)
+ LLUVIA INMINENTE EN 2 DÍAS (05/12/2025)
 
-📊 ESTRATEGIA DE ANTICIPACIÓN (LÍMITE ALCANZADO):
+ ESTRATEGIA DE ANTICIPACIÓN (LÍMITE ALCANZADO):
    • Aumentar producción al MÁXIMO: 25%
    • Meta diaria ajustada: 104.88 toneladas
    • Volumen recuperable: 41.95 toneladas (50%)
    • Déficit residual: 41.95 toneladas
 
-⚠️ ADVERTENCIA:
+️ ADVERTENCIA:
    No será posible cubrir el 100% del déficit proyectado.
    Se recomienda priorizar cargas de mayor valor durante estos días.
 
-💡 ACCIÓN INMEDIATA:
+ ACCIÓN INMEDIATA:
    Movilizar todos los recursos disponibles. Considerar horas extras.
 ```
 
 ---
 
-## 🛠️ PASO C: Estrategia de Reacción
+## ️ PASO C: Estrategia de Reacción
 
 ### Objetivo
 Optimizar uso de tiempo durante lluvia activa o inminente sin días previos
@@ -221,23 +164,23 @@ if ($dias_operativos_previos == 0) {
 
 **Output**:
 ```
-🌧️ LLUVIA ACTIVA O INMINENTE
+️ LLUVIA ACTIVA O INMINENTE
 
-📊 ESTRATEGIA DE REACCIÓN:
+ ESTRATEGIA DE REACCIÓN:
    Opción recomendada: MANTENIMIENTO PREVENTIVO ADELANTADO
 
-🔧 MAQUINARIAS IDENTIFICADAS (2):
+ MAQUINARIAS IDENTIFICADAS (2):
    • Tractor Forestal - Desgaste: 85.3%
      Odómetro: 1280 hs | Próximo mant.: 1500 hs
    • Grúa Cargadora - Desgaste: 92.1%
      Odómetro: 920 hs | Próximo mant.: 1000 hs
 
-💡 ACCIÓN INMEDIATA:
+ ACCIÓN INMEDIATA:
    1. Coordinar con taller para adelantar mantenimientos
    2. Aprovechar parada por lluvia para trabajos preventivos
    3. Reducir riesgo de fallas futuras y tiempos de inactividad
 
-💰 BENEFICIO:
+ BENEFICIO:
    Convertir tiempo de inactividad en mantenimiento productivo.
    Evitar fallas inesperadas durante días operativos.
 ```
@@ -248,20 +191,20 @@ if ($dias_operativos_previos == 0) {
 
 **Output**:
 ```
-🌧️ LLUVIA ACTIVA O INMINENTE
+️ LLUVIA ACTIVA O INMINENTE
 
-📊 ESTRATEGIA DE REACCIÓN:
+ ESTRATEGIA DE REACCIÓN:
    Opción recomendada: SUSPENSIÓN DE JORNADA
 
-💰 ANÁLISIS DE COSTOS:
+ ANÁLISIS DE COSTOS:
    • Costo estructural diario: $12,450.00
    • Días de lluvia proyectados: 2
    • Pérdida total estimada: $24,900.00
 
-🔍 MAQUINARIAS REVISADAS:
+ MAQUINARIAS REVISADAS:
    No se detectaron equipos que requieran mantenimiento urgente.
 
-💡 ACCIÓN INMEDIATA:
+ ACCIÓN INMEDIATA:
    1. Suspender jornada para ahorro de costos operativos
    2. Notificar a empleados sobre suspensión por clima
    3. Asegurar equipos y cerrar el lote
@@ -272,7 +215,7 @@ if ($dias_operativos_previos == 0) {
 
 ---
 
-## 🌐 Integración con Open-Meteo API
+##  Integración con Open-Meteo API
 
 ### Endpoint
 
@@ -306,7 +249,7 @@ https://api.open-meteo.com/v1/forecast
 
 ---
 
-## 💰 Cálculo de Costos
+##  Cálculo de Costos
 
 ### 1. Meta Diaria Estimada
 
@@ -338,7 +281,7 @@ foreach ($maquinarias_alquiladas as $maquinaria) {
 
 ---
 
-## 🖥️ Uso del Sistema
+## ️ Uso del Sistema
 
 ### Comando Artisan
 
@@ -353,30 +296,30 @@ php artisan clima:decisiones --lote=5
 ### Output del Comando
 
 ```
-🌦️  Sistema de Decisiones Climáticas Inteligentes
+️  Sistema de Decisiones Climáticas Inteligentes
 ═══════════════════════════════════════════════════
 
-📍 Analizando 3 lote(s)...
+ Analizando 3 lote(s)...
 
-🌲 Lote Rapp - Las Tunas
+ Lote Rapp - Las Tunas
 
-   📋 ANTICIPACION   MEDIA 
+    ANTICIPACION   MEDIA 
 
-   ⚠️ ALERTA DE LLUVIA EN 6 DÍAS (09/12/2025)
+   ️ ALERTA DE LLUVIA EN 6 DÍAS (09/12/2025)
    ...
    [Recomendación completa]
 
 ───────────────────────────────────────────────────
 
 ═══════════════════════════════════════════════════
-📊 RESUMEN DE ANÁLISIS
+ RESUMEN DE ANÁLISIS
 ═══════════════════════════════════════════════════
    Total de lotes analizados: 3
    Estrategias de Anticipación: 2
    Estrategias de Reacción: 1
 
-💡 ACCIÓN REQUERIDA: Revisar alertas de anticipación y ajustar producción HOY.
-🚨 ATENCIÓN: Hay lotes con lluvia activa/inminente. Ejecutar estrategias de reacción.
+ ACCIÓN REQUERIDA: Revisar alertas de anticipación y ajustar producción HOY.
+ ATENCIÓN: Hay lotes con lluvia activa/inminente. Ejecutar estrategias de reacción.
 ```
 
 ### Uso Programático
@@ -402,7 +345,7 @@ if ($resultado['success']) {
 
 ---
 
-## 📁 Estructura de Archivos
+##  Estructura de Archivos
 
 ```
 app/
@@ -421,7 +364,7 @@ app/
 
 ---
 
-## 🧪 Scripts de Prueba
+##  Scripts de Prueba
 
 ### test_clima_decision_service.php
 
@@ -441,7 +384,7 @@ php test_clima_decision_service.php
 
 ---
 
-## 🔍 Troubleshooting
+##  Troubleshooting
 
 ### Error: "El lote no tiene coordenadas GPS configuradas"
 
@@ -474,7 +417,7 @@ curl "https://api.open-meteo.com/v1/forecast?latitude=-25.695139&longitude=-54.4
 
 ---
 
-## 📈 Mejoras Futuras
+##  Mejoras Futuras
 
 ### 1. Notificaciones Automáticas
 
@@ -515,7 +458,7 @@ if ($recomendacion) {
 
 ---
 
-## ✅ Checklist de Implementación
+##  Checklist de Implementación
 
 - [x] Servicio ClimaDecisionService completo
 - [x] Comando `clima:decisiones`
@@ -533,7 +476,7 @@ if ($recomendacion) {
 
 ---
 
-## 📚 Referencias
+##  Referencias
 
 - **Open-Meteo API**: https://open-meteo.com/en/docs
 - **Laravel HTTP Client**: https://laravel.com/docs/12.x/http-client
@@ -542,7 +485,7 @@ if ($recomendacion) {
 
 ---
 
-## 🤝 Ejemplo de Flujo Completo
+##  Ejemplo de Flujo Completo
 
 ```
 LOTE: Rapp - Las Tunas
@@ -584,4 +527,4 @@ RECOMENDACIÓN:
 
 ---
 
-**Sistema listo para producción** ✅
+**Sistema listo para producción** 

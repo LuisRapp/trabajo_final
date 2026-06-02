@@ -3,7 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Models\User;
+use App\Models\Usuario;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
 
@@ -21,11 +21,13 @@ class AdminUserSeeder extends Seeder
         ]);
 
         // Crear usuario administrador si no existe
-        $admin = User::firstOrCreate(
+        $admin = Usuario::firstOrCreate(
             ['email' => 'admin@rennova.com'],
             [
-                'name' => 'Administrador',
+                'nombre' => 'Administrador',
+                'apellido' => 'Rennova',
                 'password' => Hash::make('password'), // Cambiar por una contraseña segura
+                'activo' => true,
             ]
         );
 

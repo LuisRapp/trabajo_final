@@ -9,6 +9,7 @@
 
     <div class="row g-4 justify-content-center">
         <!-- Lotes -->
+        @can('ver-lotes')
         <div class="col-12 col-md-6 col-lg-4 col-xl-3">
             <div class="card h-100 border-0 shadow-sm hover-elevate">
                 <div class="card-body text-center p-4">
@@ -18,8 +19,10 @@
                 </div>
             </div>
         </div>
+        @endcan
 
         <!-- Clientes -->
+        @can('ver-clientes')
         <div class="col-12 col-md-6 col-lg-4 col-xl-3">
             <div class="card h-100 border-0 shadow-sm hover-elevate">
                 <div class="card-body text-center p-4">
@@ -29,8 +32,10 @@
                 </div>
             </div>
         </div>
+        @endcan
 
         <!-- Ventas -->
+        @can('ver-ventas')
         <div class="col-12 col-md-6 col-lg-4 col-xl-3">
             <div class="card h-100 border-0 shadow-sm hover-elevate">
                 <div class="card-body text-center p-4">
@@ -40,8 +45,10 @@
                 </div>
             </div>
         </div>
+        @endcan
 
         <!-- Cargas -->
+        @can('ver-cargas')
         <div class="col-12 col-md-6 col-lg-4 col-xl-3">
             <div class="card h-100 border-0 shadow-sm hover-elevate">
                 <div class="card-body text-center p-4">
@@ -51,8 +58,10 @@
                 </div>
             </div>
         </div>
+        @endcan
 
         <!-- Categorías -->
+        @can('ver-categorias-madera')
         <div class="col-12 col-md-6 col-lg-4 col-xl-3">
             <div class="card h-100 border-0 shadow-sm hover-elevate">
                 <div class="card-body text-center p-4">
@@ -62,8 +71,10 @@
                 </div>
             </div>
         </div>
+        @endcan
 
         <!-- Lista de Precios -->
+        @can('ver-lista-precios')
         <div class="col-12 col-md-6 col-lg-4 col-xl-3">
             <div class="card h-100 border-0 shadow-sm hover-elevate">
                 <div class="card-body text-center p-4">
@@ -73,6 +84,7 @@
                 </div>
             </div>
         </div>
+        @endcan
     </div>
 </div>
 @endsection

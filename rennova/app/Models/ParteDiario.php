@@ -16,8 +16,14 @@ class ParteDiario extends Model implements Auditable
     protected $primaryKey = 'id_parte_diario';
     protected $fillable = [
         'id_lote',
+        'id_lote_tarea',
         'fecha',
+        'tipo_tarea',
         'es_dia_caido',
+        'clima_override',
+        'clima_override_motivo',
+        'clima_override_confirmado_por',
+        'clima_override_confirmado_at',
         'observaciones',
         'activo',
         'costo_mano_obra',
@@ -32,6 +38,11 @@ class ParteDiario extends Model implements Auditable
         return $this->belongsTo(Lote::class, 'id_lote');
     }
 
+    public function loteTarea()
+    {
+        return $this->belongsTo(LoteTarea::class, 'id_lote_tarea');
+    }
+
     public function empleados()
     {
         return $this->belongsToMany(Empleado::class, 'parte_diario_empleado', 'id_parte_diario', 'id_empleado')->withTimestamps();
@@ -40,6 +51,11 @@ class ParteDiario extends Model implements Auditable
     public function cargas()
     {
         return $this->hasMany(Carga::class, 'id_parte_diario');
+    }
+
+    public function movimientosStock()
+    {
+        return $this->hasMany(MovimientoStock::class, 'id_parte_diario');
     }
 
     /**
@@ -87,8 +103,14 @@ class ParteDiario extends Model implements Auditable
         // ===== B. COSTO INSUMOS =====
         // Buscar movimientos de stock tipo 'salida' vinculados a este parte
         $movimientos = MovimientoStock::where('tipo', 'salida')
-            ->whereDate('fecha', $this->fecha)
-            ->where('motivo', 'LIKE', 'Parte Diario #' . $this->id_parte_diario . '%')
+            ->where(function ($query) {
+                $query->where('id_parte_diario', $this->id_parte_diario)
+                    ->orWhere(function ($fallback) {
+                        $fallback->whereNull('id_parte_diario')
+                            ->whereDate('fecha', $this->fecha)
+                            ->where('motivo', 'LIKE', 'Parte Diario #' . $this->id_parte_diario . '%');
+                    });
+            })
             ->get();
 
         foreach ($movimientos as $mov) {

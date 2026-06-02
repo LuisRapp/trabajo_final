@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\User;
+use App\Models\Usuario;
 use Laravel\Fortify\Features;
 use Livewire\Volt\Volt;
 
@@ -16,7 +16,7 @@ beforeEach(function () {
 });
 
 test('two factor settings page can be rendered', function () {
-    $user = User::factory()->withoutTwoFactor()->create();
+    $user = Usuario::factory()->withoutTwoFactor()->create();
 
     $this->actingAs($user)
         ->withSession(['auth.password_confirmed_at' => time()])
@@ -27,7 +27,7 @@ test('two factor settings page can be rendered', function () {
 });
 
 test('two factor settings page requires password confirmation when enabled', function () {
-    $user = User::factory()->create();
+    $user = Usuario::factory()->create();
 
     $response = $this->actingAs($user)
         ->get(route('two-factor.show'));
@@ -38,7 +38,7 @@ test('two factor settings page requires password confirmation when enabled', fun
 test('two factor settings page returns forbidden response when two factor is disabled', function () {
     config(['fortify.features' => []]);
 
-    $user = User::factory()->create();
+    $user = Usuario::factory()->create();
 
     $response = $this->actingAs($user)
         ->withSession(['auth.password_confirmed_at' => time()])
@@ -48,7 +48,7 @@ test('two factor settings page returns forbidden response when two factor is dis
 });
 
 test('two factor authentication disabled when confirmation abandoned between requests', function () {
-    $user = User::factory()->create();
+    $user = Usuario::factory()->create();
 
     $user->forceFill([
         'two_factor_secret' => encrypt('test-secret'),

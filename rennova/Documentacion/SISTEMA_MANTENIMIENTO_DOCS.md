@@ -1,26 +1,31 @@
-# Sistema de Mantenimiento Preventivo - Documentación
+# Sistema de Mantenimiento Preventivo - Documentacion
 
-## 📋 RESUMEN DE IMPLEMENTACIÓN
+Ultima actualizacion: 8 de febrero de 2026.
+
+Nota: Este documento es la referencia tecnica. Para el flujo de uso y el proceso automatico, ver:
+- GUIA_MANTENIMIENTOS_USO.md
+- PROCESO_AUTOMATICO_MANTENIMIENTO.md
+
+##  RESUMEN DE IMPLEMENTACIÓN
 
 Se ha implementado un sistema completo de gestión de mantenimientos preventivos y correctivos basado en odómetro de toneladas procesadas.
 
 ---
 
-## 🗄️ ESTRUCTURA DE BASE DE DATOS
+## ️ ESTRUCTURA DE BASE DE DATOS
 
 ### Nuevos Campos Agregados:
 
 1. **maquinarias**
    - `toneladas_acumuladas` (DECIMAL 12,2): Odómetro que nunca se resetea
+   - `umbral_toneladas` (DECIMAL 10,2): Umbral por maquinaria para generar mantenimiento preventivo
 
-2. **tipo_maquinarias**
-   - `umbral_toneladas` (DECIMAL 10,2): Umbral para generar mantenimiento preventivo
 
-3. **mantenimientos**
+2. **mantenimientos**
    - `toneladas_snapshot` (DECIMAL 12,2): Snapshot del odómetro al momento del mantenimiento
    - `costo_mano_obra` (DECIMAL 10,2): Costo de mano de obra
 
-4. **mantenimiento_insumos**
+3. **mantenimiento_insumos**
    - `costo_unitario` (DECIMAL 10,2): Costo del insumo al momento del uso
    - `subtotal` (DECIMAL 10,2): cantidad × costo_unitario
 
@@ -30,6 +35,7 @@ Se ha implementado un sistema completo de gestión de mantenimientos preventivos
 ```sql
 - id_kit (PK)
 - id_tipo_maquinaria (FK)
+- id_maquinaria (FK)
 - id_insumo (FK)
 - cantidad_requerida
 - es_obligatorio
@@ -38,7 +44,7 @@ Se ha implementado un sistema completo de gestión de mantenimientos preventivos
 
 ---
 
-## ⚙️ COMPONENTES IMPLEMENTADOS
+## ️ COMPONENTES IMPLEMENTADOS
 
 ### 1. Evento y Listener (Actualización Inmediata)
 
@@ -74,7 +80,7 @@ event(new CargaRegistrada($carga, $maquinariaId, $toneladas));
 3. Si supera el `umbral_toneladas`:
    - Crea orden de mantenimiento en estado "programado"
    - Verifica stock de insumos del kit
-   - Notifica si falta stock (por ahora en logs, pendiente email)
+   - Notifica si falta stock (envia email de advertencia (StockInsuficiente))
 
 **Ejecución manual:**
 ```bash
@@ -194,7 +200,7 @@ fetch(`/mantenimientos/${id}/approve`, {
 
 ---
 
-## 📦 MODELOS ACTUALIZADOS
+##  MODELOS ACTUALIZADOS
 
 ### Nuevos Modelos:
 - `App\Models\KitMantenimientoPreventivo`
@@ -210,7 +216,7 @@ Todos los modelos implementan `OwenIt\Auditing\Auditable` para trazabilidad auto
 
 ---
 
-## 🔄 FLUJO COMPLETO DEL SISTEMA
+##  FLUJO COMPLETO DEL SISTEMA
 
 ### 1. Registro de Producción (ParteDiario)
 ```
@@ -237,7 +243,7 @@ Crea orden "programado"
       ↓
 Verifica stock del kit
       ↓
-Notifica si falta stock (Log + Email pendiente)
+Notifica si falta stock (Email StockInsuficiente)
 ```
 
 ### 3. Aprobación de Orden
@@ -268,7 +274,7 @@ Estado = "completado"
 
 ---
 
-## 🧪 PRUEBAS SUGERIDAS
+##  PRUEBAS SUGERIDAS
 
 ### 1. Probar Actualización de Odómetro
 ```php
@@ -285,8 +291,8 @@ dd($maquinaria->fresh()->toneladas_acumuladas);
 
 ### 2. Probar Comando de Umbrales
 ```bash
-# Primero configurar umbral en tipo_maquinaria
-UPDATE tipo_maquinarias SET umbral_toneladas = 100 WHERE id_tipo_maquinaria = 1;
+# Primero configurar umbral en maquinaria
+UPDATE maquinarias SET umbral_toneladas = 100 WHERE id_maquinaria = 1;
 
 # Ejecutar comando
 php artisan mantenimiento:check-umbrales
@@ -324,7 +330,7 @@ POST /mantenimientos/1/complete
 
 ---
 
-## 🚨 PENDIENTE / TODO
+##  PENDIENTE / TODO
 
 1. **Notificaciones por Email:**
    - Implementar envío cuando el comando detecte falta de stock
@@ -353,7 +359,7 @@ POST /mantenimientos/1/complete
 
 ---
 
-## 📚 REFERENCIAS
+##  REFERENCIAS
 
 - **Auditoría:** `owen-it/laravel-auditing` (ya instalado)
 - **Eventos Laravel:** https://laravel.com/docs/events
@@ -362,7 +368,7 @@ POST /mantenimientos/1/complete
 
 ---
 
-## 🛠️ COMANDOS ÚTILES
+## ️ COMANDOS ÚTILES
 
 ```bash
 # Ejecutar migraciones
@@ -386,4 +392,4 @@ php artisan cache:clear
 
 **Implementado el:** 10 de noviembre de 2025
 **Versión:** 1.0
-**Estado:** ✅ Base implementada - Pendiente UI y notificaciones
+Estado: base implementada; pendiente UI y notificaciones.

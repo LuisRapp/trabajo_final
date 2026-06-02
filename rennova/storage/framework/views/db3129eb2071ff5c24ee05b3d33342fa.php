@@ -1,5 +1,5 @@
-<li class="nav-item dropdown">
-    <a class="nav-link position-relative" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+<li class="nav-item dropdown" id="notificaciones-dropdown">
+    <a class="nav-link position-relative" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" id="notificaciones-toggle">
         <i class="bi bi-bell-fill" style="font-size: 1.3rem;"></i>
         <!--[if BLOCK]><![endif]--><?php if($cantidadNoLeidas > 0): ?>
             <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.65rem;">
@@ -64,7 +64,7 @@
 
                                 </div>
                                 
-                                <!-- Info de fecha límite y días restantes -->
+                                <!-- Info de fecha limite y dias restantes -->
                                 <!--[if BLOCK]><![endif]--><?php if($notificacion->fecha_limite): ?>
                                     <?php
                                         $diasRestantes = $notificacion->diasRestantes();
@@ -73,7 +73,7 @@
                                         <?php if($diasRestantes !== null): ?>
                                             <!--[if BLOCK]><![endif]--><?php if($diasRestantes >= 0): ?>
                                                 <span class="badge bg-warning text-dark" style="font-size: 0.7rem;">
-                                                    <i class="bi bi-clock"></i> <?php echo e($diasRestantes); ?> día(s) restante(s)
+                                                    <i class="bi bi-clock"></i> <?php echo e($diasRestantes); ?> dia(s) restante(s)
                                                 </span>
                                             <?php else: ?>
                                                 <span class="badge bg-danger" style="font-size: 0.7rem;">
@@ -201,7 +201,7 @@ unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
                             Debes programar el mantenimiento entre el 
                             <strong><?php echo e(\Carbon\Carbon::parse($fechaMinima)->format('d/m/Y')); ?></strong> y el 
                             <strong><?php echo e(\Carbon\Carbon::parse($fechaMaxima)->format('d/m/Y')); ?></strong>
-                            (máximo 7 días desde la notificación).
+                            (maximo 7 dias desde la notificacion).
                         </div>
                     </div>
 
@@ -219,4 +219,41 @@ unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
     </div>
 </div>
 <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
-<?php /**PATH D:\trabajo_final\rennova\resources\views/livewire/notificaciones-campana.blade.php ENDPATH**/ ?>
+<?php $__env->startPush('scripts'); ?>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        initNotificacionesDropdown();
+    });
+
+    // Reinicializar después de cada actualización de Livewire
+    document.addEventListener('livewire:update', function() {
+        setTimeout(initNotificacionesDropdown, 100);
+    });
+
+    function initNotificacionesDropdown() {
+        // Esperar a que Bootstrap esté disponible
+        const checkBootstrap = setInterval(function() {
+            if (window.bootstrap && window.bootstrap.Dropdown) {
+                clearInterval(checkBootstrap);
+                
+                const dropdownElement = document.getElementById('notificaciones-toggle');
+                if (dropdownElement) {
+                    // Destruir instancia anterior si existe
+                    const existingInstance = bootstrap.Dropdown.getInstance(dropdownElement);
+                    if (existingInstance) {
+                        existingInstance.dispose();
+                    }
+                    
+                    // Crear nueva instancia
+                    new bootstrap.Dropdown(dropdownElement);
+                    
+                    console.log('✓ Dropdown de notificaciones inicializado');
+                }
+            }
+        }, 100);
+        
+        // Timeout de seguridad (5 segundos)
+        setTimeout(() => clearInterval(checkBootstrap), 5000);
+    }
+</script>
+<?php $__env->stopPush(); ?><?php /**PATH D:\trabajo_final\rennova\resources\views/livewire/notificaciones-campana.blade.php ENDPATH**/ ?>

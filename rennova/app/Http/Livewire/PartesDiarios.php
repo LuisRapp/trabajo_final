@@ -15,6 +15,9 @@ use App\Models\MovimientoStock;
 use App\Models\Recibo;
 use App\Models\CategoriaMadera;
 use App\Models\Cliente;
+use App\Models\LoteTarea;
+use App\Enums\TaskType;
+use App\Services\ClimaOperativoService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -22,19 +25,29 @@ use Illuminate\Support\Facades\Log;
 class PartesDiarios extends Component
 {
     use WithPagination;
-    protected $paginationTheme = 'bootstrap';
+    protected $paginationTheme = 'tailwind';
 
     // Parte Diario Principal
     // Listado paginado se entrega desde render(), no como estado
     public $parte_id;
     public $id_lote;
+    public $id_lote_tarea;
     public $fecha;
+    public $tipo_tarea;
     public $actividad_realizada;
     public $es_dia_caido = false;
     public $motivo_dia_caido;
+    public $clima_estado;
+    public $clima_razon;
+    public $clima_fuente;
+    public $clima_es_fin_de_semana = false;
+    public $clima_requiere_override = false;
+    public $clima_override_confirmado = false;
+    public $clima_override_motivo;
     public $observaciones;
     public $busqueda = '';
     public $busqueda_fecha = '';
+    public $tab_activo = 'listado';
     
     // Catálogos (lazy loaded via computed properties)
     protected $lotesCache;
@@ -79,12 +92,23 @@ class PartesDiarios extends Component
     public $movimiento_observaciones;
     public $stock_disponible_insumo = null; // Para mostrar en UI
 
+    // Creación rápida de tarea
+    public $nueva_tarea_tipo_tarea;
+    public $nueva_tarea_superficie_afectada_ha;
+
     protected function rules()
     {
         $fechaMinima = Carbon::today()->subDays(7)->toDateString();
         
         $rules = [
             'id_lote' => 'required|exists:lotes,id_lote',
+            'id_lote_tarea' => [
+                'required',
+                'integer',
+                \Illuminate\Validation\Rule::exists('lote_tareas', 'id_lote_tarea')->where(function ($q) {
+                    $q->where('id_lote', $this->id_lote);
+                }),
+            ],
             // Validar fecha: solo hoy o dentro de los últimos 7 días
             'fecha' => [
                 'required',
@@ -108,7 +132,27 @@ class PartesDiarios extends Component
             'fecha.before_or_equal' => 'No se pueden crear partes diarios para fechas futuras. Solo hoy o días anteriores.',
             'fecha.after_or_equal' => "No se pueden crear partes diarios con más de 7 días de antigüedad. Fecha mínima permitida: {$fechaMinima}.",
             'id_lote.required' => 'Debe seleccionar un lote.',
+            'id_lote_tarea.required' => 'Debe seleccionar una tarea del lote.',
+            'id_lote_tarea.exists' => 'La tarea seleccionada no es válida para este lote.',
         ];
+    }
+
+    public function getTaskTypesProperty(): array
+    {
+        return TaskType::cases();
+    }
+
+    public function getLoteTareasProperty()
+    {
+        if (!$this->id_lote) {
+            return collect();
+        }
+
+        return LoteTarea::query()
+            ->where('id_lote', $this->id_lote)
+            ->orderByRaw("CASE WHEN estado IN ('en_ejecucion','planificada') THEN 0 ELSE 1 END")
+            ->orderByDesc('id_lote_tarea')
+            ->get();
     }
 
     public function mount()
@@ -140,6 +184,63 @@ class PartesDiarios extends Component
         
         // Limpiar cache de propiedades computadas
         unset($this->empleadosFiltradosCache, $this->maquinariasFiltradaCache);
+
+        // Reset tarea seleccionada / creación rápida
+        $this->id_lote_tarea = null;
+        $this->nueva_tarea_tipo_tarea = null;
+        $this->nueva_tarea_superficie_afectada_ha = null;
+
+        $this->revisarClima();
+    }
+
+    public function crearTareaRapida()
+    {
+        if (!$this->id_lote) {
+            session()->flash('error', 'Seleccione un lote antes de crear una tarea.');
+            return;
+        }
+
+        $taskType = TaskType::tryFrom((string) $this->nueva_tarea_tipo_tarea);
+        if (!$taskType) {
+            session()->flash('error', 'Seleccione un tipo de tarea válido.');
+            return;
+        }
+
+        $superficie = $this->nueva_tarea_superficie_afectada_ha;
+        if ($superficie !== null && $superficie !== '') {
+            $superficie = (float) $superficie;
+            if ($superficie <= 0) {
+                session()->flash('error', 'La superficie afectada debe ser mayor a 0.');
+                return;
+            }
+        } else {
+            $superficie = null;
+        }
+
+
+        try {
+            $tarea = LoteTarea::create([
+                'id_lote' => $this->id_lote,
+                'tipo_tarea' => $taskType->value,
+                'estado' => 'en_ejecucion',
+                'fecha_inicio' => $this->fecha ?: now()->toDateString(),
+                'superficie_afectada_ha' => $superficie,
+                'observaciones' => 'Creada desde Parte Diario',
+            ]);
+
+            $this->id_lote_tarea = $tarea->id_lote_tarea;
+            $this->nueva_tarea_tipo_tarea = null;
+            $this->nueva_tarea_superficie_afectada_ha = null;
+
+            session()->flash('message', 'Tarea creada y seleccionada.');
+            $this->dispatch('$refresh');
+        } catch (\Exception $e) {
+            session()->flash('error', 'No se pudo crear la tarea: ' . $e->getMessage());
+            \Log::error('Error al crear tarea rápida', [
+                'lote' => $this->id_lote,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     public function getEmpleadosFiltradosProperty()
@@ -176,12 +277,6 @@ class PartesDiarios extends Component
         return $this->maquinariasFiltradaCache;
     }
 
-    public function updatedFecha()
-    {
-        // Cuando cambia la fecha del parte, recalcular jornal vigente por empleado
-        $this->actualizarJornalPorEmpleado();
-    }
-    
     public function updatedCargaPesoBruto()
     {
         $this->calcularPesoNeto();
@@ -263,6 +358,12 @@ class PartesDiarios extends Component
     {
         $this->resetPage();
     }
+
+    public function updatedFecha()
+    {
+        $this->actualizarJornalPorEmpleado();
+        $this->revisarClima();
+    }
     
     public function updatedEsDiaCaido()
     {
@@ -271,10 +372,85 @@ class PartesDiarios extends Component
             $this->cargas = [];
             $this->carga_empleados = [];
             $this->total_toneladas = 0;
+            $this->clima_override_confirmado = false;
+            $this->clima_override_motivo = '';
         } else {
             $this->jornales = [];
             $this->motivo_dia_caido = '';
         }
+    }
+
+    private function revisarClima(): void
+    {
+        $this->clima_estado = null;
+        $this->clima_razon = null;
+        $this->clima_fuente = null;
+        $this->clima_es_fin_de_semana = false;
+        $this->clima_requiere_override = false;
+
+        if (!$this->id_lote || !$this->fecha) {
+            $this->clima_override_confirmado = false;
+            $this->clima_override_motivo = '';
+            return;
+        }
+
+        $fecha = Carbon::parse($this->fecha);
+        $this->clima_es_fin_de_semana = $fecha->isWeekend();
+
+        $lote = Lote::find($this->id_lote);
+        if (!$lote) {
+            return;
+        }
+
+        $climaDia = app(ClimaOperativoService::class)->obtenerEstadoDia($lote, $fecha);
+        $estadoPronostico = $climaDia->estado_pronostico ?? $climaDia->estado_operativo ?? 'OPERATIVO';
+        $this->clima_estado = strtoupper((string) $estadoPronostico);
+        $this->clima_razon = $climaDia->razon_pronostico ?? $climaDia->razon ?? null;
+        $this->clima_fuente = $climaDia->fuente_pronostico ?? $climaDia->fuente ?? null;
+
+        $noOperativo = $this->clima_estado === 'INACTIVO';
+        $this->clima_requiere_override = $noOperativo || $this->clima_es_fin_de_semana;
+
+        if (!$this->clima_requiere_override) {
+            $this->clima_override_confirmado = false;
+            $this->clima_override_motivo = '';
+        }
+    }
+
+    private function resolverClimaOperacion(): array
+    {
+        if (!$this->id_lote || !$this->fecha) {
+            return [
+                'requiere_override' => false,
+                'estado' => null,
+                'razon' => null,
+                'fuente' => null,
+            ];
+        }
+
+        $fecha = Carbon::parse($this->fecha);
+        $esFinDeSemana = $fecha->isWeekend();
+
+        $lote = Lote::find($this->id_lote);
+        if (!$lote) {
+            return [
+                'requiere_override' => $esFinDeSemana,
+                'estado' => null,
+                'razon' => null,
+                'fuente' => null,
+            ];
+        }
+
+        $climaDia = app(ClimaOperativoService::class)->obtenerEstadoDia($lote, $fecha);
+        $estado = strtoupper((string) ($climaDia->estado_pronostico ?? $climaDia->estado_operativo ?? 'OPERATIVO'));
+        $requiere = $esFinDeSemana || $estado === 'INACTIVO';
+
+        return [
+            'requiere_override' => $requiere,
+            'estado' => $estado,
+            'razon' => $climaDia->razon ?? null,
+            'fuente' => $climaDia->fuente ?? null,
+        ];
     }
     
     // ============ GESTIÓN DE CARGAS (DESTAJO) ============
@@ -538,7 +714,19 @@ class PartesDiarios extends Component
             session()->flash('error', "No se pueden crear partes con más de 7 días de antigüedad. Fecha mínima: {$fechaMinima}.");
             return;
         }
-        
+
+        $climaInfo = $this->resolverClimaOperacion();
+        $this->clima_requiere_override = (bool) ($climaInfo['requiere_override'] ?? false);
+        if (!$this->es_dia_caido && $this->clima_requiere_override) {
+            if (!$this->clima_override_confirmado) {
+                session()->flash('error', 'El dia seleccionado esta marcado como no operativo. Debe confirmar la operacion para continuar.');
+                return;
+            }
+            if (!trim((string) $this->clima_override_motivo)) {
+                session()->flash('error', 'Debe indicar un motivo de confirmacion para operar en dia no operativo.');
+                return;
+            }
+        }
         // Validaciones adicionales
         if (!$this->es_dia_caido && empty($this->cargas)) {
             session()->flash('error', 'Debe registrar al menos una carga para modo producción.');
@@ -563,14 +751,50 @@ class PartesDiarios extends Component
         try {
             \DB::beginTransaction();
             $eventosCarga = [];
+
+            // Enforce lógico: 1 Parte Diario por (lote, fecha).
+            // Si el usuario intenta crear uno nuevo y ya existe, reutilizamos el existente.
+            if (!$this->parte_id) {
+                $existente = ParteDiario::where('id_lote', $this->id_lote)
+                    ->whereDate('fecha', $this->fecha)
+                    ->orderByDesc('id_parte_diario')
+                    ->first();
+
+                if ($existente) {
+                    $this->parte_id = $existente->id_parte_diario;
+                    session()->flash('message', 'Ya existe un Parte Diario para ese lote y fecha. Se actualizará el registro existente.');
+                }
+            }
             
             // 1. Guardar el Parte Diario (Maestro)
+            $tarea = LoteTarea::find($this->id_lote_tarea);
+            if (!$tarea || (int) $tarea->id_lote !== (int) $this->id_lote) {
+                throw new \InvalidArgumentException('La tarea seleccionada no corresponde al lote.');
+            }
+
+            $parteExistente = $this->parte_id ? ParteDiario::find($this->parte_id) : null;
+            $overrideAplicado = !$this->es_dia_caido && (bool) $this->clima_override_confirmado;
+            $overrideMotivo = $overrideAplicado ? trim((string) $this->clima_override_motivo) : null;
+            $overrideConfirmadoPor = $overrideAplicado
+                ? ($parteExistente?->clima_override_confirmado_por ?? auth()->id())
+                : null;
+            $overrideConfirmadoAt = $overrideAplicado
+                ? ($parteExistente?->clima_override_confirmado_at ?? now())
+                : null;
+
             $parteDiario = ParteDiario::updateOrCreate(
                 ['id_parte_diario' => $this->parte_id],
                 [
                     'id_lote' => $this->id_lote,
+                    'id_lote_tarea' => $tarea->id_lote_tarea,
                     'fecha' => $this->fecha,
+                    // Se mantiene tipo_tarea por compatibilidad y para queries legacy
+                    'tipo_tarea' => (string) $tarea->tipo_tarea,
                     'es_dia_caido' => $this->es_dia_caido,
+                    'clima_override' => $overrideAplicado,
+                    'clima_override_motivo' => $overrideMotivo,
+                    'clima_override_confirmado_por' => $overrideConfirmadoPor,
+                    'clima_override_confirmado_at' => $overrideConfirmadoAt,
                     'observaciones' => $this->observaciones,
                     'activo' => true,
                 ]
@@ -645,9 +869,13 @@ class PartesDiarios extends Component
             // 3. Guardar Movimientos de Insumos (siempre se guardan)
             // Si estamos en edición, eliminar movimientos previos de este parte para no duplicar
             if ($this->parte_id) {
-                MovimientoStock::whereDate('fecha', $this->fecha)
-                    ->where('motivo', 'ILIKE', 'Parte Diario #' . $parteDiarioId . ' - %')
-                    ->delete();
+                MovimientoStock::where(function ($query) use ($parteDiarioId) {
+                    $query->where('id_parte_diario', $parteDiarioId)
+                        ->orWhere(function ($fallback) use ($parteDiarioId) {
+                            $fallback->whereNull('id_parte_diario')
+                                ->where('motivo', 'ILIKE', 'Parte Diario #' . $parteDiarioId . ' - %');
+                        });
+                })->delete();
             }
             
             // Registrar movimientos con cálculo FIFO automático para salidas
@@ -662,7 +890,8 @@ class PartesDiarios extends Component
                             $movData['id_insumo'],
                             $movData['cantidad'],
                             $motivo,
-                            $this->fecha
+                            $this->fecha,
+                            $parteDiarioId
                         );
                         
                         // Opcional: guardar detalle del costo FIFO en log para auditoría
@@ -727,9 +956,14 @@ class PartesDiarios extends Component
         $parte = ParteDiario::with(['empleados.rolLaboral'])->findOrFail($id);
         $this->parte_id = $parte->id_parte_diario;
         $this->id_lote = $parte->id_lote;
+        $this->id_lote_tarea = $parte->id_lote_tarea;
         $this->fecha = $parte->fecha;
+        $this->tipo_tarea = $parte->tipo_tarea;
         $this->es_dia_caido = (bool) $parte->es_dia_caido;
         $this->observaciones = $parte->observaciones;
+        $this->clima_override_confirmado = (bool) ($parte->clima_override ?? false);
+        $this->clima_override_motivo = $parte->clima_override_motivo;
+        $this->tab_activo = 'nuevo';
 
         // Cargar CARGAS si es producción
         $this->cargas = [];
@@ -775,8 +1009,14 @@ class PartesDiarios extends Component
 
         // Cargar MOVIMIENTOS vinculados a este parte (por motivo y fecha)
         $this->movimientos = [];
-        $movs = MovimientoStock::whereDate('fecha', $this->fecha)
-            ->where('motivo', 'ILIKE', 'Parte Diario #' . $parte->id_parte_diario . ' - %')
+        $movs = MovimientoStock::where(function ($query) use ($parte) {
+                $query->where('id_parte_diario', $parte->id_parte_diario)
+                    ->orWhere(function ($fallback) use ($parte) {
+                        $fallback->whereNull('id_parte_diario')
+                            ->whereDate('fecha', $this->fecha)
+                            ->where('motivo', 'ILIKE', 'Parte Diario #' . $parte->id_parte_diario . ' - %');
+                    });
+            })
             ->get();
         
         // Agrupar múltiples movimientos FIFO del mismo insumo en uno solo para edición
@@ -814,6 +1054,7 @@ class PartesDiarios extends Component
 
         // Asegurar que el mapa de jornales vigentes esté actualizado
         $this->actualizarJornalPorEmpleado();
+        $this->revisarClima();
     }
 
     public function eliminar($id)
@@ -826,15 +1067,28 @@ class PartesDiarios extends Component
     public function resetCampos()
     {
         $this->reset([
-            'parte_id', 'id_lote', 'fecha', 'actividad_realizada', 'es_dia_caido', 
-            'motivo_dia_caido', 'observaciones', 'cargas', 'jornales', 'movimientos',
-            'carga_peso_neto', 'carga_id_chofer', 'carga_destino', 'carga_empleados',
+            'parte_id', 'id_lote', 'id_lote_tarea', 'fecha', 'tipo_tarea', 'actividad_realizada', 'es_dia_caido', 
+            'motivo_dia_caido', 'clima_estado', 'clima_razon', 'clima_fuente', 'clima_es_fin_de_semana',
+            'clima_requiere_override', 'clima_override_confirmado', 'clima_override_motivo',
+            'observaciones', 'cargas', 'jornales', 'movimientos',
+            'carga_id_categoria_madera', 'carga_ticket', 'carga_peso_bruto', 'carga_tara',
+            'carga_peso_neto', 'carga_id_chofer', 'carga_destino', 'carga_empleados', 'carga_maquinarias',
+            'busqueda_chofer', 'busqueda_cliente', 'empleados_asignados_ids', 'maquinarias_asignadas_ids',
             'jornal_id_empleado', 'jornal_observaciones',
-            'movimiento_id_insumo', 'movimiento_cantidad', 'movimiento_motivo', 'movimiento_observaciones'
+            'movimiento_id_insumo', 'movimiento_cantidad', 'movimiento_motivo', 'movimiento_observaciones',
+            'nueva_tarea_tipo_tarea', 'nueva_tarea_superficie_afectada_ha'
         ]);
         $this->total_toneladas = 0;
         $this->stock_disponible_insumo = null;
         $this->actualizarJornalPorEmpleado();
+    }
+
+    public function cancelarEdicion()
+    {
+        $this->resetCampos();
+        $this->resetValidation();
+        $this->tab_activo = 'listado';
+        $this->dispatch('parteDiarioCancelado');
     }
 
     // ============ PROPIEDADES COMPUTADAS (Catálogos) ============
@@ -842,7 +1096,7 @@ class PartesDiarios extends Component
     public function getLotesProperty()
     {
         if (!isset($this->lotesCache)) {
-            $this->lotesCache = Lote::where('estado', 'activo')
+            $this->lotesCache = Lote::whereIn('estado', ['activo', 'en_proceso'])
                 ->orderBy('propietario')
                 ->get();
         }
@@ -889,3 +1143,4 @@ class PartesDiarios extends Component
         return Cliente::orderBy('razon_social')->get();
     }
 }
+

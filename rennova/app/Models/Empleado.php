@@ -19,6 +19,7 @@ class Empleado extends Model implements Auditable
         'dni',
         'apellido',
         'nombre',
+        'email',
         'fecha_nacimiento',
         'fecha_inicio_actividades',
         'fecha_fin_actividades'
@@ -47,6 +48,16 @@ class Empleado extends Model implements Auditable
     public function recibos()
     {
         return $this->hasMany(Recibo::class, 'id_empleado', 'id_empleado');
+    }
+
+    public function mantenimientos()
+    {
+        return $this->belongsToMany(
+            Mantenimiento::class,
+            'mantenimiento_empleado',
+            'id_empleado',
+            'id_mantenimiento'
+        )->withPivot('rol_origen')->withTimestamps();
     }
 
     /**

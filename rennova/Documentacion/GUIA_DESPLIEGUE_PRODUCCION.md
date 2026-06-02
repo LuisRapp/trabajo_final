@@ -1,24 +1,26 @@
-# 🚀 GUÍA DE DESPLIEGUE EN PRODUCCIÓN
+#  GUIA DE DESPLIEGUE EN PRODUCCION
+
+Ultima actualizacion: 8 de febrero de 2026.
 
 **Fecha:** 5 de Diciembre de 2025  
 **Versión:** 1.0 Final
 
 ---
 
-## 📋 CHECKLIST PRE-DESPLIEGUE
+##  CHECKLIST PRE-DESPLIEGUE
 
 ### Sistema Completamente Configurado
 
-- ✅ **Procesos automatizados:** Mantenimiento y Clima
-- ✅ **Reportes y estadísticas:** Dashboard con gráficos ApexCharts
-- ✅ **Tareas programadas:** Scheduler configurado
-- ✅ **Notificaciones:** Sistema integrado
-- ✅ **Base de datos:** Estructura completa
-- ✅ **Testing:** 34/34 pruebas pasadas (100%)
+-  **Procesos automatizados:** Mantenimiento y Clima
+-  **Reportes y estadísticas:** Dashboard con gráficos ApexCharts
+-  **Tareas programadas:** Scheduler configurado
+-  **Notificaciones:** Sistema integrado
+-  **Base de datos:** Estructura completa
+-  **Testing:** 34/34 pruebas pasadas (100%)
 
 ---
 
-## 🔧 PASOS DE DESPLIEGUE
+##  PASOS DE DESPLIEGUE
 
 ### 1. Preparar Servidor
 
@@ -124,7 +126,7 @@ sudo certbot certonly --webroot -w /var/www/rennova/public -d tudominio.com
 
 ---
 
-## ✅ VERIFICACIÓN POST-DESPLIEGUE
+##  VERIFICACIÓN POST-DESPLIEGUE
 
 ### 1. Verificar que el sitio está en línea
 
@@ -169,7 +171,7 @@ php artisan clima:decisiones
 
 ---
 
-## 📊 MONITOREO EN PRODUCCIÓN
+##  MONITOREO EN PRODUCCIÓN
 
 ### Logs
 
@@ -198,14 +200,14 @@ grep CRON /var/log/messages # CentOS/RHEL
 ### Alertas Recomendadas
 
 Configurar alertas para:
-- ❌ Si una tarea falla
-- ❌ Si no hay logs de tareas en 24 horas
-- ❌ Si la base de datos está desconectada
-- ⚠️ Si hay muchos errores en logs
+-  Si una tarea falla
+-  Si no hay logs de tareas en 24 horas
+-  Si la base de datos está desconectada
+- ️ Si hay muchos errores en logs
 
 ---
 
-## 🔐 SEGURIDAD
+##  SEGURIDAD
 
 ### 1. Desactivar Debug en Producción
 
@@ -240,7 +242,7 @@ RateLimiter::for('login', function (Request $request) {
 
 ---
 
-## 📱 NOTIFICACIONES POR EMAIL
+##  NOTIFICACIONES POR EMAIL
 
 Las notificaciones se configuran automáticamente. Verificar:
 
@@ -257,7 +259,7 @@ Para producción, usar servicio real (SendGrid, AWS SES, etc.)
 
 ---
 
-## 🆘 TROUBLESHOOTING
+##  TROUBLESHOOTING
 
 ### Las tareas no se ejecutan
 
@@ -314,7 +316,7 @@ memory_limit = 256M
 
 ---
 
-## 📈 ESCALABILIDAD
+##  ESCALABILIDAD
 
 Para manejo de muchos lotes/máquinas:
 
@@ -346,7 +348,7 @@ Schedule::command('mantenimiento:check-umbrales')
 
 ---
 
-## 📞 SOPORTE Y MANTENIMIENTO
+##  SOPORTE Y MANTENIMIENTO
 
 ### Actualizaciones de dependencias
 
@@ -378,18 +380,18 @@ Usar herramientas como:
 
 ---
 
-## ✨ CONCLUSIÓN
+##  CONCLUSIÓN
 
 El sistema **Rennova** está 100% listo para producción con:
 
-✅ Automatización completa de procesos  
-✅ Estadísticas en tiempo real con gráficos  
-✅ Notificaciones automáticas  
-✅ Monitoreo y logging  
-✅ Seguridad implementada  
-✅ Escalabilidad considerada  
+ Automatización completa de procesos  
+ Estadísticas en tiempo real con gráficos  
+ Notificaciones automáticas  
+ Monitoreo y logging  
+ Seguridad implementada  
+ Escalabilidad considerada  
 
-**Estado:** 🟢 **LISTO PARA DESPLEGAR**
+Estado: listo para desplegar.
 
 ---
 

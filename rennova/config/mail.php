@@ -124,4 +124,15 @@ return [
     */
     'admin_email' => env('MAIL_ADMIN_EMAIL', 'admin@example.com'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Orden de compra (Propuestas automáticas)
+    |--------------------------------------------------------------------------
+    | Lista de emails separados por coma (PURCHASE_ORDER_EMAILS).
+    */
+    'purchase_order_emails' => array_values(array_filter(array_map(
+        static fn ($v) => trim((string) $v),
+        explode(',', (string) env('PURCHASE_ORDER_EMAILS', ''))
+    ))),
+
 ];

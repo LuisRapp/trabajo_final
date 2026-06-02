@@ -19,7 +19,8 @@ class MovimientoStock extends Model implements Auditable
         'motivo',
         'precio_unitario',
         'id_lote_inventario',
-        'costo_total_movimiento'
+        'costo_total_movimiento',
+        'id_parte_diario'
     ];
 
     protected $casts = [
@@ -40,6 +41,11 @@ class MovimientoStock extends Model implements Auditable
         return $this->belongsTo(LoteInventario::class, 'id_lote_inventario');
     }
 
+    public function parteDiario()
+    {
+        return $this->belongsTo(ParteDiario::class, 'id_parte_diario');
+    }
+
     /**
      * Registra una salida de stock usando FIFO automático
      * 
@@ -50,7 +56,7 @@ class MovimientoStock extends Model implements Auditable
      * @return array ['movimientos' => MovimientoStock[], 'costo_total' => float]
      * @throws \Exception Si hay stock insuficiente
      */
-    public static function registrarSalida($idInsumo, $cantidad, $motivo, $fecha = null)
+    public static function registrarSalida($idInsumo, $cantidad, $motivo, $fecha = null, $parteDiarioId = null)
     {
         DB::beginTransaction();
         
@@ -77,7 +83,8 @@ class MovimientoStock extends Model implements Auditable
                     'motivo' => $motivo,
                     'precio_unitario' => $lote['precio_unitario'],
                     'id_lote_inventario' => $lote['id_lote_inventario'],
-                    'costo_total_movimiento' => $lote['costo_parcial']
+                    'costo_total_movimiento' => $lote['costo_parcial'],
+                    'id_parte_diario' => $parteDiarioId
                 ]);
                 
                 $movimientos[] = $movimiento;

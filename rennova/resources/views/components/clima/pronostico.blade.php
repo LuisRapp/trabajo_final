@@ -7,21 +7,35 @@
 ])
 
 @php
-    $alertStyles = [
-        'ACELERAR' => 'alert-warning',
-        'SUSPENDER' => 'alert-danger',
-        'NORMAL' => 'alert-success',
+    // Configuración High Density - Colores semánticos al 5%
+    $alertConfig = [
+        'ACELERAR' => [
+            'bg' => 'bg-amber-50/50',
+            'text' => 'text-amber-700',
+            'dot' => 'bg-amber-500',
+            'label' => 'ALERTA',
+        ],
+        'SUSPENDER' => [
+            'bg' => 'bg-red-50/50',
+            'text' => 'text-red-700',
+            'dot' => 'bg-red-500',
+            'label' => 'PARADA',
+        ],
+        'NORMAL' => [
+            'bg' => 'bg-emerald-50/50',
+            'text' => 'text-emerald-700',
+            'dot' => 'bg-emerald-500',
+            'label' => 'OPERATIVO',
+        ],
     ];
-    $alertTitle = [
-        'ACELERAR' => 'ALERTA: ACELERAR PRODUCCIÓN',
-        'SUSPENDER' => 'ALERTA: SUSPENDER OPERACIONES',
-        'NORMAL' => 'OPERACIÓN NORMAL',
-    ];
+    
+    $currentAlert = $alertConfig[$alerta] ?? $alertConfig['NORMAL'];
+    
     $iconMap = [
-        'sun' => '☀️',
-        'storm' => '⛈️',
-        'fog' => '🌫️',
-        'cloud' => '☁️',
+        'sun' => '☀',
+        'storm' => '⛈',
+        'fog' => '🌫',
+        'cloud' => '☁',
     ];
 
     // Calcular la ventana de trabajo
@@ -32,167 +46,104 @@
             $diasOperativos++;
         }
     }
-    $ventana = $diasOperativos . ' días' ?? '2 días';
+    $ventana = $diasOperativos . ' dias' ?? '2 dias';
 
-    // Encontrar el día crítico (primer día inactivo)
+    // Encontrar el día crítico
     $diaCritico = 'Desconocido';
     foreach ($pronostico as $dia) {
         if ($dia['inactivo'] ?? false) {
-            $diaCritico = ucfirst($dia['label'] ?? 'próximamente');
+            $diaCritico = ucfirst($dia['label'] ?? 'proximamente');
             break;
         }
     }
 @endphp
 
-<div class="py-4" style="max-width: 100%; overflow-x: hidden;">
-    <!-- Alerta Principal -->
-    <div class="alert mb-4 p-4 rounded-2 border-3 {{ $alertStyles[$alerta] ?? $alertStyles['NORMAL'] }}" style="border-width: 2px;">
-        <div class="row align-items-center">
-            <div class="col-md-8">
-                <h2 class="fw-bold mb-2" style="font-size: 1.5rem;">{{ $alertTitle[$alerta] ?? $alertTitle['NORMAL'] }}</h2>
-                <p class="mb-0" style="font-size: 1.05rem;">
-                    Se pronostican lluvias fuertes para el <span class="fw-bold">{{ $diaCritico }}</span>. 
-                    <br>Ventana operativa: <span class="fw-bold">{{ $ventana }}</span>.
-                </p>
+<div class="w-full space-y-3">
+    {{-- Bento Grid: Status + KPIs en fila compacta --}}
+    <div class="grid grid-cols-1 gap-2 md:grid-cols-4">
+        {{-- Widget 1: Estado General --}}
+        <div class="rounded-lg border border-slate-200 {{ $currentAlert['bg'] }} p-3">
+            <div class="flex items-center gap-2">
+                <span class="h-2 w-2 rounded-full {{ $currentAlert['dot'] }}"></span>
+                <span class="text-xs font-bold uppercase tracking-wide {{ $currentAlert['text'] }}">{{ $currentAlert['label'] }}</span>
             </div>
-            <div class="col-md-4 text-end">
-                <span class="badge bg-light text-dark p-3" style="font-size: 1rem;">
-                    📍 {{ $lote }}
-                </span>
+            <div class="mt-2 text-xs text-slate-600">
+                <span class="font-medium {{ $currentAlert['text'] }}">{{ $diaCritico }}</span> · {{ $ventana }}
             </div>
+        </div>
+
+        {{-- Widget 2: Dias Perdidos --}}
+        <div class="rounded-lg border border-slate-200 bg-white p-3">
+            <div class="text-xs font-medium uppercase tracking-wide text-slate-500">DIAS PERDIDOS</div>
+            <div class="mt-1 text-2xl font-bold text-slate-900">{{ $analisisImpacto['diasPerdidos'] ?? 0 }}</div>
+            <div class="text-xs text-slate-500">Lluvia + barro</div>
+        </div>
+
+        {{-- Widget 3: Deficit --}}
+        <div class="rounded-lg border border-slate-200 bg-white p-3">
+            <div class="text-xs font-medium uppercase tracking-wide text-slate-500">DEFICIT TN</div>
+            <div class="mt-1 text-2xl font-bold text-slate-900">{{ abs($analisisImpacto['deficitTn'] ?? 0) }}</div>
+            <div class="text-xs text-slate-500">Volumen en riesgo</div>
+        </div>
+
+        {{-- Widget 4: Accion --}}
+        <div class="rounded-lg border border-slate-200 bg-white p-3">
+            @php
+                $accionConfig = match($alerta) {
+                    'SUSPENDER' => ['text' => 'Suspender', 'color' => 'text-red-700'],
+                    'ACELERAR' => ['text' => '+' . ($analisisImpacto['accionPorcentaje'] ?? 0) . '%', 'color' => 'text-amber-700'],
+                    default => ['text' => 'Normal', 'color' => 'text-emerald-700']
+                };
+            @endphp
+            <div class="text-xs font-medium uppercase tracking-wide text-slate-500">ACCION</div>
+            <div class="mt-1 text-2xl font-bold {{ $accionConfig['color'] }}">{{ $accionConfig['text'] }}</div>
+            <div class="text-xs text-slate-500">Sugerida</div>
         </div>
     </div>
 
-    <!-- Pronóstico de 7 Días -->
-    <div class="mt-5">
-        <h5 class="fw-bold text-dark mb-3">📅 Pronóstico Operativo (7 Días)</h5>
-        <div class="row g-2">
-            @if(count($pronostico) > 0)
+
+    {{-- Timeline Strip: Pronostico 7 dias (estilo Gantt compacto) --}}
+    <div class="rounded-lg border border-slate-200 bg-white">
+        <div class="border-b border-slate-200 px-3 py-2">
+            <h3 class="text-xs font-bold uppercase tracking-wide text-slate-700">Pronostico Operativo (7 dias)</h3>
+        </div>
+        @if(count($pronostico) > 0)
+            <div class="grid grid-cols-7 divide-x divide-slate-100">
                 @foreach($pronostico as $dia)
                     @php
                         $isInactivo = $dia['inactivo'] ?? false;
-                        $isBarro = ($dia['suelo'] ?? null) === 'BARRO';
-                        $bgClass = $isInactivo
-                            ? 'bg-danger text-white'
-                            : 'bg-light border border-success';
-                        $badgeClass = $isInactivo
-                            ? 'bg-white text-danger'
-                            : 'bg-success text-white';
+                        $bgCell = $isInactivo ? 'bg-red-50/50' : 'bg-white';
+                        $textColor = $isInactivo ? 'text-red-700' : 'text-emerald-700';
+                        $dotColor = $isInactivo ? 'bg-red-500' : 'bg-emerald-500';
                     @endphp
-                    <div class="col-6 col-md-4 col-lg-1-7">
-                        <div class="card h-100 {{ $bgClass }} text-center rounded-2 shadow-sm p-2">
-                            <div class="card-body p-2">
-                                <small class="fw-bold d-block mb-1" style="font-size: 0.8rem;">{{ $dia['label'] }}</small>
-                                <div style="font-size: 1.8rem;" class="mb-2">{{ $iconMap[$dia['icono']] ?? '☀️' }}</div>
-                                <span class="badge {{ $badgeClass }}" style="font-size: 0.7rem;">
-                                    {{ $dia['estado'] }}
-                                </span>
-                            </div>
+                    <div class="px-2 py-3 {{ $bgCell }} text-center">
+                        <div class="text-xs font-medium text-slate-500">{{ $dia['label'] }}</div>
+                        <div class="my-2 text-lg">{{ $iconMap[$dia['icono']] ?? '☀' }}</div>
+                        <div class="flex items-center justify-center gap-1">
+                            <span class="h-1.5 w-1.5 rounded-full {{ $dotColor }}"></span>
+                            <span class="text-xs font-medium {{ $textColor }}">{{ $dia['estado'] }}</span>
                         </div>
                     </div>
                 @endforeach
-            @else
-                <div class="col-12">
-                    <p class="text-muted text-center py-3">Datos de pronóstico no disponibles</p>
-                </div>
-            @endif
-        </div>
+            </div>
+        @else
+            <div class="px-3 py-4 text-center text-xs text-slate-500">Sin datos</div>
+        @endif
     </div>
 
-    <!-- Análisis de Impacto -->
-    <div class="mt-5">
-        <h5 class="fw-bold text-dark mb-3">📊 Análisis de Impacto</h5>
-        <div class="row g-3">
-            <!-- Días Perdidos -->
-            <div class="col-md-4">
-                <div class="card h-100 rounded-2 shadow-sm border-start border-danger border-5 p-3">
-                    <h6 class="fw-bold text-muted small mb-3 text-uppercase">📅 Días Perdidos</h6>
-                    <div class="mb-2">
-                        <span class="display-4 fw-bold text-danger">{{ $analisisImpacto['diasPerdidos'] ?? 0 }}</span>
-                        <small class="text-muted ms-2">días</small>
-                    </div>
-                    <small class="text-muted">Incluye lluvia y barro post-lluvia</small>
-                </div>
-            </div>
 
-            <!-- Déficit Proyectado -->
-            <div class="col-md-4">
-                <div class="card h-100 rounded-2 shadow-sm border-start border-warning border-5 p-3">
-                    <h6 class="fw-bold text-muted small mb-3 text-uppercase">⚠️ Déficit Proyectado</h6>
-                    <div class="mb-2">
-                        <span class="display-4 fw-bold text-warning">{{ abs($analisisImpacto['deficitTn'] ?? 0) }}</span>
-                        <small class="text-muted ms-2">Tn</small>
-                    </div>
-                    <small class="text-muted">Volumen en riesgo si no se actúa</small>
-                </div>
-            </div>
-
-            <!-- Acción Sugerida -->
-            <div class="col-md-4">
-                @php
-                    $accionConfig = match($alerta) {
-                        'SUSPENDER' => [
-                            'color' => 'danger',
-                            'bg' => '#fff0f0',
-                            'texto' => 'SUSPENDER OPERACIONES',
-                            'detalle' => 'Condiciones no permiten trabajar',
-                            'icono' => '🛑',
-                            'mostrar_porcentaje' => false
-                        ],
-                        'ACELERAR' => [
-                            'color' => 'warning',
-                            'bg' => '#fff8e1',
-                            'texto' => '+' . ($analisisImpacto['accionPorcentaje'] ?? 0) . '%',
-                            'detalle' => 'Acelerar ritmo de producción',
-                            'icono' => '⚡',
-                            'mostrar_porcentaje' => true
-                        ],
-                        default => [
-                            'color' => 'success',
-                            'bg' => '#f0f8f4',
-                            'texto' => 'OPERACIÓN NORMAL',
-                            'detalle' => 'Mantener ritmo actual',
-                            'icono' => '✅',
-                            'mostrar_porcentaje' => false
-                        ]
-                    };
-                @endphp
-                <div class="card h-100 rounded-2 shadow-sm border-start border-{{ $accionConfig['color'] }} border-5 p-3" style="background-color: {{ $accionConfig['bg'] }};">
-                    <h6 class="fw-bold text-{{ $accionConfig['color'] }} small mb-3 text-uppercase">{{ $accionConfig['icono'] }} Acción Sugerida</h6>
-                    <div class="mb-2">
-                        <span class="display-4 fw-bold text-{{ $accionConfig['color'] }}">{{ $accionConfig['texto'] }}</span>
-                    </div>
-                    <small class="fw-semibold text-{{ $accionConfig['color'] }}">{{ $accionConfig['detalle'] }}</small>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Recomendación Detallada -->
+    {{-- Recomendacion (compacta) --}}
     @if($recomendacionDetallada)
-    <div class="mt-4">
-        <div class="card rounded-2 shadow-sm border-0" style="background-color: #f8f9fa;">
-            <div class="card-body p-3">
-                <h6 class="fw-bold text-dark mb-2" style="font-size: 0.9rem;"><i class="bi bi-lightbulb"></i> Recomendación del Sistema</h6>
-                <div style="font-size: 0.8rem; line-height: 1.5; white-space: pre-line; font-family: 'Courier New', monospace; color: #333;">{!! nl2br(e($recomendacionDetallada)) !!}</div>
+    <div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+        <div class="flex items-start gap-2">
+            <svg class="h-4 w-4 flex-shrink-0 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <div class="flex-1">
+                <div class="text-xs font-medium text-slate-700">Recomendacion del Sistema</div>
+                <div class="mt-1 whitespace-pre-line text-xs text-slate-600">{!! nl2br(e($recomendacionDetallada)) !!}</div>
             </div>
         </div>
     </div>
     @endif
 </div>
-
-<style>
-    .col-lg-1-7 {
-        flex: 0 0 calc(100% / 7);
-    }
-    @media (max-width: 992px) {
-        .col-lg-1-7 {
-            flex: 0 0 calc(100% / 4);
-        }
-    }
-    @media (max-width: 768px) {
-        .col-lg-1-7 {
-            flex: 0 0 calc(100% / 2);
-        }
-    }
-</style>

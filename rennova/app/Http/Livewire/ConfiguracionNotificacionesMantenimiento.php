@@ -3,7 +3,7 @@
 namespace App\Http\Livewire;
 
 use Livewire\Component;
-use App\Models\User;
+use App\Models\Usuario;
 use Illuminate\Support\Facades\DB;
 
 class ConfiguracionNotificacionesMantenimiento extends Component
@@ -15,7 +15,7 @@ class ConfiguracionNotificacionesMantenimiento extends Component
 
     public function mount()
     {
-        $this->usuarios = User::orderBy('name')->get();
+        $this->usuarios = Usuario::orderBy('nombre')->get();
         $this->cargarConfiguracion();
     }
 

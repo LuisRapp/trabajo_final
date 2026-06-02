@@ -42,24 +42,38 @@ return new class extends Migration
             $table->index(['id_insumo', 'fecha', 'tipo'], 'idx_movimiento_reportes');
         });
         
-                // Backfill precio_unitario con el costo_unitario del insumo para registros históricos
-                DB::statement("
-                    UPDATE movimiento_stocks ms
-                    SET precio_unitario = COALESCE(i.costo_unitario, 1),
-                        costo_total_movimiento = ms.cantidad * COALESCE(i.costo_unitario, 1)
-                    FROM insumos i
-                    WHERE ms.id_insumo = i.id_insumo
-                      AND ms.precio_unitario IS NULL
-                ");
-        
-                // Hacer NOT NULL después del backfill
-                DB::statement('ALTER TABLE movimiento_stocks ALTER COLUMN precio_unitario SET NOT NULL');
-                DB::statement('ALTER TABLE movimiento_stocks ALTER COLUMN costo_total_movimiento SET NOT NULL');
-        
-        // Agregar CHECK constraint para validar que precio_unitario > 0
+        $driver = DB::connection()->getDriverName();
+
+        if ($driver === 'sqlite') {
+            DB::statement("\n                UPDATE movimiento_stocks\n                SET precio_unitario = COALESCE(\n                        (SELECT i.costo_unitario FROM insumos i WHERE i.id_insumo = movimiento_stocks.id_insumo),
+                        1
+                    ),
+                    costo_total_movimiento = cantidad * COALESCE(\n                        (SELECT i.costo_unitario FROM insumos i WHERE i.id_insumo = movimiento_stocks.id_insumo),
+                        1
+                    )
+                WHERE precio_unitario IS NULL
+            ");
+
+            return;
+        }
+
+        // Backfill precio_unitario con el costo_unitario del insumo para registros históricos (PostgreSQL)
+        DB::statement("\n            UPDATE movimiento_stocks ms
+            SET precio_unitario = COALESCE(i.costo_unitario, 1),
+                costo_total_movimiento = ms.cantidad * COALESCE(i.costo_unitario, 1)
+            FROM insumos i
+            WHERE ms.id_insumo = i.id_insumo
+              AND ms.precio_unitario IS NULL
+        ");
+
+        // Hacer NOT NULL después del backfill (PostgreSQL)
+        DB::statement('ALTER TABLE movimiento_stocks ALTER COLUMN precio_unitario SET NOT NULL');
+        DB::statement('ALTER TABLE movimiento_stocks ALTER COLUMN costo_total_movimiento SET NOT NULL');
+
+        // Agregar CHECK constraint para validar que precio_unitario > 0 (PostgreSQL)
         DB::statement('ALTER TABLE movimiento_stocks ADD CONSTRAINT chk_precio_positivo CHECK (precio_unitario > 0)');
-        
-        // Agregar CHECK constraint para validar que costo_total = cantidad × precio_unitario
+
+        // Agregar CHECK constraint para validar que costo_total = cantidad × precio_unitario (PostgreSQL)
         DB::statement('ALTER TABLE movimiento_stocks ADD CONSTRAINT chk_costo_calculado CHECK (ABS(costo_total_movimiento - (cantidad * precio_unitario)) < 0.01)');
     }
 
@@ -68,18 +82,22 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('movimiento_stocks', function (Blueprint $table) {
-            // Eliminar constraints primero
-            $table->dropConstraint('chk_precio_positivo');
-            $table->dropConstraint('chk_costo_calculado');
-            
+        $driver = DB::connection()->getDriverName();
+
+        Schema::table('movimiento_stocks', function (Blueprint $table) use ($driver) {
+            if ($driver !== 'sqlite') {
+                // Eliminar constraints primero
+                $table->dropConstraint('chk_precio_positivo');
+                $table->dropConstraint('chk_costo_calculado');
+            }
+
             // Eliminar índices
             $table->dropIndex('idx_movimiento_lote');
             $table->dropIndex('idx_movimiento_reportes');
-            
+
             // Eliminar foreign key
             $table->dropForeign(['id_lote_inventario']);
-            
+
             // Eliminar columnas
             $table->dropColumn([
                 'precio_unitario',

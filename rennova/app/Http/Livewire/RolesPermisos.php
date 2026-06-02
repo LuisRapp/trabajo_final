@@ -3,20 +3,57 @@
 namespace App\Http\Livewire;
 
 use Livewire\Component;
+use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
-use App\Models\User;
+use App\Models\Usuario;
 
 class RolesPermisos extends Component
 {
+    public $activeTab = 'roles';
     public $selectedRole = null;
     public $selectedUser = null;
     public $rolePermissions = [];
     public $userRoles = [];
+    public $userModelClassName = null;
     
     // Para crear nuevo rol
     public $newRoleName = '';
     public $busqueda = '';
+
+    protected function userModelClass(): string
+    {
+        $model = config('auth.providers.users.model');
+
+        if (is_string($model) && class_exists($model)) {
+            return $model;
+        }
+
+        return Usuario::class;
+    }
+
+    protected function userSearchColumns(string $userModel): array
+    {
+        if ($userModel === Usuario::class) {
+            return ['nombre', 'apellido', 'email'];
+        }
+
+        return ['name', 'email'];
+    }
+
+    protected function userSearchOperator(): string
+    {
+        return DB::connection()->getDriverName() === 'pgsql' ? 'ilike' : 'like';
+    }
+
+    public function displayUserName($user): string
+    {
+        if ($user instanceof Usuario) {
+            return trim($user->nombre . ' ' . $user->apellido);
+        }
+
+        return (string) ($user->name ?? $user->email ?? '');
+    }
 
     public function render()
     {
@@ -28,12 +65,21 @@ class RolesPermisos extends Component
             return count($parts) > 1 ? implode('-', array_slice($parts, 1)) : 'otros';
         });
         
-        $query = User::query();
+        $userModel = $this->userModelClass();
+        $query = $userModel::query();
         if ($this->busqueda) {
-            $query->where('name', 'ilike', '%' . $this->busqueda . '%')
-                  ->orWhere('email', 'ilike', '%' . $this->busqueda . '%');
+            $columns = $this->userSearchColumns($userModel);
+            $operator = $this->userSearchOperator();
+            $query->where(function ($query) use ($columns, $operator) {
+                foreach ($columns as $index => $column) {
+                    $method = $index === 0 ? 'where' : 'orWhere';
+                    $query->{$method}($column, $operator, '%' . $this->busqueda . '%');
+                }
+            });
         }
         $users = $query->with('roles')->get();
+
+        $this->userModelClassName = $userModel;
         
         return view('livewire.roles-permisos', compact('roles', 'permissions', 'users'));
     }
@@ -100,7 +146,8 @@ class RolesPermisos extends Component
     public function selectUser($userId)
     {
         $this->selectedUser = $userId;
-        $user = User::find($userId);
+        $userModel = $this->userModelClassName ?: $this->userModelClass();
+        $user = $userModel::find($userId);
         $this->userRoles = $user ? $user->roles->pluck('name')->toArray() : [];
     }
 
@@ -111,7 +158,8 @@ class RolesPermisos extends Component
             return;
         }
 
-        $user = User::find($this->selectedUser);
+        $userModel = $this->userModelClassName ?: $this->userModelClass();
+        $user = $userModel::find($this->selectedUser);
         $user->syncRoles($this->userRoles);
         
         session()->flash('message', 'Roles del usuario actualizados correctamente');

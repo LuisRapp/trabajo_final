@@ -13,12 +13,14 @@
     <!-- Pestañas (Tabs) -->
     <ul class="nav nav-tabs mb-4" id="unidadesTabs" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="nuevo-tab" data-bs-toggle="tab" data-bs-target="#nuevo-unidad" type="button" role="tab">
+            @canany(['crear-unidades-medida', 'editar-unidades-medida'])
+            <button class="nav-link" id="nuevo-tab" data-bs-toggle="tab" data-bs-target="#nuevo-unidad" type="button" role="tab">
                 <i class="bi bi-plus-circle"></i> Nueva Unidad
             </button>
+            @endcanany
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="listado-tab" data-bs-toggle="tab" data-bs-target="#listado-unidades" type="button" role="tab">
+            <button class="nav-link active" id="listado-tab" data-bs-toggle="tab" data-bs-target="#listado-unidades" type="button" role="tab">
                 <i class="bi bi-list-ul"></i> Listado de Unidades
             </button>
         </li>
@@ -26,7 +28,8 @@
 
     <div class="tab-content" id="unidadesTabContent">
         <!-- Tab 1: Formulario Nueva Unidad -->
-        <div class="tab-pane fade show active" id="nuevo-unidad" role="tabpanel">
+        @canany(['crear-unidades-medida', 'editar-unidades-medida'])
+        <div class="tab-pane fade" id="nuevo-unidad" role="tabpanel">
             <div class="card shadow mb-4">
                 <div class="card-header bg-light">
                     <h5 class="mb-0"><i class="bi bi-{{ $unidad_id ? 'pencil-square' : 'plus-circle' }}"></i> {{ $unidad_id ? 'Editar Unidad' : 'Nueva Unidad' }}</h5>
@@ -51,17 +54,20 @@
                             <i class="bi bi-x-circle"></i> Cancelar
                         </button>
                     @endif
+                    @canany(['crear-unidades-medida', 'editar-unidades-medida'])
                     <button type="submit" class="btn btn-primary">
                         <i class="bi bi-check-circle"></i> {{ $unidad_id ? 'Actualizar' : 'Guardar' }}
                     </button>
+                    @endcanany
                 </div>
             </form>
         </div>
     </div>
 </div>
+        @endcanany
 
 <!-- Tab 2: Listado de Unidades -->
-<div class="tab-pane fade" id="listado-unidades" role="tabpanel">
+<div class="tab-pane fade show active" id="listado-unidades" role="tabpanel">
     <div class="card shadow">
         <div class="card-body">
             <!-- Buscador -->
@@ -93,12 +99,16 @@
                                 <td><span class="badge bg-info">{{ $unidad->abreviatura }}</span></td>
                                 <td class="text-center">
                                     <div class="btn-group btn-group-sm" role="group">
+                                        @can('editar-unidades-medida')
                                         <button class="btn btn-outline-primary" wire:click="editar({{ $unidad->id_unidad_medida }})" onclick="cambiarAPestanaFormulario()" title="Editar">
                                             <i class="bi bi-pencil"></i>
                                         </button>
+                                        @endcan
+                                        @can('eliminar-unidades-medida')
                                         <button class="btn btn-outline-danger" wire:click="eliminar({{ $unidad->id_unidad_medida }})" onclick="return confirm('¿Está seguro de eliminar esta unidad?')" title="Eliminar">
                                             <i class="bi bi-trash"></i>
                                         </button>
+                                        @endcan
                                     </div>
                                 </td>
                             </tr>

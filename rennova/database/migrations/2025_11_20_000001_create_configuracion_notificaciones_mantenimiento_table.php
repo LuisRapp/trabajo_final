@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('configuracion_notificaciones_mantenimiento', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('user_id')->constrained('usuarios')->onDelete('cascade');
             $table->enum('tipo_notificacion', ['umbral', 'recordatorio', 'stock'])
                 ->comment('Tipo de notificación: umbral=se alcanzó umbral, recordatorio=mantenimiento programado hoy, stock=falta stock');
             $table->timestamps();

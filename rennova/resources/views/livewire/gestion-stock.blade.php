@@ -1,9 +1,11 @@
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="mb-0"><i class="bi bi-boxes"></i> Gestión de Stock (FIFO)</h1>
+        @can('crear-gestion-stock')
         <button class="btn btn-primary" wire:click="abrirModal">
             <i class="bi bi-plus-circle"></i> Registrar Entrada
         </button>
+        @endcan
     </div>
 
     @if (session()->has('message'))
@@ -278,9 +280,11 @@
                         <button type="button" class="btn btn-secondary" wire:click="cerrarModal">
                             <i class="bi bi-x-circle"></i> Cancelar
                         </button>
+                        @can('crear-gestion-stock')
                         <button type="button" class="btn btn-primary" wire:click="guardar">
                             <i class="bi bi-save"></i> Guardar Entrada
                         </button>
+                        @endcan
                     </div>
                 </div>
             </div>

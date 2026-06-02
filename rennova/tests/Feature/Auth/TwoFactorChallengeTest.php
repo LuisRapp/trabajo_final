@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\User;
+use App\Models\Usuario;
 use Laravel\Fortify\Features;
 use Livewire\Volt\Volt;
 
@@ -24,7 +24,7 @@ test('two factor challenge can be rendered', function () {
         'confirmPassword' => true,
     ]);
 
-    $user = User::factory()->create();
+    $user = Usuario::factory()->create();
 
     $user->forceFill([
         'two_factor_secret' => encrypt('test-secret'),

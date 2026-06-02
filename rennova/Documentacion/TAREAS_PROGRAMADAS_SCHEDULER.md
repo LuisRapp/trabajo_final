@@ -1,20 +1,22 @@
 # ⏰ TAREAS PROGRAMADAS (SCHEDULER)
 
+Ultima actualizacion: 8 de febrero de 2026.
+
 **Fecha:** 5 de Diciembre de 2025  
-**Estado:** ✅ **CONFIGURADO Y LISTO**
+Estado: configurado y listo.
 
 ---
 
-## 📋 RESUMEN
+##  RESUMEN
 
 El sistema Rennova tiene **2 procesos críticos automatizados** que se ejecutan en el servidor sin intervención manual:
 
-1. ✅ **Generación automática de órdenes de mantenimiento** (cuando la maquinaria supera umbrales)
-2. ✅ **Actualización de pronóstico climático** (análisis de riesgo y recomendaciones)
+1.  **Generación automática de órdenes de mantenimiento** (cuando la maquinaria supera umbrales)
+2.  **Actualización de pronóstico climático** (análisis de riesgo y recomendaciones)
 
 ---
 
-## 🔧 TAREAS CONFIGURADAS
+##  TAREAS CONFIGURADAS
 
 ### 1️⃣ Verificación de Umbrales de Mantenimiento
 ```
@@ -89,7 +91,7 @@ Descripción: Verifica estado de mantenimientos programados
 
 ---
 
-## 🚀 CÓMO ACTIVAR EN SERVIDOR
+##  CÓMO ACTIVAR EN SERVIDOR
 
 ### Opción 1: Linux/Mac (Recomendado)
 
@@ -131,7 +133,7 @@ Se ejecuta automáticamente cuando el contenedor está activo.
 
 ---
 
-## 📊 CONFIGURACIÓN ACTUAL
+##  CONFIGURACIÓN ACTUAL
 
 ```php
 // routes/console.php
@@ -161,7 +163,7 @@ Schedule::command('mantenimiento:check-programados')
 
 ---
 
-## 🧪 TESTING - EJECUTAR MANUAL
+##  TESTING - EJECUTAR MANUAL
 
 Para probar sin esperar a la hora programada:
 
@@ -184,7 +186,7 @@ php artisan schedule:list
 
 ---
 
-## 📝 LOGS Y MONITOREO
+##  LOGS Y MONITOREO
 
 Los logs de tareas programadas se guardan en:
 
@@ -193,22 +195,22 @@ storage/logs/laravel.log
 ```
 
 Cada tarea registra:
-- ✅ Inicio de ejecución
-- ✅ Órdenes creadas
-- ❌ Errores ocurridos
-- ✅ Finalización exitosa
+-  Inicio de ejecución
+-  Órdenes creadas
+-  Errores ocurridos
+-  Finalización exitosa
 
 Ejemplo de log:
 
 ```
 [2025-12-05 02:00:15] local.INFO: Tarea de mantenimiento completada: mantenimiento:check-umbrales
-[2025-12-05 02:00:15] local.INFO: 🟢 Orden creada - Maquinaria ID: 5 - Toneladas: 1200/1000
+[2025-12-05 02:00:15] local.INFO:  Orden creada - Maquinaria ID: 5 - Toneladas: 1200/1000
 [2025-12-05 06:00:22] local.INFO: Tarea de clima completada: clima:analizar
 ```
 
 ---
 
-## ⚠️ REQUISITOS IMPORTANTES
+## ️ REQUISITOS IMPORTANTES
 
 ### 1. **Cron debe estar ejecutándose**
    - Sin cron, las tareas NO se ejecutan automáticamente
@@ -232,7 +234,7 @@ Ejemplo de log:
 
 ---
 
-## 🔄 ORDEN DE EJECUCIÓN
+##  ORDEN DE EJECUCIÓN
 
 ```timeline
 02:00 AM  → mantenimiento:check-umbrales        (Diario)
@@ -249,7 +251,7 @@ Ejemplo de log:
 
 ---
 
-## ✅ CHECKLIST DE IMPLEMENTACIÓN
+##  CHECKLIST DE IMPLEMENTACIÓN
 
 - [x] Comandos creados y funcionales
 - [x] Scheduler configurado en `routes/console.php`
@@ -262,25 +264,25 @@ Ejemplo de log:
 
 ---
 
-## 📞 SOPORTE
+##  SOPORTE
 
 **Problema:** Las tareas no se ejecutan
-- ❌ Verificar que cron está activo: `ps aux | grep cron`
-- ❌ Verificar logs: `tail -f storage/logs/laravel.log`
-- ❌ Ejecutar manual: `php artisan mantenimiento:check-umbrales`
+-  Verificar que cron está activo: `ps aux | grep cron`
+-  Verificar logs: `tail -f storage/logs/laravel.log`
+-  Ejecutar manual: `php artisan mantenimiento:check-umbrales`
 
 **Problema:** Errores de conexión
-- ❌ Verificar `.env` con credenciales BD
-- ❌ Verificar permiso de escritura en `storage/logs/`
+-  Verificar `.env` con credenciales BD
+-  Verificar permiso de escritura en `storage/logs/`
 
 **Problema:** Tareas se ejecutan muy lentamente
-- ❌ Aumentar timeout en crontab
-- ❌ Revisar queries en logs
-- ❌ Verificar recursos del servidor
+-  Aumentar timeout en crontab
+-  Revisar queries en logs
+-  Verificar recursos del servidor
 
 ---
 
-## 🎯 PRÓXIMOS PASOS
+##  PRÓXIMOS PASOS
 
 1. **Desplegar en servidor** con cron configurado
 2. **Monitorear logs** primeros 3 días
@@ -289,6 +291,6 @@ Ejemplo de log:
 
 ---
 
-**Status:** ✅ **COMPLETAMENTE CONFIGURADO Y PROBADO**
+Estado: completamente configurado y probado.
 
-El sistema está listo para funcionar automáticamente en producción. 🚀
+El sistema está listo para funcionar automáticamente en producción. 

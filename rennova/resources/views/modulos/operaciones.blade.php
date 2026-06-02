@@ -13,6 +13,7 @@
 
     <div class="row g-4">
         <!-- Proveedores -->
+        @can('ver-proveedores')
         <div class="col-12 col-md-6 col-xl-4">
             <div class="card h-100 border-0 shadow-sm hover-elevate">
                 <div class="card-body p-4">
@@ -31,8 +32,10 @@
                 </div>
             </div>
         </div>
+        @endcan
 
         <!-- Insumos -->
+        @can('ver-insumos')
         <div class="col-12 col-md-6 col-xl-4">
             <div class="card h-100 border-0 shadow-sm hover-elevate">
                 <div class="card-body p-4">
@@ -51,8 +54,10 @@
                 </div>
             </div>
         </div>
+        @endcan
 
         <!-- Gestión Stock (FIFO) -->
+        @can('ver-gestion-stock')
         <div class="col-12 col-md-6 col-xl-4">
             <div class="card h-100 border-0 shadow-sm hover-elevate">
                 <div class="card-body p-4">
@@ -71,8 +76,10 @@
                 </div>
             </div>
         </div>
+        @endcan
 
         <!-- Partes Diarios -->
+        @can('ver-partes-diarios')
         <div class="col-12 col-md-6 col-xl-4">
             <div class="card h-100 border-0 shadow-sm hover-elevate">
                 <div class="card-body p-4">
@@ -91,8 +98,10 @@
                 </div>
             </div>
         </div>
+        @endcan
 
         <!-- Unidades de Medida -->
+        @can('ver-unidades-medida')
         <div class="col-12 col-md-6 col-xl-4">
             <div class="card h-100 border-0 shadow-sm hover-elevate">
                 <div class="card-body p-4">
@@ -111,6 +120,7 @@
                 </div>
             </div>
         </div>
+        @endcan
     </div>
 </div>
 @endsection

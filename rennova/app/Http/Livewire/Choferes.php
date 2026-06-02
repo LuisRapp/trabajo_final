@@ -8,8 +8,9 @@ use App\Models\Cliente;
 
 class Choferes extends Component
 {
-    public $choferes = [];
+    public $choferes;
     public $clientes = [];
+    public $tab_activo = 'listado';
 
     public $chofer_id;
     public $id_cliente;
@@ -39,6 +40,7 @@ class Choferes extends Component
     public function mount()
     {
         $this->clientes = Cliente::orderBy('razon_social')->get();
+        $this->choferes = [];
         $this->cargarChoferes();
     }
 
@@ -70,8 +72,6 @@ class Choferes extends Component
 
     public function render()
     {
-        // asegurar datos actualizados al renderizar
-        $this->cargarChoferes();
         return view('livewire.choferes');
     }
 

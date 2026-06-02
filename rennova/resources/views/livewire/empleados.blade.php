@@ -1,181 +1,198 @@
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="mb-0"><i class="bi bi-person-workspace"></i> Empleados</h1>
+<div class="mx-auto max-w-7xl px-4 py-8">
+    <div class="mb-8 flex items-center justify-between">
+        <h1 class="flex items-center gap-2 text-3xl font-bold text-slate-800">
+            <i class="bi bi-person-workspace"></i> Empleados
+        </h1>
     </div>
 
     @if (session()->has('message'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="bi bi-check-circle-fill"></i> {{ session('message') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <div x-data="{ open: true }" x-show="open" x-transition
+            class="mb-6 flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-4 text-green-700 shadow-sm" role="alert">
+            <i class="bi bi-check-circle-fill"></i>
+            <span class="flex-1 font-medium">{{ session('message') }}</span>
+            <button type="button" class="text-green-600 hover:text-green-800" @click="open = false">
+                <i class="bi bi-x-lg"></i>
+            </button>
         </div>
     @endif
 
-    <!-- Pestañas (Tabs) -->
-    <ul class="nav nav-tabs mb-4" id="empleadosTabs" role="tablist">
-        <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="nuevo-tab" data-bs-toggle="tab" data-bs-target="#nuevo-empleado" type="button" role="tab" aria-controls="nuevo-empleado" aria-selected="true">
-                <i class="bi bi-plus-circle"></i> Nuevo Empleado
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="listado-tab" data-bs-toggle="tab" data-bs-target="#listado-empleados" type="button" role="tab" aria-controls="listado-empleados" aria-selected="false">
-                <i class="bi bi-list-ul"></i> Listado de Empleados
-            </button>
-        </li>
-    </ul>
+    <!-- Tabs Navigation -->
+    <div class="mb-6 flex gap-0">
+        @canany(['crear-empleados', 'editar-empleados'])
+        <button type="button" wire:click="$set('tab_activo','nuevo')"
+            class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border border-r-0 rounded-l-lg transition-all {{ $tab_activo === 'nuevo' ? 'text-white' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}"
+            style="{{ $tab_activo === 'nuevo' ? 'background-color: #2d7a4f; border-color: #2d7a4f' : '' }}">
+            <i class="bi bi-plus-circle"></i> Nuevo Empleado
+        </button>
+        @endcanany
+        <button type="button" wire:click="$set('tab_activo','listado')"
+            class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border rounded-r-lg transition-all {{ $tab_activo === 'listado' ? 'text-white' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}"
+            style="{{ $tab_activo === 'listado' ? 'background-color: #2d7a4f; border-color: #2d7a4f' : '' }}">
+            <i class="bi bi-list-ul"></i> Listado de Empleados
+        </button>
+    </div>
 
-    <div class="tab-content" id="empleadosTabContent">
-        <!-- Pestaña 1: Nuevo Empleado (Formulario) -->
-        <div class="tab-pane fade show active" id="nuevo-empleado" role="tabpanel" aria-labelledby="nuevo-tab">
-            <div class="card shadow mb-4">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0"><i class="bi bi-{{ $empleado_id ? 'pencil-square' : 'plus-circle' }}"></i> {{ $empleado_id ? 'Editar Empleado' : 'Nuevo Empleado' }}</h5>
-                </div>
-                <div class="card-body">
-                    <form wire:submit.prevent="guardar">
-                <div class="row g-3 mb-4">
-                    <div class="col-md-4">
-                        <label class="form-label fw-semibold">DNI <span class="text-danger">*</span></label>
-                        <input type="text" wire:model="dni" class="form-control @error('dni') is-invalid @enderror" placeholder="12345678" maxlength="8">
-                        @error('dni') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label fw-semibold">Apellido <span class="text-danger">*</span></label>
-                        <input type="text" wire:model="apellido" class="form-control @error('apellido') is-invalid @enderror" placeholder="Apellido">
-                        @error('apellido') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label fw-semibold">Nombre <span class="text-danger">*</span></label>
-                        <input type="text" wire:model="nombre" class="form-control @error('nombre') is-invalid @enderror" placeholder="Nombre">
-                        @error('nombre') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                    </div>
-                </div>
-                <div class="row g-3 mb-4">
-                    <div class="col-md-3">
-                        <label class="form-label fw-semibold">Rol Laboral <span class="text-danger">*</span></label>
-                        <select wire:model="id_rol_laboral" class="form-select @error('id_rol_laboral') is-invalid @enderror">
-                            <option value="">Seleccione...</option>
-                            @foreach($roles as $rol)
-                                <option value="{{ $rol->id_rol_laboral }}">{{ $rol->nombre }}</option>
-                            @endforeach
-                        </select>
-                        @error('id_rol_laboral') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label fw-semibold">Fecha Nacimiento</label>
-                        <input type="date" wire:model="fecha_nacimiento" class="form-control @error('fecha_nacimiento') is-invalid @enderror">
-                        @error('fecha_nacimiento') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label fw-semibold">Fecha Inicio <span class="text-danger">*</span></label>
-                        <input type="date" wire:model="fecha_inicio_actividades" class="form-control @error('fecha_inicio_actividades') is-invalid @enderror">
-                        @error('fecha_inicio_actividades') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label fw-semibold">Fecha Fin</label>
-                        <input type="date" wire:model="fecha_fin_actividades" class="form-control @error('fecha_fin_actividades') is-invalid @enderror">
-                        <small class="text-muted">Opcional</small>
-                        @error('fecha_fin_actividades') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                    </div>
-                </div>
-                <div class="d-flex gap-2 justify-content-end">
-                    @if ($empleado_id)
-                        <button type="button" wire:click="resetCampos" class="btn btn-secondary">
-                            <i class="bi bi-x-circle"></i> Cancelar
-                        </button>
-                    @endif
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-check-circle"></i> {{ $empleado_id ? 'Actualizar' : 'Guardar' }}
-                    </button>
-                </div>
-            </form>
-                </div>
+    <!-- Tab 1: Nuevo Empleado -->
+    @if($tab_activo === 'nuevo')
+        @canany(['crear-empleados', 'editar-empleados'])
+        <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+            <div class="bg-slate-100 border-b border-slate-200 px-6 py-4">
+                <h5 class="flex items-center gap-2 text-lg font-semibold text-slate-800 mb-0">
+                    <i class="bi bi-{{ $empleado_id ? 'pencil-square' : 'plus-circle' }}"></i> 
+                    {{ $empleado_id ? 'Editar Empleado' : 'Nuevo Empleado' }}
+                </h5>
             </div>
-        </div>
-
-        <!-- Pestaña 2: Listado de Empleados (Tabla) -->
-        <div class="tab-pane fade" id="listado-empleados" role="tabpanel" aria-labelledby="listado-tab">
-            <div class="card shadow">
-                <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Listado de Empleados</h5>
-                </div>
-                <div class="card-body">
-                    <!-- Buscador -->
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <div class="input-group">
-                                <span class="input-group-text bg-light">
-                                    <i class="bi bi-search"></i>
-                                </span>
-                                <input type="text" wire:model.live="busqueda" class="form-control" placeholder="Buscar por apellido, nombre, DNI o rol...">
-                            </div>
+            <div class="p-6">
+                <form wire:submit.prevent="guardar">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">DNI @if(!$empleado_id)<span class="text-red-500">*</span>@endif</label>
+                            <input type="text" wire:model="dni" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('dni') ring-2 ring-red-500 @enderror" placeholder="12345678" maxlength="8">
+                            @error('dni') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
+                            @if($empleado_id) <small class="text-slate-500 text-xs mt-1 block">Opcional - Dejar en blanco para mantener el actual</small> @endif
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Apellido <span class="text-red-500">*</span></label>
+                            <input type="text" wire:model="apellido" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('apellido') ring-2 ring-red-500 @enderror" placeholder="Apellido">
+                            @error('apellido') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Nombre <span class="text-red-500">*</span></label>
+                            <input type="text" wire:model="nombre" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('nombre') ring-2 ring-red-500 @enderror" placeholder="Nombre">
+                            @error('nombre') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
                         </div>
                     </div>
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>ID</th>
-                            <th>DNI</th>
-                            <th>Apellido y Nombre</th>
-                            <th>Rol</th>
-                            <th>Fecha Nacimiento</th>
-                            <th>Fecha Inicio</th>
-                            <th class="text-center">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($empleados as $empleado)
-                            <tr>
-                                <td><span class="badge bg-secondary">{{ $empleado->id_empleado }}</span></td>
-                                <td>{{ number_format($empleado->dni, 0, ',', '.') }}</td>
-                                <td class="fw-semibold">{{ $empleado->apellido }}, {{ $empleado->nombre }}</td>
-                                <td>{{ $empleado->rolLaboral?->nombre ?? 'N/A' }}</td>
-                                <td>{{ $empleado->fecha_nacimiento ? \Carbon\Carbon::parse($empleado->fecha_nacimiento)->format('d/m/Y') : 'N/A' }}</td>
-                                <td>{{ $empleado->fecha_inicio_actividades ? \Carbon\Carbon::parse($empleado->fecha_inicio_actividades)->format('d/m/Y') : 'N/A' }}</td>
-                                <td class="text-center">
-                                    <div class="btn-group btn-group-sm" role="group">
-                                        <button class="btn btn-outline-primary" wire:click="editar({{ $empleado->id_empleado }})" onclick="cambiarAPestanaFormulario()" title="Editar">
-                                            <i class="bi bi-pencil"></i>
-                                        </button>
-                                        <button class="btn btn-outline-danger" wire:click="eliminar({{ $empleado->id_empleado }})" onclick="return confirm('¿Está seguro de eliminar este empleado?')" title="Eliminar">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="7" class="text-center py-5 text-muted">
-                                    <i class="bi bi-inbox" style="font-size: 3rem;"></i>
-                                    <p class="mb-0 mt-2">No hay empleados registrados.</p>
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Rol Laboral <span class="text-red-500">*</span></label>
+                            <select wire:model="id_rol_laboral" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('id_rol_laboral') ring-2 ring-red-500 @enderror">
+                                <option value="">Seleccione...</option>
+                                @foreach($roles as $rol)
+                                    <option value="{{ $rol->id_rol_laboral }}">{{ $rol->nombre }}</option>
+                                @endforeach
+                            </select>
+                            @error('id_rol_laboral') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Fecha Nacimiento <span class="text-red-500">*</span></label>
+                            <input type="date" wire:model="fecha_nacimiento" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('fecha_nacimiento') ring-2 ring-red-500 @enderror">
+                            @error('fecha_nacimiento') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Fecha Inicio <span class="text-red-500">*</span></label>
+                            <input type="date" wire:model="fecha_inicio_actividades" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('fecha_inicio_actividades') ring-2 ring-red-500 @enderror">
+                            @error('fecha_inicio_actividades') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Fecha Fin</label>
+                            <input type="date" wire:model="fecha_fin_actividades" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('fecha_fin_actividades') ring-2 ring-red-500 @enderror">
+                            <small class="text-slate-500 text-xs mt-1 block">Opcional</small>
+                            @error('fecha_fin_actividades') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
+                        </div>
                     </div>
-                </div>
+
+                    <div class="flex gap-2 justify-end">
+                        @if ($empleado_id)
+                            <button type="button" wire:click="resetCampos" class="inline-flex items-center gap-2 px-4 py-2 bg-slate-600 text-white hover:bg-slate-700 rounded-lg transition-colors font-medium text-sm">
+                                <i class="bi bi-x-circle"></i> Cancelar
+                            </button>
+                        @endif
+                        @canany(['crear-empleados', 'editar-empleados'])
+                        <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-colors font-medium text-sm" style="background-color: #2d7a4f;" onmouseover="this.style.backgroundColor='#245c3d'" onmouseout="this.style.backgroundColor='#2d7a4f'">
+                            <i class="bi bi-check-circle"></i> {{ $empleado_id ? 'Actualizar' : 'Guardar' }}
+                        </button>
+                        @endcanany
+                    </div>
+                </form>
             </div>
         </div>
-    </div>
+        @endcanany
+    @endif
+
+    <!-- Tab 2: Listado de Empleados -->
+    @if($tab_activo === 'listado')
+        <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+            <div class="bg-slate-100 border-b border-slate-200 px-6 py-4">
+                <h5 class="text-lg font-semibold text-slate-800 mb-0">Listado de Empleados</h5>
+            </div>
+            <div class="p-6">
+                <!-- Buscador -->
+                <div class="mb-6">
+                    <div class="flex items-center gap-2 px-4 py-3 border border-slate-300 rounded-lg bg-slate-50">
+                        <i class="bi bi-search text-slate-500"></i>
+                        <input type="text" wire:model.live="busqueda" placeholder="Buscar por apellido, nombre, DNI o rol..." class="flex-1 bg-slate-50 border-0 focus:ring-0 focus:outline-none text-slate-700 placeholder-slate-400">
+                    </div>
+                </div>
+
+                <!-- Tabla -->
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b border-slate-200 bg-slate-50">
+                                <th class="px-3 py-3 text-left text-xs font-semibold uppercase text-slate-600">ID</th>
+                                <th class="px-3 py-3 text-left text-xs font-semibold uppercase text-slate-600">DNI</th>
+                                <th class="px-3 py-3 text-left text-xs font-semibold uppercase text-slate-600">Apellido y Nombre</th>
+                                <th class="px-3 py-3 text-left text-xs font-semibold uppercase text-slate-600">Rol</th>
+                                <th class="px-3 py-3 text-left text-xs font-semibold uppercase text-slate-600">Fecha Nacimiento</th>
+                                <th class="px-3 py-3 text-left text-xs font-semibold uppercase text-slate-600">Fecha Inicio</th>
+                                <th class="px-3 py-3 text-center text-xs font-semibold uppercase text-slate-600">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200">
+                            @forelse ($empleados as $empleado)
+                                <tr class="hover:bg-slate-50 transition-colors">
+                                    <td class="px-3 py-3"><span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">{{ $empleado->id_empleado }}</span></td>
+                                    <td class="px-3 py-3 text-slate-600">{{ number_format($empleado->dni, 0, ',', '.') }}</td>
+                                    <td class="px-3 py-3 font-semibold text-slate-800">{{ $empleado->apellido }}, {{ $empleado->nombre }}</td>
+                                    <td class="px-3 py-3 text-slate-600">{{ $empleado->rolLaboral?->nombre ?? 'N/A' }}</td>
+                                    <td class="px-3 py-3 text-slate-600">{{ $empleado->fecha_nacimiento ? \Carbon\Carbon::parse($empleado->fecha_nacimiento)->format('d/m/Y') : 'N/A' }}</td>
+                                    <td class="px-3 py-3 text-slate-600">{{ $empleado->fecha_inicio_actividades ? \Carbon\Carbon::parse($empleado->fecha_inicio_actividades)->format('d/m/Y') : 'N/A' }}</td>
+                                    <td class="px-3 py-3 text-center">
+                                        <div class="flex gap-1 justify-center">
+                                            @can('editar-empleados')
+                                            <button type="button" class="inline-flex items-center px-2 py-1 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded transition-colors border border-blue-200" wire:click="editar({{ $empleado->id_empleado }})" title="Editar">
+                                                <i class="bi bi-pencil text-sm"></i>
+                                            </button>
+                                            @endcan
+                                            @can('eliminar-empleados')
+                                            <button type="button" class="inline-flex items-center px-2 py-1 bg-red-50 text-red-700 hover:bg-red-100 rounded transition-colors border border-red-200" wire:click="eliminar({{ $empleado->id_empleado }})" onclick="return confirm('¿Está seguro de eliminar este empleado?')" title="Eliminar">
+                                                <i class="bi bi-trash text-sm"></i>
+                                            </button>
+                                            @endcan
+                                        </div>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="7" class="px-3 py-8 text-center">
+                                        <i class="bi bi-inbox text-slate-300 block mb-2" style="font-size: 2rem;"></i>
+                                        <p class="text-slate-500 font-medium">No hay empleados registrados.</p>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Paginación -->
+                @if($empleados->hasPages())
+                    <div class="mt-6">
+                        {{ $empleados->links('pagination::tailwind') }}
+                    </div>
+                @endif
+            </div>
+        </div>
+    @endif
 </div>
 
-<!-- JavaScript para cambiar de pestaña al editar/guardar -->
 <script>
-    function cambiarAPestanaFormulario() {
-        const nuevoTab = document.getElementById('nuevo-tab');
-        const nuevoTabInstance = new bootstrap.Tab(nuevoTab);
-        nuevoTabInstance.show();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    document.addEventListener('livewire:init', () => {
-        Livewire.on('empleadoGuardado', () => {
-            const listadoTab = document.getElementById('listado-tab');
-            const listadoTabInstance = new bootstrap.Tab(listadoTab);
-            listadoTabInstance.show();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        });
+    document.addEventListener('DOMContentLoaded', function() {
+        const successAlert = document.querySelector('[x-data*="open"]');
+        if (successAlert && window.Alpine) {
+            setTimeout(() => {
+                successAlert.remove?.();
+            }, 3000);
+        }
     });
 </script>

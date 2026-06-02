@@ -1,350 +1,340 @@
-<div class="container-fluid py-4">
-    <div class="card shadow">
-        <div class="card-header bg-primary text-white">
-            <h4 class="mb-0">
-                <i class="fas fa-calculator"></i> Liquidación de Pagos a Empleados
-            </h4>
+<div class="mx-auto max-w-7xl px-4 py-8">
+    <div class="mb-6 flex items-center justify-between">
+        <h1 class="flex items-center gap-2 text-3xl font-bold text-slate-800">
+            <i class="bi bi-calculator"></i> Liquidación de Pagos a Empleados
+        </h1>
+    </div>
+
+    <!--[if BLOCK]><![endif]--><?php if(session()->has('message')): ?>
+        <div x-data="{ open: true }" x-show="open" x-transition
+            class="mb-6 flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-4 text-green-700 shadow-sm" role="alert">
+            <i class="bi bi-check-circle-fill"></i>
+            <span class="flex-1 font-medium"><?php echo e(session('message')); ?></span>
+            <button type="button" class="text-green-600 hover:text-green-800" @click="open = false">
+                <i class="bi bi-x-lg"></i>
+            </button>
         </div>
-        
-        <div class="card-body">
-            <!--[if BLOCK]><![endif]--><?php if(session()->has('message')): ?>
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    <i class="fas fa-check-circle"></i> <?php echo e(session('message')); ?>
+    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
 
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+    <?php if(session()->has('error')): ?>
+        <div x-data="{ open: true }" x-show="open" x-transition
+            class="mb-6 flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700 shadow-sm" role="alert">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <span class="flex-1 font-medium"><?php echo e(session('error')); ?></span>
+            <button type="button" class="text-red-600 hover:text-red-800" @click="open = false">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
 
-            <?php if(session()->has('error')): ?>
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <i class="fas fa-exclamation-triangle"></i> <?php echo e(session('error')); ?>
-
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
-
+    <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+        <div class="bg-slate-100 border-b border-slate-200 px-6 py-4">
+            <h2 class="text-lg font-semibold text-slate-800">Gestión de liquidaciones</h2>
+        </div>
+        <div class="p-6">
             <!--[if BLOCK]><![endif]--><?php if(!$mostrar_liquidacion): ?>
-                
-                <form wire:submit.prevent="calcularLiquidacion">
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label for="id_empleado" class="form-label">Empleado *</label>
-                                <select wire:model="id_empleado" id="id_empleado" class="form-select <?php $__errorArgs = ['id_empleado'];
+                <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->any(['crear-liquidacion-pagos', 'editar-liquidacion-pagos'])): ?>
+                <form wire:submit.prevent="calcularLiquidacion" class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                    <div class="md:col-span-5">
+                        <label for="id_empleado" class="block text-sm font-semibold text-slate-700 mb-2">Empleado *</label>
+                        <select wire:model="id_empleado" id="id_empleado"
+                            class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors <?php $__errorArgs = ['id_empleado'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+$message = $__bag->first($__errorArgs[0]); ?> ring-2 ring-red-500 <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
-unset($__errorArgs, $__bag); ?>">
-                                    <option value="">Seleccione un empleado</option>
-                                    <!--[if BLOCK]><![endif]--><?php $__currentLoopData = $empleados; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $emp): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                        <option value="<?php echo e($emp->id_empleado); ?>">
-                                            <?php echo e($emp->apellido); ?>, <?php echo e($emp->nombre); ?> - <?php echo e($emp->rolLaboral->nombre ?? 'Sin rol'); ?>
+unset($__errorArgs, $__bag); ?>" <?php if($liquidar_todos): echo 'disabled'; endif; ?>>
+                            <option value="">Seleccione un empleado</option>
+                            <!--[if BLOCK]><![endif]--><?php $__currentLoopData = $empleados; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $emp): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <option value="<?php echo e($emp->id_empleado); ?>">
+                                    <?php echo e($emp->apellido); ?>, <?php echo e($emp->nombre); ?> - <?php echo e($emp->rolLaboral->nombre ?? 'Sin rol'); ?>
 
-                                        </option>
-                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><!--[if ENDBLOCK]><![endif]-->
-                                </select>
-                                <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['id_empleado'];
+                                </option>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><!--[if ENDBLOCK]><![endif]-->
+                        </select>
+                        <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['id_empleado'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> <div class="invalid-feedback"><?php echo e($message); ?></div> <?php unset($message);
+$message = $__bag->first($__errorArgs[0]); ?> <p class="mt-1 text-sm text-red-500"><?php echo e($message); ?></p> <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
-                            </div>
+                        <div class="mt-2 flex items-center gap-2 text-sm text-slate-600">
+                            <input type="checkbox" id="liquidar_todos" wire:model="liquidar_todos" class="h-4 w-4 rounded border-slate-300 text-green-700 focus:ring-green-600">
+                            <label for="liquidar_todos">Liquidar a todos los empleados</label>
                         </div>
+                    </div>
 
-                        <div class="col-md-3">
-                            <div class="mb-3">
-                                <label for="fecha_inicio" class="form-label">Fecha Inicio *</label>
-                                <input type="date" wire:model="fecha_inicio" id="fecha_inicio" class="form-control <?php $__errorArgs = ['fecha_inicio'];
+                    <div class="md:col-span-3">
+                        <label for="fecha_inicio" class="block text-sm font-semibold text-slate-700 mb-2">Fecha Inicio *</label>
+                        <input type="date" wire:model="fecha_inicio" id="fecha_inicio"
+                            class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors <?php $__errorArgs = ['fecha_inicio'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+$message = $__bag->first($__errorArgs[0]); ?> ring-2 ring-red-500 <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>">
-                                <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['fecha_inicio'];
+                        <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['fecha_inicio'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> <div class="invalid-feedback"><?php echo e($message); ?></div> <?php unset($message);
+$message = $__bag->first($__errorArgs[0]); ?> <p class="mt-1 text-sm text-red-500"><?php echo e($message); ?></p> <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
-                            </div>
-                        </div>
+                    </div>
 
-                        <div class="col-md-3">
-                            <div class="mb-3">
-                                <label for="fecha_fin" class="form-label">Fecha Fin *</label>
-                                <input type="date" wire:model="fecha_fin" id="fecha_fin" class="form-control <?php $__errorArgs = ['fecha_fin'];
+                    <div class="md:col-span-3">
+                        <label for="fecha_fin" class="block text-sm font-semibold text-slate-700 mb-2">Fecha Fin *</label>
+                        <input type="date" wire:model="fecha_fin" id="fecha_fin"
+                            class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors <?php $__errorArgs = ['fecha_fin'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+$message = $__bag->first($__errorArgs[0]); ?> ring-2 ring-red-500 <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>">
-                                <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['fecha_fin'];
+                        <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['fecha_fin'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> <div class="invalid-feedback"><?php echo e($message); ?></div> <?php unset($message);
+$message = $__bag->first($__errorArgs[0]); ?> <p class="mt-1 text-sm text-red-500"><?php echo e($message); ?></p> <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
-                            </div>
-                        </div>
+                    </div>
 
-                        <div class="col-md-2">
-                            <div class="mb-3">
-                                <label class="form-label">&nbsp;</label>
-                                <button type="submit" class="btn btn-primary w-100">
-                                    <i class="fas fa-calculator"></i> Calcular
-                                </button>
-                            </div>
-                        </div>
+                    <div class="md:col-span-1 flex items-end">
+                        <button type="submit" class="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-green-700 px-4 py-3 text-white font-semibold shadow-sm hover:bg-green-800">
+                            <i class="bi bi-calculator"></i> Calcular
+                        </button>
+                    </div>
+                    <div class="md:col-span-12">
+                        <p class="mt-2 text-xs text-slate-500">Esta opción genera recibos para todos los empleados activos del período seleccionado.</p>
                     </div>
                 </form>
+                <?php endif; ?>
             <?php else: ?>
-                
-                <div class="row">
-                    <div class="col-12">
-                        <div class="alert alert-info">
-                            <h5 class="mb-2">
-                                <i class="fas fa-user"></i> 
-                                <?php echo e($empleado_seleccionado->apellido); ?>, <?php echo e($empleado_seleccionado->nombre); ?>
+                <div class="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4 text-blue-800">
+                    <h5 class="mb-1 flex items-center gap-2 font-semibold">
+                        <i class="bi bi-person-circle"></i>
+                        <?php echo e($empleado_seleccionado->apellido); ?>, <?php echo e($empleado_seleccionado->nombre); ?>
 
-                            </h5>
-                            <p class="mb-0">
-                                <strong>Rol:</strong> <?php echo e($empleado_seleccionado->rolLaboral->nombre ?? 'N/A'); ?> |
-                                <strong>Período:</strong> <?php echo e(\Carbon\Carbon::parse($fecha_inicio)->format('d/m/Y')); ?> a <?php echo e(\Carbon\Carbon::parse($fecha_fin)->format('d/m/Y')); ?>
+                    </h5>
+                    <p class="text-sm">
+                        <strong>Rol:</strong> <?php echo e($empleado_seleccionado->rolLaboral->nombre ?? 'N/A'); ?> |
+                        <strong>Período:</strong> <?php echo e(\Carbon\Carbon::parse($fecha_inicio)->format('d/m/Y')); ?> a <?php echo e(\Carbon\Carbon::parse($fecha_fin)->format('d/m/Y')); ?>
 
-                            </p>
-                        </div>
-                    </div>
+                    </p>
                 </div>
 
                 <!--[if BLOCK]><![endif]--><?php if(!$recibo_generado): ?>
-                    
-                    <div class="row mb-4">
-                        <div class="col-md-6">
-                            <div class="card border-secondary">
-                                <div class="card-header bg-secondary text-white">
-                                    <h6 class="mb-0"><i class="fas fa-info-circle"></i> Detalle del Cálculo</h6>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="space-y-4">
+                            <div class="rounded-lg border border-slate-200 bg-white shadow-sm">
+                                <div class="border-b border-slate-200 bg-slate-100 px-4 py-3">
+                                    <h6 class="mb-0 flex items-center gap-2 font-semibold text-slate-800">
+                                        <i class="bi bi-info-circle"></i> Detalle del Cálculo
+                                    </h6>
                                 </div>
-                                <div class="card-body">
-                                    <table class="table table-sm mb-0">
-                                        <tbody>
-                                            <tr>
-                                                <td><strong>Días caídos trabajados:</strong></td>
-                                                <td class="text-end"><?php echo e($calculo['cantidad_dias_caidos']); ?> días</td>
-                                            </tr>
-                                            <tr>
-                                                <td><strong>Jornal diario:</strong></td>
-                                                <td class="text-end">$<?php echo e(number_format($calculo['valor_jornal'], 2)); ?></td>
-                                            </tr>
-                                            <tr class="table-light">
-                                                <td><strong>Subtotal jornales:</strong></td>
-                                                <td class="text-end"><strong>$<?php echo e(number_format($calculo['total_pagar_jornales'], 2)); ?></strong></td>
-                                            </tr>
-                                            <tr>
-                                                <td colspan="2"><hr class="my-2"></td>
-                                            </tr>
-                                       
-                                            <tr>
-                                                <td><strong>Toneladas producidas:</strong></td>
-                                                <td class="text-end"><?php echo e(number_format($calculo['total_peso_toneladas'] ?? 0, 2)); ?> ton</td>
-                                            </tr>
-                                            <tr>
-                                                <td><strong>Tarifa por tonelada:</strong></td>
-                                                <td class="text-end">$<?php echo e(number_format($calculo['tarifa_fija_por_tonelada'], 2)); ?></td>
-                                            </tr>
-                                            <tr class="table-light">
-                                                <td><strong>Subtotal producción:</strong></td>
-                                                <td class="text-end"><strong>$<?php echo e(number_format($calculo['total_pagar_produccion'], 2)); ?></strong></td>
-                                            </tr>
-                                            <tr>
-                                                <td colspan="2"><hr class="my-2"></td>
-                                            </tr>
-                                            <tr class="table-success">
-                                                <td><strong>TOTAL CALCULADO:</strong></td>
-                                                <td class="text-end"><h5 class="mb-0">$<?php echo e(number_format($calculo['total_pagar_final'], 2)); ?></h5></td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
+                                <div class="p-4">
+                                    <div class="space-y-3 text-sm">
+                                        <div class="flex items-center justify-between">
+                                            <span class="font-semibold">Días caídos trabajados</span>
+                                            <span><?php echo e($calculo['cantidad_dias_caidos']); ?> días</span>
+                                        </div>
+                                        <div class="flex items-center justify-between">
+                                            <span class="font-semibold">Jornal diario</span>
+                                            <span>$<?php echo e(number_format($calculo['valor_jornal'], 2)); ?></span>
+                                        </div>
+                                        <div class="flex items-center justify-between rounded-md bg-slate-50 px-3 py-2">
+                                            <span class="font-semibold">Subtotal jornales</span>
+                                            <span class="font-semibold">$<?php echo e(number_format($calculo['total_pagar_jornales'], 2)); ?></span>
+                                        </div>
+                                        <hr>
+                                        <div class="flex items-center justify-between">
+                                            <span class="font-semibold">Toneladas producidas</span>
+                                            <span><?php echo e(number_format($calculo['total_peso_toneladas'] ?? 0, 2)); ?> ton</span>
+                                        </div>
+                                        <div class="flex items-center justify-between">
+                                            <span class="font-semibold">Tarifa por tonelada</span>
+                                            <span>$<?php echo e(number_format($calculo['tarifa_fija_por_tonelada'], 2)); ?></span>
+                                        </div>
+                                        <div class="flex items-center justify-between rounded-md bg-slate-50 px-3 py-2">
+                                            <span class="font-semibold">Subtotal producción</span>
+                                            <span class="font-semibold">$<?php echo e(number_format($calculo['total_pagar_produccion'], 2)); ?></span>
+                                        </div>
+                                        <hr>
+                                        <div class="flex items-center justify-between rounded-md bg-green-50 px-3 py-2 text-green-800">
+                                            <span class="font-semibold">TOTAL CALCULADO</span>
+                                            <span class="text-lg font-bold">$<?php echo e(number_format($calculo['total_pagar_final'], 2)); ?></span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            
-                            
+
                             <!--[if BLOCK]><![endif]--><?php if(count($adelantos_pendientes) > 0): ?>
-                                <div class="card border-warning mt-3">
-                                    <div class="card-header bg-warning text-dark">
-                                        <h6 class="mb-0"><i class="fas fa-hand-holding-usd"></i> Adelantos Pendientes</h6>
+                                <div class="rounded-lg border border-amber-200 bg-amber-50 shadow-sm">
+                                    <div class="border-b border-amber-200 px-4 py-3 text-amber-900">
+                                        <h6 class="mb-0 flex items-center gap-2 font-semibold">
+                                            <i class="bi bi-cash-stack"></i> Adelantos Pendientes
+                                        </h6>
                                     </div>
-                                    <div class="card-body">
-                                        <table class="table table-sm table-striped mb-0">
-                                            <thead>
-                                                <tr>
-                                                    <th>Fecha</th>
-                                                    <th class="text-end">Monto</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <!--[if BLOCK]><![endif]--><?php $__currentLoopData = $adelantos_pendientes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $adelanto): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <div class="p-4">
+                                        <div class="overflow-hidden rounded-lg border border-amber-200">
+                                            <table class="min-w-full text-sm">
+                                                <thead class="bg-amber-100 text-amber-900">
                                                     <tr>
-                                                        <td><?php echo e(\Carbon\Carbon::parse($adelanto->fecha_emision)->format('d/m/Y')); ?></td>
-                                                        <td class="text-end">$<?php echo e(number_format($adelanto->monto, 2)); ?></td>
+                                                        <th class="px-3 py-2 text-left">Fecha</th>
+                                                        <th class="px-3 py-2 text-right">Monto</th>
                                                     </tr>
-                                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><!--[if ENDBLOCK]><![endif]-->
-                                            </tbody>
-                                            <tfoot>
-                                                <tr class="table-warning">
-                                                    <th>TOTAL ADELANTOS:</th>
-                                                    <th class="text-end">$<?php echo e(number_format($total_adelantos, 2)); ?></th>
-                                                </tr>
-                                            </tfoot>
-                                        </table>
-                                        <div class="alert alert-info mt-2 mb-0">
-                                            <small><i class="fas fa-info-circle"></i> Estos adelantos se descontarán automáticamente y se marcarán como "pagados" al generar el recibo.</small>
+                                                </thead>
+                                                <tbody class="divide-y divide-amber-200 bg-white">
+                                                    <!--[if BLOCK]><![endif]--><?php $__currentLoopData = $adelantos_pendientes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $adelanto): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                        <tr>
+                                                            <td class="px-3 py-2"><?php echo e(\Carbon\Carbon::parse($adelanto->fecha_emision)->format('d/m/Y')); ?></td>
+                                                            <td class="px-3 py-2 text-right">$<?php echo e(number_format($adelanto->monto, 2)); ?></td>
+                                                        </tr>
+                                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><!--[if ENDBLOCK]><![endif]-->
+                                                </tbody>
+                                                <tfoot class="bg-amber-100">
+                                                    <tr>
+                                                        <th class="px-3 py-2 text-left">TOTAL ADELANTOS</th>
+                                                        <th class="px-3 py-2 text-right">$<?php echo e(number_format($total_adelantos, 2)); ?></th>
+                                                    </tr>
+                                                </tfoot>
+                                            </table>
+                                        </div>
+                                        <div class="mt-3 rounded-md border border-blue-200 bg-blue-50 p-3 text-xs text-blue-800">
+                                            <i class="bi bi-info-circle"></i> Estos adelantos se descontarán automáticamente y se marcarán como "pagados" al generar el recibo.
                                         </div>
                                     </div>
                                 </div>
                             <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
                         </div>
 
-                        <div class="col-md-6">
-                            <div class="card border-primary">
-                                <div class="card-header bg-primary text-white">
-                                    <h6 class="mb-0"><i class="fas fa-edit"></i> Datos del Recibo (Editable)</h6>
-                                </div>
-                                <div class="card-body">
-                                    <form wire:submit.prevent="generarRecibo">
-                                        <div class="mb-3">
-                                            <label for="monto_bruto" class="form-label">Monto Bruto *</label>
-                                            <input type="number" 
-                                                   wire:model.live="monto_bruto" 
-                                                   id="monto_bruto" 
-                                                   step="0.1" min="0" 
-                                                   class="form-control <?php $__errorArgs = ['monto_bruto'];
+                        <div class="rounded-lg border border-slate-200 bg-white shadow-sm">
+                            <div class="border-b border-slate-200 bg-slate-100 px-4 py-3">
+                                <h6 class="mb-0 flex items-center gap-2 font-semibold text-slate-800">
+                                    <i class="bi bi-pencil-square"></i> Datos del Recibo (Editable)
+                                </h6>
+                            </div>
+                            <div class="p-4">
+                                <form wire:submit.prevent="generarRecibo" class="space-y-4">
+                                    <div>
+                                        <label for="monto_bruto" class="block text-sm font-semibold text-slate-700 mb-2">Monto Bruto *</label>
+                                        <input type="number" wire:model.live="monto_bruto" id="monto_bruto" step="0.1" min="0"
+                                            class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors <?php $__errorArgs = ['monto_bruto'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+$message = $__bag->first($__errorArgs[0]); ?> ring-2 ring-red-500 <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>">
-                                            <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['monto_bruto'];
+                                        <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['monto_bruto'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> <div class="invalid-feedback"><?php echo e($message); ?></div> <?php unset($message);
+$message = $__bag->first($__errorArgs[0]); ?> <p class="mt-1 text-sm text-red-500"><?php echo e($message); ?></p> <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
-                                            <div class="form-text">Puedes modificar el monto calculado si es necesario</div>
-                                        </div>
+                                        <p class="mt-1 text-xs text-slate-500">Puedes modificar el monto calculado si es necesario</p>
+                                    </div>
 
-                                        <div class="mb-3">
-                                            <label for="descuentos" class="form-label">
-                                                Descuentos
-                                                <!--[if BLOCK]><![endif]--><?php if($total_adelantos > 0): ?>
-                                                    <span class="badge bg-warning text-dark">
-                                                        <i class="fas fa-hand-holding-usd"></i> Incluye adelantos
-                                                    </span>
-                                                <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
-                                            </label>
-                                            <input type="number" 
-                                                   wire:model.live="descuentos" 
-                                                   id="descuentos" 
-                                                   step="0.1" min="0" 
-                                                   class="form-control <?php $__errorArgs = ['descuentos'];
+                                    <div>
+                                        <label for="descuentos" class="block text-sm font-semibold text-slate-700 mb-2">
+                                            Descuentos
+                                            <!--[if BLOCK]><![endif]--><?php if($total_adelantos > 0): ?>
+                                                <span class="ml-2 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-800">
+                                                    <i class="bi bi-cash-stack"></i> Incluye adelantos
+                                                </span>
+                                            <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+                                        </label>
+                                        <input type="number" wire:model.live="descuentos" id="descuentos" step="0.1" min="0"
+                                            class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors <?php $__errorArgs = ['descuentos'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+$message = $__bag->first($__errorArgs[0]); ?> ring-2 ring-red-500 <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>">
-                                            <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['descuentos'];
+                                        <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['descuentos'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> <div class="invalid-feedback"><?php echo e($message); ?></div> <?php unset($message);
+$message = $__bag->first($__errorArgs[0]); ?> <p class="mt-1 text-sm text-red-500"><?php echo e($message); ?></p> <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
-                                            <div class="form-text">
-                                                <!--[if BLOCK]><![endif]--><?php if($total_adelantos > 0): ?>
-                                                    Adelantos del período: $<?php echo e(number_format($total_adelantos, 2)); ?> (se marcarán como pagados)
-                                                <?php else: ?>
-                                                    Otros descuentos: retenciones, etc.
-                                                <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
-                                            </div>
-                                        </div>
+                                        <p class="mt-1 text-xs text-slate-500">
+                                            <!--[if BLOCK]><![endif]--><?php if($total_adelantos > 0): ?>
+                                                Adelantos del período: $<?php echo e(number_format($total_adelantos, 2)); ?> (se marcarán como pagados)
+                                            <?php else: ?>
+                                                Otros descuentos: retenciones, etc.
+                                            <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+                                        </p>
+                                    </div>
 
-                                        <div class="mb-3">
-                                            <label class="form-label">Monto Neto a Pagar</label>
-                                            <div class="alert alert-success mb-0">
-                                                <h4 class="mb-0">$<?php echo e(number_format($monto_neto, 2)); ?></h4>
-                                            </div>
+                                    <div>
+                                        <label class="block text-sm font-semibold text-slate-700 mb-2">Monto Neto a Pagar</label>
+                                        <div class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-green-800">
+                                            <div class="text-2xl font-bold">$<?php echo e(number_format($monto_neto, 2)); ?></div>
                                         </div>
+                                    </div>
 
-                                        <div class="mb-3">
-                                            <label for="observaciones" class="form-label">Observaciones</label>
-                                            <textarea wire:model="observaciones" 
-                                                      id="observaciones" 
-                                                      rows="3" 
-                                                      class="form-control <?php $__errorArgs = ['observaciones'];
+                                    <div>
+                                        <label for="observaciones" class="block text-sm font-semibold text-slate-700 mb-2">Observaciones</label>
+                                        <textarea wire:model="observaciones" id="observaciones" rows="3"
+                                            class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors <?php $__errorArgs = ['observaciones'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+$message = $__bag->first($__errorArgs[0]); ?> ring-2 ring-red-500 <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
-unset($__errorArgs, $__bag); ?>" 
-                                                      maxlength="150"></textarea>
-                                            <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['observaciones'];
+unset($__errorArgs, $__bag); ?>" maxlength="150"></textarea>
+                                        <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['observaciones'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> <div class="invalid-feedback"><?php echo e($message); ?></div> <?php unset($message);
+$message = $__bag->first($__errorArgs[0]); ?> <p class="mt-1 text-sm text-red-500"><?php echo e($message); ?></p> <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
-                                        </div>
+                                    </div>
 
-                                        <div class="d-grid gap-2">
-                                            <button type="submit" class="btn btn-success btn-lg">
-                                                <i class="fas fa-check-circle"></i> Generar Recibo
-                                            </button>
-                                            <button type="button" wire:click="nuevaLiquidacion" class="btn btn-secondary">
-                                                <i class="fas fa-times"></i> Cancelar
-                                            </button>
-                                        </div>
-                                    </form>
-                                </div>
+                                    <div class="flex flex-col gap-2">
+                                        <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->any(['crear-liquidacion-pagos', 'editar-liquidacion-pagos'])): ?>
+                                        <button type="submit" class="inline-flex items-center justify-center gap-2 rounded-lg bg-green-700 px-4 py-3 text-white font-semibold shadow-sm hover:bg-green-800">
+                                            <i class="bi bi-check-circle"></i> Generar Recibo
+                                        </button>
+                                        <?php endif; ?>
+                                        <button type="button" wire:click="nuevaLiquidacion" class="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-200 px-4 py-3 text-slate-700 font-semibold hover:bg-slate-300">
+                                            <i class="bi bi-x-circle"></i> Cancelar
+                                        </button>
+                                    </div>
+                                </form>
                             </div>
                         </div>
                     </div>
                 <?php else: ?>
-                    
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="alert alert-success text-center py-5">
-                                <i class="fas fa-check-circle fa-5x mb-3"></i>
-                                <h3>¡Recibo generado correctamente!</h3>
-                                <p class="lead mb-4">El pago ha sido registrado en el sistema.</p>
-                                <button type="button" wire:click="nuevaLiquidacion" class="btn btn-primary btn-lg">
-                                    <i class="fas fa-plus"></i> Nueva Liquidación
-                                </button>
-                            </div>
-                        </div>
+                    <div class="rounded-lg border border-green-200 bg-green-50 p-8 text-center text-green-800">
+                        <i class="bi bi-check-circle-fill text-5xl"></i>
+                        <h3 class="mt-3 text-2xl font-semibold">¡Recibo generado correctamente!</h3>
+                        <p class="mt-2 text-sm">El pago ha sido registrado en el sistema.</p>
+                        <button type="button" wire:click="nuevaLiquidacion"
+                            class="mt-4 inline-flex items-center justify-center gap-2 rounded-lg bg-green-700 px-4 py-3 text-white font-semibold shadow-sm hover:bg-green-800">
+                            <i class="bi bi-plus-circle"></i> Nueva Liquidación
+                        </button>
                     </div>
                 <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
             <?php endif; ?><!--[if ENDBLOCK]><![endif]-->

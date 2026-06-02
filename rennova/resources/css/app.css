@@ -1,4 +1,6 @@
-@import 'tailwindcss';
+@config '../../tailwind.config.js';
+@import 'tailwindcss/theme' layer(theme);
+@import 'tailwindcss/utilities' layer(utilities);
 @import '../../vendor/livewire/flux/dist/flux.css';
 
 @source '../views';
@@ -44,6 +46,78 @@
     ::backdrop,
     ::file-selector-button {
         border-color: var(--color-gray-200, currentColor);
+    }
+}
+
+@layer components {
+    .border-default {
+        border-color: #cbd5e1;
+    }
+
+    .lotes-accion-btn {
+        @apply inline-flex h-8 w-24 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-2 text-xs font-bold shadow-sm transition-all;
+    }
+
+    .lotes-accion-btn--iniciar {
+        @apply text-white;
+        background-color: #2d7a4f;
+    }
+
+    .lotes-accion-btn--iniciar:hover {
+        background-color: #245c3d;
+    }
+
+    .lotes-accion-btn--ver {
+        @apply bg-slate-200 text-slate-900 hover:bg-slate-300;
+    }
+
+    .lotes-form-btn {
+        @apply inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-medium shadow-sm transition-colors;
+    }
+
+    .lotes-form-btn--primary {
+        @apply bg-blue-600 text-white hover:bg-blue-700;
+    }
+
+    .lotes-form-btn--secondary {
+        @apply border border-slate-300 bg-white text-slate-700 hover:bg-slate-50;
+    }
+
+    .lotes-modal-btn {
+        @apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg px-4 py-2 text-xs font-semibold shadow-sm transition-colors;
+    }
+
+    .lotes-modal-btn--primary {
+        @apply bg-blue-600 text-white hover:bg-blue-700;
+    }
+
+    .lotes-modal-btn--secondary {
+        @apply border border-slate-300 bg-white text-slate-700 hover:bg-slate-50;
+    }
+
+    .lotes-modal-btn--danger {
+        @apply border border-red-200 bg-red-600 text-white hover:bg-red-700;
+    }
+
+    .lotes-modal-btn--ghost {
+        @apply text-slate-500 hover:text-slate-800;
+    }
+
+    .lotes-modal-overlay {
+        @apply flex items-start justify-center backdrop-blur-sm;
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        background: rgba(15, 23, 42, 0.4);
+        padding-top: 25vh;
+    }
+
+    .lotes-modal-container {
+        @apply w-full max-w-7xl px-4;
+    }
+
+    .lotes-modal-card {
+        @apply overflow-hidden rounded-2xl border border-slate-200 bg-white p-8 shadow-2xl;
     }
 }
 

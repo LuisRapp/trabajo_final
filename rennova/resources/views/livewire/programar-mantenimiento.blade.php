@@ -98,7 +98,7 @@
                     </div>
                 </div>
                 <div class="d-flex gap-2 justify-content-end">
-                    <a href="{{ route('home') }}" class="btn btn-secondary">
+                    <a href="{{ route('dashboard') }}" class="btn btn-secondary">
                         <i class="bi bi-arrow-left"></i> Cancelar
                     </a>
                     <button type="submit" class="btn btn-primary">

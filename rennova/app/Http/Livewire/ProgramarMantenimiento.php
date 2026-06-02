@@ -82,7 +82,7 @@ class ProgramarMantenimiento extends Component
         // Mensaje de éxito y redirección
         session()->flash('success', 'Mantenimiento programado exitosamente para el ' . \Carbon\Carbon::parse($this->fechaProgramada)->format('d/m/Y'));
         
-        return redirect()->route('home');
+        return redirect()->route('mantenimientos.index');
     }
 
     public function render()

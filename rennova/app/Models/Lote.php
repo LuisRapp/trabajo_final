@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Jobs\ProcessAllocationProposal;
+use App\Models\AllocationProposal;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
@@ -22,6 +24,7 @@ class Lote extends Model implements AuditableContract
         'superficie',
         'latitud',
         'longitud',
+        'main_task_type',
     ];
 
     /**
@@ -34,6 +37,7 @@ class Lote extends Model implements AuditableContract
         'ubicacion',
         'especie',
         'superficie',
+        'main_task_type',
     ];
 
     /**
@@ -50,9 +54,36 @@ class Lote extends Model implements AuditableContract
     // Nota: evitamos enganchar eventos inexistentes de pivot a nivel de modelo.
     // La auditoría de asignaciones se realiza en el flujo de guardado del componente Livewire.
 
+    protected static function booted(): void
+    {
+        static::saved(function (self $lote) {
+            if ($lote->wasRecentlyCreated || $lote->wasChanged(['estado', 'especie', 'superficie', 'main_task_type'])) {
+                // Use afterCommit to avoid database transaction conflicts
+                \DB::afterCommit(function () use ($lote) {
+                    ProcessAllocationProposal::dispatch($lote->id_lote);
+                });
+            }
+        });
+    }
+
     public function parteDiarios()
     {
         return $this->hasMany(ParteDiario::class, 'id_lote');
+    }
+
+    public function tareas()
+    {
+        return $this->hasMany(LoteTarea::class, 'id_lote');
+    }
+
+    public function allocationProposals()
+    {
+        return $this->hasMany(AllocationProposal::class, 'id_lote');
+    }
+
+    public function latestAllocationProposal()
+    {
+        return $this->hasOne(AllocationProposal::class, 'id_lote')->latestOfMany();
     }
 
     public function empleados()

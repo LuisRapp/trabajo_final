@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
+use App\Models\Usuario;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Database\Seeders\AdminUserSeeder;
@@ -14,15 +14,35 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Usuarios de prueba
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        $this->call([
+            RolesAndPermissionsSeeder::class,
         ]);
 
-        // Usuario administrador con rol
-        $this->call([
-            AdminUserSeeder::class,
-        ]);
+        if (app()->environment(['local', 'testing'])) {
+            // Datos y usuario de demostración
+            $this->call([
+                LotesClimaDemoSeeder::class,
+                LoteEscenarioNormalSeeder::class,
+                LoteEscenarioLluviaModeradaSeeder::class,
+                LoteEscenarioLluviaIntensaSeeder::class,
+                LoteEscenarioReaccionInmediataSeeder::class,
+                LoteEscenarioSuspensionSeeder::class,
+            ]);
+
+            $admin = Usuario::factory()->create([
+                'nombre' => 'Demo',
+                'apellido' => 'Admin',
+                'email' => 'demo@example.com',
+                'password' => bcrypt('demo1234'),
+                'activo' => true,
+            ]);
+
+            // Asignar rol de Administrador
+            $admin->assignRole('Administrador');
+
+            $this->command->info('✅ Usuario de demostración creado:');
+            $this->command->info('   Email: demo@example.com');
+            $this->command->info('   Password: demo1234');
+        }
     }
 }

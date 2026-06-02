@@ -1,128 +1,143 @@
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="mb-0"><i class="bi bi-people"></i> Clientes</h1>
+<div class="mx-auto max-w-7xl px-4 py-8" x-data="{ tab: 'listado' }">
+    <div class="mb-8 flex items-center justify-between">
+        <h1 class="flex items-center gap-2 text-3xl font-bold text-slate-800">
+            <i class="bi bi-people"></i> Clientes
+        </h1>
     </div>
 
     @if (session()->has('message'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="bi bi-check-circle-fill"></i> {{ session('message') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <div x-data="{ open: true }" x-show="open" x-transition
+            class="mb-6 flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-4 text-green-700 shadow-sm" role="alert">
+            <i class="bi bi-check-circle-fill"></i>
+            <span class="flex-1 font-medium">{{ session('message') }}</span>
+            <button type="button" class="text-green-600 hover:text-green-800" @click="open = false">
+                <i class="bi bi-x-lg"></i>
+            </button>
         </div>
     @endif
 
-    <!-- Pestañas (Tabs) -->
-    <ul class="nav nav-tabs mb-4" id="clientesTabs" role="tablist">
-        <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="nuevo-tab" data-bs-toggle="tab" data-bs-target="#nuevo-cliente" type="button" role="tab">
-                <i class="bi bi-plus-circle"></i> Nuevo Cliente
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="listado-tab" data-bs-toggle="tab" data-bs-target="#listado-clientes" type="button" role="tab">
-                <i class="bi bi-list-ul"></i> Listado de Clientes
-            </button>
-        </li>
-    </ul>
+    <div class="mb-6 flex gap-0">
+        @canany(['crear-clientes', 'editar-clientes'])
+        <button type="button" @click="tab = 'nuevo'; $wire.$refresh()"
+            class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border border-r-0 rounded-l-lg transition-all"
+            :class="tab === 'nuevo' ? 'text-white' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'"
+            :style="tab === 'nuevo' ? 'background-color: #2d7a4f; border-color: #2d7a4f' : ''">
+            <i class="bi bi-plus-circle"></i> Nuevo Cliente
+        </button>
+        @endcanany
+        <button type="button" @click="tab = 'listado'; $wire.$refresh()"
+            class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border rounded-r-lg transition-all"
+            :class="tab === 'listado' ? 'text-white' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'"
+            :style="tab === 'listado' ? 'background-color: #2d7a4f; border-color: #2d7a4f' : ''">
+            <i class="bi bi-list-ul"></i> Listado de Clientes
+        </button>
+    </div>
 
-    <div class="tab-content" id="clientesTabContent">
-        <!-- Tab 1: Formulario Nuevo Cliente -->
-        <div class="tab-pane fade show active" id="nuevo-cliente" role="tabpanel">
-            <div class="card shadow mb-4">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0"><i class="bi bi-{{ $cliente_id ? 'pencil-square' : 'plus-circle' }}"></i> {{ $cliente_id ? 'Editar Cliente' : 'Nuevo Cliente' }}</h5>
+    <div>
+        @canany(['crear-clientes', 'editar-clientes'])
+        <div x-show="tab === 'nuevo'" x-transition>
+            <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+                <div class="bg-slate-100 border-b border-slate-200 px-6 py-4">
+                    <h5 class="flex items-center gap-2 text-lg font-semibold text-slate-800 mb-0">
+                        <i class="bi bi-{{ $cliente_id ? 'pencil-square' : 'plus-circle' }}"></i> 
+                        {{ $cliente_id ? 'Editar Cliente' : 'Nuevo Cliente' }}
+                    </h5>
                 </div>
-                <div class="card-body">
+                <div class="p-6">
                     <form wire:submit.prevent="guardar">
-                        <div class="row g-3 mb-4">
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">Razón Social / Nombre <span class="text-danger">*</span></label>
-                                <input type="text" wire:model="razon_social" class="form-control @error('razon_social') is-invalid @enderror" placeholder="Nombre del cliente">
-                                @error('razon_social') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-2">Razón Social / Nombre <span class="text-red-500">*</span></label>
+                                <input type="text" wire:model="razon_social" placeholder="Nombre del cliente" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('razon_social') ring-2 ring-red-500 @enderror">
+                                @error('razon_social') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">CUIT <span class="text-danger">*</span></label>
-                                <input type="text" wire:model="cuit" class="form-control @error('cuit') is-invalid @enderror" placeholder="XX-XXXXXXXX-X">
-                                @error('cuit') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                            </div>
-                        </div>
-                        <div class="row g-3 mb-4">
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">Dirección</label>
-                                <input type="text" wire:model="direccion" class="form-control @error('direccion') is-invalid @enderror" placeholder="Dirección completa">
-                                @error('direccion') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">Contacto</label>
-                                <input type="text" wire:model="contacto" class="form-control @error('contacto') is-invalid @enderror" placeholder="Teléfono / Email">
-                                @error('contacto') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-2">CUIT <span class="text-red-500">*</span></label>
+                                <input type="text" wire:model="cuit" placeholder="XX-XXXXXXXX-X" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('cuit') ring-2 ring-red-500 @enderror">
+                                @error('cuit') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
                             </div>
                         </div>
-                        <div class="d-flex gap-2 justify-content-end">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-2">Dirección</label>
+                                <input type="text" wire:model="direccion" placeholder="Dirección completa" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('direccion') ring-2 ring-red-500 @enderror">
+                                @error('direccion') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-2">Contacto</label>
+                                <input type="text" wire:model="contacto" placeholder="Teléfono / Email" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('contacto') ring-2 ring-red-500 @enderror">
+                                @error('contacto') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
+                            </div>
+                        </div>
+                        <div class="flex gap-2 justify-end">
                             @if ($cliente_id)
-                                <button type="button" wire:click="resetCampos" class="btn btn-secondary">
+                                <button type="button" wire:click="resetCampos" class="inline-flex items-center gap-2 px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors font-medium text-sm">
                                     <i class="bi bi-x-circle"></i> Cancelar
                                 </button>
                             @endif
-                            <button type="submit" class="btn btn-primary">
+                            @canany(['crear-clientes', 'editar-clientes'])
+                            <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-colors font-medium text-sm" style="background-color: #2d7a4f;" onmouseover="this.style.backgroundColor='#245c3d'" onmouseout="this.style.backgroundColor='#2d7a4f'">
                                 <i class="bi bi-check-circle"></i> {{ $cliente_id ? 'Actualizar' : 'Guardar' }}
                             </button>
+                            @endcanany
                         </div>
                     </form>
                 </div>
             </div>
         </div>
-
-        <!-- Tab 2: Listado de Clientes -->
-        <div class="tab-pane fade" id="listado-clientes" role="tabpanel">
-            <div class="card shadow">
-                <div class="card-body">
+        @endcanany
+        <div x-show="tab === 'listado'" x-transition>
+            <div class="bg-white rounded-lg shadow-sm border border-slate-200">
+                <div class="p-6">
                     <!-- Buscador -->
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <div class="input-group">
-                                <span class="input-group-text bg-light">
-                                    <i class="bi bi-search"></i>
-                                </span>
-                                <input type="text" wire:model.live="busqueda" class="form-control" placeholder="Buscar por razón social, CUIT o contacto...">
-                            </div>
+                    <div class="mb-6">
+                        <div class="flex items-center gap-2 px-4 py-3 border border-slate-300 rounded-lg bg-slate-50">
+                            <i class="bi bi-search text-slate-500"></i>
+                            <input type="text" wire:model.live="busqueda" placeholder="Buscar por razón social, CUIT o contacto..." class="flex-1 bg-slate-50 border-0 focus:ring-0 focus:outline-none text-slate-700 placeholder-slate-400">
                         </div>
                     </div>
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Razón Social / Nombre</th>
-                                    <th>CUIT</th>
-                                    <th>Dirección</th>
-                                    <th>Contacto</th>
-                                    <th class="text-center">Acciones</th>
+                    
+                    <!-- Tabla -->
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b border-slate-200">
+                                    <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-slate-600">ID</th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-slate-600">Razón Social / Nombre</th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-slate-600">CUIT</th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-slate-600">Dirección</th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-slate-600">Contacto</th>
+                                    <th class="px-4 py-3 text-center text-xs font-semibold uppercase text-slate-600">Acciones</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody class="divide-y divide-slate-200">
                                 @forelse ($clientes as $cliente)
-                                    <tr>
-                                        <td><span class="badge bg-secondary">{{ $cliente->id_cliente }}</span></td>
-                                        <td><span class="fw-semibold">{{ $cliente->razon_social ?? $cliente->nombre }}</span></td>
-                                        <td>{{ $cliente->cuit }}</td>
-                                        <td>{{ $cliente->direccion ?? '-' }}</td>
-                                        <td>{{ $cliente->contacto ?? '-' }}</td>
-                                        <td class="text-center">
-                                            <div class="btn-group btn-group-sm" role="group">
-                                                <button class="btn btn-outline-primary" wire:click="editar({{ $cliente->id_cliente }})" onclick="cambiarAPestanaFormulario()" title="Editar">
-                                                    <i class="bi bi-pencil"></i>
+                                    <tr class="hover:bg-slate-50 transition-colors">
+                                        <td class="px-4 py-3"><span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">{{ $cliente->id_cliente }}</span></td>
+                                        <td class="px-4 py-3"><span class="font-semibold text-slate-900">{{ $cliente->razon_social ?? $cliente->nombre }}</span></td>
+                                        <td class="px-4 py-3 text-slate-600">{{ $cliente->cuit }}</td>
+                                        <td class="px-4 py-3 text-slate-600">{{ $cliente->direccion ?? '-' }}</td>
+                                        <td class="px-4 py-3 text-slate-600">{{ $cliente->contacto ?? '-' }}</td>
+                                        <td class="px-4 py-3 text-center">
+                                            <div class="flex gap-1 justify-center">
+                                                @can('editar-clientes')
+                                                <button wire:click="editar({{ $cliente->id_cliente }})" @click="tab = 'nuevo'" title="Editar" class="inline-flex items-center px-2 py-1 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded transition-colors border border-blue-200">
+                                                    <i class="bi bi-pencil text-sm"></i>
                                                 </button>
-                                                <button class="btn btn-outline-danger" wire:click="eliminar({{ $cliente->id_cliente }})" onclick="return confirm('¿Está seguro de eliminar este cliente?')" title="Eliminar">
-                                                    <i class="bi bi-trash"></i>
+                                                @endcan
+                                                @can('eliminar-clientes')
+                                                <button wire:click="eliminar({{ $cliente->id_cliente }})" onclick="return confirm('¿Está seguro de eliminar este cliente?')" title="Eliminar" class="inline-flex items-center px-2 py-1 bg-red-50 text-red-700 hover:bg-red-100 rounded transition-colors border border-red-200">
+                                                    <i class="bi bi-trash text-sm"></i>
                                                 </button>
+                                                @endcan
                                             </div>
                                         </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="6" class="text-center py-4">
-                                            <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
-                                            <p class="text-muted mt-2">No hay clientes registrados.</p>
+                                        <td colspan="6" class="px-4 py-8 text-center">
+                                            <i class="bi bi-inbox text-slate-300 block mb-2" style="font-size: 2rem;"></i>
+                                            <p class="text-slate-500 font-medium">No hay clientes registrados.</p>
                                         </td>
                                     </tr>
                                 @endforelse
@@ -137,19 +152,9 @@
 
 <!-- JavaScript para cambiar entre pestañas -->
 <script>
-    function cambiarAPestanaFormulario() {
-        const nuevoTab = document.getElementById('nuevo-tab');
-        const nuevoTabInstance = new bootstrap.Tab(nuevoTab);
-        nuevoTabInstance.show();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
     document.addEventListener('livewire:init', () => {
         Livewire.on('clienteGuardado', () => {
-            const listadoTab = document.getElementById('listado-tab');
-            const listadoTabInstance = new bootstrap.Tab(listadoTab);
-            listadoTabInstance.show();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            // Alpine.js actualizará automáticamente la vista
         });
     });
 </script>

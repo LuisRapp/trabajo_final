@@ -14,7 +14,7 @@ use App\Models\ParteDiario;
 use App\Models\Proveedor;
 use App\Models\TipoMaquinaria;
 use App\Models\UnidadMedida;
-use App\Models\User;
+use App\Models\Usuario;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -49,7 +49,7 @@ class DemoDaySeeder extends Seeder
             'clientes',
             'empleados',
             'ventas',
-            'users',
+            'usuarios',
         ];
 
         foreach ($tables as $table) {
@@ -58,12 +58,14 @@ class DemoDaySeeder extends Seeder
         Schema::enableForeignKeyConstraints();
 
         // Setup inicial base
-        User::factory()->create([
-            'name' => 'Demo Admin',
+        Usuario::factory()->create([
+            'nombre' => 'Demo',
+            'apellido' => 'Admin',
             'email' => 'demo@example.com',
             'password' => bcrypt('demo1234'),
+            'activo' => true,
         ]);
-        User::factory()->count(2)->create();
+        Usuario::factory()->count(2)->create();
 
         $clientes = Cliente::factory()->count(3)->create();
         $proveedores = Proveedor::factory()->count(3)->create();

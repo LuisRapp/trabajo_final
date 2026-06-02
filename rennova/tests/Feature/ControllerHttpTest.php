@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use Tests\TestCase;
-use App\Models\User;
+use App\Models\Usuario;
 use App\Models\Lote;
 use App\Models\Maquinaria;
 use App\Models\TipoMaquinaria;
@@ -24,7 +24,7 @@ class ControllerHttpTest extends TestCase
 {
     use RefreshDatabase, WithFaker;
 
-    protected User $usuario;
+    protected Usuario $usuario;
     protected Lote $lote;
     protected Maquinaria $maquinaria;
     protected TipoMaquinaria $tipoMaquinaria;
@@ -35,7 +35,7 @@ class ControllerHttpTest extends TestCase
     {
         parent::setUp();
 
-        $this->usuario = User::factory()->create();
+        $this->usuario = Usuario::factory()->create();
         $this->actingAs($this->usuario);
 
         $this->tipoMaquinaria = TipoMaquinaria::create([

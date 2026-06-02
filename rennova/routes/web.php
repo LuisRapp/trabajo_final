@@ -31,8 +31,13 @@ use App\Http\Controllers\CargaController;
 use App\Http\Controllers\ChoferController;
 
 // --- RUTAS PÚBLICAS ---
-// Página principal (pública) usando controlador para armar pronóstico
-Route::get('/', [DashboardController::class, 'index'])->name('home');
+// Página de bienvenida / login
+Route::get('/', function () {
+    if (auth()->check()) {
+        return redirect()->route('dashboard');
+    }
+    return view('welcome');
+})->name('welcome');
 
 // Las rutas de autenticación (login, register, etc.) deben estar PÚBLICAS
 require __DIR__.'/auth.php';
@@ -71,6 +76,12 @@ Route::middleware(['auth'])->group(function () {
 
     // --- ABMs PRINCIPALES (Ahora protegidos) ---
     Route::get('/lotes', [LoteController::class, 'index'])->name('lotes.index');
+    Route::get('/lotes/{loteId}/recomendaciones', function ($loteId) {
+        return view('lotes.recomendaciones', ['loteId' => (int) $loteId]);
+    })->name('lotes.recomendaciones');
+        Route::get('/lotes/{loteId}/tareas', function ($loteId) {
+            return view('lotes.planificar-tareas', ['loteId' => (int) $loteId]);
+        })->name('lotes.tareas');
     Route::get('/clientes', [ClienteController::class, 'index'])->name('clientes.index');
     Route::get('/proveedores', [ProveedorController::class, 'index'])->name('proveedores.index');
     Route::get('/categorias-madera', [CategoriaMaderaController::class, 'index'])->name('categorias-madera.index');
@@ -122,12 +133,17 @@ Route::middleware(['auth'])->group(function () {
     
     // Reportes - Estadísticas Forestales
     Route::get('/reportes/estadisticas-forestales', [ReporteController::class, 'estadisticasForestales'])->name('reportes.estadisticas-forestales');
+    Route::get('/reportes/estadisticas-forestales/pdf', [ReporteController::class, 'estadisticasForestalesPdf'])->name('reportes.estadisticas-forestales.pdf');
+    Route::get('/reportes/clima-lluvias/pdf', [ReporteController::class, 'climaLluviasPdf'])->name('reportes.clima-lluvias.pdf');
     
     // Liquidación de Pagos
     Route::view('/liquidacion-pagos', 'liquidacion-pagos.index')->name('liquidacion-pagos.index');
     
     // Asignaciones por Lote (Empleados y Maquinaria)
     Route::view('/asignaciones-lote', 'asignaciones-lote.index')->name('asignaciones-lote.index');
+
+    // Propuestas automáticas de asignación (basadas en histórico)
+    Route::view('/propuestas-asignacion', 'allocation-proposals.index')->name('allocation-proposals.index');
     
     // Gestión de Stock (FIFO) dentro del módulo Operaciones
     Route::view('/modulos/operaciones/gestionstock', 'modulos.operaciones.gestionstock')->name('modulos.operaciones.gestionstock');
@@ -153,4 +169,5 @@ Route::middleware(['auth'])->group(function () {
     Route::view('/roles-permisos', 'roles-permisos.index')->middleware(['permission:gestionar-permisos'])->name('roles-permisos.index');
 
 });
+
 

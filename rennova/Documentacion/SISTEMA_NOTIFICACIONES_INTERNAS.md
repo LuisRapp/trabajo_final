@@ -1,5 +1,7 @@
 # Sistema de Notificaciones Internas - Mantenimiento Preventivo
 
+Ultima actualizacion: 8 de febrero de 2026.
+
 ## Descripción General
 
 El sistema de notificaciones internas permite que los usuarios reciban alertas dentro de la aplicación cuando una maquinaria alcanza su umbral de mantenimiento. Los usuarios tienen **7 días** desde la creación de la notificación para programar la fecha del mantenimiento.

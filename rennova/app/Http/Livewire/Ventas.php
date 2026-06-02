@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 class Ventas extends Component
 {
     // Control de pestañas
-    public $tab_activo = 'nuevo';
+    public $tab_activo = 'historial';
     
     // Nueva Venta
     public $id_cliente = null;
