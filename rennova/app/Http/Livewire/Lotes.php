@@ -222,6 +222,7 @@ class Lotes extends Component
                 // Opcional: marcar todas las propuestas como cerradas
                 DB::table('allocation_proposals')
                     ->where('id_lote', $id)
+                    ->whereNull('deleted_at')
                     ->update(['status' => 'closed']);
             });
 
@@ -290,6 +291,7 @@ class Lotes extends Component
         try {
             DB::table('allocation_proposals')
                 ->where('id_lote', $lote->id_lote)
+                ->whereNull('deleted_at')
                 ->where('status', 'draft')
                 ->update(['status' => 'closed']);
 
