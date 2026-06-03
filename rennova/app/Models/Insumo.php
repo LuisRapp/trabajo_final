@@ -2,18 +2,21 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Contracts\Auditable;
 
 class Insumo extends Model implements Auditable
 {
-    use HasFactory, \OwenIt\Auditing\Auditable;
-    
+    use HasFactory, \OwenIt\Auditing\Auditable, SoftDeletes;
+
     protected $table = 'insumos';
+
     protected $primaryKey = 'id_insumo';
+
     protected $fillable = ['nombre', 'descripcion', 'id_unidad_medida', 'id_proveedor'];
-    
+
     // NO usar appends para cálculos costosos
     // protected $appends = ['stock', 'precio_promedio'];
 
@@ -29,7 +32,7 @@ class Insumo extends Model implements Auditable
             'stock' => LoteInventario::selectRaw('COALESCE(SUM(cantidad_disponible), 0)')
                 ->whereColumn('lotes_inventario.id_insumo', 'insumos.id_insumo')
                 ->where('agotado', false),
-            
+
             // Precio promedio ponderado: suma(cantidad * precio) / suma(cantidad)
             'precio_promedio' => LoteInventario::selectRaw('
                 CASE 
@@ -39,7 +42,7 @@ class Insumo extends Model implements Auditable
                 END
             ')
                 ->whereColumn('lotes_inventario.id_insumo', 'insumos.id_insumo')
-                ->where('agotado', false)
+                ->where('agotado', false),
         ]);
     }
 
@@ -53,7 +56,7 @@ class Insumo extends Model implements Auditable
         if (isset($this->attributes['stock'])) {
             return $this->attributes['stock'];
         }
-        
+
         // Fallback: calcular dinámicamente (menos eficiente)
         return MovimientoStock::stockDisponible($this->id_insumo);
     }
@@ -68,19 +71,21 @@ class Insumo extends Model implements Auditable
         if (isset($this->attributes['precio_promedio'])) {
             return $this->attributes['precio_promedio'];
         }
-        
+
         // Fallback: calcular dinámicamente (menos eficiente)
         return MovimientoStock::precioPromedio($this->id_insumo);
     }
 
     public function unidadMedida()
     {
-        return $this->belongsTo(UnidadMedida::class, 'id_unidad_medida');   
+        return $this->belongsTo(UnidadMedida::class, 'id_unidad_medida');
     }
+
     public function proveedor()
     {
         return $this->belongsTo(Proveedor::class, 'id_proveedor');
     }
+
     public function movimientoStocks()
     {
         return $this->hasMany(MovimientoStock::class, 'id_insumo');

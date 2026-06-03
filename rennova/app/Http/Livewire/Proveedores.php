@@ -2,16 +2,30 @@
 
 namespace App\Http\Livewire;
 
-use Livewire\Component;
 use App\Models\Proveedor;
+use Livewire\Component;
 
 class Proveedores extends Component
 {
-    public $proveedores, $proveedor_id, $razon_social, $cuit, $direccion, $telefono, $email, $busqueda = '';
+    public $proveedores;
+
+    public $proveedor_id;
+
+    public $razon_social;
+
+    public $cuit;
+
+    public $direccion;
+
+    public $telefono;
+
+    public $email;
+
+    public $busqueda = '';
 
     protected $rules = [
         'razon_social' => 'required|min:3',
-        'cuit' => 'required|digits:11|unique:proveedors,cuit',
+        'cuit' => 'required|digits:11|unique:proveedores,cuit',
         'direccion' => 'required',
         'telefono' => 'nullable|string',
         'email' => 'nullable|email',
@@ -30,6 +44,7 @@ class Proveedores extends Component
     public function render()
     {
         $this->cargarProveedores();
+
         return view('livewire.proveedores');
     }
 
@@ -38,10 +53,10 @@ class Proveedores extends Component
         $query = Proveedor::query();
 
         if ($this->busqueda) {
-            $query->where(function($q) {
-                $q->where('razon_social', 'ILIKE', '%' . $this->busqueda . '%')
-                  ->orWhere('cuit', 'ILIKE', '%' . $this->busqueda . '%')
-                  ->orWhere('email', 'ILIKE', '%' . $this->busqueda . '%');
+            $query->where(function ($q) {
+                $q->where('razon_social', 'ILIKE', '%'.$this->busqueda.'%')
+                    ->orWhere('cuit', 'ILIKE', '%'.$this->busqueda.'%')
+                    ->orWhere('email', 'ILIKE', '%'.$this->busqueda.'%');
             });
         }
 

@@ -2,7 +2,7 @@
 
 namespace App\Notifications;
 
-use App\Models\MantenimientoPurchaseProposal;
+use App\Models\PropuestaCompraMantenimiento;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -11,9 +11,7 @@ class OrdenCompraMantenimientoNotification extends Notification
 {
     use Queueable;
 
-    public function __construct(private readonly MantenimientoPurchaseProposal $proposal)
-    {
-    }
+    public function __construct(private readonly PropuestaCompraMantenimiento $proposal) {}
 
     public function via(object $notifiable): array
     {
@@ -31,15 +29,15 @@ class OrdenCompraMantenimientoNotification extends Notification
         $mantenimientoId = $p->id_mantenimiento;
         $maquinaria = $p->maquinaria?->modelo ?? 'N/A';
 
-        $subject = 'Orden de compra - Mantenimiento #' . $mantenimientoId;
+        $subject = 'Orden de compra - Mantenimiento #'.$mantenimientoId;
 
         $message = (new MailMessage)
             ->subject($subject)
             ->greeting('Orden de Compra (Mantenimiento Preventivo)')
             ->line('Se generó una propuesta de compra por falta de stock en el kit preventivo.')
             ->line('')
-            ->line('**Mantenimiento #' . $mantenimientoId . '**')
-            ->line('• Maquinaria: ' . $maquinaria)
+            ->line('**Mantenimiento #'.$mantenimientoId.'**')
+            ->line('• Maquinaria: '.$maquinaria)
             ->line('');
 
         foreach ($p->insumos as $row) {

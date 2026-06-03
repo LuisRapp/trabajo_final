@@ -2,18 +2,21 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use OwenIt\Auditing\Contracts\Auditable;
 use App\Models\Traits\CalculaCostosLaborales;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use OwenIt\Auditing\Contracts\Auditable;
 
 class Empleado extends Model implements Auditable
 {
-    use HasFactory, \OwenIt\Auditing\Auditable;
     use CalculaCostosLaborales;
-    
+    use HasFactory, \OwenIt\Auditing\Auditable, SoftDeletes;
+
     protected $table = 'empleados';
+
     protected $primaryKey = 'id_empleado';
+
     protected $fillable = [
         'id_rol_laboral',
         'dni',
@@ -22,7 +25,7 @@ class Empleado extends Model implements Auditable
         'email',
         'fecha_nacimiento',
         'fecha_inicio_actividades',
-        'fecha_fin_actividades'
+        'fecha_fin_actividades',
     ];
 
     public function rolLaboral()
@@ -71,14 +74,15 @@ class Empleado extends Model implements Auditable
      * @param  string|\DateTimeInterface  $fechaInicio
      * @param  string|\DateTimeInterface  $fechaFin
      * @return array {
-     *     @type int cantidad_dias_caidos
-     *     @type float total_peso_neto (toneladas asignadas al empleado)
-     *     @type float valor_jornal
-     *     @type float tarifa_fija_por_tonelada
-     *     @type float total_pagar_jornales
-     *     @type float total_pagar_produccion
-     *     @type float total_pagar_final
-     * }
+     *
+     * @type int cantidad_dias_caidos
+     * @type float total_peso_neto (toneladas asignadas al empleado)
+     * @type float valor_jornal
+     * @type float tarifa_fija_por_tonelada
+     * @type float total_pagar_jornales
+     * @type float total_pagar_produccion
+     * @type float total_pagar_final
+     *             }
      */
     public function calcularPagoRango($fechaInicio, $fechaFin)
     {
@@ -105,7 +109,7 @@ class Empleado extends Model implements Auditable
                 ->orderBy('fecha_inicio', 'desc')
                 ->first();
 
-            if (!$hist) {
+            if (! $hist) {
                 // intentar con fechaInicio si no hay match exacto en fechaFin
                 $hist = \App\Models\HistoricoRolLaboral::where('rol_laboral_id', $rolId)
                     ->whereDate('fecha_inicio', '<=', $fechaInicio)
@@ -138,14 +142,14 @@ class Empleado extends Model implements Auditable
                     ->where('id_parte_diario', $parte->id_parte_diario)
                     ->where('id_empleado', $this->id_empleado)
                     ->exists();
-                
+
                 if ($trabajoEseDia) {
                     $cantidad_dias_caidos += 1;
                 }
             } else {
                 // PRODUCCIÓN: Buscar cargas del día asignadas a este empleado mediante tabla pivote
                 $cargasDelDia = \App\Models\Carga::whereDate('fecha_carga', $parte->fecha)
-                    ->whereHas('empleados', function($query) {
+                    ->whereHas('empleados', function ($query) {
                         // Evitar ambigüedad de columna en el join con pivote
                         $query->where('empleados.id_empleado', $this->id_empleado);
                     })
@@ -164,7 +168,7 @@ class Empleado extends Model implements Auditable
         // Cálculos finales
         // IMPORTANTE: peso_neto está en kilos, convertir a toneladas (dividir por 1000) y redondear a 2 decimales
         $total_peso_toneladas = round($total_peso_neto / 1000, 2);
-        
+
         $total_pagar_jornales = $cantidad_dias_caidos * (float) $valorJornal;
         $total_pagar_produccion = $total_peso_toneladas * (float) $tarifaFija;
         $total_pagar_final = $total_pagar_jornales + $total_pagar_produccion;

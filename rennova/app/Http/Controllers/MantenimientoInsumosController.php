@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\MantenimientoInsumos;
+use App\Models\MantenimientoInsumo;
 use Illuminate\Http\Request;
 
 class MantenimientoInsumosController extends Controller
@@ -34,7 +34,7 @@ class MantenimientoInsumosController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(MantenimientoInsumos $mantenimientoInsumos)
+    public function show(MantenimientoInsumo $mantenimientoInsumos)
     {
         //
     }
@@ -42,7 +42,7 @@ class MantenimientoInsumosController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(MantenimientoInsumos $mantenimientoInsumos)
+    public function edit(MantenimientoInsumo $mantenimientoInsumos)
     {
         //
     }
@@ -50,7 +50,7 @@ class MantenimientoInsumosController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, MantenimientoInsumos $mantenimientoInsumos)
+    public function update(Request $request, MantenimientoInsumo $mantenimientoInsumos)
     {
         //
     }
@@ -58,7 +58,7 @@ class MantenimientoInsumosController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(MantenimientoInsumos $mantenimientoInsumos)
+    public function destroy(MantenimientoInsumo $mantenimientoInsumos)
     {
         //
     }

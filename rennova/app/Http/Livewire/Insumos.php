@@ -2,22 +2,38 @@
 
 namespace App\Http\Livewire;
 
-use Livewire\Component;
 use App\Models\Insumo;
-use App\Models\UnidadMedida;
 use App\Models\Proveedor;
+use App\Models\UnidadMedida;
+use Livewire\Component;
 
 class Insumos extends Component
 {
-    public $insumos, $insumo_id, $nombre, $descripcion, $id_unidad_medida, $id_proveedor, $busqueda = '';
-    public $unidades, $proveedores;
+    public $insumos;
+
+    public $insumo_id;
+
+    public $nombre;
+
+    public $descripcion;
+
+    public $id_unidad_medida;
+
+    public $id_proveedor;
+
+    public $busqueda = '';
+
+    public $unidades;
+
+    public $proveedores;
+
     public $tab_activo = 'listado';
 
     protected $rules = [
         'nombre' => 'required|min:3',
         'descripcion' => 'nullable|string',
         'id_unidad_medida' => 'required|exists:unidad_medidas,id_unidad_medida',
-        'id_proveedor' => 'required|exists:proveedors,id_proveedor',
+        'id_proveedor' => 'required|exists:proveedores,id_proveedor',
     ];
 
     protected $messages = [
@@ -36,6 +52,7 @@ class Insumos extends Component
     public function render()
     {
         $this->cargarInsumos();
+
         return view('livewire.insumos');
     }
 
@@ -47,16 +64,16 @@ class Insumos extends Component
 
         if ($this->busqueda) {
             $busq = $this->busqueda;
-            $query->where(function($q) use ($busq) {
-                $q->where('nombre', 'ILIKE', '%' . $busq . '%')
-                  ->orWhere('descripcion', 'ILIKE', '%' . $busq . '%')
-                  ->orWhereHas('proveedor', function($qp) use ($busq) {
-                      $qp->where('razon_social', 'ILIKE', '%' . $busq . '%');
-                  })
-                  ->orWhereHas('unidadMedida', function($qu) use ($busq) {
-                      $qu->where('nombre', 'ILIKE', '%' . $busq . '%')
-                         ->orWhere('abreviatura', 'ILIKE', '%' . $busq . '%');
-                  });
+            $query->where(function ($q) use ($busq) {
+                $q->where('nombre', 'ILIKE', '%'.$busq.'%')
+                    ->orWhere('descripcion', 'ILIKE', '%'.$busq.'%')
+                    ->orWhereHas('proveedor', function ($qp) use ($busq) {
+                        $qp->where('razon_social', 'ILIKE', '%'.$busq.'%');
+                    })
+                    ->orWhereHas('unidadMedida', function ($qu) use ($busq) {
+                        $qu->where('nombre', 'ILIKE', '%'.$busq.'%')
+                            ->orWhere('abreviatura', 'ILIKE', '%'.$busq.'%');
+                    });
             });
         }
 

@@ -2,12 +2,12 @@
 
 namespace App\Http\Livewire;
 
-use App\Models\AllocationProposal;
-use App\Models\AllocationProposalEmployee;
-use App\Models\AllocationProposalInsumo;
-use App\Models\AllocationProposalMaquinaria;
-use App\Models\Lote;
 use App\Jobs\GenerateAllocationProposalsForLote;
+use App\Models\Lote;
+use App\Models\PropuestaAsignacion;
+use App\Models\PropuestaAsignacionEmpleado;
+use App\Models\PropuestaAsignacionInsumo;
+use App\Models\PropuestaAsignacionMaquinaria;
 use App\Notifications\OrdenCompraPropuestaNotification;
 use App\Services\AutomaticAllocationService;
 use Illuminate\Support\Facades\DB;
@@ -21,6 +21,7 @@ class AllocationProposals extends Component
     public $lotes = [];
 
     public $filter_lote_id = '';
+
     public $filter_status = '';
 
     public $proposals = [];
@@ -28,10 +29,13 @@ class AllocationProposals extends Component
     public $mostrar_listado = true;
 
     public $selected_proposal_id;
+
     public $selectedProposal;
 
     public $employeeSelected = [];
+
     public $maquinariaSelected = [];
+
     public $insumoSelected = [];
 
     public $guardando = false;
@@ -48,7 +52,7 @@ class AllocationProposals extends Component
 
         $this->refreshProposals();
 
-        if ($this->loteId && !$this->selected_proposal_id && $this->proposals && $this->proposals->count() > 0) {
+        if ($this->loteId && ! $this->selected_proposal_id && $this->proposals && $this->proposals->count() > 0) {
             $this->seleccionar((int) $this->proposals->first()->id_allocation_proposal);
         }
     }
@@ -65,15 +69,15 @@ class AllocationProposals extends Component
 
     public function refreshProposals()
     {
-        $query = AllocationProposal::query()
+        $query = PropuestaAsignacion::query()
             ->with(['lote', 'loteTarea'])
             ->orderByDesc('id_allocation_proposal');
 
-        if (!empty($this->filter_lote_id)) {
+        if (! empty($this->filter_lote_id)) {
             $query->where('id_lote', (int) $this->filter_lote_id);
         }
 
-        if (!empty($this->filter_status)) {
+        if (! empty($this->filter_status)) {
             $query->where('status', $this->filter_status);
         }
 
@@ -81,7 +85,7 @@ class AllocationProposals extends Component
 
         if ($this->selected_proposal_id) {
             $exists = $this->proposals->firstWhere('id_allocation_proposal', (int) $this->selected_proposal_id);
-            if (!$exists) {
+            if (! $exists) {
                 $this->resetSelection();
             }
         }
@@ -90,8 +94,9 @@ class AllocationProposals extends Component
     public function generarAhora()
     {
         $loteId = $this->loteId ?: (int) $this->filter_lote_id;
-        if (!$loteId) {
+        if (! $loteId) {
             session()->flash('error', 'Seleccione un lote para generar propuestas.');
+
             return;
         }
 
@@ -124,12 +129,13 @@ class AllocationProposals extends Component
 
     private function loadSelectedProposal(): void
     {
-        if (!$this->selected_proposal_id) {
+        if (! $this->selected_proposal_id) {
             $this->resetSelection();
+
             return;
         }
 
-        $proposal = AllocationProposal::query()
+        $proposal = PropuestaAsignacion::query()
             ->with([
                 'lote',
                 'loteTarea',
@@ -139,8 +145,9 @@ class AllocationProposals extends Component
             ])
             ->find($this->selected_proposal_id);
 
-        if (!$proposal) {
+        if (! $proposal) {
             $this->resetSelection();
+
             return;
         }
 
@@ -161,7 +168,7 @@ class AllocationProposals extends Component
 
     public function guardarSeleccion()
     {
-        if (!$this->selected_proposal_id) {
+        if (! $this->selected_proposal_id) {
             return;
         }
 
@@ -170,19 +177,19 @@ class AllocationProposals extends Component
         try {
             DB::transaction(function () {
                 foreach ($this->employeeSelected as $rowId => $selected) {
-                    AllocationProposalEmployee::where('id_allocation_proposal_employee', (int) $rowId)
+                    PropuestaAsignacionEmpleado::where('id_allocation_proposal_employee', (int) $rowId)
                         ->where('id_allocation_proposal', (int) $this->selected_proposal_id)
                         ->update(['selected' => (bool) $selected]);
                 }
 
                 foreach ($this->maquinariaSelected as $rowId => $selected) {
-                    AllocationProposalMaquinaria::where('id_allocation_proposal_maquinaria', (int) $rowId)
+                    PropuestaAsignacionMaquinaria::where('id_allocation_proposal_maquinaria', (int) $rowId)
                         ->where('id_allocation_proposal', (int) $this->selected_proposal_id)
                         ->update(['selected' => (bool) $selected]);
                 }
 
                 foreach ($this->insumoSelected as $rowId => $selected) {
-                    AllocationProposalInsumo::where('id_allocation_proposal_insumo', (int) $rowId)
+                    PropuestaAsignacionInsumo::where('id_allocation_proposal_insumo', (int) $rowId)
                         ->where('id_allocation_proposal', (int) $this->selected_proposal_id)
                         ->update(['selected' => (bool) $selected]);
                 }
@@ -191,7 +198,7 @@ class AllocationProposals extends Component
             $this->loadSelectedProposal();
             session()->flash('message', 'Selección guardada correctamente.');
         } catch (\Throwable $e) {
-            session()->flash('error', 'Error al guardar selección: ' . $e->getMessage());
+            session()->flash('error', 'Error al guardar selección: '.$e->getMessage());
         } finally {
             $this->guardando = false;
         }
@@ -199,7 +206,7 @@ class AllocationProposals extends Component
 
     public function confirmar()
     {
-        if (!$this->selected_proposal_id) {
+        if (! $this->selected_proposal_id) {
             return;
         }
 
@@ -208,7 +215,7 @@ class AllocationProposals extends Component
         try {
             $this->guardarSeleccion();
 
-            $proposal = AllocationProposal::find((int) $this->selected_proposal_id);
+            $proposal = PropuestaAsignacion::find((int) $this->selected_proposal_id);
             if ($proposal) {
                 $meta = $proposal->meta ?? [];
                 if ($this->isLowConfidence($meta)) {
@@ -228,7 +235,7 @@ class AllocationProposals extends Component
             $this->refreshProposals();
             session()->flash('message', 'Propuesta confirmada.');
         } catch (\Throwable $e) {
-            session()->flash('error', 'Error al confirmar: ' . $e->getMessage());
+            session()->flash('error', 'Error al confirmar: '.$e->getMessage());
         } finally {
             $this->guardando = false;
         }
@@ -236,7 +243,7 @@ class AllocationProposals extends Component
 
     public function aplicar()
     {
-        if (!$this->selected_proposal_id) {
+        if (! $this->selected_proposal_id) {
             return;
         }
 
@@ -246,8 +253,8 @@ class AllocationProposals extends Component
             $this->guardarSeleccion();
 
             DB::transaction(function () {
-                /** @var AllocationProposal $proposal */
-                $proposal = AllocationProposal::query()
+                /** @var PropuestaAsignacion $proposal */
+                $proposal = PropuestaAsignacion::query()
                     ->with(['lote', 'proposedEmployees', 'proposedMaquinarias'])
                     ->lockForUpdate()
                     ->findOrFail((int) $this->selected_proposal_id);
@@ -257,7 +264,7 @@ class AllocationProposals extends Component
                 }
 
                 $lote = $proposal->lote;
-                if (!$lote) {
+                if (! $lote) {
                     throw new \RuntimeException('La propuesta no tiene lote asociado.');
                 }
 
@@ -282,12 +289,12 @@ class AllocationProposals extends Component
                     ->toArray();
 
                 $busyEmployees = $this->findBusyEmployees($empleadosIds, (int) $lote->id_lote);
-                if (!empty($busyEmployees)) {
+                if (! empty($busyEmployees)) {
                     throw new \RuntimeException('Algunos empleados ya estan asignados a otros lotes en proceso.');
                 }
 
                 $busyMaquinarias = $this->findBusyMaquinarias($maquinariasIds, (int) $lote->id_lote);
-                if (!empty($busyMaquinarias)) {
+                if (! empty($busyMaquinarias)) {
                     throw new \RuntimeException('Algunas maquinarias ya estan asignadas a otros lotes en proceso.');
                 }
 
@@ -297,7 +304,7 @@ class AllocationProposals extends Component
                 $lote->maquinarias()->sync($maquinariasIds);
 
                 $proposal->status = 'applied';
-                if (!$proposal->confirmed_at) {
+                if (! $proposal->confirmed_at) {
                     $proposal->confirmed_at = now();
                 }
                 $proposal->applied_at = now();
@@ -310,7 +317,7 @@ class AllocationProposals extends Component
             $this->refreshProposals();
             session()->flash('message', 'Asignación aplicada al lote.');
         } catch (\Throwable $e) {
-            session()->flash('error', 'Error al aplicar: ' . $e->getMessage());
+            session()->flash('error', 'Error al aplicar: '.$e->getMessage());
         } finally {
             $this->guardando = false;
         }
@@ -318,25 +325,26 @@ class AllocationProposals extends Component
 
     private function isLowConfidence($meta): bool
     {
-        if (!is_array($meta)) {
+        if (! is_array($meta)) {
             return false;
         }
 
-        if (!empty($meta['review_required'])) {
+        if (! empty($meta['review_required'])) {
             return true;
         }
 
         $reason = $meta['default_rates']['reason'] ?? null;
+
         return $reason === 'sin_historico';
     }
 
-    private function closeOtherProposals(AllocationProposal $proposal): void
+    private function closeOtherProposals(PropuestaAsignacion $proposal): void
     {
-        $query = AllocationProposal::query()
+        $query = PropuestaAsignacion::query()
             ->where('id_lote', $proposal->id_lote)
             ->where('id_allocation_proposal', '!=', $proposal->id_allocation_proposal);
 
-        if (!empty($proposal->id_lote_tarea)) {
+        if (! empty($proposal->id_lote_tarea)) {
             $query->where('id_lote_tarea', $proposal->id_lote_tarea);
         } else {
             $query->whereNull('id_lote_tarea')
@@ -390,8 +398,8 @@ class AllocationProposals extends Component
 
     private function enviarOrdenCompraSiCorresponde(int $proposalId): void
     {
-        /** @var AllocationProposal|null $proposal */
-        $proposal = AllocationProposal::query()
+        /** @var PropuestaAsignacion|null $proposal */
+        $proposal = PropuestaAsignacion::query()
             ->with([
                 'lote',
                 'loteTarea',
@@ -401,13 +409,13 @@ class AllocationProposals extends Component
             ])
             ->find($proposalId);
 
-        if (!$proposal) {
+        if (! $proposal) {
             return;
         }
 
         // Evitar re-envíos (guardado en meta JSON).
         $meta = $proposal->meta ?? [];
-        if (!empty($meta['purchase_order']['sent_at'] ?? null)) {
+        if (! empty($meta['purchase_order']['sent_at'] ?? null)) {
             return;
         }
 
@@ -437,7 +445,7 @@ class AllocationProposals extends Component
         $proposal->save();
     }
 
-    private function resolvePurchaseOrderRecipients(AllocationProposal $proposal): array
+    private function resolvePurchaseOrderRecipients(PropuestaAsignacion $proposal): array
     {
         $emails = [];
 

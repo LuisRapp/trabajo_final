@@ -2,25 +2,43 @@
 
 namespace App\Http\Livewire;
 
-use Livewire\Component;
-use Livewire\WithPagination;
 use App\Models\Empleado;
 use App\Models\RolLaboral;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class Empleados extends Component
 {
     use WithPagination;
 
-    public $empleado_id, $id_rol_laboral, $dni, $apellido, $nombre, $fecha_nacimiento, $fecha_inicio_actividades, $fecha_fin_actividades, $busqueda = '';
+    public $empleado_id;
+
+    public $id_rol_laboral;
+
+    public $dni;
+
+    public $apellido;
+
+    public $nombre;
+
+    public $fecha_nacimiento;
+
+    public $fecha_inicio_actividades;
+
+    public $fecha_fin_actividades;
+
+    public $busqueda = '';
+
     public $roles;
+
     public $tab_activo = 'listado';
 
     public function rules()
     {
         return [
-            'id_rol_laboral' => 'required|exists:rol_laborals,id_rol_laboral',
-            'dni' => $this->empleado_id 
-                ? 'nullable|digits:8|unique:empleados,dni,' . $this->empleado_id . ',id_empleado'
+            'id_rol_laboral' => 'required|exists:roles_laborales,id_rol_laboral',
+            'dni' => $this->empleado_id
+                ? 'nullable|digits:8|unique:empleados,dni,'.$this->empleado_id.',id_empleado'
                 : 'required|digits:8|unique:empleados,dni',
             'apellido' => 'required|min:2',
             'nombre' => 'required|min:2',
@@ -60,13 +78,13 @@ class Empleados extends Component
 
         if ($this->busqueda) {
             $busq = $this->busqueda;
-            $query->where(function($q) use ($busq) {
-                $q->where('apellido', 'ILIKE', '%' . $busq . '%')
-                  ->orWhere('nombre', 'ILIKE', '%' . $busq . '%')
-                  ->orWhereRaw("CAST(dni AS TEXT) ILIKE ?", ['%' . $busq . '%'])
-                  ->orWhereHas('rolLaboral', function($qr) use ($busq) {
-                      $qr->where('nombre', 'ILIKE', '%' . $busq . '%');
-                  });
+            $query->where(function ($q) use ($busq) {
+                $q->where('apellido', 'ILIKE', '%'.$busq.'%')
+                    ->orWhere('nombre', 'ILIKE', '%'.$busq.'%')
+                    ->orWhereRaw('CAST(dni AS TEXT) ILIKE ?', ['%'.$busq.'%'])
+                    ->orWhereHas('rolLaboral', function ($qr) use ($busq) {
+                        $qr->where('nombre', 'ILIKE', '%'.$busq.'%');
+                    });
             });
         }
 

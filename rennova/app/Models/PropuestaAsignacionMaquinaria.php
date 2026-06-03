@@ -2,14 +2,15 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
-class AllocationProposalMaquinaria extends Model
+class PropuestaAsignacionMaquinaria extends Model
 {
     use HasFactory;
 
     protected $table = 'allocation_proposal_maquinarias';
+
     protected $primaryKey = 'id_allocation_proposal_maquinaria';
 
     protected $fillable = [
@@ -27,7 +28,7 @@ class AllocationProposalMaquinaria extends Model
 
     public function proposal()
     {
-        return $this->belongsTo(AllocationProposal::class, 'id_allocation_proposal');
+        return $this->belongsTo(PropuestaAsignacion::class, 'id_allocation_proposal');
     }
 
     public function maquinaria()

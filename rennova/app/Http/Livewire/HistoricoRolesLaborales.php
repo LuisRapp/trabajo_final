@@ -2,27 +2,34 @@
 
 namespace App\Http\Livewire;
 
-use Livewire\Component;
 use App\Models\HistoricoRolLaboral;
 use App\Models\RolLaboral;
+use Livewire\Component;
 
 class HistoricoRolesLaborales extends Component
 {
     public $historicos = [];
+
     public $roles = [];
-    
+
     public $historico_id;
+
     public $rol_laboral_id;
+
     public $precio_tonelada;
+
     public $jornal_diario;
+
     public $fecha_inicio;
+
     public $fecha_fin;
+
     public $motivo_cambio;
-    
+
     public $busqueda = '';
 
     protected $rules = [
-        'rol_laboral_id' => 'required|exists:rol_laborals,id_rol_laboral',
+        'rol_laboral_id' => 'required|exists:roles_laborales,id_rol_laboral',
         'precio_tonelada' => 'nullable|numeric|min:0',
         'jornal_diario' => 'nullable|numeric|min:0',
         'fecha_inicio' => 'required|date',
@@ -50,15 +57,15 @@ class HistoricoRolesLaborales extends Component
 
         if ($this->busqueda) {
             $busq = $this->busqueda;
-            $query->where(function($q) use ($busq) {
-                $q->whereRaw("CAST(precio_tonelada AS TEXT) ILIKE ?", ["%{$busq}%"])
-                  ->orWhereRaw("CAST(jornal_diario AS TEXT) ILIKE ?", ["%{$busq}%"])
-                  ->orWhere('motivo_cambio', 'ILIKE', "%{$busq}%")
-                  ->orWhereDate('fecha_inicio', $busq)
-                  ->orWhereDate('fecha_fin', $busq)
-                  ->orWhereHas('rolLaboral', function($qr) use ($busq) {
-                      $qr->where('nombre', 'ILIKE', "%{$busq}%");
-                  });
+            $query->where(function ($q) use ($busq) {
+                $q->whereRaw('CAST(precio_tonelada AS TEXT) ILIKE ?', ["%{$busq}%"])
+                    ->orWhereRaw('CAST(jornal_diario AS TEXT) ILIKE ?', ["%{$busq}%"])
+                    ->orWhere('motivo_cambio', 'ILIKE', "%{$busq}%")
+                    ->orWhereDate('fecha_inicio', $busq)
+                    ->orWhereDate('fecha_fin', $busq)
+                    ->orWhereHas('rolLaboral', function ($qr) use ($busq) {
+                        $qr->where('nombre', 'ILIKE', "%{$busq}%");
+                    });
             });
         }
 
@@ -73,6 +80,7 @@ class HistoricoRolesLaborales extends Component
     public function render()
     {
         $this->cargarHistoricos();
+
         return view('livewire.historico-roles-laborales');
     }
 

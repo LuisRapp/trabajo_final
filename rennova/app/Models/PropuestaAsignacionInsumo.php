@@ -2,14 +2,15 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
-class AllocationProposalInsumo extends Model
+class PropuestaAsignacionInsumo extends Model
 {
     use HasFactory;
 
     protected $table = 'allocation_proposal_insumos';
+
     protected $primaryKey = 'id_allocation_proposal_insumo';
 
     protected $fillable = [
@@ -28,7 +29,7 @@ class AllocationProposalInsumo extends Model
 
     public function proposal()
     {
-        return $this->belongsTo(AllocationProposal::class, 'id_allocation_proposal');
+        return $this->belongsTo(PropuestaAsignacion::class, 'id_allocation_proposal');
     }
 
     public function insumo()

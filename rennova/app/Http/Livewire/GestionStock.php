@@ -12,40 +12,55 @@ use Livewire\WithPagination;
 class GestionStock extends Component
 {
     use WithPagination;
+
     protected $paginationTheme = 'bootstrap';
 
     // Propiedades de formulario
     public $id_insumo;
+
     public $id_proveedor;
+
     public $cantidad;
+
     public $precio_unitario;
+
     public $numero_factura;
+
     public $tipo_movimiento = 'compra';
+
     public $observaciones;
+
     public $fecha_compra;
 
     // Propiedades de UI
     public $mostrarModal = false;
+
     public $modoEdicion = false;
+
     public $loteSeleccionado = null;
 
     // Filtros
     public $filtro_insumo = '';
+
     public $filtro_proveedor = '';
+
     public $filtro_fecha_inicio = '';
+
     public $filtro_fecha_fin = '';
+
     public $filtro_tipo = '';
+
     public $filtro_estado = 'disponibles'; // disponibles, agotados, todos
 
     protected $rules = [
         'id_insumo' => 'required|exists:insumos,id_insumo',
-        'id_proveedor' => 'nullable|exists:proveedors,id_proveedor',
+        'id_proveedor' => 'nullable|exists:proveedores,id_proveedor',
         'cantidad' => 'required|numeric|min:0.01',
         'precio_unitario' => 'required|numeric|min:0.01',
         'numero_factura' => 'nullable|string|max:100',
         'tipo_movimiento' => 'required|in:compra,ajuste_entrada,devolucion',
         'observaciones' => 'nullable|string|max:500',
-        'fecha_compra' => 'required|date'
+        'fecha_compra' => 'required|date',
     ];
 
     protected $messages = [
@@ -55,7 +70,7 @@ class GestionStock extends Component
         'precio_unitario.required' => 'El precio unitario es obligatorio',
         'precio_unitario.min' => 'El precio debe ser mayor a 0',
         'fecha_compra.required' => 'La fecha de compra es obligatoria',
-        'tipo_movimiento.in' => 'Tipo de movimiento inválido'
+        'tipo_movimiento.in' => 'Tipo de movimiento inválido',
     ];
 
     public function mount()
@@ -78,7 +93,7 @@ class GestionStock extends Component
             'lotes' => $lotes,
             'insumos' => $insumos,
             'proveedores' => $proveedores,
-            'estadisticas' => $estadisticas
+            'estadisticas' => $estadisticas,
         ]);
     }
 
@@ -132,7 +147,7 @@ class GestionStock extends Component
             'valor_inventario' => $lotes->sum(function ($lote) {
                 return $lote->cantidad_disponible * $lote->precio_unitario;
             }),
-            'lotes_proximos_agotar' => $lotes->filter(fn($l) => $l->estaProximoAgotar())->count()
+            'lotes_proximos_agotar' => $lotes->filter(fn ($l) => $l->estaProximoAgotar())->count(),
         ];
     }
 
@@ -173,7 +188,7 @@ class GestionStock extends Component
                 'id_insumo' => $this->id_insumo,
                 'cantidad' => $this->cantidad,
                 'precio_unitario' => $this->precio_unitario,
-                'fecha_compra' => $this->fecha_compra
+                'fecha_compra' => $this->fecha_compra,
             ]);
 
             $metadata = [
@@ -181,7 +196,7 @@ class GestionStock extends Component
                 'numero_factura' => $this->numero_factura,
                 'tipo_movimiento' => $this->tipo_movimiento,
                 'observaciones' => $this->observaciones,
-                'motivo' => $this->generarMotivo()
+                'motivo' => $this->generarMotivo(),
             ];
 
             \Log::info('Metadata:', $metadata);
@@ -207,9 +222,9 @@ class GestionStock extends Component
             $this->resetPage();
 
         } catch (\Exception $e) {
-            \Log::error('Error al guardar lote: ' . $e->getMessage());
+            \Log::error('Error al guardar lote: '.$e->getMessage());
             \Log::error($e->getTraceAsString());
-            session()->flash('message', 'Error al registrar el lote: ' . $e->getMessage());
+            session()->flash('message', 'Error al registrar el lote: '.$e->getMessage());
             session()->flash('alert-type', 'danger');
         }
     }
@@ -219,13 +234,13 @@ class GestionStock extends Component
         $motivos = [
             'compra' => 'Compra',
             'ajuste_entrada' => 'Ajuste de Entrada',
-            'devolucion' => 'Devolución'
+            'devolucion' => 'Devolución',
         ];
 
         $motivo = $motivos[$this->tipo_movimiento] ?? 'Entrada';
 
         if ($this->numero_factura) {
-            $motivo .= ' - Factura ' . $this->numero_factura;
+            $motivo .= ' - Factura '.$this->numero_factura;
         }
 
         return $motivo;

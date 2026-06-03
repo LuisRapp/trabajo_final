@@ -3,9 +3,9 @@
 namespace App\Jobs;
 
 use App\Enums\TaskType;
-use App\Models\AllocationProposal;
 use App\Models\Lote;
 use App\Models\LoteTarea;
+use App\Models\PropuestaAsignacion;
 use App\Services\AutomaticAllocationService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -14,7 +14,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
-class ProcessAllocationProposal implements ShouldQueue, ShouldBeUnique
+class ProcessAllocationProposal implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -26,18 +26,17 @@ class ProcessAllocationProposal implements ShouldQueue, ShouldBeUnique
         public readonly int $minSamples = 5,
         public readonly int $gapDaysForRunSplit = 7,
         public readonly bool $skipIfAlreadyGeneratedToday = true,
-    ) {
-    }
+    ) {}
 
     public function uniqueId(): string
     {
-        return 'allocation-proposals:process:lote:' . $this->loteId;
+        return 'allocation-proposals:process:lote:'.$this->loteId;
     }
 
     public function handle(AutomaticAllocationService $service): void
     {
         $lote = Lote::find($this->loteId);
-        if (!$lote) {
+        if (! $lote) {
             return;
         }
 
@@ -50,7 +49,7 @@ class ProcessAllocationProposal implements ShouldQueue, ShouldBeUnique
         if ($tareasActivas->isNotEmpty()) {
             foreach ($tareasActivas as $tarea) {
                 if ($this->skipIfAlreadyGeneratedToday) {
-                    $exists = AllocationProposal::where('id_lote_tarea', $tarea->id_lote_tarea)
+                    $exists = PropuestaAsignacion::where('id_lote_tarea', $tarea->id_lote_tarea)
                         ->where('created_at', '>=', now()->startOfDay())
                         ->where(function ($q) {
                             $q->whereNull('status')->orWhere('status', '!=', 'closed');
@@ -74,12 +73,12 @@ class ProcessAllocationProposal implements ShouldQueue, ShouldBeUnique
         }
 
         $taskType = TaskType::tryFrom((string) $lote->main_task_type);
-        if (!$taskType) {
+        if (! $taskType) {
             return;
         }
 
         if ($this->skipIfAlreadyGeneratedToday) {
-            $exists = AllocationProposal::where('id_lote', $lote->id_lote)
+            $exists = PropuestaAsignacion::where('id_lote', $lote->id_lote)
                 ->whereNull('id_lote_tarea')
                 ->where('tipo_tarea', $taskType->value)
                 ->where('created_at', '>=', now()->startOfDay())

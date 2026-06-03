@@ -2,16 +2,20 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use OwenIt\Auditing\Contracts\Auditable;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use OwenIt\Auditing\Contracts\Auditable;
 
 class Carga extends Model implements Auditable
 {
-    use HasFactory, \OwenIt\Auditing\Auditable;
+    use HasFactory, \OwenIt\Auditing\Auditable, SoftDeletes;
+
     protected $table = 'cargas';
+
     protected $primaryKey = 'id_carga';
+
     protected $fillable = [
         'id_lote',
         'id_categoria_madera',
@@ -66,8 +70,8 @@ class Carga extends Model implements Auditable
     public function ventas()
     {
         return $this->belongsToMany(Venta::class, 'venta_cargas', 'id_carga', 'id_venta')
-                    ->withPivot('precio_unitario', 'peso_toneladas', 'subtotal')
-                    ->withTimestamps();
+            ->withPivot('precio_unitario', 'peso_toneladas', 'subtotal')
+            ->withTimestamps();
     }
 
     protected static function booted()

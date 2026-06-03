@@ -4,11 +4,9 @@ namespace App\Http\Livewire;
 
 use App\Enums\TaskType;
 use App\Jobs\SendPurchaseOrderEmail;
-use App\Models\AllocationProposal;
-use App\Models\AllocationProposalEmployee;
-use App\Models\AllocationProposalMaquinaria;
-use App\Models\AllocationProposalInsumo;
 use App\Models\Lote;
+use App\Models\PropuestaAsignacion;
+use App\Models\PropuestaAsignacionEmpleado;
 use App\Services\AutomaticAllocationService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -17,18 +15,22 @@ use Livewire\Component;
 class LaunchpadModal extends Component
 {
     public bool $showModal = false;
+
     public ?int $loteId = null;
 
-    public ?AllocationProposal $proposal = null;
+    public ?PropuestaAsignacion $proposal = null;
 
     /** @var Collection<int, mixed> */
     public Collection $employees;
+
     /** @var Collection<int, mixed> */
     public Collection $machinery;
+
     /** @var Collection<int, mixed> */
     public Collection $supplies;
 
     public float $supplies_cost = 0.0;
+
     public float $week_1_fuel = 0.0;
 
     public array $employeeSelected = [];
@@ -59,11 +61,11 @@ class LaunchpadModal extends Component
 
     private function loadProposal(): void
     {
-        if (!$this->loteId) {
+        if (! $this->loteId) {
             return;
         }
 
-        $proposal = AllocationProposal::query()
+        $proposal = PropuestaAsignacion::query()
             ->with([
                 'lote',
                 'loteTarea',
@@ -75,9 +77,9 @@ class LaunchpadModal extends Component
             ->orderByDesc('id_allocation_proposal')
             ->first();
 
-        if (!$proposal) {
+        if (! $proposal) {
             $lote = Lote::find($this->loteId);
-            if (!$lote) {
+            if (! $lote) {
                 return;
             }
 
@@ -112,6 +114,7 @@ class LaunchpadModal extends Component
         $this->week_1_fuel = (float) $this->supplies
             ->filter(function ($row) {
                 $name = mb_strtolower((string) ($row->insumo->nombre ?? ''));
+
                 return str_contains($name, 'diesel') || str_contains($name, 'gasoil');
             })
             ->sum(fn ($row) => (float) ($row->cantidad_semana_1 ?? 0));
@@ -119,7 +122,7 @@ class LaunchpadModal extends Component
 
     public function confirmAndLaunch(): void
     {
-        if (!$this->proposal || !$this->loteId) {
+        if (! $this->proposal || ! $this->loteId) {
             return;
         }
 
@@ -130,19 +133,19 @@ class LaunchpadModal extends Component
         try {
             DB::transaction(function () use (&$requiresReview, &$reviewMessage) {
                 foreach ($this->employeeSelected as $rowId => $selected) {
-                    AllocationProposalEmployee::where('id_allocation_proposal_employee', (int) $rowId)
+                    PropuestaAsignacionEmpleado::where('id_allocation_proposal_employee', (int) $rowId)
                         ->where('id_allocation_proposal', (int) $this->proposal->id_allocation_proposal)
                         ->update(['selected' => (bool) $selected]);
                 }
 
-                /** @var AllocationProposal $proposal */
-                $proposal = AllocationProposal::query()
+                /** @var PropuestaAsignacion $proposal */
+                $proposal = PropuestaAsignacion::query()
                     ->with(['lote', 'proposedEmployees', 'proposedMaquinarias'])
                     ->lockForUpdate()
                     ->findOrFail((int) $this->proposal->id_allocation_proposal);
 
                 $lote = $proposal->lote;
-                if (!$lote) {
+                if (! $lote) {
                     return;
                 }
 
@@ -153,12 +156,13 @@ class LaunchpadModal extends Component
                     $meta['reviewed_at'] = now()->toISOString();
                     $proposal->meta = $meta;
                     $proposal->status = 'confirmed';
-                    if (!$proposal->confirmed_at) {
+                    if (! $proposal->confirmed_at) {
                         $proposal->confirmed_at = now();
                     }
                     $proposal->save();
                     $requiresReview = true;
                     $reviewMessage = 'Propuesta con baja confianza. Confirmada para revisiÃ³n manual. Vuelva a aplicar para asignar.';
+
                     return;
                 }
 
@@ -177,12 +181,12 @@ class LaunchpadModal extends Component
                     ->toArray();
 
                 $busyEmployees = $this->findBusyEmployees($empleadosIds, (int) $lote->id_lote);
-                if (!empty($busyEmployees)) {
+                if (! empty($busyEmployees)) {
                     throw new \RuntimeException('Algunos empleados ya estÃ¡n asignados a otros lotes en proceso.');
                 }
 
                 $busyMaquinarias = $this->findBusyMaquinarias($maquinariasIds, (int) $lote->id_lote);
-                if (!empty($busyMaquinarias)) {
+                if (! empty($busyMaquinarias)) {
                     throw new \RuntimeException('Algunas maquinarias ya estÃ¡n asignadas a otros lotes en proceso.');
                 }
 
@@ -195,7 +199,7 @@ class LaunchpadModal extends Component
                 $lote->save();
 
                 $proposal->status = 'applied';
-                if (!$proposal->confirmed_at) {
+                if (! $proposal->confirmed_at) {
                     $proposal->confirmed_at = now();
                 }
                 $proposal->applied_at = now();
@@ -204,6 +208,7 @@ class LaunchpadModal extends Component
 
             if ($requiresReview) {
                 session()->flash('message', $reviewMessage);
+
                 return;
             }
 
@@ -212,7 +217,7 @@ class LaunchpadModal extends Component
 
             session()->flash('message', 'Asignación aplicada y lote iniciado.');
         } catch (\Throwable $e) {
-            session()->flash('error', 'Error al iniciar operación: ' . $e->getMessage());
+            session()->flash('error', 'Error al iniciar operación: '.$e->getMessage());
         } finally {
             $this->guardando = false;
         }
@@ -220,25 +225,26 @@ class LaunchpadModal extends Component
 
     private function isLowConfidence($meta): bool
     {
-        if (!is_array($meta)) {
+        if (! is_array($meta)) {
             return false;
         }
 
-        if (!empty($meta['review_required'])) {
+        if (! empty($meta['review_required'])) {
             return true;
         }
 
         $reason = $meta['default_rates']['reason'] ?? null;
+
         return $reason === 'sin_historico';
     }
 
-    private function closeOtherProposals(AllocationProposal $proposal): void
+    private function closeOtherProposals(PropuestaAsignacion $proposal): void
     {
-        $query = AllocationProposal::query()
+        $query = PropuestaAsignacion::query()
             ->where('id_lote', $proposal->id_lote)
             ->where('id_allocation_proposal', '!=', $proposal->id_allocation_proposal);
 
-        if (!empty($proposal->id_lote_tarea)) {
+        if (! empty($proposal->id_lote_tarea)) {
             $query->where('id_lote_tarea', $proposal->id_lote_tarea);
         } else {
             $query->whereNull('id_lote_tarea')

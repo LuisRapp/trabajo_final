@@ -2,16 +2,19 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Contracts\Auditable;
 
 class Maquinaria extends Model implements Auditable
 {
-    use HasFactory, \OwenIt\Auditing\Auditable;
-    
+    use HasFactory, \OwenIt\Auditing\Auditable, SoftDeletes;
+
     protected $table = 'maquinarias';
+
     protected $primaryKey = 'id_maquinaria';
+
     protected $fillable = [
         'id_tipo_maquinaria',
         'modelo',
@@ -19,9 +22,9 @@ class Maquinaria extends Model implements Auditable
         'es_alquilada',
         'fecha_inicio_actividades',
         'toneladas_acumuladas',
-        'umbral_toneladas'
+        'umbral_toneladas',
     ];
-        
+
     public function tipoMaquinaria()
     {
         return $this->belongsTo(TipoMaquinaria::class, 'id_tipo_maquinaria');

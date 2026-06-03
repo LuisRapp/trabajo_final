@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\Lote;
 use App\Models\ParteDiario;
-use App\Models\Carga;
 use App\Models\Recibo;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
@@ -13,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 class ForestalStatsService
 {
     private const CACHE_TTL = 21600; // 6 horas
+
     private const FALLBACK_PUNTO_EQUILIBRIO = 75; // tn si faltan datos
 
     /**
@@ -22,7 +22,7 @@ class ForestalStatsService
     {
         $fechaDesde = $desde ? Carbon::parse($desde) : null;
         $fechaHasta = $hasta ? Carbon::parse($hasta) : null;
-        $cacheKey = "stats.precio_promedio_venta.{$lote->id_lote}." . ($fechaDesde ? $fechaDesde->format('Ymd') : 'na') . '.' . ($fechaHasta ? $fechaHasta->format('Ymd') : 'na');
+        $cacheKey = "stats.precio_promedio_venta.{$lote->id_lote}.".($fechaDesde ? $fechaDesde->format('Ymd') : 'na').'.'.($fechaHasta ? $fechaHasta->format('Ymd') : 'na');
 
         return Cache::remember(
             $cacheKey,
@@ -64,11 +64,10 @@ class ForestalStatsService
         ?string $hasta = null,
         bool $incluirLiquidaciones = false,
         bool $usarManoObraPartes = true
-    ): float
-    {
+    ): float {
         $fechaDesde = $desde ? Carbon::parse($desde) : Carbon::now()->subMonths(6);
         $fechaHasta = $hasta ? Carbon::parse($hasta) : null;
-        $cacheKey = "stats.costo_prom_tn.{$lote->id_lote}.{$fechaDesde->format('Ymd')}." . ($fechaHasta ? $fechaHasta->format('Ymd') : 'na') . '.liq' . ($incluirLiquidaciones ? '1' : '0') . '.mo' . ($usarManoObraPartes ? '1' : '0');
+        $cacheKey = "stats.costo_prom_tn.{$lote->id_lote}.{$fechaDesde->format('Ymd')}.".($fechaHasta ? $fechaHasta->format('Ymd') : 'na').'.liq'.($incluirLiquidaciones ? '1' : '0').'.mo'.($usarManoObraPartes ? '1' : '0');
 
         return Cache::remember(
             $cacheKey,
@@ -113,7 +112,8 @@ class ForestalStatsService
                 }
 
                 $cargasQuery = DB::table('cargas')
-                    ->where('id_lote', $lote->id_lote);
+                    ->where('id_lote', $lote->id_lote)
+                    ->whereNull('cargas.deleted_at');
 
                 if ($fechaHasta) {
                     $cargasQuery->whereBetween('fecha_carga', [$fechaDesde->toDateString(), $fechaHasta->toDateString()]);
@@ -128,6 +128,7 @@ class ForestalStatsService
                 }
 
                 $numerador = $totalGastos + $costoManoObra + $liquidacionesPeriodo;
+
                 return round($numerador / $totalTon, 2);
             }
         );
@@ -142,11 +143,10 @@ class ForestalStatsService
         ?string $hasta = null,
         bool $incluirLiquidaciones = false,
         bool $usarManoObraPartes = true
-    ): float
-    {
+    ): float {
         $fechaDesde = $desde ? Carbon::parse($desde) : null;
         $fechaHasta = $hasta ? Carbon::parse($hasta) : null;
-        $cacheKey = "stats.punto_equilibrio.{$lote->id_lote}." . ($fechaDesde ? $fechaDesde->format('Ymd') : 'na') . '.' . ($fechaHasta ? $fechaHasta->format('Ymd') : 'na') . '.liq' . ($incluirLiquidaciones ? '1' : '0') . '.mo' . ($usarManoObraPartes ? '1' : '0');
+        $cacheKey = "stats.punto_equilibrio.{$lote->id_lote}.".($fechaDesde ? $fechaDesde->format('Ymd') : 'na').'.'.($fechaHasta ? $fechaHasta->format('Ymd') : 'na').'.liq'.($incluirLiquidaciones ? '1' : '0').'.mo'.($usarManoObraPartes ? '1' : '0');
 
         return Cache::remember(
             $cacheKey,
@@ -169,7 +169,7 @@ class ForestalStatsService
                 }
 
                 $punto = $fijos / $denominador;
-                if ($punto <= 0 || !is_finite($punto)) {
+                if ($punto <= 0 || ! is_finite($punto)) {
                     return self::FALLBACK_PUNTO_EQUILIBRIO;
                 }
 
@@ -205,9 +205,18 @@ class ForestalStatsService
                 $maquinaria = (float) ($rows->maquinaria ?? 0);
                 $manoObra = (float) ($rows->mano_obra ?? 0);
 
-                if ($insumos > 0) { $labels[] = 'Insumos'; $data[] = round($insumos, 2); }
-                if ($maquinaria > 0) { $labels[] = 'Maquinaria'; $data[] = round($maquinaria, 2); }
-                if ($manoObra > 0) { $labels[] = 'Mano de Obra'; $data[] = round($manoObra, 2); }
+                if ($insumos > 0) {
+                    $labels[] = 'Insumos';
+                    $data[] = round($insumos, 2);
+                }
+                if ($maquinaria > 0) {
+                    $labels[] = 'Maquinaria';
+                    $data[] = round($maquinaria, 2);
+                }
+                if ($manoObra > 0) {
+                    $labels[] = 'Mano de Obra';
+                    $data[] = round($manoObra, 2);
+                }
 
                 return [
                     'labels' => $labels,
@@ -231,6 +240,7 @@ class ForestalStatsService
                     ->selectRaw('DATE(fecha_carga) as fecha')
                     ->selectRaw('SUM(peso_neto/1000.0) as toneladas')
                     ->where('id_lote', $lote->id_lote)
+                    ->whereNull('cargas.deleted_at')
                     ->whereDate('fecha_carga', '>=', $desde)
                     ->groupBy(DB::raw('DATE(fecha_carga)'))
                     ->orderBy('fecha')
@@ -262,7 +272,7 @@ class ForestalStatsService
             function () use ($lote) {
                 $desde = Carbon::now()->subMonths(5)->startOfMonth();
                 $rows = ParteDiario::query()
-                    ->selectRaw(DB::raw($this->dateTrunc('fecha', 'month') . ' as periodo'))
+                    ->selectRaw(DB::raw($this->dateTrunc('fecha', 'month').' as periodo'))
                     ->selectRaw('AVG(costo_unitario_calculado) as costo_prom')
                     ->where('id_lote', $lote->id_lote)
                     ->whereDate('fecha', '>=', $desde->toDateString())
@@ -273,7 +283,7 @@ class ForestalStatsService
                 $labels = [];
                 $data = [];
                 foreach ($rows as $row) {
-                    $labels[] = Carbon::parse($row->periodo . '-01')->format('M Y');
+                    $labels[] = Carbon::parse($row->periodo.'-01')->format('M Y');
                     $data[] = round((float) $row->costo_prom, 2);
                 }
 
@@ -324,6 +334,7 @@ class ForestalStatsService
         if ($driver === 'mysql') {
             return "DATE_FORMAT({$column}, '%Y-%m-01')";
         }
+
         // SQLite
         return "strftime('%Y-%m-01', {$column})";
     }

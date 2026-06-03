@@ -11,7 +11,7 @@ class AllocationPropose extends Command
 {
     protected $signature = 'allocation:propose {loteId} {taskType} {--months=24} {--min=5} {--gap=7}';
 
-    protected $description = 'Genera una AllocationProposal para un lote y tipo de tarea usando historial real (persona-día/máquina-día).';
+    protected $description = 'Genera una PropuestaAsignacion para un lote y tipo de tarea usando historial real (persona-día/máquina-día).';
 
     public function handle(AutomaticAllocationService $service): int
     {
@@ -19,14 +19,16 @@ class AllocationPropose extends Command
         $taskTypeInput = (string) $this->argument('taskType');
 
         $taskType = TaskType::tryFrom($taskTypeInput);
-        if (!$taskType) {
-            $this->error('taskType inválido. Valores permitidos: ' . implode(', ', array_map(fn($c) => $c->value, TaskType::cases())));
+        if (! $taskType) {
+            $this->error('taskType inválido. Valores permitidos: '.implode(', ', array_map(fn ($c) => $c->value, TaskType::cases())));
+
             return self::INVALID;
         }
 
         $lote = Lote::find($loteId);
-        if (!$lote) {
-            $this->error('No se encontró el lote: ' . $loteId);
+        if (! $lote) {
+            $this->error('No se encontró el lote: '.$loteId);
+
             return self::FAILURE;
         }
 
@@ -42,16 +44,16 @@ class AllocationPropose extends Command
             gapDaysForRunSplit: $gap
         );
 
-        $this->info('Proposal creada: #' . $proposal->id_allocation_proposal);
-        $this->line('Lote: ' . $proposal->id_lote . ' | Especie: ' . ($proposal->especie ?? '-') . ' | Superficie: ' . ($proposal->superficie_ha ?? '-') . ' ha');
-        $this->line('Tarea: ' . $proposal->tipo_tarea);
+        $this->info('Proposal creada: #'.$proposal->id_allocation_proposal);
+        $this->line('Lote: '.$proposal->id_lote.' | Especie: '.($proposal->especie ?? '-').' | Superficie: '.($proposal->superficie_ha ?? '-').' ha');
+        $this->line('Tarea: '.$proposal->tipo_tarea);
         $this->line('Estimación total:');
-        $this->line('  - Persona-día: ' . ($proposal->estimated_person_days ?? 'N/A'));
-        $this->line('  - Máquina-día: ' . ($proposal->estimated_machine_days ?? 'N/A'));
-        $this->line('  - Duración (días): ' . ($proposal->estimated_duration_days ?? 'N/A'));
+        $this->line('  - Persona-día: '.($proposal->estimated_person_days ?? 'N/A'));
+        $this->line('  - Máquina-día: '.($proposal->estimated_machine_days ?? 'N/A'));
+        $this->line('  - Duración (días): '.($proposal->estimated_duration_days ?? 'N/A'));
         $this->line('Sugerencias:');
-        $this->line('  - Tamaño equipo: ' . ($proposal->suggested_team_size ?? 'N/A'));
-        $this->line('  - Maquinarias: ' . ($proposal->suggested_machinery_count ?? 'N/A'));
+        $this->line('  - Tamaño equipo: '.($proposal->suggested_team_size ?? 'N/A'));
+        $this->line('  - Maquinarias: '.($proposal->suggested_machinery_count ?? 'N/A'));
 
         return self::SUCCESS;
     }

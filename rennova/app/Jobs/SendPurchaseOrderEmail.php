@@ -2,7 +2,7 @@
 
 namespace App\Jobs;
 
-use App\Models\AllocationProposal;
+use App\Models\PropuestaAsignacion;
 use App\Notifications\OrdenCompraPropuestaNotification;
 use App\Services\AutomaticAllocationService;
 use Illuminate\Bus\Queueable;
@@ -16,13 +16,11 @@ class SendPurchaseOrderEmail implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public function __construct(public readonly int $proposalId)
-    {
-    }
+    public function __construct(public readonly int $proposalId) {}
 
     public function handle(): void
     {
-        $proposal = AllocationProposal::query()
+        $proposal = PropuestaAsignacion::query()
             ->with([
                 'lote',
                 'loteTarea',
@@ -32,12 +30,12 @@ class SendPurchaseOrderEmail implements ShouldQueue
             ])
             ->find($this->proposalId);
 
-        if (!$proposal) {
+        if (! $proposal) {
             return;
         }
 
         $meta = $proposal->meta ?? [];
-        if (!empty($meta['purchase_order']['sent_at'] ?? null)) {
+        if (! empty($meta['purchase_order']['sent_at'] ?? null)) {
             return;
         }
 
@@ -66,7 +64,7 @@ class SendPurchaseOrderEmail implements ShouldQueue
         $proposal->save();
     }
 
-    private function resolvePurchaseOrderRecipients(AllocationProposal $proposal): array
+    private function resolvePurchaseOrderRecipients(PropuestaAsignacion $proposal): array
     {
         $emails = [];
 

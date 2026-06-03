@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Models\Mantenimiento;
-use App\Models\MantenimientoPurchaseProposal;
+use App\Models\PropuestaCompraMantenimiento;
 use Dompdf\Dompdf;
 use Dompdf\Options;
 use Illuminate\Support\Facades\Storage;
@@ -28,8 +28,8 @@ class MantenimientoDocumentsService
 
         $pdf = $this->renderPdf($html);
 
-        $filename = 'orden_mantenimiento_' . $mantenimiento->id_mantenimiento . '_' . now()->format('Ymd_His') . '.pdf';
-        $relativePath = 'private/mantenimientos/' . $mantenimiento->id_mantenimiento . '/' . $filename;
+        $filename = 'orden_mantenimiento_'.$mantenimiento->id_mantenimiento.'_'.now()->format('Ymd_His').'.pdf';
+        $relativePath = 'private/mantenimientos/'.$mantenimiento->id_mantenimiento.'/'.$filename;
         Storage::disk('local')->put($relativePath, $pdf);
 
         return [
@@ -42,7 +42,7 @@ class MantenimientoDocumentsService
     /**
      * Genera PDF de orden de compra de mantenimiento y lo guarda en storage/app.
      */
-    public function generatePurchaseOrderPdf(MantenimientoPurchaseProposal $proposal): array
+    public function generatePurchaseOrderPdf(PropuestaCompraMantenimiento $proposal): array
     {
         $proposal->loadMissing([
             'mantenimiento.tipoMantenimiento',
@@ -58,8 +58,8 @@ class MantenimientoDocumentsService
         $pdf = $this->renderPdf($html);
 
         $mantenimientoId = (int) $proposal->id_mantenimiento;
-        $filename = 'orden_compra_mantenimiento_' . $mantenimientoId . '_' . now()->format('Ymd_His') . '.pdf';
-        $relativePath = 'private/mantenimientos/' . $mantenimientoId . '/' . $filename;
+        $filename = 'orden_compra_mantenimiento_'.$mantenimientoId.'_'.now()->format('Ymd_His').'.pdf';
+        $relativePath = 'private/mantenimientos/'.$mantenimientoId.'/'.$filename;
         Storage::disk('local')->put($relativePath, $pdf);
 
         return [
@@ -71,7 +71,7 @@ class MantenimientoDocumentsService
 
     private function renderPdf(string $html): string
     {
-        $options = new Options();
+        $options = new Options;
         $options->set('isRemoteEnabled', true);
         $options->set('isPhpEnabled', true);
         $options->set('defaultFont', 'DejaVu Sans');
@@ -84,4 +84,3 @@ class MantenimientoDocumentsService
         return $dompdf->output();
     }
 }
-
