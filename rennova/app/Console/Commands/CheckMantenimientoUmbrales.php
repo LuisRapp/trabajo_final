@@ -375,6 +375,7 @@ class CheckMantenimientoUmbrales extends Command
 
         $stockDisponible = (float) DB::table('movimiento_stocks')
             ->where('id_insumo', $insumo->id_insumo)
+            ->whereNull('deleted_at')
             ->selectRaw(
                 "COALESCE(SUM(CASE WHEN tipo = 'entrada' THEN cantidad WHEN tipo = 'salida' THEN -cantidad ELSE 0 END), 0) as stock"
             )
@@ -577,6 +578,7 @@ class CheckMantenimientoUmbrales extends Command
         foreach ($kit as $item) {
             $stockDisponible = (float) DB::table('movimiento_stocks')
                 ->where('id_insumo', $item->id_insumo)
+                ->whereNull('deleted_at')
                 ->selectRaw(
                     "COALESCE(SUM(CASE WHEN tipo = 'entrada' THEN cantidad WHEN tipo = 'salida' THEN -cantidad ELSE 0 END), 0) as stock"
                 )
@@ -681,6 +683,7 @@ class CheckMantenimientoUmbrales extends Command
         $ocupados = DB::table('mantenimiento_empleado as me')
             ->join('mantenimientos as m', 'm.id_mantenimiento', '=', 'me.id_mantenimiento')
             ->whereIn('m.estado', ['programado', 'en curso'])
+            ->whereNull('m.deleted_at')
             ->whereDate('m.fecha_programada', $fecha)
             ->pluck('me.id_empleado')
             ->map(fn ($id) => (int) $id)
@@ -704,6 +707,7 @@ class CheckMantenimientoUmbrales extends Command
         $ocupados = DB::table('mantenimiento_empleado as me')
             ->join('mantenimientos as m', 'm.id_mantenimiento', '=', 'me.id_mantenimiento')
             ->whereIn('m.estado', ['programado', 'en curso'])
+            ->whereNull('m.deleted_at')
             ->whereDate('m.fecha_programada', $fecha)
             ->pluck('me.id_empleado')
             ->map(fn ($id) => (int) $id)
