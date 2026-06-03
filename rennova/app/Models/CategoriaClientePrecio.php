@@ -3,11 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Contracts\Auditable;
 
 class CategoriaClientePrecio extends Model implements Auditable
 {
-    use \OwenIt\Auditing\Auditable;
+    use SoftDeletes, \OwenIt\Auditing\Auditable;
     
     protected $table = 'categoria_cliente_precio';
     protected $fillable = [

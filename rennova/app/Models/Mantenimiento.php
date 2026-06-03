@@ -3,14 +3,18 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Contracts\Auditable;
 
 class Mantenimiento extends Model implements Auditable
 {
     use \OwenIt\Auditing\Auditable;
-    
+    use SoftDeletes;
+
     protected $table = 'mantenimientos';
+
     protected $primaryKey = 'id_mantenimiento';
+
     protected $fillable = [
         'id_maquinaria',
         'id_tipo_mantenimiento',
@@ -20,7 +24,7 @@ class Mantenimiento extends Model implements Auditable
         'costo_total',
         'estado',
         'toneladas_snapshot',
-        'costo_mano_obra'
+        'costo_mano_obra',
     ];
 
     public function maquinaria()

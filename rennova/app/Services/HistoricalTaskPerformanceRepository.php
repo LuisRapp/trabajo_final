@@ -174,6 +174,7 @@ class HistoricalTaskPerformanceRepository
             ->join('insumos as i', 'i.id_insumo', '=', 'ms.id_insumo')
             ->whereDate('ms.fecha', '>=', $since->toDateString())
             ->where('ms.tipo', 'salida')
+            ->whereNull('ms.deleted_at')
             ->select([
                 'i.id_insumo',
                 'i.nombre',
@@ -204,6 +205,7 @@ class HistoricalTaskPerformanceRepository
                 where ms.id_insumo = ?
                   and ms.tipo = 'salida'
                   and ms.fecha >= ?
+                  and ms.deleted_at is null
                 group by ms.fecha
             ) t
         ) as med"))
@@ -228,6 +230,7 @@ class HistoricalTaskPerformanceRepository
         $latestEntrada = DB::table('movimiento_stocks')
             ->where('id_insumo', $insumoId)
             ->where('tipo', 'entrada')
+            ->whereNull('deleted_at')
             ->orderByDesc('fecha')
             ->orderByDesc('id_movimiento_stock')
             ->value('precio_unitario');
@@ -238,6 +241,7 @@ class HistoricalTaskPerformanceRepository
 
         $latestAny = DB::table('movimiento_stocks')
             ->where('id_insumo', $insumoId)
+            ->whereNull('deleted_at')
             ->orderByDesc('fecha')
             ->orderByDesc('id_movimiento_stock')
             ->value('precio_unitario');
@@ -267,6 +271,7 @@ class HistoricalTaskPerformanceRepository
                 where ms.id_insumo = :insumo
                   and ms.tipo = 'salida'
                   and ms.fecha >= :since
+                  and ms.deleted_at is null
                 group by ms.fecha
             ),
             daily_activity as (
