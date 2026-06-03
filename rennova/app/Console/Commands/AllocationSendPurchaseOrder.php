@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Models\AllocationProposal;
+use App\Models\PropuestaAsignacion;
 use App\Notifications\OrdenCompraPropuestaNotification;
 use App\Services\AutomaticAllocationService;
 use Illuminate\Console\Command;
@@ -12,15 +12,15 @@ class AllocationSendPurchaseOrder extends Command
 {
     protected $signature = 'allocation:send-oc {proposalId} {--to=}';
 
-    protected $description = 'Envía mail de Orden de Compra (OC) para una AllocationProposal (incluye insumos semana 1 con cantidad/costo).';
+    protected $description = 'Envía mail de Orden de Compra (OC) para una PropuestaAsignacion (incluye insumos semana 1 con cantidad/costo).';
 
     public function handle(AutomaticAllocationService $service): int
     {
         $proposalId = (int) $this->argument('proposalId');
         $to = $this->option('to');
 
-        /** @var AllocationProposal|null $proposal */
-        $proposal = AllocationProposal::query()
+        /** @var PropuestaAsignacion|null $proposal */
+        $proposal = PropuestaAsignacion::query()
             ->with([
                 'lote',
                 'loteTarea',
@@ -30,8 +30,9 @@ class AllocationSendPurchaseOrder extends Command
             ])
             ->find($proposalId);
 
-        if (!$proposal) {
-            $this->error('No se encontró la propuesta: ' . $proposalId);
+        if (! $proposal) {
+            $this->error('No se encontró la propuesta: '.$proposalId);
+
             return self::FAILURE;
         }
 
@@ -59,7 +60,7 @@ class AllocationSendPurchaseOrder extends Command
             Notification::route('mail', $email)->notify(new OrdenCompraPropuestaNotification($proposal));
         }
 
-        $this->info('OC enviada a: ' . implode(', ', $emails));
+        $this->info('OC enviada a: '.implode(', ', $emails));
 
         return self::SUCCESS;
     }

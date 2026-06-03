@@ -2,7 +2,7 @@
 
 namespace App\Notifications;
 
-use App\Models\AllocationProposal;
+use App\Models\PropuestaAsignacion;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -11,9 +11,7 @@ class OrdenCompraPropuestaNotification extends Notification
 {
     use Queueable;
 
-    public function __construct(private readonly AllocationProposal $proposal)
-    {
-    }
+    public function __construct(private readonly PropuestaAsignacion $proposal) {}
 
     public function via(object $notifiable): array
     {
@@ -24,30 +22,30 @@ class OrdenCompraPropuestaNotification extends Notification
     {
         $p = $this->proposal;
 
-        $subject = 'Orden de compra - Propuesta #' . $p->id_allocation_proposal
-            . ' (Lote #' . $p->id_lote . ' - ' . (string) ($p->tipo_tarea ?? '-') . ')';
+        $subject = 'Orden de compra - Propuesta #'.$p->id_allocation_proposal
+            .' (Lote #'.$p->id_lote.' - '.(string) ($p->tipo_tarea ?? '-').')';
 
         $message = (new MailMessage)
             ->subject($subject)
             ->greeting('Orden de Compra (Propuesta Automática)')
             ->line('Se generó una orden de compra estimada a partir de una propuesta confirmada en el sistema.')
             ->line('')
-            ->line('**Propuesta #' . $p->id_allocation_proposal . '**')
-            ->line('• Lote: #' . $p->id_lote)
-            ->line('• Tarea: ' . (string) ($p->tipo_tarea ?? '-'))
-            ->line('• Especie: ' . (string) ($p->especie ?? '-'))
-            ->line('• Superficie: ' . (string) ($p->superficie_ha ?? '-') . ' ha')
+            ->line('**Propuesta #'.$p->id_allocation_proposal.'**')
+            ->line('• Lote: #'.$p->id_lote)
+            ->line('• Tarea: '.(string) ($p->tipo_tarea ?? '-'))
+            ->line('• Especie: '.(string) ($p->especie ?? '-'))
+            ->line('• Superficie: '.(string) ($p->superficie_ha ?? '-').' ha')
             ->line('');
 
         $empleados = $p->proposedEmployees
             ?->where('selected', true)
-            ->map(fn ($r) => trim((string) (($r->empleado->apellido ?? '') . ' ' . ($r->empleado->nombre ?? ''))))
+            ->map(fn ($r) => trim((string) (($r->empleado->apellido ?? '').' '.($r->empleado->nombre ?? ''))))
             ->filter()
             ->values()
             ->all() ?? [];
 
-        if (!empty($empleados)) {
-            $message->line('**Personal seleccionado**: ' . implode(', ', $empleados));
+        if (! empty($empleados)) {
+            $message->line('**Personal seleccionado**: '.implode(', ', $empleados));
         }
 
         $maqs = $p->proposedMaquinarias
@@ -57,8 +55,8 @@ class OrdenCompraPropuestaNotification extends Notification
             ->values()
             ->all() ?? [];
 
-        if (!empty($maqs)) {
-            $message->line('**Maquinarias seleccionadas**: ' . implode(', ', $maqs));
+        if (! empty($maqs)) {
+            $message->line('**Maquinarias seleccionadas**: '.implode(', ', $maqs));
         }
 
         $message->line('');
@@ -82,15 +80,15 @@ class OrdenCompraPropuestaNotification extends Notification
                 $cantidad = $row->cantidad_semana_1;
                 $costo = $row->costo_estimado_semana_1;
 
-                $line = '• ' . $nombre;
+                $line = '• '.$nombre;
                 if ($cantidad !== null) {
-                    $line .= ': ' . (string) $cantidad . ($unidad ? (' ' . $unidad) : '');
+                    $line .= ': '.(string) $cantidad.($unidad ? (' '.$unidad) : '');
                 } else {
                     $line .= ': (cantidad N/A)';
                 }
 
                 if ($costo !== null) {
-                    $line .= ' | costo estimado: $' . (string) $costo;
+                    $line .= ' | costo estimado: $'.(string) $costo;
                     $total += (float) $costo;
                     $hasTotal = true;
                 } else {
@@ -102,7 +100,7 @@ class OrdenCompraPropuestaNotification extends Notification
 
             if ($hasTotal) {
                 $message->line('');
-                $message->line('**Total estimado semana 1**: $' . number_format($total, 2, ',', '.'));
+                $message->line('**Total estimado semana 1**: $'.number_format($total, 2, ',', '.'));
             }
         }
 

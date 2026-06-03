@@ -3,18 +3,20 @@
 namespace App\Models;
 
 use App\Jobs\ProcessAllocationProposal;
-use App\Models\AllocationProposal;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Auditable;
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class Lote extends Model implements AuditableContract
 {
-    use HasFactory, Auditable;
-    
+    use Auditable, HasFactory, SoftDeletes;
+
     protected $table = 'lotes';
+
     protected $primaryKey = 'id_lote';
+
     protected $fillable = [
         'propietario',
         'condicion_compra',
@@ -78,12 +80,12 @@ class Lote extends Model implements AuditableContract
 
     public function allocationProposals()
     {
-        return $this->hasMany(AllocationProposal::class, 'id_lote');
+        return $this->hasMany(PropuestaAsignacion::class, 'id_lote');
     }
 
-    public function latestAllocationProposal()
+    public function latestPropuestaAsignacion()
     {
-        return $this->hasOne(AllocationProposal::class, 'id_lote')->latestOfMany();
+        return $this->hasOne(PropuestaAsignacion::class, 'id_lote')->latestOfMany();
     }
 
     public function empleados()
@@ -91,14 +93,14 @@ class Lote extends Model implements AuditableContract
         // Pivote correcta para Asignación de Empleados a Lote
         // Estructura esperada: lote_empleado(id_lote, id_empleado, timestamps)
         return $this->belongsToMany(Empleado::class, 'lote_empleado', 'id_lote', 'id_empleado')
-                    ->withTimestamps();
+            ->withTimestamps();
     }
 
     public function maquinarias()
     {
         // Se asume una tabla pivote 'lote_maquinaria' con columnas: id_lote, id_maquinaria
         return $this->belongsToMany(Maquinaria::class, 'lote_maquinaria', 'id_lote', 'id_maquinaria')
-                    ->withTimestamps();
+            ->withTimestamps();
     }
 
     public function cargas()
@@ -106,10 +108,9 @@ class Lote extends Model implements AuditableContract
         return $this->hasMany(Carga::class, 'id_lote');
     }
 
-    public function ventas()
-    {
-        return $this->hasMany(Venta::class, 'id_lote');
-    }
+    // No existe relación directa de ventas hacia lotes.
+    // La cadena es: Lote -> Cargas -> Venta (via pivot venta_cargas).
+    // Para obtener ventas de un lote: $lote->cargas->flatMap->ventas
 
     public function movimientosStock()
     {

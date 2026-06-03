@@ -3,24 +3,22 @@
 namespace App\Services;
 
 use App\Enums\TaskType;
-use App\Models\AllocationProposal;
-use App\Models\AllocationProposalEmployee;
-use App\Models\AllocationProposalInsumo;
-use App\Models\AllocationProposalMaquinaria;
+use App\Models\Insumo;
 use App\Models\Lote;
 use App\Models\LoteTarea;
-use App\Models\Insumo;
+use App\Models\PropuestaAsignacion;
+use App\Models\PropuestaAsignacionEmpleado;
+use App\Models\PropuestaAsignacionInsumo;
+use App\Models\PropuestaAsignacionMaquinaria;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class AutomaticAllocationService
 {
-
     public function __construct(
         private readonly HistoricalTaskPerformanceRepository $repo
-    ) {
-    }
+    ) {}
 
     public function proposeForLotAndTask(
         Lote $lote,
@@ -28,7 +26,7 @@ class AutomaticAllocationService
         ?Carbon $since = null,
         int $minSamples = 5,
         int $gapDaysForRunSplit = 7
-    ): AllocationProposal {
+    ): PropuestaAsignacion {
         $since ??= Carbon::today()->subMonths(24);
 
         $fallbacks = [
@@ -84,7 +82,7 @@ class AutomaticAllocationService
         $estimatedMachineDays = ($superficie > 0 && is_numeric($mdphMedian)) ? round(((float) $mdphMedian) * $superficie, 2) : null;
         $estimatedDurationDays = ($superficie > 0 && is_numeric($dphMedian)) ? round(((float) $dphMedian) * $superficie, 2) : null;
 
-        $proposal = AllocationProposal::create([
+        $proposal = PropuestaAsignacion::create([
             'id_lote' => $lote->id_lote,
             'id_lote_tarea' => null,
             'tipo_tarea' => $taskType->value,
@@ -131,17 +129,17 @@ class AutomaticAllocationService
         ?Carbon $since = null,
         int $minSamples = 5,
         int $gapDaysForRunSplit = 7
-    ): AllocationProposal {
+    ): PropuestaAsignacion {
         $since ??= Carbon::today()->subMonths(24);
 
         $lote = $tarea->lote()->first();
-        if (!$lote) {
+        if (! $lote) {
             throw new \InvalidArgumentException('La tarea no tiene lote asociado.');
         }
 
         $taskType = TaskType::tryFrom((string) $tarea->tipo_tarea);
-        if (!$taskType) {
-            throw new \InvalidArgumentException('tipo_tarea inválido en lote_tareas: ' . (string) $tarea->tipo_tarea);
+        if (! $taskType) {
+            throw new \InvalidArgumentException('tipo_tarea inválido en lote_tareas: '.(string) $tarea->tipo_tarea);
         }
 
         $fallbacks = [
@@ -195,7 +193,7 @@ class AutomaticAllocationService
         $estimatedMachineDays = ($superficie > 0 && is_numeric($mdphMedian)) ? round(((float) $mdphMedian) * $superficie, 2) : null;
         $estimatedDurationDays = ($superficie > 0 && is_numeric($dphMedian)) ? round(((float) $dphMedian) * $superficie, 2) : null;
 
-        $proposal = AllocationProposal::create([
+        $proposal = PropuestaAsignacion::create([
             'id_lote' => $lote->id_lote,
             'id_lote_tarea' => $tarea->id_lote_tarea,
             'tipo_tarea' => $taskType->value,
@@ -238,7 +236,7 @@ class AutomaticAllocationService
     }
 
     private function populateProposalCandidates(
-        AllocationProposal $proposal,
+        PropuestaAsignacion $proposal,
         TaskType $taskType,
         ?string $species,
         Carbon $since
@@ -255,7 +253,7 @@ class AutomaticAllocationService
 
         $i = 0;
         $employees = $employees
-            ->filter(fn ($row) => !in_array((int) $row->id_empleado, $busyEmployees, true))
+            ->filter(fn ($row) => ! in_array((int) $row->id_empleado, $busyEmployees, true))
             ->values();
 
         $teamSize = $this->resolveTeamSize($proposal);
@@ -272,9 +270,8 @@ class AutomaticAllocationService
 
         $chainsawCandidates = $employees->filter(fn ($row) => $this->roleMatches($row->rol_nombre ?? null, $chainsawKeywords))->values();
         $operatorCandidates = $employees->filter(fn ($row) => $this->roleMatches($row->rol_nombre ?? null, $operatorKeywords))->values();
-        $generalCandidates = $employees->filter(fn ($row) =>
-            !$this->roleMatches($row->rol_nombre ?? null, $chainsawKeywords)
-            && !$this->roleMatches($row->rol_nombre ?? null, $operatorKeywords)
+        $generalCandidates = $employees->filter(fn ($row) => ! $this->roleMatches($row->rol_nombre ?? null, $chainsawKeywords)
+            && ! $this->roleMatches($row->rol_nombre ?? null, $operatorKeywords)
         )->values();
 
         foreach ($chainsawCandidates->take($chainsawCount) as $row) {
@@ -314,7 +311,7 @@ class AutomaticAllocationService
             $missingOperators = $operatorCount - $operatorCandidates->count();
             $additionalOperators = $this->fallbackEmployeesByRole($operatorKeywords, $busyEmployees, $missingOperators);
             foreach ($additionalOperators as $row) {
-                if (!$employees->contains('id_empleado', $row->id_empleado)) {
+                if (! $employees->contains('id_empleado', $row->id_empleado)) {
                     $employees->push($row);
                     if (count($selectedEmployeeIds) < ($chainsawCount + $operatorCount)) {
                         $selectedEmployeeIds[] = (int) $row->id_empleado;
@@ -324,7 +321,7 @@ class AutomaticAllocationService
         }
 
         foreach ($employees as $row) {
-            AllocationProposalEmployee::create([
+            PropuestaAsignacionEmpleado::create([
                 'id_allocation_proposal' => $proposal->id_allocation_proposal,
                 'id_empleado' => (int) $row->id_empleado,
                 'rol_sugerido' => $row->rol_nombre ? (string) $row->rol_nombre : null,
@@ -357,7 +354,7 @@ class AutomaticAllocationService
         }
 
         // Filtrar maquinarias ocupadas
-        $maquinarias = $maquinarias->filter(fn($row) => !in_array((int) $row->id_maquinaria, $busyMaquinarias, true));
+        $maquinarias = $maquinarias->filter(fn ($row) => ! in_array((int) $row->id_maquinaria, $busyMaquinarias, true));
 
         // Priorización blanda por tipo (para acercarnos a grúa/skidder sin hardcode rígido)
         $sortedMaquinarias = $maquinarias->sortByDesc(function ($row) {
@@ -365,7 +362,7 @@ class AutomaticAllocationService
             $modelo = mb_strtolower((string) ($row->modelo ?? ''));
             $bonus = 0;
             // Detectar grúa tanto en tipo como en modelo
-            if (str_contains($tipo, 'grua') || str_contains($tipo, 'grúa') || 
+            if (str_contains($tipo, 'grua') || str_contains($tipo, 'grúa') ||
                 str_contains($modelo, 'grua') || str_contains($modelo, 'grúa') ||
                 str_contains($tipo, 'carga')) {
                 $bonus += 1000;
@@ -375,28 +372,30 @@ class AutomaticAllocationService
             }
 
             $base = isset($row->days_count) ? (float) $row->days_count : 0.0;
+
             return $bonus + $base;
         })->values();
 
         $sortedMaquinarias = $sortedMaquinarias
-            ->filter(fn ($row) => !in_array((int) $row->id_maquinaria, $busyMaquinarias, true))
+            ->filter(fn ($row) => ! in_array((int) $row->id_maquinaria, $busyMaquinarias, true))
             ->values();
 
         $needsCorte = $this->taskNeedsCorte($taskType);
         $selectedMachineryIds = [];
-        
+
         // Categorizar todas las maquinarias disponibles
         $categories = $sortedMaquinarias->mapWithKeys(function ($row) {
             $label = $row->tipo_nombre ?? $row->modelo ?? '';
             $cat = $this->detectMachineCategory($label);
+
             return [(int) $row->id_maquinaria => $cat];
         });
 
         // Separar por categorías para armar parejas/equipos lógicos
-        $cargaPool = $sortedMaquinarias->filter(fn($r) => ($categories[(int)$r->id_maquinaria] ?? null) === 'carga');
-        $arrastrePool = $sortedMaquinarias->filter(fn($r) => ($categories[(int)$r->id_maquinaria] ?? null) === 'arrastre');
-        $cortePool = $sortedMaquinarias->filter(fn($r) => ($categories[(int)$r->id_maquinaria] ?? null) === 'corte');
-        $otrosPool = $sortedMaquinarias->filter(fn($r) => ($categories[(int)$r->id_maquinaria] ?? null) === null);
+        $cargaPool = $sortedMaquinarias->filter(fn ($r) => ($categories[(int) $r->id_maquinaria] ?? null) === 'carga');
+        $arrastrePool = $sortedMaquinarias->filter(fn ($r) => ($categories[(int) $r->id_maquinaria] ?? null) === 'arrastre');
+        $cortePool = $sortedMaquinarias->filter(fn ($r) => ($categories[(int) $r->id_maquinaria] ?? null) === 'corte');
+        $otrosPool = $sortedMaquinarias->filter(fn ($r) => ($categories[(int) $r->id_maquinaria] ?? null) === null);
 
         // Estrategia: Armar parejas del mundo real
         // 1. Trío completo: arrastre + corte + carga (ideal)
@@ -407,7 +406,7 @@ class AutomaticAllocationService
         $targetMachines = max(1, (int) ($proposal->suggested_machinery_count ?? 1));
 
         // Intentar formar trío completo si hay disponibilidad y la tarea lo amerita
-        if ($needsCorte && $targetMachines >= 3 && 
+        if ($needsCorte && $targetMachines >= 3 &&
             $arrastrePool->isNotEmpty() && $cortePool->isNotEmpty() && $cargaPool->isNotEmpty()) {
             $selectedMachineryIds[] = (int) $arrastrePool->first()->id_maquinaria;
             $selectedMachineryIds[] = (int) $cortePool->first()->id_maquinaria;
@@ -417,7 +416,7 @@ class AutomaticAllocationService
         elseif ($arrastrePool->isNotEmpty() && $cargaPool->isNotEmpty()) {
             $selectedMachineryIds[] = (int) $arrastrePool->first()->id_maquinaria;
             $selectedMachineryIds[] = (int) $cargaPool->first()->id_maquinaria;
-            
+
             // Si necesita corte y hay disponible, agregar
             if ($needsCorte && $cortePool->isNotEmpty() && count($selectedMachineryIds) < $targetMachines) {
                 $selectedMachineryIds[] = (int) $cortePool->first()->id_maquinaria;
@@ -435,26 +434,34 @@ class AutomaticAllocationService
 
         // Completar hasta el target con maquinarias priorizadas que falten
         foreach (['carga', 'arrastre', 'corte'] as $cat) {
-            if (count($selectedMachineryIds) >= $targetMachines) break;
+            if (count($selectedMachineryIds) >= $targetMachines) {
+                break;
+            }
             foreach ($sortedMaquinarias as $row) {
-                if (count($selectedMachineryIds) >= $targetMachines) break;
-                if (in_array((int) $row->id_maquinaria, $selectedMachineryIds, true)) continue;
+                if (count($selectedMachineryIds) >= $targetMachines) {
+                    break;
+                }
+                if (in_array((int) $row->id_maquinaria, $selectedMachineryIds, true)) {
+                    continue;
+                }
                 if (($categories[(int) $row->id_maquinaria] ?? null) === $cat) {
                     $selectedMachineryIds[] = (int) $row->id_maquinaria;
                 }
             }
         }
-        
+
         // Fallback: completar con cualquier maquinaria disponible (sin categoría o de otros tipos)
         foreach ($sortedMaquinarias as $row) {
-            if (count($selectedMachineryIds) >= $targetMachines) break;
-            if (!in_array((int) $row->id_maquinaria, $selectedMachineryIds, true)) {
+            if (count($selectedMachineryIds) >= $targetMachines) {
+                break;
+            }
+            if (! in_array((int) $row->id_maquinaria, $selectedMachineryIds, true)) {
                 $selectedMachineryIds[] = (int) $row->id_maquinaria;
             }
         }
 
         foreach ($sortedMaquinarias as $row) {
-            AllocationProposalMaquinaria::create([
+            PropuestaAsignacionMaquinaria::create([
                 'id_allocation_proposal' => $proposal->id_allocation_proposal,
                 'id_maquinaria' => (int) $row->id_maquinaria,
                 'tipo_sugerido' => $row->tipo_nombre ? (string) $row->tipo_nombre : null,
@@ -469,7 +476,7 @@ class AutomaticAllocationService
         );
 
         foreach ($insumos as $row) {
-            AllocationProposalInsumo::create([
+            PropuestaAsignacionInsumo::create([
                 'id_allocation_proposal' => $proposal->id_allocation_proposal,
                 'id_insumo' => (int) $row->id_insumo,
                 'cantidad_semana_1' => null,
@@ -482,7 +489,7 @@ class AutomaticAllocationService
         $this->ensureWeek1SupplyEstimates($proposal, $since);
     }
 
-    public function ensureWeek1SupplyEstimates(AllocationProposal $proposal, ?Carbon $since = null): void
+    public function ensureWeek1SupplyEstimates(PropuestaAsignacion $proposal, ?Carbon $since = null): void
     {
         $since ??= Carbon::today()->subMonths(24);
 
@@ -502,7 +509,7 @@ class AutomaticAllocationService
                 }
 
                 $medianDaily = null;
-                if (!empty($proposal->tipo_tarea)) {
+                if (! empty($proposal->tipo_tarea)) {
                     $medianDaily = $this->repo->medianDailySalidaQuantityForInsumoAndTask(
                         (int) $row->id_insumo,
                         (string) $proposal->tipo_tarea,
@@ -536,21 +543,21 @@ class AutomaticAllocationService
             $proposal->save();
         });
 
-        $useDefault = !empty(($proposal->meta ?? [])['default_rates']['reason'] ?? null);
+        $useDefault = ! empty(($proposal->meta ?? [])['default_rates']['reason'] ?? null);
         $this->ensureWeek1FuelEstimate($proposal, $days, $useDefault);
         $this->ensureWeek1PersonFuelEstimate($proposal, $days, $useDefault);
         $this->ensureChainsawSupplies($proposal);
     }
 
-    private function ensureWeek1FuelEstimate(AllocationProposal $proposal, int $days, bool $useDefault): void
+    private function ensureWeek1FuelEstimate(PropuestaAsignacion $proposal, int $days, bool $useDefault): void
     {
-        if (!$useDefault) {
+        if (! $useDefault) {
             return;
         }
         $proposal->loadMissing(['proposedInsumos', 'proposedMaquinarias']);
 
         $machines = $proposal->suggested_machinery_count;
-        if (!is_numeric($machines)) {
+        if (! is_numeric($machines)) {
             $machines = $proposal->proposedMaquinarias
                 ->where('selected', true)
                 ->count();
@@ -566,13 +573,13 @@ class AutomaticAllocationService
             ->orWhereRaw('LOWER(nombre) LIKE ?', ['%diesel%'])
             ->first();
 
-        if (!$fuel) {
+        if (! $fuel) {
             return;
         }
 
         $litros = round(50 * $machines * $days, 2);
 
-        $row = AllocationProposalInsumo::query()
+        $row = PropuestaAsignacionInsumo::query()
             ->where('id_allocation_proposal', $proposal->id_allocation_proposal)
             ->where('id_insumo', $fuel->id_insumo)
             ->first();
@@ -581,7 +588,7 @@ class AutomaticAllocationService
             $row->cantidad_semana_1 = $litros;
             $row->save();
         } else {
-            AllocationProposalInsumo::create([
+            PropuestaAsignacionInsumo::create([
                 'id_allocation_proposal' => $proposal->id_allocation_proposal,
                 'id_insumo' => (int) $fuel->id_insumo,
                 'cantidad_semana_1' => $litros,
@@ -591,9 +598,9 @@ class AutomaticAllocationService
         }
     }
 
-    private function ensureWeek1PersonFuelEstimate(AllocationProposal $proposal, int $days, bool $useDefault): void
+    private function ensureWeek1PersonFuelEstimate(PropuestaAsignacion $proposal, int $days, bool $useDefault): void
     {
-        if (!$useDefault) {
+        if (! $useDefault) {
             return;
         }
 
@@ -607,13 +614,13 @@ class AutomaticAllocationService
             ->orWhereRaw('LOWER(nombre) LIKE ?', ['%gasolina%'])
             ->first();
 
-        if (!$nafta) {
+        if (! $nafta) {
             return;
         }
 
         $litros = round(5 * $teamSize * $days, 2);
 
-        $row = AllocationProposalInsumo::query()
+        $row = PropuestaAsignacionInsumo::query()
             ->where('id_allocation_proposal', $proposal->id_allocation_proposal)
             ->where('id_insumo', $nafta->id_insumo)
             ->first();
@@ -622,7 +629,7 @@ class AutomaticAllocationService
             $row->cantidad_semana_1 = $litros;
             $row->save();
         } else {
-            AllocationProposalInsumo::create([
+            PropuestaAsignacionInsumo::create([
                 'id_allocation_proposal' => $proposal->id_allocation_proposal,
                 'id_insumo' => (int) $nafta->id_insumo,
                 'cantidad_semana_1' => $litros,
@@ -632,9 +639,9 @@ class AutomaticAllocationService
         }
     }
 
-    private function ensureChainsawSupplies(AllocationProposal $proposal): void
+    private function ensureChainsawSupplies(PropuestaAsignacion $proposal): void
     {
-        if (!$this->taskNeedsCorte(TaskType::tryFrom((string) $proposal->tipo_tarea) ?? TaskType::TALA_RASA)) {
+        if (! $this->taskNeedsCorte(TaskType::tryFrom((string) $proposal->tipo_tarea) ?? TaskType::TALA_RASA)) {
             return;
         }
 
@@ -647,14 +654,14 @@ class AutomaticAllocationService
 
         foreach ($keywords as $kw) {
             $insumo = Insumo::query()
-                ->whereRaw('LOWER(nombre) LIKE ?', ['%' . $kw . '%'])
+                ->whereRaw('LOWER(nombre) LIKE ?', ['%'.$kw.'%'])
                 ->first();
 
-            if (!$insumo) {
+            if (! $insumo) {
                 continue;
             }
 
-            $exists = AllocationProposalInsumo::query()
+            $exists = PropuestaAsignacionInsumo::query()
                 ->where('id_allocation_proposal', $proposal->id_allocation_proposal)
                 ->where('id_insumo', $insumo->id_insumo)
                 ->exists();
@@ -663,7 +670,7 @@ class AutomaticAllocationService
                 continue;
             }
 
-            AllocationProposalInsumo::create([
+            PropuestaAsignacionInsumo::create([
                 'id_allocation_proposal' => $proposal->id_allocation_proposal,
                 'id_insumo' => (int) $insumo->id_insumo,
                 'cantidad_semana_1' => null,
@@ -673,7 +680,7 @@ class AutomaticAllocationService
         }
     }
 
-    private function resolveTeamSize(AllocationProposal $proposal): int
+    private function resolveTeamSize(PropuestaAsignacion $proposal): int
     {
         if (is_numeric($proposal->suggested_team_size)) {
             return max(1, (int) round((float) $proposal->suggested_team_size));
@@ -705,6 +712,7 @@ class AutomaticAllocationService
                 return true;
             }
         }
+
         return false;
     }
 
@@ -736,15 +744,15 @@ class AutomaticAllocationService
         }
 
         return collect(DB::table('empleados as e')
-            ->leftJoin('rol_laborals as rl', 'rl.id_rol_laboral', '=', 'e.id_rol_laboral')
-            ->when(!empty($keywords), function ($q) use ($keywords) {
+            ->leftJoin('roles_laborales as rl', 'rl.id_rol_laboral', '=', 'e.id_rol_laboral')
+            ->when(! empty($keywords), function ($q) use ($keywords) {
                 $q->where(function ($q) use ($keywords) {
                     foreach ($keywords as $kw) {
-                        $q->orWhereRaw('LOWER(rl.nombre) LIKE ?', ['%' . $kw . '%']);
+                        $q->orWhereRaw('LOWER(rl.nombre) LIKE ?', ['%'.$kw.'%']);
                     }
                 });
             })
-            ->when(!empty($busyEmployees), fn ($q) => $q->whereNotIn('e.id_empleado', $busyEmployees))
+            ->when(! empty($busyEmployees), fn ($q) => $q->whereNotIn('e.id_empleado', $busyEmployees))
             ->select([
                 'e.id_empleado',
                 'e.apellido',
@@ -792,11 +800,11 @@ class AutomaticAllocationService
 
         foreach ($records as $row) {
             $key = $row->id_lote_tarea
-                ? ('tarea|' . $row->id_lote_tarea)
-                : ($row->id_lote . '|' . $row->tipo_tarea);
+                ? ('tarea|'.$row->id_lote_tarea)
+                : ($row->id_lote.'|'.$row->tipo_tarea);
             $date = Carbon::parse($row->fecha);
 
-            if (!isset($current[$key])) {
+            if (! isset($current[$key])) {
                 $current[$key] = [
                     'id_lote' => (int) $row->id_lote,
                     'id_lote_tarea' => $row->id_lote_tarea ? (int) $row->id_lote_tarea : null,
@@ -970,6 +978,7 @@ class AutomaticAllocationService
         }
 
         $weight = $pos - $lower;
+
         return $lowerVal + ($upperVal - $lowerVal) * $weight;
     }
 }

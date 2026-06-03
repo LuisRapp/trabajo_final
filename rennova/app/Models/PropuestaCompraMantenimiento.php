@@ -2,14 +2,15 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
-class MantenimientoPurchaseProposal extends Model
+class PropuestaCompraMantenimiento extends Model
 {
     use HasFactory;
 
     protected $table = 'mantenimiento_purchase_proposals';
+
     protected $primaryKey = 'id_mantenimiento_purchase_proposal';
 
     protected $fillable = [
@@ -35,6 +36,6 @@ class MantenimientoPurchaseProposal extends Model
 
     public function insumos()
     {
-        return $this->hasMany(MantenimientoPurchaseProposalInsumo::class, 'id_mantenimiento_purchase_proposal');
+        return $this->hasMany(PropuestaCompraMantenimientoInsumo::class, 'id_mantenimiento_purchase_proposal');
     }
 }

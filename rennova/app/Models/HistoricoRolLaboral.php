@@ -8,16 +8,18 @@ use OwenIt\Auditing\Contracts\Auditable;
 class HistoricoRolLaboral extends Model implements Auditable
 {
     use \OwenIt\Auditing\Auditable;
-    
-    protected $table = 'historico_rol_laborals';
+
+    protected $table = 'historico_roles_laborales';
+
     protected $fillable = [
         'rol_laboral_id',
         'precio_tonelada',
         'jornal_diario',
         'fecha_inicio',
         'fecha_fin',
-        'motivo_cambio'
+        'motivo_cambio',
     ];
+
     public function rolLaboral()
     {
         return $this->belongsTo(RolLaboral::class, 'rol_laboral_id', 'id_rol_laboral');

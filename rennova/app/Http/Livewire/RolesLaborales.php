@@ -2,15 +2,21 @@
 
 namespace App\Http\Livewire;
 
-use Livewire\Component;
 use App\Models\RolLaboral;
+use Livewire\Component;
 
 class RolesLaborales extends Component
 {
-    public $roles, $rol_id, $nombre, $busqueda = '';
+    public $roles;
+
+    public $rol_id;
+
+    public $nombre;
+
+    public $busqueda = '';
 
     protected $rules = [
-        'nombre' => 'required|min:3|unique:rol_laborals,nombre',
+        'nombre' => 'required|min:3|unique:roles_laborales,nombre',
     ];
 
     protected $messages = [
@@ -22,6 +28,7 @@ class RolesLaborales extends Component
     public function render()
     {
         $this->cargarRoles();
+
         return view('livewire.roles-laborales');
     }
 
@@ -31,7 +38,7 @@ class RolesLaborales extends Component
 
         if ($this->busqueda) {
             $busq = $this->busqueda;
-            $query->where('nombre', 'ILIKE', '%' . $busq . '%');
+            $query->where('nombre', 'ILIKE', '%'.$busq.'%');
         }
 
         $this->roles = $query->orderBy('id_rol_laboral', 'desc')->get();

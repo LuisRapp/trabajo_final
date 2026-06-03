@@ -2,46 +2,49 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\Usuario;
-use App\Models\Lote;
-use App\Models\Maquinaria;
-use App\Models\TipoMaquinaria;
-use App\Models\Empleado;
-use App\Models\RolLaboral;
-use App\Models\ParteDiario;
 use App\Models\Carga;
-use App\Models\Mantenimiento;
-use App\Models\TipoMantenimiento;
+use App\Models\Empleado;
+use App\Models\HistoricoRolLaboral;
 use App\Models\Insumo;
 use App\Models\KitMantenimientoPreventivo;
-use App\Models\MantenimientoInsumo;
+use App\Models\Lote;
+use App\Models\Mantenimiento;
+use App\Models\Maquinaria;
 use App\Models\MovimientoStock;
 use App\Models\NotificacionSistema;
-use App\Models\HistoricoRolLaboral;
-use App\Services\MantenimientoService;
+use App\Models\ParteDiario;
+use App\Models\RolLaboral;
+use App\Models\TipoMantenimiento;
+use App\Models\TipoMaquinaria;
+use App\Models\Usuario;
 use App\Services\ClimaDecisionService;
 use App\Services\ForestalStatsService;
+use App\Services\MantenimientoService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
+use Tests\TestCase;
 
 class SystemWhiteBoxTest extends TestCase
 {
     use RefreshDatabase, WithFaker;
 
     protected Usuario $usuario;
+
     protected Lote $lote;
+
     protected TipoMaquinaria $tipoMaquinaria;
+
     protected Maquinaria $maquinaria;
+
     protected RolLaboral $rolLaboral;
+
     protected Empleado $empleado;
 
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Crear usuario de prueba
         $this->usuario = Usuario::factory()->create();
         $this->actingAs($this->usuario);
@@ -49,7 +52,7 @@ class SystemWhiteBoxTest extends TestCase
         // Crear configuración de tipo de maquinaria
         $this->tipoMaquinaria = TipoMaquinaria::create([
             'nombre' => 'Cosechadora',
-            'descripcion' => 'Máquina cosechadora forestal'
+            'descripcion' => 'Máquina cosechadora forestal',
         ]);
 
         // Crear maquinaria
@@ -60,7 +63,7 @@ class SystemWhiteBoxTest extends TestCase
             'es_alquilada' => false,
             'fecha_inicio_actividades' => now(),
             'toneladas_acumuladas' => 100,
-            'umbral_toneladas' => 500
+            'umbral_toneladas' => 500,
         ]);
 
         // Crear rol laboral
@@ -68,7 +71,7 @@ class SystemWhiteBoxTest extends TestCase
             'nombre' => 'Operario',
             'descripcion' => 'Operario general',
             'valor_jornal' => 1000,
-            'tarifa_fija_por_tonelada' => 50
+            'tarifa_fija_por_tonelada' => 50,
         ]);
 
         // Registrar histórico de rol
@@ -77,7 +80,7 @@ class SystemWhiteBoxTest extends TestCase
             'valor_jornal' => 1000,
             'tarifa_fija_por_tonelada' => 50,
             'fecha_inicio' => now()->subMonths(6),
-            'fecha_fin' => null
+            'fecha_fin' => null,
         ]);
 
         // Crear lote
@@ -89,7 +92,7 @@ class SystemWhiteBoxTest extends TestCase
             'especie' => 'Pino',
             'superficie' => 100,
             'latitud' => -27.3612,
-            'longitud' => -55.5116
+            'longitud' => -55.5116,
         ]);
 
         // Crear empleado
@@ -100,14 +103,14 @@ class SystemWhiteBoxTest extends TestCase
             'nombre' => 'Juan',
             'fecha_nacimiento' => '1990-01-15',
             'fecha_inicio_actividades' => now()->subYear(),
-            'fecha_fin_actividades' => null
+            'fecha_fin_actividades' => null,
         ]);
 
         Log::info('═══ INICIALIZACIÓN DE DATOS DE PRUEBA ═══', [
             'usuario_id' => $this->usuario->id,
             'lote_id' => $this->lote->id_lote,
             'maquinaria_id' => $this->maquinaria->id_maquinaria,
-            'empleado_id' => $this->empleado->id_empleado
+            'empleado_id' => $this->empleado->id_empleado,
         ]);
     }
 
@@ -127,7 +130,7 @@ class SystemWhiteBoxTest extends TestCase
             'especie' => 'Eucalipto',
             'superficie' => 50,
             'latitud' => -29.1234,
-            'longitud' => -56.7890
+            'longitud' => -56.7890,
         ];
 
         $lote = Lote::create($datos);
@@ -138,7 +141,7 @@ class SystemWhiteBoxTest extends TestCase
 
         Log::info('✓ ÉXITO: Lote creado correctamente', [
             'lote_id' => $lote->id_lote,
-            'datos' => $datos
+            'datos' => $datos,
         ]);
     }
 
@@ -148,18 +151,18 @@ class SystemWhiteBoxTest extends TestCase
 
         $this->lote->update([
             'estado' => 'inactivo',
-            'superficie' => 150
+            'superficie' => 150,
         ]);
 
         $this->assertDatabaseHas('lotes', [
             'id_lote' => $this->lote->id_lote,
             'estado' => 'inactivo',
-            'superficie' => 150
+            'superficie' => 150,
         ]);
 
         Log::info('✓ ÉXITO: Lote actualizado correctamente', [
             'lote_id' => $this->lote->id_lote,
-            'nuevos_datos' => ['estado' => 'inactivo', 'superficie' => 150]
+            'nuevos_datos' => ['estado' => 'inactivo', 'superficie' => 150],
         ]);
     }
 
@@ -170,7 +173,7 @@ class SystemWhiteBoxTest extends TestCase
         $loteId = $this->lote->id_lote;
         $this->lote->delete();
 
-        $this->assertDatabaseMissing('lotes', ['id_lote' => $loteId]);
+        $this->assertSoftDeleted('lotes', ['id_lote' => $loteId]);
 
         Log::info('✓ ÉXITO: Lote eliminado correctamente', ['lote_id' => $loteId]);
     }
@@ -185,7 +188,7 @@ class SystemWhiteBoxTest extends TestCase
             'estado' => 'activo',
             'ubicacion' => 'Misiones',
             'especie' => 'Pino',
-            'superficie' => 75
+            'superficie' => 75,
         ]);
 
         $lotes = Lote::all();
@@ -193,7 +196,7 @@ class SystemWhiteBoxTest extends TestCase
         $this->assertGreaterThanOrEqual(2, $lotes->count());
 
         Log::info('✓ ÉXITO: Lotes listados', [
-            'total_lotes' => $lotes->count()
+            'total_lotes' => $lotes->count(),
         ]);
     }
 
@@ -212,7 +215,7 @@ class SystemWhiteBoxTest extends TestCase
             'es_alquilada' => true,
             'fecha_inicio_actividades' => now(),
             'toneladas_acumuladas' => 50,
-            'umbral_toneladas' => 400
+            'umbral_toneladas' => 400,
         ];
 
         $maquinaria = Maquinaria::create($datos);
@@ -222,7 +225,7 @@ class SystemWhiteBoxTest extends TestCase
 
         Log::info('✓ ÉXITO: Maquinaria creada', [
             'maquinaria_id' => $maquinaria->id_maquinaria,
-            'modelo' => $datos['modelo']
+            'modelo' => $datos['modelo'],
         ]);
     }
 
@@ -234,12 +237,12 @@ class SystemWhiteBoxTest extends TestCase
 
         $this->assertDatabaseHas('lote_maquinaria', [
             'id_lote' => $this->lote->id_lote,
-            'id_maquinaria' => $this->maquinaria->id_maquinaria
+            'id_maquinaria' => $this->maquinaria->id_maquinaria,
         ]);
 
         Log::info('✓ ÉXITO: Maquinaria asignada a lote', [
             'lote_id' => $this->lote->id_lote,
-            'maquinaria_id' => $this->maquinaria->id_maquinaria
+            'maquinaria_id' => $this->maquinaria->id_maquinaria,
         ]);
     }
 
@@ -252,12 +255,12 @@ class SystemWhiteBoxTest extends TestCase
 
         $this->assertDatabaseMissing('lote_maquinaria', [
             'id_lote' => $this->lote->id_lote,
-            'id_maquinaria' => $this->maquinaria->id_maquinaria
+            'id_maquinaria' => $this->maquinaria->id_maquinaria,
         ]);
 
         Log::info('✓ ÉXITO: Maquinaria desasignada de lote', [
             'lote_id' => $this->lote->id_lote,
-            'maquinaria_id' => $this->maquinaria->id_maquinaria
+            'maquinaria_id' => $this->maquinaria->id_maquinaria,
         ]);
     }
 
@@ -276,7 +279,7 @@ class SystemWhiteBoxTest extends TestCase
             'nombre' => 'Carlos',
             'fecha_nacimiento' => '1985-06-20',
             'fecha_inicio_actividades' => now()->subMonths(3),
-            'fecha_fin_actividades' => null
+            'fecha_fin_actividades' => null,
         ];
 
         $empleado = Empleado::create($datos);
@@ -286,7 +289,7 @@ class SystemWhiteBoxTest extends TestCase
 
         Log::info('✓ ÉXITO: Empleado creado', [
             'empleado_id' => $empleado->id_empleado,
-            'dni' => $datos['dni']
+            'dni' => $datos['dni'],
         ]);
     }
 
@@ -298,12 +301,12 @@ class SystemWhiteBoxTest extends TestCase
 
         $this->assertDatabaseHas('lote_empleado', [
             'id_lote' => $this->lote->id_lote,
-            'id_empleado' => $this->empleado->id_empleado
+            'id_empleado' => $this->empleado->id_empleado,
         ]);
 
         Log::info('✓ ÉXITO: Empleado asignado a lote', [
             'lote_id' => $this->lote->id_lote,
-            'empleado_id' => $this->empleado->id_empleado
+            'empleado_id' => $this->empleado->id_empleado,
         ]);
     }
 
@@ -322,19 +325,19 @@ class SystemWhiteBoxTest extends TestCase
             'costo_insumos' => 500.00,
             'costo_maquinaria' => 1200.00,
             'costo_mano_obra' => 800.00,
-            'costo_total_dia' => 2500.00
+            'costo_total_dia' => 2500.00,
         ];
 
         $parteDiario = ParteDiario::create($datos);
 
         $this->assertDatabaseHas('partes_diarios', [
             'id_lote' => $this->lote->id_lote,
-            'costo_total_dia' => 2500.00
+            'costo_total_dia' => 2500.00,
         ]);
 
         Log::info('✓ ÉXITO: Parte diario creado', [
             'parte_diario_id' => $parteDiario->id_parte_diario,
-            'costo_total' => $datos['costo_total_dia']
+            'costo_total' => $datos['costo_total_dia'],
         ]);
     }
 
@@ -349,19 +352,19 @@ class SystemWhiteBoxTest extends TestCase
             'costo_insumos' => 500,
             'costo_maquinaria' => 1200,
             'costo_mano_obra' => 800,
-            'costo_total_dia' => 2500
+            'costo_total_dia' => 2500,
         ]);
 
         $parteDiario->empleados()->attach($this->empleado->id_empleado);
 
         $this->assertDatabaseHas('parte_diario_empleado', [
             'id_parte_diario' => $parteDiario->id_parte_diario,
-            'id_empleado' => $this->empleado->id_empleado
+            'id_empleado' => $this->empleado->id_empleado,
         ]);
 
         Log::info('✓ ÉXITO: Empleado asignado a parte diario', [
             'parte_diario_id' => $parteDiario->id_parte_diario,
-            'empleado_id' => $this->empleado->id_empleado
+            'empleado_id' => $this->empleado->id_empleado,
         ]);
     }
 
@@ -373,19 +376,19 @@ class SystemWhiteBoxTest extends TestCase
             'id_lote' => $this->lote->id_lote,
             'fecha_carga' => now(),
             'peso_neto' => 8000, // 8 toneladas
-            'descripcion' => 'Carga de madera A'
+            'descripcion' => 'Carga de madera A',
         ];
 
         $carga = Carga::create($datos);
 
         $this->assertDatabaseHas('cargas', [
             'id_lote' => $this->lote->id_lote,
-            'peso_neto' => 8000
+            'peso_neto' => 8000,
         ]);
 
         Log::info('✓ ÉXITO: Carga creada', [
             'carga_id' => $carga->id_carga,
-            'peso_neto_tn' => 8
+            'peso_neto_tn' => 8,
         ]);
     }
 
@@ -400,7 +403,7 @@ class SystemWhiteBoxTest extends TestCase
         $datos = [
             'nombre' => 'Cambio de Aceite',
             'descripcion' => 'Cambio periódico de aceite',
-            'intervalo_toneladas' => 200
+            'intervalo_toneladas' => 200,
         ];
 
         $tipoMant = TipoMantenimiento::create($datos);
@@ -409,7 +412,7 @@ class SystemWhiteBoxTest extends TestCase
 
         Log::info('✓ ÉXITO: Tipo de mantenimiento creado', [
             'tipo_id' => $tipoMant->id_tipo_mantenimiento,
-            'nombre' => $datos['nombre']
+            'nombre' => $datos['nombre'],
         ]);
     }
 
@@ -420,7 +423,7 @@ class SystemWhiteBoxTest extends TestCase
         $tipoMant = TipoMantenimiento::create([
             'nombre' => 'Revisión General',
             'descripcion' => 'Revisión completa',
-            'intervalo_toneladas' => 500
+            'intervalo_toneladas' => 500,
         ]);
 
         $datos = [
@@ -428,19 +431,19 @@ class SystemWhiteBoxTest extends TestCase
             'id_tipo_mantenimiento' => $tipoMant->id_tipo_mantenimiento,
             'fecha_inicio' => now(),
             'fecha_programada' => now()->addDays(7),
-            'estado' => 'pendiente'
+            'estado' => 'pendiente',
         ];
 
         $mantenimiento = Mantenimiento::create($datos);
 
         $this->assertDatabaseHas('mantenimientos', [
             'id_maquinaria' => $this->maquinaria->id_maquinaria,
-            'estado' => 'pendiente'
+            'estado' => 'pendiente',
         ]);
 
         Log::info('✓ ÉXITO: Mantenimiento preventivo creado', [
             'mantenimiento_id' => $mantenimiento->id_mantenimiento,
-            'estado' => $datos['estado']
+            'estado' => $datos['estado'],
         ]);
     }
 
@@ -451,14 +454,14 @@ class SystemWhiteBoxTest extends TestCase
         $tipoMant = TipoMantenimiento::create([
             'nombre' => 'Cambio de Filtro',
             'descripcion' => 'Cambio de filtros',
-            'intervalo_toneladas' => 250
+            'intervalo_toneladas' => 250,
         ]);
 
         $insumo = Insumo::create([
             'nombre' => 'Filtro Aire',
             'descripcion' => 'Filtro de aire para maquinaria',
             'costo_unitario' => 150.00,
-            'unidad_medida_id' => 1
+            'unidad_medida_id' => 1,
         ]);
 
         // Crear kit de mantenimiento
@@ -467,7 +470,7 @@ class SystemWhiteBoxTest extends TestCase
             'id_tipo_mantenimiento' => $tipoMant->id_tipo_mantenimiento,
             'id_insumo' => $insumo->id_insumo,
             'cantidad_requerida' => 2,
-            'es_obligatorio' => true
+            'es_obligatorio' => true,
         ]);
 
         // Registrar movimiento de entrada
@@ -476,7 +479,7 @@ class SystemWhiteBoxTest extends TestCase
             'tipo' => 'entrada',
             'cantidad' => 5,
             'motivo' => 'Compra inicial',
-            'fecha' => now()
+            'fecha' => now(),
         ]);
 
         $mantenimiento = Mantenimiento::create([
@@ -484,10 +487,10 @@ class SystemWhiteBoxTest extends TestCase
             'id_tipo_mantenimiento' => $tipoMant->id_tipo_mantenimiento,
             'fecha_inicio' => now(),
             'fecha_programada' => now()->addDays(7),
-            'estado' => 'pendiente'
+            'estado' => 'pendiente',
         ]);
 
-        $service = new MantenimientoService();
+        $service = new MantenimientoService;
         $resultado = $service->verificarStockParaAprobacion($mantenimiento->id_mantenimiento);
 
         $this->assertTrue($resultado['puede_aprobar']);
@@ -495,7 +498,7 @@ class SystemWhiteBoxTest extends TestCase
 
         Log::info('✓ ÉXITO: Stock verificado correctamente', [
             'mantenimiento_id' => $mantenimiento->id_mantenimiento,
-            'puede_aprobar' => true
+            'puede_aprobar' => true,
         ]);
     }
 
@@ -506,14 +509,14 @@ class SystemWhiteBoxTest extends TestCase
         $tipoMant = TipoMantenimiento::create([
             'nombre' => 'Cambio de Aceite',
             'descripcion' => 'Cambio de aceite motor',
-            'intervalo_toneladas' => 300
+            'intervalo_toneladas' => 300,
         ]);
 
         $insumo = Insumo::create([
             'nombre' => 'Aceite Premium',
             'descripcion' => 'Aceite de motor premium',
             'costo_unitario' => 500.00,
-            'unidad_medida_id' => 1
+            'unidad_medida_id' => 1,
         ]);
 
         // Registrar stock
@@ -522,7 +525,7 @@ class SystemWhiteBoxTest extends TestCase
             'tipo' => 'entrada',
             'cantidad' => 10,
             'motivo' => 'Compra',
-            'fecha' => now()
+            'fecha' => now(),
         ]);
 
         $mantenimiento = Mantenimiento::create([
@@ -530,18 +533,18 @@ class SystemWhiteBoxTest extends TestCase
             'id_tipo_mantenimiento' => $tipoMant->id_tipo_mantenimiento,
             'fecha_inicio' => now(),
             'fecha_programada' => now()->addDays(3),
-            'estado' => 'aprobado'
+            'estado' => 'aprobado',
         ]);
 
-        $service = new MantenimientoService();
+        $service = new MantenimientoService;
         $resultado = $service->completarMantenimiento(
             $mantenimiento->id_mantenimiento,
             [
                 [
                     'id_insumo' => $insumo->id_insumo,
                     'cantidad_utilizada' => 2,
-                    'costo_unitario' => 500
-                ]
+                    'costo_unitario' => 500,
+                ],
             ],
             1000 // costo de mano de obra
         );
@@ -551,12 +554,12 @@ class SystemWhiteBoxTest extends TestCase
 
         $this->assertDatabaseHas('mantenimientos', [
             'id_mantenimiento' => $mantenimiento->id_mantenimiento,
-            'estado' => 'completado'
+            'estado' => 'completado',
         ]);
 
         Log::info('✓ ÉXITO: Mantenimiento completado', [
             'mantenimiento_id' => $mantenimiento->id_mantenimiento,
-            'costo_total' => $resultado['costo_total']
+            'costo_total' => $resultado['costo_total'],
         ]);
     }
 
@@ -574,19 +577,19 @@ class SystemWhiteBoxTest extends TestCase
             'mensaje' => 'Se requiere mantenimiento preventivo en maquinaria CAT 320',
             'tipo' => 'mantenimiento',
             'referencia_id' => $this->maquinaria->id_maquinaria,
-            'leida' => false
+            'leida' => false,
         ];
 
         $notificacion = NotificacionSistema::create($datos);
 
         $this->assertDatabaseHas('notificaciones_sistema', [
             'id_usuario' => $this->usuario->id,
-            'tipo' => 'mantenimiento'
+            'tipo' => 'mantenimiento',
         ]);
 
         Log::info('✓ ÉXITO: Notificación creada', [
             'notificacion_id' => $notificacion->id_notificacion,
-            'tipo' => $datos['tipo']
+            'tipo' => $datos['tipo'],
         ]);
     }
 
@@ -599,7 +602,7 @@ class SystemWhiteBoxTest extends TestCase
             'titulo' => 'Prueba',
             'mensaje' => 'Notificación de prueba',
             'tipo' => 'general',
-            'leida' => false
+            'leida' => false,
         ]);
 
         $notificacion->update(['leida' => true]);
@@ -607,7 +610,7 @@ class SystemWhiteBoxTest extends TestCase
         $this->assertTrue($notificacion->fresh()->leida);
 
         Log::info('✓ ÉXITO: Notificación marcada como leída', [
-            'notificacion_id' => $notificacion->id_notificacion
+            'notificacion_id' => $notificacion->id_notificacion,
         ]);
     }
 
@@ -620,7 +623,7 @@ class SystemWhiteBoxTest extends TestCase
             'titulo' => 'Notificación 1',
             'mensaje' => 'Primera notificación',
             'tipo' => 'general',
-            'leida' => false
+            'leida' => false,
         ]);
 
         NotificacionSistema::create([
@@ -628,7 +631,7 @@ class SystemWhiteBoxTest extends TestCase
             'titulo' => 'Notificación 2',
             'mensaje' => 'Segunda notificación',
             'tipo' => 'general',
-            'leida' => true
+            'leida' => true,
         ]);
 
         $noLeidas = NotificacionSistema::where('id_usuario', $this->usuario->id)
@@ -638,7 +641,7 @@ class SystemWhiteBoxTest extends TestCase
         $this->assertEquals(1, $noLeidas->count());
 
         Log::info('✓ ÉXITO: Notificaciones no leídas listadas', [
-            'total' => $noLeidas->count()
+            'total' => $noLeidas->count(),
         ]);
     }
 
@@ -658,7 +661,7 @@ class SystemWhiteBoxTest extends TestCase
             'costo_insumos' => 0,
             'costo_maquinaria' => 0,
             'costo_mano_obra' => 100,
-            'costo_total_dia' => 100
+            'costo_total_dia' => 100,
         ])->empleados()->attach($this->empleado->id_empleado);
 
         // Crear carga y asignar empleado
@@ -666,7 +669,7 @@ class SystemWhiteBoxTest extends TestCase
             'id_lote' => $this->lote->id_lote,
             'fecha_carga' => now()->subDays(4),
             'peso_neto' => 10000, // 10 toneladas
-            'descripcion' => 'Carga de prueba'
+            'descripcion' => 'Carga de prueba',
         ]);
 
         $parteDiario = ParteDiario::create([
@@ -676,7 +679,7 @@ class SystemWhiteBoxTest extends TestCase
             'costo_insumos' => 500,
             'costo_maquinaria' => 1000,
             'costo_mano_obra' => 500,
-            'costo_total_dia' => 2000
+            'costo_total_dia' => 2000,
         ]);
 
         $carga->empleados()->attach($this->empleado->id_empleado);
@@ -693,7 +696,7 @@ class SystemWhiteBoxTest extends TestCase
         Log::info('✓ ÉXITO: Pago calculado correctamente', [
             'empleado_id' => $this->empleado->id_empleado,
             'dias_caidos' => $pago['cantidad_dias_caidos'],
-            'total_pagar' => $pago['total_pagar_final']
+            'total_pagar' => $pago['total_pagar_final'],
         ]);
     }
 
@@ -713,10 +716,10 @@ class SystemWhiteBoxTest extends TestCase
             'especie' => 'Pino',
             'superficie' => 50,
             'latitud' => null,
-            'longitud' => null
+            'longitud' => null,
         ]);
 
-        $service = new ClimaDecisionService();
+        $service = new ClimaDecisionService;
         $resultado = $service->analizarYRecomendar($loteSinCoord);
 
         $this->assertFalse($resultado['success']);
@@ -724,7 +727,7 @@ class SystemWhiteBoxTest extends TestCase
 
         Log::info('✓ ÉXITO: Error capturado correctamente sin coordenadas', [
             'lote_id' => $loteSinCoord->id_lote,
-            'error' => $resultado['error']
+            'error' => $resultado['error'],
         ]);
     }
 
@@ -737,10 +740,10 @@ class SystemWhiteBoxTest extends TestCase
             'id_lote' => $this->lote->id_lote,
             'fecha_carga' => now(),
             'peso_neto' => 5000, // 5 toneladas
-            'descripcion' => 'Carga 1'
+            'descripcion' => 'Carga 1',
         ]);
 
-        $service = new ForestalStatsService();
+        $service = new ForestalStatsService;
         $precioPromedio = $service->getPrecioPromedioVenta($this->lote);
 
         // Sin ventas registradas, debería ser 0
@@ -748,7 +751,7 @@ class SystemWhiteBoxTest extends TestCase
 
         Log::info('✓ ÉXITO: Estadísticas forestales calculadas', [
             'lote_id' => $this->lote->id_lote,
-            'precio_promedio' => $precioPromedio
+            'precio_promedio' => $precioPromedio,
         ]);
     }
 
@@ -763,24 +766,24 @@ class SystemWhiteBoxTest extends TestCase
             'costo_insumos' => 500,
             'costo_maquinaria' => 1000,
             'costo_mano_obra' => 300,
-            'costo_total_dia' => 1800
+            'costo_total_dia' => 1800,
         ]);
 
         Carga::create([
             'id_lote' => $this->lote->id_lote,
             'fecha_carga' => now(),
             'peso_neto' => 3000, // 3 toneladas
-            'descripcion' => 'Carga de prueba'
+            'descripcion' => 'Carga de prueba',
         ]);
 
-        $service = new ForestalStatsService();
+        $service = new ForestalStatsService;
         $costoProm = $service->getCostoPromedioPorTn($this->lote);
 
         $this->assertGreaterThan(0, $costoProm);
 
         Log::info('✓ ÉXITO: Costo promedio por tonelada calculado', [
             'lote_id' => $this->lote->id_lote,
-            'costo_promedio_tn' => $costoProm
+            'costo_promedio_tn' => $costoProm,
         ]);
     }
 

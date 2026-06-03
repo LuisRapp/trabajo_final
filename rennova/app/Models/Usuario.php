@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
@@ -10,11 +11,12 @@ use Spatie\Permission\Traits\HasRoles;
 
 class Usuario extends Authenticatable
 {
-    use HasFactory, Notifiable, TwoFactorAuthenticatable, HasRoles;
+    use HasFactory, HasRoles, Notifiable, SoftDeletes, TwoFactorAuthenticatable;
 
     protected $guard_name = 'web';
 
     protected $table = 'usuarios';
+
     protected $primaryKey = 'id';
 
     protected $fillable = [
@@ -24,7 +26,6 @@ class Usuario extends Authenticatable
         'email',
         'password',
         'telefono',
-        'activo',
         'ultimo_acceso',
     ];
 
@@ -35,14 +36,13 @@ class Usuario extends Authenticatable
 
     protected $casts = [
         'email_verified_at' => 'datetime',
-        'activo' => 'boolean',
         'ultimo_acceso' => 'datetime',
         'password' => 'hashed',
     ];
 
     public function getNameAttribute(): string
     {
-        $fullName = trim(($this->nombre ?? '') . ' ' . ($this->apellido ?? ''));
+        $fullName = trim(($this->nombre ?? '').' '.($this->apellido ?? ''));
 
         return $fullName !== '' ? $fullName : (string) ($this->email ?? '');
     }
@@ -60,4 +60,3 @@ class Usuario extends Authenticatable
         $this->attributes['apellido'] = trim(implode(' ', array_slice($parts, 1)));
     }
 }
-

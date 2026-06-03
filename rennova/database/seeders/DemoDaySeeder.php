@@ -7,8 +7,8 @@ use App\Models\Cliente;
 use App\Models\Insumo;
 use App\Models\Lote;
 use App\Models\LoteInventario;
-use App\Models\Maquinaria;
 use App\Models\Mantenimiento;
+use App\Models\Maquinaria;
 use App\Models\MovimientoStock;
 use App\Models\ParteDiario;
 use App\Models\Proveedor;
@@ -45,7 +45,7 @@ class DemoDaySeeder extends Seeder
             'lotes',
             'insumos',
             'unidad_medidas',
-            'proveedors',
+            'proveedores',
             'clientes',
             'empleados',
             'ventas',
@@ -110,7 +110,7 @@ class DemoDaySeeder extends Seeder
             'precio_unitario' => 1200,
             'costo_total' => 200000 * 1200,
             'fecha_compra' => Carbon::now()->subDays(40),
-            'numero_factura' => 'FAC-' . $faker->numerify('###-#####'),
+            'numero_factura' => 'FAC-'.$faker->numerify('###-#####'),
             'tipo_movimiento' => 'compra',
             'observaciones' => 'Stock inicial para demo climática',
             'agotado' => false,
@@ -225,7 +225,7 @@ class DemoDaySeeder extends Seeder
             $carga = Carga::factory()->create([
                 'id_lote' => $lote->id_lote,
                 'id_parte_diario' => $parte->id_parte_diario,
-                'ticket' => 'TK-' . $faker->numerify('#####'),
+                'ticket' => 'TK-'.$faker->numerify('#####'),
                 'peso_bruto' => $pesoBruto,
                 'tara' => $tara,
                 'peso_neto' => $pesoNeto,
@@ -246,7 +246,7 @@ class DemoDaySeeder extends Seeder
                 'tipo' => 'salida',
                 'cantidad' => $litros,
                 'fecha' => $fecha->format('Y-m-d'),
-                'motivo' => 'Parte Diario #' . $parte->id_parte_diario . ' - Gasoil',
+                'motivo' => 'Parte Diario #'.$parte->id_parte_diario.' - Gasoil',
                 'precio_unitario' => $precioUnitario,
                 'id_lote_inventario' => $stockGasoil->id_lote_inventario,
                 'costo_total_movimiento' => round($litros * $precioUnitario, 2),

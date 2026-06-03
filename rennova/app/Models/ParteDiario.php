@@ -2,18 +2,20 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use OwenIt\Auditing\Contracts\Auditable;
 use Carbon\Carbon;
-
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use OwenIt\Auditing\Contracts\Auditable;
 
 class ParteDiario extends Model implements Auditable
 {
-    use HasFactory, \OwenIt\Auditing\Auditable;
+    use HasFactory, \OwenIt\Auditing\Auditable, SoftDeletes;
 
     protected $table = 'parte_diarios';
+
     protected $primaryKey = 'id_parte_diario';
+
     protected $fillable = [
         'id_lote',
         'id_lote_tarea',
@@ -25,12 +27,11 @@ class ParteDiario extends Model implements Auditable
         'clima_override_confirmado_por',
         'clima_override_confirmado_at',
         'observaciones',
-        'activo',
         'costo_mano_obra',
         'costo_insumos',
         'costo_maquinaria',
         'costo_total_dia',
-        'costo_unitario_calculado'
+        'costo_unitario_calculado',
     ];
 
     public function lote()
@@ -60,12 +61,12 @@ class ParteDiario extends Model implements Auditable
 
     /**
      * Calcular y guardar todos los costos del parte diario.
-     * 
+     *
      * Desglose:
      * - Costo Mano de Obra: empleados que trabajaron (jornal o destajo)
      * - Costo Insumos: movimientos de salida del día
      * - Costo Maquinaria: alquiler + mantenimientos completados ese día
-     * 
+     *
      * @return void
      */
     public function calcularYGuardarCostos()
@@ -78,12 +79,12 @@ class ParteDiario extends Model implements Auditable
         // ===== A. COSTO MANO DE OBRA =====
         // Obtener empleados que trabajaron en este parte
         $empleados = $this->empleados()->with('rolLaboral')->get();
-        
-        if (!$empleados->isEmpty()) {
+
+        if (! $empleados->isEmpty()) {
             foreach ($empleados as $empleado) {
                 // Obtener cargas del día donde participó este empleado
                 $cargasDelEmpleado = Carga::whereDate('fecha_carga', $this->fecha)
-                    ->whereHas('empleados', function($q) use ($empleado) {
+                    ->whereHas('empleados', function ($q) use ($empleado) {
                         $q->where('empleados.id_empleado', $empleado->id_empleado);
                     })
                     ->with('empleados')
@@ -108,7 +109,7 @@ class ParteDiario extends Model implements Auditable
                     ->orWhere(function ($fallback) {
                         $fallback->whereNull('id_parte_diario')
                             ->whereDate('fecha', $this->fecha)
-                            ->where('motivo', 'LIKE', 'Parte Diario #' . $this->id_parte_diario . '%');
+                            ->where('motivo', 'LIKE', 'Parte Diario #'.$this->id_parte_diario.'%');
                     });
             })
             ->get();
@@ -125,7 +126,7 @@ class ParteDiario extends Model implements Auditable
         // ===== C. COSTO MAQUINARIA (Alquiler + Mantenimientos) =====
         // C1. Calcular costo de alquiler por destajo
         $cargasDelParte = $this->cargas()->with('maquinarias')->get();
-        
+
         // Calcular total de toneladas del parte
         foreach ($cargasDelParte as $carga) {
             // peso_neto está en kg, convertir a toneladas
@@ -136,7 +137,7 @@ class ParteDiario extends Model implements Auditable
         $maquinariasUsadas = collect();
         foreach ($cargasDelParte as $carga) {
             foreach ($carga->maquinarias as $maq) {
-                if (!$maquinariasUsadas->contains('id_maquinaria', $maq->id_maquinaria)) {
+                if (! $maquinariasUsadas->contains('id_maquinaria', $maq->id_maquinaria)) {
                     $maquinariasUsadas->push($maq);
                 }
             }
@@ -153,8 +154,8 @@ class ParteDiario extends Model implements Auditable
 
         // C2. Sumar mantenimientos completados en esta fecha
         $idsMaquinarias = $maquinariasUsadas->pluck('id_maquinaria')->toArray();
-        
-        if (!empty($idsMaquinarias)) {
+
+        if (! empty($idsMaquinarias)) {
             $mantenimientos = Mantenimiento::whereIn('id_maquinaria', $idsMaquinarias)
                 ->where('estado', 'completado')
                 ->whereNotNull('fecha_fin')
@@ -168,10 +169,10 @@ class ParteDiario extends Model implements Auditable
 
         // ===== D. TOTALES Y GUARDADO =====
         $costoTotalDia = $costoManoObra + $costoInsumos + $costoMaquinaria;
-        
+
         // Calcular costo unitario (por tonelada)
         $costoUnitario = null;
-        if (!$this->es_dia_caido && $totalToneladas > 0) {
+        if (! $this->es_dia_caido && $totalToneladas > 0) {
             $costoUnitario = round($costoTotalDia / $totalToneladas, 2);
         }
 
@@ -181,7 +182,7 @@ class ParteDiario extends Model implements Auditable
             'costo_insumos' => round($costoInsumos, 2),
             'costo_maquinaria' => round($costoMaquinaria, 2),
             'costo_total_dia' => round($costoTotalDia, 2),
-            'costo_unitario_calculado' => $costoUnitario
+            'costo_unitario_calculado' => $costoUnitario,
         ]);
     }
 

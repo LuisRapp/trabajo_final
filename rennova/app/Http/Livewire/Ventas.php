@@ -2,35 +2,46 @@
 
 namespace App\Http\Livewire;
 
-use Livewire\Component;
-use App\Models\Cliente;
 use App\Models\Carga;
+use App\Models\Cliente;
 use App\Models\Venta;
 use Illuminate\Support\Facades\DB;
+use Livewire\Component;
 
 class Ventas extends Component
 {
     // Control de pestañas
     public $tab_activo = 'historial';
-    
+
     // Nueva Venta
     public $id_cliente = null;
+
     public $fecha_desde;
+
     public $fecha_hasta;
+
     public $detalle_cargas = [];
+
     public $total_venta = 0;
+
     public $observaciones = '';
-    
+
     // Historial
     public $ventas = [];
+
     public $busqueda = '';
-    
+
     // Modal detalle
     public $mostrar_modal = false;
+
     public $venta_seleccionada = null;
+
     public $detalle_venta = [];
+
     public $modo_edicion = false;
+
     public $obs_edicion = '';
+
     public $monto_edicion = 0;
 
     public function mount()
@@ -44,16 +55,19 @@ class Ventas extends Component
     {
         if (empty($this->id_cliente)) {
             session()->flash('error', 'Seleccione un cliente.');
+
             return;
         }
         if (empty($this->fecha_desde) || empty($this->fecha_hasta)) {
             session()->flash('error', 'Seleccione el rango de fechas.');
+
             return;
         }
 
         $cliente = Cliente::find($this->id_cliente);
-        if (!$cliente) {
+        if (! $cliente) {
             session()->flash('error', 'Cliente no encontrado.');
+
             return;
         }
 
@@ -73,13 +87,13 @@ class Ventas extends Component
                 DB::raw('ROUND((cargas.peso_neto / 1000.0) * COALESCE(ccp.precio, 0), 2) as subtotal'),
             ])
             ->join('categoria_maderas as cat', 'cat.id_categoria_madera', '=', 'cargas.id_categoria_madera')
-            ->leftJoin('categoria_cliente_precio as ccp', function($join) {
+            ->leftJoin('categoria_cliente_precio as ccp', function ($join) {
                 $join->on('ccp.categoria_id', '=', 'cargas.id_categoria_madera')
                     ->where('ccp.cliente_id', '=', $this->id_cliente)
                     ->whereColumn('ccp.fecha_desde', '<=', 'cargas.fecha_carga')
-                    ->where(function($q) {
+                    ->where(function ($q) {
                         $q->whereNull('ccp.fecha_hasta')
-                          ->orWhereColumn('ccp.fecha_hasta', '>=', 'cargas.fecha_carga');
+                            ->orWhereColumn('ccp.fecha_hasta', '>=', 'cargas.fecha_carga');
                     });
             })
             ->where('cargas.destino', $nombreCliente)
@@ -93,10 +107,11 @@ class Ventas extends Component
             $this->detalle_cargas = [];
             $this->total_venta = 0;
             session()->flash('message', 'No se encontraron cargas pendientes.');
+
             return;
         }
 
-        $this->detalle_cargas = $rows->map(function($r) {
+        $this->detalle_cargas = $rows->map(function ($r) {
             return [
                 'id_carga' => $r->id_carga,
                 'fecha_carga' => $r->fecha_carga,
@@ -110,18 +125,20 @@ class Ventas extends Component
         })->toArray();
 
         $this->total_venta = collect($this->detalle_cargas)->sum('subtotal');
-        session()->flash('message', 'Cargas cargadas: ' . count($this->detalle_cargas));
+        session()->flash('message', 'Cargas cargadas: '.count($this->detalle_cargas));
     }
 
     public function guardarVenta()
     {
         if (empty($this->detalle_cargas)) {
             session()->flash('error', 'No hay cargas para facturar.');
+
             return;
         }
 
         if (empty($this->id_cliente)) {
             session()->flash('error', 'Cliente no encontrado.');
+
             return;
         }
 
@@ -132,7 +149,6 @@ class Ventas extends Component
                 'fecha_emision' => now()->toDateString(),
                 'monto' => $this->total_venta,
                 'observaciones' => $this->observaciones,
-                'activo' => true,
             ]);
 
             foreach ($this->detalle_cargas as $detalle) {
@@ -152,14 +168,14 @@ class Ventas extends Component
             $this->total_venta = 0;
             $this->observaciones = '';
             $this->id_cliente = null;
-            
+
             $this->cargarVentas(); // Refrescar historial
 
-            session()->flash('message', 'Venta registrada exitosamente. ID: ' . $venta->id_recibo);
+            session()->flash('message', 'Venta registrada exitosamente. ID: '.$venta->id_recibo);
 
         } catch (\Exception $e) {
             DB::rollBack();
-            session()->flash('error', 'Error al guardar la venta: ' . $e->getMessage());
+            session()->flash('error', 'Error al guardar la venta: '.$e->getMessage());
         }
     }
 
@@ -173,10 +189,10 @@ class Ventas extends Component
             $busq = $this->busqueda;
             $query->where(function ($q) use ($busq) {
                 $q->whereHas('cliente', function ($qc) use ($busq) {
-                    $qc->where('razon_social', 'ILIKE', '%' . $busq . '%');
+                    $qc->where('razon_social', 'ILIKE', '%'.$busq.'%');
                 })
-                ->orWhere('id_recibo', 'LIKE', '%' . $busq . '%')
-                ->orWhereRaw("CAST(monto AS TEXT) ILIKE ?", ['%' . $busq . '%']);
+                    ->orWhere('id_recibo', 'LIKE', '%'.$busq.'%')
+                    ->orWhereRaw('CAST(monto AS TEXT) ILIKE ?', ['%'.$busq.'%']);
             });
         }
 
@@ -192,12 +208,12 @@ class Ventas extends Component
     {
         $venta = Venta::with(['cliente', 'cargas.categoriaMadera'])
             ->findOrFail($id_recibo);
-        
+
         $this->venta_seleccionada = $venta;
         $this->obs_edicion = $venta->observaciones;
         $this->monto_edicion = $venta->monto;
-        
-        $this->detalle_venta = $venta->cargas->map(function($carga) {
+
+        $this->detalle_venta = $venta->cargas->map(function ($carga) {
             return [
                 'ticket' => $carga->ticket,
                 'fecha_carga' => $carga->fecha_carga,
@@ -208,7 +224,7 @@ class Ventas extends Component
                 'subtotal' => $carga->pivot->subtotal,
             ];
         })->toArray();
-        
+
         $this->mostrar_modal = true;
         $this->modo_edicion = false;
     }
@@ -229,23 +245,24 @@ class Ventas extends Component
 
     public function guardarEdicion()
     {
-        if (!$this->venta_seleccionada) {
+        if (! $this->venta_seleccionada) {
             session()->flash('error', 'No hay venta seleccionada.');
+
             return;
         }
-        
+
         try {
             $this->venta_seleccionada->update([
                 'observaciones' => $this->obs_edicion,
                 'monto' => $this->monto_edicion,
             ]);
-            
+
             $this->cargarVentas();
             $this->modo_edicion = false;
             session()->flash('message', 'Venta actualizada exitosamente.');
-            
+
         } catch (\Exception $e) {
-            session()->flash('error', 'Error al actualizar: ' . $e->getMessage());
+            session()->flash('error', 'Error al actualizar: '.$e->getMessage());
         }
     }
 
@@ -254,24 +271,24 @@ class Ventas extends Component
         DB::beginTransaction();
         try {
             $venta = Venta::with('cargas')->findOrFail($id_recibo);
-            
+
             // Marcar la venta como inactiva
-            $venta->update(['activo' => false]);
-            
+            $venta->delete();
+
             // Retornar las cargas al estado "pendiente"
             foreach ($venta->cargas as $carga) {
                 $carga->update(['estado' => 'pendiente']);
             }
-            
+
             DB::commit();
-            
+
             $this->cargarVentas();
             $this->cerrarModal();
             session()->flash('message', 'Venta dada de baja exitosamente. Las cargas están disponibles nuevamente.');
-            
+
         } catch (\Exception $e) {
             DB::rollBack();
-            session()->flash('error', 'Error al dar de baja: ' . $e->getMessage());
+            session()->flash('error', 'Error al dar de baja: '.$e->getMessage());
         }
     }
 
@@ -297,6 +314,7 @@ class Ventas extends Component
     public function render()
     {
         $clientes = Cliente::orderBy('razon_social')->get();
+
         return view('livewire.ventas', compact('clientes'));
     }
 }

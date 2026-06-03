@@ -2,14 +2,15 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
-class MantenimientoPurchaseProposalInsumo extends Model
+class PropuestaCompraMantenimientoInsumo extends Model
 {
     use HasFactory;
 
     protected $table = 'mantenimiento_purchase_proposal_insumos';
+
     protected $primaryKey = 'id_mantenimiento_purchase_proposal_insumo';
 
     protected $fillable = [
@@ -22,7 +23,7 @@ class MantenimientoPurchaseProposalInsumo extends Model
 
     public function propuesta()
     {
-        return $this->belongsTo(MantenimientoPurchaseProposal::class, 'id_mantenimiento_purchase_proposal');
+        return $this->belongsTo(PropuestaCompraMantenimiento::class, 'id_mantenimiento_purchase_proposal');
     }
 
     public function insumo()

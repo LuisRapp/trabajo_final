@@ -2,13 +2,30 @@
 
 namespace App\Http\Livewire;
 
-use Livewire\Component;
-use App\Models\Recibo;
 use App\Models\Empleado;
+use App\Models\Recibo;
+use Livewire\Component;
 
 class Recibos extends Component
 {
-    public $recibos, $recibo_id, $id_empleado, $fecha_emision, $monto_bruto, $descuentos, $monto, $observaciones, $busqueda = '';
+    public $recibos;
+
+    public $recibo_id;
+
+    public $id_empleado;
+
+    public $fecha_emision;
+
+    public $monto_bruto;
+
+    public $descuentos;
+
+    public $monto;
+
+    public $observaciones;
+
+    public $busqueda = '';
+
     public $empleados;
 
     protected $rules = [
@@ -50,23 +67,24 @@ class Recibos extends Component
     public function render()
     {
         $this->cargarRecibos();
+
         return view('livewire.recibos');
     }
 
     public function cargarRecibos()
     {
-        $query = Recibo::with('empleado')->where('activo', true);
+        $query = Recibo::with('empleado');
 
         if ($this->busqueda) {
             $busq = $this->busqueda;
-            $query->where(function($q) use ($busq) {
-                $q->whereRaw("CAST(monto AS TEXT) ILIKE ?", ['%' . $busq . '%'])
-                  ->orWhereRaw("CAST(monto_bruto AS TEXT) ILIKE ?", ['%' . $busq . '%'])
-                  ->orWhereDate('fecha_emision', $busq)
-                  ->orWhereHas('empleado', function($qe) use ($busq) {
-                      $qe->where('apellido', 'ILIKE', '%' . $busq . '%')
-                         ->orWhere('nombre', 'ILIKE', '%' . $busq . '%');
-                  });
+            $query->where(function ($q) use ($busq) {
+                $q->whereRaw('CAST(monto AS TEXT) ILIKE ?', ['%'.$busq.'%'])
+                    ->orWhereRaw('CAST(monto_bruto AS TEXT) ILIKE ?', ['%'.$busq.'%'])
+                    ->orWhereDate('fecha_emision', $busq)
+                    ->orWhereHas('empleado', function ($qe) use ($busq) {
+                        $qe->where('apellido', 'ILIKE', '%'.$busq.'%')
+                            ->orWhere('nombre', 'ILIKE', '%'.$busq.'%');
+                    });
             });
         }
 
@@ -117,8 +135,7 @@ class Recibos extends Component
     public function eliminar($id)
     {
         $recibo = Recibo::findOrFail($id);
-        $recibo->activo = false;
-        $recibo->save();
+        $recibo->delete();
         session()->flash('message', 'Recibo dado de baja correctamente.');
     }
 

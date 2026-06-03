@@ -82,7 +82,7 @@ class HistoricalTaskPerformanceRepository
             ->join('lotes as l', 'l.id_lote', '=', 'pd.id_lote')
             ->leftJoin('lote_tareas as lt', 'lt.id_lote_tarea', '=', 'pd.id_lote_tarea')
             ->join('empleados as e', 'e.id_empleado', '=', 'ce.id_empleado')
-            ->leftJoin('rol_laborals as rl', 'rl.id_rol_laboral', '=', 'e.id_rol_laboral')
+            ->leftJoin('roles_laborales as rl', 'rl.id_rol_laboral', '=', 'e.id_rol_laboral')
             ->whereNotNull('c.id_parte_diario')
             ->whereDate('pd.fecha', '>=', $since->toDateString())
             ->where('pd.es_dia_caido', false)
@@ -210,7 +210,7 @@ class HistoricalTaskPerformanceRepository
             ->setBindings([$insumoId, $since->toDateString()])
             ->first();
 
-        if (!$row || $row->median_daily_qty === null) {
+        if (! $row || $row->median_daily_qty === null) {
             return null;
         }
 
@@ -219,7 +219,7 @@ class HistoricalTaskPerformanceRepository
 
     public function unitPriceForInsumo(int $insumoId): ?float
     {
-        $insumo = DB::table('insumos')->where('id_insumo', $insumoId)->first();
+        $insumo = DB::table('insumos')->where('id_insumo', $insumoId)->whereNull('deleted_at')->first();
         if ($insumo && $insumo->costo_unitario !== null) {
             return (float) $insumo->costo_unitario;
         }
@@ -347,7 +347,7 @@ class HistoricalTaskPerformanceRepository
             'since' => $since->toDateString(),
         ]);
 
-        if (!$row || $row->median_daily_qty === null) {
+        if (! $row || $row->median_daily_qty === null) {
             return null;
         }
 

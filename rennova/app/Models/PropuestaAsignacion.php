@@ -2,14 +2,15 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
-class AllocationProposal extends Model
+class PropuestaAsignacion extends Model
 {
     use HasFactory;
 
     protected $table = 'allocation_proposals';
+
     protected $primaryKey = 'id_allocation_proposal';
 
     protected $fillable = [
@@ -51,16 +52,16 @@ class AllocationProposal extends Model
 
     public function proposedEmployees()
     {
-        return $this->hasMany(AllocationProposalEmployee::class, 'id_allocation_proposal');
+        return $this->hasMany(PropuestaAsignacionEmpleado::class, 'id_allocation_proposal');
     }
 
     public function proposedMaquinarias()
     {
-        return $this->hasMany(AllocationProposalMaquinaria::class, 'id_allocation_proposal');
+        return $this->hasMany(PropuestaAsignacionMaquinaria::class, 'id_allocation_proposal');
     }
 
     public function proposedInsumos()
     {
-        return $this->hasMany(AllocationProposalInsumo::class, 'id_allocation_proposal');
+        return $this->hasMany(PropuestaAsignacionInsumo::class, 'id_allocation_proposal');
     }
 }

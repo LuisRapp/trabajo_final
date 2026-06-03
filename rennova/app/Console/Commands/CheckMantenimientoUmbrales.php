@@ -8,10 +8,10 @@ use App\Models\Insumo;
 use App\Models\KitMantenimientoPreventivo;
 use App\Models\Lote;
 use App\Models\Mantenimiento;
-use App\Models\MantenimientoPurchaseProposal;
-use App\Models\MantenimientoPurchaseProposalInsumo;
 use App\Models\Maquinaria;
 use App\Models\NotificacionSistema;
+use App\Models\PropuestaCompraMantenimiento;
+use App\Models\PropuestaCompraMantenimientoInsumo;
 use App\Models\RolLaboral;
 use App\Models\TipoMantenimiento;
 use App\Models\TipoMaquinaria;
@@ -29,8 +29,11 @@ class CheckMantenimientoUmbrales extends Command
     private const CLIMA_VENTANA_HORAS = 72;
 
     protected $signature = 'mantenimiento:check-umbrales {--maquinaria=} {--simular} {--forzar-flujo}';
+
     protected $description = 'Verifica umbrales, programa por clima y genera orden de mantenimiento con personal asignado';
+
     protected float $ultimoEnvioMail = 0.0;
+
     protected bool $modoForzado = false;
 
     public function handle(): int
@@ -63,12 +66,14 @@ class CheckMantenimientoUmbrales extends Command
 
         if ($maquinarias->isEmpty()) {
             $this->warn('No hay maquinarias elegibles para verificar.');
+
             return self::SUCCESS;
         }
 
         $tipoPreventivo = $this->obtenerTipoPreventivo($forzarFlujo);
-        if (!$tipoPreventivo) {
+        if (! $tipoPreventivo) {
             $this->error('No existe tipo de mantenimiento preventivo configurado.');
+
             return self::SUCCESS;
         }
 
@@ -96,6 +101,7 @@ class CheckMantenimientoUmbrales extends Command
 
             if ($ordenPendiente) {
                 $this->warn("Maquinaria {$maquinaria->id_maquinaria}: ya existe orden abierta.");
+
                 continue;
             }
 
@@ -142,6 +148,7 @@ class CheckMantenimientoUmbrales extends Command
                     'maquinaria_id' => $maquinaria->id_maquinaria,
                     'error' => $e->getMessage(),
                 ]);
+
                 continue;
             }
 
@@ -149,7 +156,7 @@ class CheckMantenimientoUmbrales extends Command
 
             $ordenesGeneradas++;
             $this->info(
-                "Orden #{$mantenimiento->id_mantenimiento} creada para maquinaria {$maquinaria->id_maquinaria}. " .
+                "Orden #{$mantenimiento->id_mantenimiento} creada para maquinaria {$maquinaria->id_maquinaria}. ".
                 "Fecha: {$programacion['fecha_programada']->toDateString()} ({$programacion['fuente']})."
             );
 
@@ -167,7 +174,7 @@ class CheckMantenimientoUmbrales extends Command
         $this->info('=== RESUMEN ===');
         $this->info("Ordenes generadas: {$ordenesGeneradas}");
 
-        if (!empty($advertenciasStock)) {
+        if (! empty($advertenciasStock)) {
             $this->warn('Advertencias de stock:');
             foreach ($advertenciasStock as $adv) {
                 $this->warn("Orden #{$adv['orden']} - Maquinaria {$adv['maquinaria']}");
@@ -179,6 +186,7 @@ class CheckMantenimientoUmbrales extends Command
         }
 
         $this->info('Verificacion completada.');
+
         return self::SUCCESS;
     }
 
@@ -186,16 +194,14 @@ class CheckMantenimientoUmbrales extends Command
     {
         $tipo = TipoMantenimiento::query()
             ->where('nombre', 'ILIKE', '%preventivo%')
-            ->where('activo', true)
             ->first();
 
-        if ($tipo || !$forzarFlujo) {
+        if ($tipo || ! $forzarFlujo) {
             return $tipo;
         }
 
         $tipo = TipoMantenimiento::create([
             'nombre' => 'Preventivo',
-            'activo' => true,
         ]);
 
         $this->info("Modo forzado: tipo de mantenimiento creado (#{$tipo->id_tipo_mantenimiento}).");
@@ -213,20 +219,20 @@ class CheckMantenimientoUmbrales extends Command
                     ->with('tipoMaquinaria')
                     ->find($maquinariaId);
 
-                if (!$maquinaria) {
+                if (! $maquinaria) {
                     $this->warn("Modo forzado: no existe la maquinaria {$maquinariaId}, se creara una de prueba.");
                 }
             }
 
-            if (!$maquinaria) {
+            if (! $maquinaria) {
                 $maquinaria = $this->crearMaquinariaDePruebaParaFlujoForzado();
             }
 
-            if (!$maquinaria) {
+            if (! $maquinaria) {
                 return null;
             }
 
-            if (!in_array((string) $maquinaria->estado, ['operativa', 'activo'], true)) {
+            if (! in_array((string) $maquinaria->estado, ['operativa', 'activo'], true)) {
                 $maquinaria->estado = 'operativa';
             }
 
@@ -240,7 +246,7 @@ class CheckMantenimientoUmbrales extends Command
                 $maquinaria->toneladas_acumuladas = $umbral + 5;
             }
 
-            if (!$maquinaria->fecha_inicio_actividades) {
+            if (! $maquinaria->fecha_inicio_actividades) {
                 $maquinaria->fecha_inicio_actividades = now()->subDays(15)->toDateString();
             }
 
@@ -257,6 +263,7 @@ class CheckMantenimientoUmbrales extends Command
                 'maquinaria_id' => $maquinariaId,
                 'error' => $e->getMessage(),
             ]);
+
             return null;
         }
     }
@@ -267,7 +274,7 @@ class CheckMantenimientoUmbrales extends Command
             ->where('nombre', 'ILIKE', '%demo mantenimiento%')
             ->first();
 
-        if (!$tipo) {
+        if (! $tipo) {
             $tipo = TipoMaquinaria::create([
                 'nombre' => 'Demo mantenimiento',
                 'umbral_toneladas' => 50,
@@ -300,15 +307,13 @@ class CheckMantenimientoUmbrales extends Command
 
         $tieneMantenimiento = (clone $activosBase)
             ->whereHas('rolLaboral', function ($q) {
-                $q->where('activo', true)
-                    ->where('nombre', 'ILIKE', '%mantenimiento%');
+                $q->where('nombre', 'ILIKE', '%mantenimiento%');
             })
             ->exists();
 
         $tieneAdministrativo = (clone $activosBase)
             ->whereHas('rolLaboral', function ($q) {
-                $q->where('activo', true)
-                    ->where('nombre', 'ILIKE', '%administrativo%');
+                $q->where('nombre', 'ILIKE', '%administrativo%');
             })
             ->exists();
 
@@ -317,15 +322,13 @@ class CheckMantenimientoUmbrales extends Command
         }
 
         $rolAdmin = RolLaboral::query()
-            ->where('activo', true)
             ->where('nombre', 'ILIKE', '%administrativo%')
             ->first();
 
-        if (!$rolAdmin) {
+        if (! $rolAdmin) {
             $rolAdmin = RolLaboral::create([
                 'nombre' => 'Personal administrativo',
                 'costo_diario' => 0,
-                'activo' => true,
             ]);
         }
 
@@ -348,7 +351,7 @@ class CheckMantenimientoUmbrales extends Command
             ->where('abreviatura', 'ud')
             ->first();
 
-        if (!$unidad) {
+        if (! $unidad) {
             $unidad = UnidadMedida::create([
                 'nombre' => 'Unidad',
                 'abreviatura' => 'ud',
@@ -359,7 +362,7 @@ class CheckMantenimientoUmbrales extends Command
             ->where('nombre', 'ILIKE', 'Insumo demo mantenimiento')
             ->first();
 
-        if (!$insumo) {
+        if (! $insumo) {
             $insumo = Insumo::create([
                 'nombre' => 'Insumo demo mantenimiento',
                 'descripcion' => 'Generado para flujo forzado de mantenimiento',
@@ -385,8 +388,8 @@ class CheckMantenimientoUmbrales extends Command
             ->where('id_insumo', $insumo->id_insumo)
             ->first();
 
-        if (!$kit) {
-            $kit = new KitMantenimientoPreventivo();
+        if (! $kit) {
+            $kit = new KitMantenimientoPreventivo;
             $kit->id_maquinaria = $maquinaria->id_maquinaria;
             $kit->id_insumo = $insumo->id_insumo;
         } elseif ($kit->trashed()) {
@@ -412,13 +415,15 @@ class CheckMantenimientoUmbrales extends Command
     {
         try {
             $maq = Maquinaria::find($maquinariaId);
-            if (!$maq) {
+            if (! $maq) {
                 $this->warn("No se encontro maquinaria {$maquinariaId} para simulacion.");
+
                 return;
             }
 
-            if (!$maq->umbral_toneladas) {
+            if (! $maq->umbral_toneladas) {
                 $this->warn("Maquinaria {$maquinariaId} no tiene umbral configurado.");
+
                 return;
             }
 
@@ -426,7 +431,7 @@ class CheckMantenimientoUmbrales extends Command
                 $maq->toneladas_acumuladas = $maq->umbral_toneladas + 5;
                 $maq->save();
                 $this->info(
-                    "Simulacion: maquinaria {$maq->id_maquinaria} supera umbral " .
+                    "Simulacion: maquinaria {$maq->id_maquinaria} supera umbral ".
                     "({$maq->toneladas_acumuladas}/{$maq->umbral_toneladas})"
                 );
             }
@@ -443,7 +448,7 @@ class CheckMantenimientoUmbrales extends Command
             ->orderBy('fecha_fin', 'desc')
             ->first();
 
-        if (!$ultimoMantenimiento) {
+        if (! $ultimoMantenimiento) {
             return (float) $maquinaria->toneladas_acumuladas;
         }
 
@@ -470,7 +475,7 @@ class CheckMantenimientoUmbrales extends Command
             })
             ->first();
 
-        if (!$lote) {
+        if (! $lote) {
             Log::warning('Fallback clima: maquinaria sin lote activo/en_proceso', [
                 'maquinaria_id' => $maquinaria->id_maquinaria,
                 'fallback_fecha' => $fallbackDate->toDateString(),
@@ -488,7 +493,7 @@ class CheckMantenimientoUmbrales extends Command
         $clima = app(ClimaDecisionService::class)->analizarYRecomendar($lote);
         $dias = $clima['pronostico'] ?? $clima['dias_detalle'] ?? [];
 
-        if (!($clima['success'] ?? false) || empty($dias)) {
+        if (! ($clima['success'] ?? false) || empty($dias)) {
             Log::warning('Fallback clima: sin datos validos de pronostico', [
                 'maquinaria_id' => $maquinaria->id_maquinaria,
                 'lote_id' => $lote->id_lote,
@@ -588,7 +593,7 @@ class CheckMantenimientoUmbrales extends Command
             }
         }
 
-        return [!empty($insumosConProblema), $insumosConProblema];
+        return [! empty($insumosConProblema), $insumosConProblema];
     }
 
     private function asignarPersonalAutomatico(Mantenimiento $mantenimiento, Carbon $fechaProgramada): array
@@ -598,24 +603,24 @@ class CheckMantenimientoUmbrales extends Command
         $empleado = $this->buscarEmpleadoDisponiblePorRol('mantenimiento', $fecha);
         $origen = 'mantenimiento';
 
-        if (!$empleado) {
+        if (! $empleado) {
             $empleado = $this->buscarEmpleadoDisponiblePorRol('administrativo', $fecha);
             $origen = 'administrativo';
         }
 
-        if (!$empleado) {
+        if (! $empleado) {
             if ($this->modoForzado) {
                 $empleado = $this->crearEmpleadoAdministrativoFallback();
                 $origen = 'administrativo_creado';
             }
         }
 
-        if (!$empleado) {
+        if (! $empleado) {
             $empleado = $this->buscarEmpleadoDisponibleSinFiltro($fecha);
             $origen = 'fallback';
         }
 
-        if (!$empleado) {
+        if (! $empleado) {
             Log::warning('No se encontro personal disponible para mantenimiento', [
                 'mantenimiento_id' => $mantenimiento->id_mantenimiento,
                 'fecha_programada' => $fecha,
@@ -634,7 +639,7 @@ class CheckMantenimientoUmbrales extends Command
         return [
             'empleado_id' => (int) $empleado->id_empleado,
             'rol_origen' => $origen,
-            'nombre' => trim($empleado->apellido . ', ' . $empleado->nombre),
+            'nombre' => trim($empleado->apellido.', '.$empleado->nombre),
         ];
     }
 
@@ -642,15 +647,13 @@ class CheckMantenimientoUmbrales extends Command
     {
         try {
             $rolAdmin = RolLaboral::query()
-                ->where('activo', true)
                 ->where('nombre', 'ILIKE', '%administrativo%')
                 ->first();
 
-            if (!$rolAdmin) {
+            if (! $rolAdmin) {
                 $rolAdmin = RolLaboral::create([
                     'nombre' => 'Personal administrativo',
                     'costo_diario' => 0,
-                    'activo' => true,
                 ]);
             }
 
@@ -668,6 +671,7 @@ class CheckMantenimientoUmbrales extends Command
             Log::error('No se pudo crear empleado administrativo fallback', [
                 'error' => $e->getMessage(),
             ]);
+
             return null;
         }
     }
@@ -688,10 +692,9 @@ class CheckMantenimientoUmbrales extends Command
                     ->orWhereDate('fecha_fin_actividades', '>', now()->toDateString());
             })
             ->whereHas('rolLaboral', function ($q) use ($keyword) {
-                $q->where('activo', true)
-                    ->where('nombre', 'ILIKE', '%' . $keyword . '%');
+                $q->where('nombre', 'ILIKE', '%'.$keyword.'%');
             })
-            ->when(!empty($ocupados), fn ($q) => $q->whereNotIn('id_empleado', $ocupados))
+            ->when(! empty($ocupados), fn ($q) => $q->whereNotIn('id_empleado', $ocupados))
             ->orderBy('id_empleado')
             ->first();
     }
@@ -711,7 +714,7 @@ class CheckMantenimientoUmbrales extends Command
                 $q->whereNull('fecha_fin_actividades')
                     ->orWhereDate('fecha_fin_actividades', '>', now()->toDateString());
             })
-            ->when(!empty($ocupados), fn ($q) => $q->whereNotIn('id_empleado', $ocupados))
+            ->when(! empty($ocupados), fn ($q) => $q->whereNotIn('id_empleado', $ocupados))
             ->orderBy('id_empleado')
             ->first();
     }
@@ -719,8 +722,8 @@ class CheckMantenimientoUmbrales extends Command
     private function crearPropuestaCompraMantenimiento(
         Mantenimiento $mantenimiento,
         array $insumosConProblema
-    ): MantenimientoPurchaseProposal {
-        $proposal = MantenimientoPurchaseProposal::firstOrCreate(
+    ): PropuestaCompraMantenimiento {
+        $proposal = PropuestaCompraMantenimiento::firstOrCreate(
             ['id_mantenimiento' => $mantenimiento->id_mantenimiento],
             [
                 'id_maquinaria' => $mantenimiento->id_maquinaria,
@@ -733,7 +736,7 @@ class CheckMantenimientoUmbrales extends Command
             $proposal->save();
         }
 
-        MantenimientoPurchaseProposalInsumo::query()
+        PropuestaCompraMantenimientoInsumo::query()
             ->where('id_mantenimiento_purchase_proposal', $proposal->id_mantenimiento_purchase_proposal)
             ->delete();
 
@@ -741,7 +744,7 @@ class CheckMantenimientoUmbrales extends Command
             if (empty($ins['id_insumo'])) {
                 continue;
             }
-            MantenimientoPurchaseProposalInsumo::create([
+            PropuestaCompraMantenimientoInsumo::create([
                 'id_mantenimiento_purchase_proposal' => $proposal->id_mantenimiento_purchase_proposal,
                 'id_insumo' => (int) $ins['id_insumo'],
                 'cantidad_requerida' => (float) ($ins['requerido'] ?? 0),
@@ -755,7 +758,7 @@ class CheckMantenimientoUmbrales extends Command
 
     private function enviarCorreoOrdenConAdjuntos(
         Mantenimiento $mantenimiento,
-        ?MantenimientoPurchaseProposal $proposal
+        ?PropuestaCompraMantenimiento $proposal
     ): void {
         $emails = $this->resolveMailRecipients();
         if (empty($emails)) {
@@ -820,12 +823,13 @@ class CheckMantenimientoUmbrales extends Command
         while (true) {
             try {
                 $enviar();
+
                 return;
             } catch (\Exception $e) {
                 $intentos++;
                 $mensaje = $e->getMessage();
                 $esRateLimit = stripos($mensaje, 'Too many emails per second') !== false || stripos($mensaje, '550') !== false;
-                if (!$esRateLimit || $intentos >= $maxIntentos) {
+                if (! $esRateLimit || $intentos >= $maxIntentos) {
                     throw $e;
                 }
                 sleep($espera);
@@ -869,6 +873,7 @@ class CheckMantenimientoUmbrales extends Command
 
             if ($userIds->isEmpty()) {
                 $this->warn('No hay usuarios configurados para notificacion interna de umbral.');
+
                 return;
             }
 
@@ -878,9 +883,9 @@ class CheckMantenimientoUmbrales extends Command
             $asignado = $asignacion['nombre'] ?? 'Sin asignacion';
 
             $titulo = "Mantenimiento Preventivo - Maquinaria {$maquinaria->id_maquinaria}";
-            $mensaje = "Se genero la orden #{$mantenimiento->id_mantenimiento}. " .
-                "Toneladas detectadas: {$toneladasDesdeUltimo} (umbral {$maquinaria->umbral_toneladas}). " .
-                "Fecha programada: {$fechaProgramada} (fuente {$origen}). " .
+            $mensaje = "Se genero la orden #{$mantenimiento->id_mantenimiento}. ".
+                "Toneladas detectadas: {$toneladasDesdeUltimo} (umbral {$maquinaria->umbral_toneladas}). ".
+                "Fecha programada: {$fechaProgramada} (fuente {$origen}). ".
                 "Personal asignado: {$asignado}.";
 
             foreach ($userIds as $userId) {
