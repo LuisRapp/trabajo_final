@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id('id_lote');
             $table->string('propietario', 60);
             $table->string('condicion_compra', 20);
-            $table->enum('estado', ['activo','cerrado','baja'])->default('activo');
+            $table->enum('estado', ['activo','en_proceso','inactivo','cerrado','baja'])->default('activo');
             $table->string('ubicacion', 100);
             $table->string('especie', 50);
             $table->decimal('superficie', 10, 2);

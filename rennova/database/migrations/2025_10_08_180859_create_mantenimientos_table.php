@@ -20,7 +20,7 @@ return new class extends Migration
             $table->date('fecha_inicio');
             $table->date('fecha_fin')->nullable();
             $table->decimal('costo_total', 10, 2)->nullable();
-            $table->enum('estado', ['programado','en curso','completado'])->default('programado');
+            $table->enum('estado', ['programado','en curso','completado','vencido'])->default('programado');
             $table->timestamps();
         });
     }
