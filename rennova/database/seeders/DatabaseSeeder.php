@@ -34,7 +34,6 @@ class DatabaseSeeder extends Seeder
                 'apellido' => 'Admin',
                 'email' => 'demo@example.com',
                 'password' => bcrypt('demo1234'),
-                'activo' => true,
             ]);
 
             // Asignar rol de Administrador

@@ -18,6 +18,7 @@ use App\Models\TipoMantenimiento;
 use App\Models\TipoMaquinaria;
 use App\Models\Usuario;
 use App\Services\ClimaDecisionService;
+use App\Services\EmpleadoPagoService;
 use App\Services\ForestalStatsService;
 use App\Services\MantenimientoService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -685,7 +686,8 @@ class SystemWhiteBoxTest extends TestCase
         $carga->empleados()->attach($this->empleado->id_empleado);
         $parteDiario->empleados()->attach($this->empleado->id_empleado);
 
-        $pago = $this->empleado->calcularPagoRango(
+        $pago = EmpleadoPagoService::calcularPagoRango(
+            $this->empleado,
             now()->subDays(10)->toDateString(),
             now()->toDateString()
         );
@@ -719,7 +721,7 @@ class SystemWhiteBoxTest extends TestCase
             'longitud' => null,
         ]);
 
-        $service = new ClimaDecisionService;
+        $service = app(ClimaDecisionService::class);
         $resultado = $service->analizarYRecomendar($loteSinCoord);
 
         $this->assertFalse($resultado['success']);

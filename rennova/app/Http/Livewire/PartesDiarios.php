@@ -15,6 +15,8 @@ use App\Models\LoteTarea;
 use App\Models\MovimientoStock;
 use App\Models\ParteDiario;
 use App\Services\ClimaOperativoService;
+use App\Services\InventarioService;
+use App\Services\ParteDiarioCostoService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Livewire\Component;
@@ -690,7 +692,7 @@ class PartesDiarios extends Component
             \Log::info('Validación pasada');
 
             // Validar stock disponible
-            $stockDisponible = MovimientoStock::stockDisponible($this->movimiento_id_insumo);
+            $stockDisponible = InventarioService::stockDisponible($this->movimiento_id_insumo);
             \Log::info('Stock disponible', ['stock' => $stockDisponible, 'requerido' => $this->movimiento_cantidad]);
 
             if ($this->movimiento_cantidad > $stockDisponible) {
@@ -744,7 +746,7 @@ class PartesDiarios extends Component
     public function updatedMovimientoIdInsumo($value)
     {
         if ($value) {
-            $this->stock_disponible_insumo = MovimientoStock::stockDisponible($value);
+            $this->stock_disponible_insumo = InventarioService::stockDisponible($value);
         } else {
             $this->stock_disponible_insumo = null;
         }
@@ -944,7 +946,7 @@ class PartesDiarios extends Component
                 if ($movData['tipo'] == 'salida') {
                     // Usar FIFO para salidas (consumos de producción)
                     try {
-                        $resultado = MovimientoStock::registrarSalida(
+                        $resultado = InventarioService::registrarSalida(
                             $movData['id_insumo'],
                             $movData['cantidad'],
                             $motivo,
@@ -981,7 +983,7 @@ class PartesDiarios extends Component
 
             // Calcular y guardar costos del parte diario
             try {
-                $parteDiario->calcularYGuardarCostos();
+                ParteDiarioCostoService::calcularYGuardarCostos($parteDiario);
             } catch (\Exception $e) {
                 \Log::error('Error al calcular costos del parte diario', [
                     'parte_id' => $parteDiario->id_parte_diario,

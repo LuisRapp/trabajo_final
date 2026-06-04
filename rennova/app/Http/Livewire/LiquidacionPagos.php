@@ -5,6 +5,7 @@ namespace App\Http\Livewire;
 use App\Models\Adelanto;
 use App\Models\Empleado;
 use App\Models\Recibo;
+use App\Services\EmpleadoPagoService;
 use Carbon\Carbon;
 use Dompdf\Dompdf;
 use Dompdf\Options;
@@ -100,7 +101,8 @@ class LiquidacionPagos extends Component
         }
 
         // Ejecutar el cálculo
-        $this->calculo = $this->empleado_seleccionado->calcularPagoRango(
+        $this->calculo = EmpleadoPagoService::calcularPagoRango(
+            $this->empleado_seleccionado,
             $this->fecha_inicio,
             $this->fecha_fin
         );
@@ -164,7 +166,7 @@ class LiquidacionPagos extends Component
             $fechaGeneracion = Carbon::now()->format('d/m/Y H:i');
 
             foreach ($empleados as $empleado) {
-                $calculo = $empleado->calcularPagoRango($this->fecha_inicio, $this->fecha_fin);
+                $calculo = EmpleadoPagoService::calcularPagoRango($empleado, $this->fecha_inicio, $this->fecha_fin);
 
                 $adelantosPendientes = Adelanto::where('id_empleado', $empleado->id_empleado)
                     ->where('estado', 'pendiente')

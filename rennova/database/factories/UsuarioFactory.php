@@ -28,7 +28,6 @@ class UsuarioFactory extends Factory
             'email_verified_at' => now(),
             'password' => Hash::make('password'),
             'telefono' => null,
-            'activo' => true,
             'ultimo_acceso' => null,
             'remember_token' => Str::random(10),
             'two_factor_secret' => Str::random(10),

@@ -6,6 +6,7 @@ use App\Models\Mantenimiento;
 use App\Models\Maquinaria;
 use App\Models\NotificacionSistema;
 use App\Models\TipoMantenimiento;
+use App\Services\InventarioService;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -357,7 +358,7 @@ class Mantenimientos extends Component
                     $cantidad = floatval($insumo['cantidad']);
 
                     // Verificar stock disponible antes de procesar
-                    $stockDisponible = \App\Models\MovimientoStock::stockDisponible($insumo['id_insumo']);
+                    $stockDisponible = InventarioService::stockDisponible($insumo['id_insumo']);
                     if ($stockDisponible < $cantidad) {
                         $nombreInsumo = \App\Models\Insumo::find($insumo['id_insumo'])->nombre ?? 'ID '.$insumo['id_insumo'];
                         throw new \Exception("Stock insuficiente para {$nombreInsumo}. Disponible: {$stockDisponible}, Requerido: {$cantidad}");
@@ -396,7 +397,7 @@ class Mantenimientos extends Component
                 $motivo = "Mantenimiento {$tipoMantenimiento} - Orden #".$orden->id_mantenimiento;
 
                 // Usar el sistema FIFO para registrar la salida
-                $resultadoSalida = \App\Models\MovimientoStock::registrarSalida(
+                $resultadoSalida = InventarioService::registrarSalida(
                     $insumo['id_insumo'],
                     $cantidad,
                     $motivo,
