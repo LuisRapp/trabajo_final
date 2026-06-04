@@ -78,8 +78,8 @@ class SystemWhiteBoxTest extends TestCase
         // Registrar histórico de rol
         HistoricoRolLaboral::create([
             'rol_laboral_id' => $this->rolLaboral->id_rol_laboral,
-            'valor_jornal' => 1000,
-            'tarifa_fija_por_tonelada' => 50,
+            'jornal_diario' => 1000,
+            'precio_tonelada' => 50,
             'fecha_inicio' => now()->subMonths(6),
             'fecha_fin' => null,
         ]);
@@ -321,7 +321,7 @@ class SystemWhiteBoxTest extends TestCase
 
         $datos = [
             'id_lote' => $this->lote->id_lote,
-            'fecha' => now(),
+            'fecha' => today(),
             'es_dia_caido' => false,
             'costo_insumos' => 500.00,
             'costo_maquinaria' => 1200.00,
@@ -331,7 +331,7 @@ class SystemWhiteBoxTest extends TestCase
 
         $parteDiario = ParteDiario::create($datos);
 
-        $this->assertDatabaseHas('partes_diarios', [
+        $this->assertDatabaseHas('parte_diarios', [
             'id_lote' => $this->lote->id_lote,
             'costo_total_dia' => 2500.00,
         ]);
@@ -348,7 +348,7 @@ class SystemWhiteBoxTest extends TestCase
 
         $parteDiario = ParteDiario::create([
             'id_lote' => $this->lote->id_lote,
-            'fecha' => now(),
+            'fecha' => today(),
             'es_dia_caido' => false,
             'costo_insumos' => 500,
             'costo_maquinaria' => 1200,
@@ -375,7 +375,7 @@ class SystemWhiteBoxTest extends TestCase
 
         $datos = [
             'id_lote' => $this->lote->id_lote,
-            'fecha_carga' => now(),
+            'fecha_carga' => today(),
             'peso_neto' => 8000, // 8 toneladas
             'descripcion' => 'Carga de madera A',
         ];
@@ -409,7 +409,7 @@ class SystemWhiteBoxTest extends TestCase
 
         $tipoMant = TipoMantenimiento::create($datos);
 
-        $this->assertDatabaseHas('tipos_mantenimiento', ['nombre' => 'Cambio de Aceite']);
+        $this->assertDatabaseHas('tipo_mantenimientos', ['nombre' => 'Cambio de Aceite']);
 
         Log::info('✓ ÉXITO: Tipo de mantenimiento creado', [
             'tipo_id' => $tipoMant->id_tipo_mantenimiento,
@@ -432,14 +432,14 @@ class SystemWhiteBoxTest extends TestCase
             'id_tipo_mantenimiento' => $tipoMant->id_tipo_mantenimiento,
             'fecha_inicio' => now(),
             'fecha_programada' => now()->addDays(7),
-            'estado' => 'pendiente',
+            'estado' => 'programado',
         ];
 
         $mantenimiento = Mantenimiento::create($datos);
 
         $this->assertDatabaseHas('mantenimientos', [
             'id_maquinaria' => $this->maquinaria->id_maquinaria,
-            'estado' => 'pendiente',
+            'estado' => 'programado',
         ]);
 
         Log::info('✓ ÉXITO: Mantenimiento preventivo creado', [
@@ -458,11 +458,16 @@ class SystemWhiteBoxTest extends TestCase
             'intervalo_toneladas' => 250,
         ]);
 
+        $unidadMedida = \App\Models\UnidadMedida::create([
+            'nombre' => 'Unidad',
+            'abreviatura' => 'u',
+        ]);
+
         $insumo = Insumo::create([
             'nombre' => 'Filtro Aire',
             'descripcion' => 'Filtro de aire para maquinaria',
             'costo_unitario' => 150.00,
-            'unidad_medida_id' => 1,
+            'id_unidad_medida' => $unidadMedida->id_unidad_medida,
         ]);
 
         // Crear kit de mantenimiento
@@ -472,6 +477,17 @@ class SystemWhiteBoxTest extends TestCase
             'id_insumo' => $insumo->id_insumo,
             'cantidad_requerida' => 2,
             'es_obligatorio' => true,
+        ]);
+
+        // Crear lote de inventario para que el stock esté disponible
+        \App\Models\LoteInventario::create([
+            'id_insumo' => $insumo->id_insumo,
+            'cantidad_inicial' => 5,
+            'cantidad_disponible' => 5,
+            'precio_unitario' => 150.00,
+            'costo_total' => 750.00,
+            'fecha_compra' => now(),
+            'agotado' => false,
         ]);
 
         // Registrar movimiento de entrada
@@ -488,7 +504,7 @@ class SystemWhiteBoxTest extends TestCase
             'id_tipo_mantenimiento' => $tipoMant->id_tipo_mantenimiento,
             'fecha_inicio' => now(),
             'fecha_programada' => now()->addDays(7),
-            'estado' => 'pendiente',
+            'estado' => 'programado',
         ]);
 
         $service = new MantenimientoService;
@@ -513,11 +529,27 @@ class SystemWhiteBoxTest extends TestCase
             'intervalo_toneladas' => 300,
         ]);
 
+        $unidadMedida = \App\Models\UnidadMedida::create([
+            'nombre' => 'Litro',
+            'abreviatura' => 'l',
+        ]);
+
         $insumo = Insumo::create([
             'nombre' => 'Aceite Premium',
             'descripcion' => 'Aceite de motor premium',
             'costo_unitario' => 500.00,
-            'unidad_medida_id' => 1,
+            'id_unidad_medida' => $unidadMedida->id_unidad_medida,
+        ]);
+
+        // Crear lote de inventario para que el stock esté disponible
+        \App\Models\LoteInventario::create([
+            'id_insumo' => $insumo->id_insumo,
+            'cantidad_inicial' => 10,
+            'cantidad_disponible' => 10,
+            'precio_unitario' => 500.00,
+            'costo_total' => 5000.00,
+            'fecha_compra' => now(),
+            'agotado' => false,
         ]);
 
         // Registrar stock
@@ -534,7 +566,7 @@ class SystemWhiteBoxTest extends TestCase
             'id_tipo_mantenimiento' => $tipoMant->id_tipo_mantenimiento,
             'fecha_inicio' => now(),
             'fecha_programada' => now()->addDays(3),
-            'estado' => 'aprobado',
+            'estado' => 'en curso',
         ]);
 
         $service = new MantenimientoService;
@@ -573,10 +605,10 @@ class SystemWhiteBoxTest extends TestCase
         Log::info('TEST: Crear Notificación del Sistema', ['test' => 'test_crear_notificacion_sistema']);
 
         $datos = [
-            'id_usuario' => $this->usuario->id,
+            'user_id' => $this->usuario->id,
             'titulo' => 'Mantenimiento Requerido',
             'mensaje' => 'Se requiere mantenimiento preventivo en maquinaria CAT 320',
-            'tipo' => 'mantenimiento',
+            'tipo' => 'mantenimiento_vencido',
             'referencia_id' => $this->maquinaria->id_maquinaria,
             'leida' => false,
         ];
@@ -584,8 +616,8 @@ class SystemWhiteBoxTest extends TestCase
         $notificacion = NotificacionSistema::create($datos);
 
         $this->assertDatabaseHas('notificaciones_sistema', [
-            'id_usuario' => $this->usuario->id,
-            'tipo' => 'mantenimiento',
+            'user_id' => $this->usuario->id,
+            'tipo' => 'mantenimiento_vencido',
         ]);
 
         Log::info('✓ ÉXITO: Notificación creada', [
@@ -599,10 +631,10 @@ class SystemWhiteBoxTest extends TestCase
         Log::info('TEST: Marcar Notificación como Leída', ['test' => 'test_marcar_notificacion_como_leida']);
 
         $notificacion = NotificacionSistema::create([
-            'id_usuario' => $this->usuario->id,
+            'user_id' => $this->usuario->id,
             'titulo' => 'Prueba',
             'mensaje' => 'Notificación de prueba',
-            'tipo' => 'general',
+            'tipo' => 'umbral_alcanzado',
             'leida' => false,
         ]);
 
@@ -620,22 +652,22 @@ class SystemWhiteBoxTest extends TestCase
         Log::info('TEST: Listar Notificaciones No Leídas', ['test' => 'test_listar_notificaciones_no_leidas']);
 
         NotificacionSistema::create([
-            'id_usuario' => $this->usuario->id,
+            'user_id' => $this->usuario->id,
             'titulo' => 'Notificación 1',
             'mensaje' => 'Primera notificación',
-            'tipo' => 'general',
+            'tipo' => 'umbral_alcanzado',
             'leida' => false,
         ]);
 
         NotificacionSistema::create([
-            'id_usuario' => $this->usuario->id,
+            'user_id' => $this->usuario->id,
             'titulo' => 'Notificación 2',
             'mensaje' => 'Segunda notificación',
-            'tipo' => 'general',
+            'tipo' => 'umbral_alcanzado',
             'leida' => true,
         ]);
 
-        $noLeidas = NotificacionSistema::where('id_usuario', $this->usuario->id)
+        $noLeidas = NotificacionSistema::where('user_id', $this->usuario->id)
             ->where('leida', false)
             ->get();
 
@@ -740,7 +772,7 @@ class SystemWhiteBoxTest extends TestCase
         // Crear cargas con ventas
         $carga1 = Carga::create([
             'id_lote' => $this->lote->id_lote,
-            'fecha_carga' => now(),
+            'fecha_carga' => today(),
             'peso_neto' => 5000, // 5 toneladas
             'descripcion' => 'Carga 1',
         ]);
@@ -763,7 +795,7 @@ class SystemWhiteBoxTest extends TestCase
 
         ParteDiario::create([
             'id_lote' => $this->lote->id_lote,
-            'fecha' => now(),
+            'fecha' => today(),
             'es_dia_caido' => false,
             'costo_insumos' => 500,
             'costo_maquinaria' => 1000,
@@ -773,7 +805,7 @@ class SystemWhiteBoxTest extends TestCase
 
         Carga::create([
             'id_lote' => $this->lote->id_lote,
-            'fecha_carga' => now(),
+            'fecha_carga' => today(),
             'peso_neto' => 3000, // 3 toneladas
             'descripcion' => 'Carga de prueba',
         ]);

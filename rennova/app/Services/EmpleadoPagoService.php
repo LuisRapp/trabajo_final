@@ -10,6 +10,60 @@ use Illuminate\Support\Facades\DB;
 
 class EmpleadoPagoService
 {
+    /**
+     * Calcular el costo de mano de obra de un empleado para un día específico.
+     *
+     * @param  string|\DateTimeInterface  $fecha
+     * @param  \Illuminate\Support\Collection|null  $cargasDelDia
+     */
+    public static function calcularCostoDia(Empleado $empleado, $fecha, bool $esDiaCaido, $cargasDelDia = null): float
+    {
+        $valorJornal = 0;
+        $tarifaPorTonelada = 0;
+
+        $rolId = $empleado->id_rol_laboral ?? $empleado->rolLaboral->id_rol_laboral ?? null;
+
+        if ($rolId) {
+            $hist = HistoricoRolLaboral::where('rol_laboral_id', $rolId)
+                ->whereDate('fecha_inicio', '<=', $fecha)
+                ->where(function ($q) use ($fecha) {
+                    $q->whereNull('fecha_fin')->orWhereDate('fecha_fin', '>=', $fecha);
+                })
+                ->orderBy('fecha_inicio', 'desc')
+                ->first();
+
+            if ($hist) {
+                $valorJornal = (float) ($hist->jornal_diario ?? 0);
+                $tarifaPorTonelada = (float) ($hist->precio_tonelada ?? 0);
+            } elseif ($empleado->rolLaboral) {
+                $valorJornal = (float) ($empleado->rolLaboral->jornal_diario ?? $empleado->rolLaboral->costo_diario ?? 0);
+                $tarifaPorTonelada = (float) ($empleado->rolLaboral->precio_tonelada ?? 0);
+            }
+        }
+
+        if ($esDiaCaido) {
+            return round($valorJornal, 2);
+        }
+
+        if (! $cargasDelDia || $cargasDelDia->isEmpty()) {
+            return 0.0;
+        }
+
+        $totalToneladasEmpleado = 0.0;
+
+        foreach ($cargasDelDia as $carga) {
+            $cantidadEmpleados = $carga->empleados->count();
+
+            if ($cantidadEmpleados > 0) {
+                $pesoAsignadoKg = $carga->peso_neto / $cantidadEmpleados;
+                $pesoAsignadoTon = $pesoAsignadoKg / 1000;
+                $totalToneladasEmpleado += $pesoAsignadoTon;
+            }
+        }
+
+        return round($totalToneladasEmpleado * $tarifaPorTonelada, 2);
+    }
+
     public static function calcularPagoRango(Empleado $empleado, $fechaInicio, $fechaFin)
     {
         $cantidad_dias_caidos = 0;

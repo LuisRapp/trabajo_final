@@ -27,7 +27,8 @@ class ParteDiarioCostoService
                     ->with('empleados')
                     ->get();
 
-                $costoEmpleado = $empleado->calcularCostoDia(
+                $costoEmpleado = EmpleadoPagoService::calcularCostoDia(
+                    $empleado,
                     $parteDiario->fecha,
                     $parteDiario->es_dia_caido,
                     $cargasDelEmpleado

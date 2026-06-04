@@ -22,34 +22,8 @@ class Insumo extends Model implements Auditable
     // protected $appends = ['stock', 'precio_promedio'];
 
     /**
-     * Scope para cargar stock y precio promedio de manera eficiente
-     * Usa una única consulta con subqueries
-     */
-    public function scopeConStockYPrecio($query)
-    {
-        return $query->addSelect([
-            'insumos.*',
-            // Stock disponible: suma de cantidad_disponible de lotes no agotados
-            'stock' => LoteInventario::selectRaw('COALESCE(SUM(cantidad_disponible), 0)')
-                ->whereColumn('lotes_inventario.id_insumo', 'insumos.id_insumo')
-                ->where('agotado', false),
-
-            // Precio promedio ponderado: suma(cantidad * precio) / suma(cantidad)
-            'precio_promedio' => LoteInventario::selectRaw('
-                CASE 
-                    WHEN SUM(cantidad_disponible) > 0 THEN 
-                        SUM(cantidad_disponible * precio_unitario) / SUM(cantidad_disponible)
-                    ELSE 0 
-                END
-            ')
-                ->whereColumn('lotes_inventario.id_insumo', 'insumos.id_insumo')
-                ->where('agotado', false),
-        ]);
-    }
-
-    /**
-     * Accessor para stock (cuando se carga con scopeConStockYPrecio)
-     * O calcula dinámicamente si no está disponible
+     * Accessor para stock
+     * Calcula dinámicamente usando el servicio de inventario
      */
     public function getStockAttribute($value = null)
     {
