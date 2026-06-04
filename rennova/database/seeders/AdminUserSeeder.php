@@ -27,7 +27,6 @@ class AdminUserSeeder extends Seeder
                 'nombre' => 'Administrador',
                 'apellido' => 'Rennova',
                 'password' => Hash::make('password'), // Cambiar por una contraseña segura
-                'activo' => true,
             ]
         );
 

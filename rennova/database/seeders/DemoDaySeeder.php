@@ -63,7 +63,6 @@ class DemoDaySeeder extends Seeder
             'apellido' => 'Admin',
             'email' => 'demo@example.com',
             'password' => bcrypt('demo1234'),
-            'activo' => true,
         ]);
         Usuario::factory()->count(2)->create();
 

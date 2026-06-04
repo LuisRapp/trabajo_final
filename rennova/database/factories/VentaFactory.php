@@ -21,7 +21,6 @@ class VentaFactory extends Factory
             'fecha_emision' => $this->faker->dateTimeBetween('-6 months', 'now'),
             'monto' => $this->faker->randomFloat(2, 150000, 2500000),
             'observaciones' => $this->faker->optional()->sentence(8),
-            'activo' => $this->faker->boolean(90),
         ];
     }
 }
