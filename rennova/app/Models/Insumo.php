@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\InventarioService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -58,7 +59,7 @@ class Insumo extends Model implements Auditable
         }
 
         // Fallback: calcular dinámicamente (menos eficiente)
-        return MovimientoStock::stockDisponible($this->id_insumo);
+        return InventarioService::stockDisponible($this->id_insumo);
     }
 
     /**
@@ -73,7 +74,7 @@ class Insumo extends Model implements Auditable
         }
 
         // Fallback: calcular dinámicamente (menos eficiente)
-        return MovimientoStock::precioPromedio($this->id_insumo);
+        return InventarioService::precioPromedio($this->id_insumo);
     }
 
     public function unidadMedida()

@@ -4,8 +4,8 @@ namespace App\Http\Livewire;
 
 use App\Models\Insumo;
 use App\Models\LoteInventario;
-use App\Models\MovimientoStock;
 use App\Models\Proveedor;
+use App\Services\InventarioService;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -201,7 +201,7 @@ class GestionStock extends Component
 
             \Log::info('Metadata:', $metadata);
 
-            $resultado = MovimientoStock::registrarEntrada(
+            $resultado = InventarioService::registrarEntrada(
                 $this->id_insumo,
                 $this->cantidad,
                 $this->precio_unitario,
