@@ -5,6 +5,7 @@ namespace App\Http\Livewire;
 use App\Models\Insumo;
 use App\Models\Proveedor;
 use App\Models\UnidadMedida;
+use App\Services\InventarioService;
 use Livewire\Component;
 
 class Insumos extends Component
@@ -59,7 +60,7 @@ class Insumos extends Component
     public function cargarInsumos()
     {
         // Usar scope optimizado para evitar N+1 queries
-        $query = Insumo::conStockYPrecio()
+        $query = InventarioService::queryInsumosConStockYPrecio()
             ->with(['unidadMedida', 'proveedor']);
 
         if ($this->busqueda) {

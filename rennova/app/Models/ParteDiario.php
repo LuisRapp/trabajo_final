@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -57,17 +56,5 @@ class ParteDiario extends Model implements Auditable
     public function movimientosStock()
     {
         return $this->hasMany(MovimientoStock::class, 'id_parte_diario');
-    }
-
-    /**
-     * @deprecated Use ParteDiarioCostoService::calcularYGuardarCostos() instead
-     */
-    protected static function booted()
-    {
-        static::saving(function (self $model) {
-            if ($model->fecha && Carbon::parse($model->fecha)->isAfter(Carbon::today())) {
-                throw new \InvalidArgumentException('La fecha del parte no puede ser futura.');
-            }
-        });
     }
 }

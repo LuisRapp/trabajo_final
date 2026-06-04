@@ -9,17 +9,18 @@ use Carbon\Carbon;
 
 /**
  * Servicio de Análisis Climático
- * 
+ *
  * Responsable de procesar datos climáticos y calcular métricas operativas
  */
 class ClimaAnalisisService
 {
     const UMBRAL_LLUVIA = 10; // mm
+
     const UMBRAL_NUBOSIDAD = 60; // %
 
     /**
      * Mapeo de Días Inactivos
-     * 
+     *
      * Reglas clave para reducir falsos positivos:
      * 1) Granularidad horaria: si precipitación diaria > 10mm, solo es INACTIVO
      *    si la lluvia acumulada entre 06:00 y 18:00 supera 5mm.
@@ -27,14 +28,14 @@ class ClimaAnalisisService
      *    Riesgo si > 12mm.
      * 3) Factor de secado: si viento_max > 15 km/h O ET0 > 4mm, puede ser OPERATIVO
      *    aunque esté nublado. Solo INACTIVO si saturación alta + nubosidad alta + poco viento.
-     * 
+     *
      * @return array [
-     *   'dias_detalle' => array de cada día con estado,
-     *   'total_dias_perdidos' => int,
-     *   'volumen_riesgo' => float,
-     *   'dia_cero_index' => int|null (primer día INACTIVO por clima),
-     *   'dias_operativos_previos' => int (días operativos antes del Día Cero)
-     * ]
+     *               'dias_detalle' => array de cada día con estado,
+     *               'total_dias_perdidos' => int,
+     *               'volumen_riesgo' => float,
+     *               'dia_cero_index' => int|null (primer día INACTIVO por clima),
+     *               'dias_operativos_previos' => int (días operativos antes del Día Cero)
+     *               ]
      */
     public function mapearDiasInactivos(array $pronostico, bool $ignorarFinDeSemana = false): array
     {
@@ -60,7 +61,7 @@ class ClimaAnalisisService
             $hour = (int) substr((string) $horaStr, 11, 2);
             $mm = $precipitacionHoraria[$hIndex] ?? 0;
 
-            if (!isset($lluviaPorFecha[$fechaKey])) {
+            if (! isset($lluviaPorFecha[$fechaKey])) {
                 $lluviaPorFecha[$fechaKey] = ['madrugada' => 0, 'diurna' => 0, 'nocturna' => 0];
             }
 
@@ -87,7 +88,7 @@ class ClimaAnalisisService
             $lluviaDiurna = $lluviaPorFecha[$fechaKey]['diurna'] ?? null;
             $lluviaNocturna = $lluviaPorFecha[$fechaKey]['nocturna'] ?? null;
             $hasHourly = array_key_exists($fechaKey, $lluviaPorFecha);
-            if (!$hasHourly) {
+            if (! $hasHourly) {
                 // Fallback conservador si falta data horaria
                 $madrugada = 0;
                 $lluviaDiurna = $mm;
@@ -108,9 +109,9 @@ class ClimaAnalisisService
             $razon = null;
 
             // 0. Verificar si es fin de semana (NO cuenta como día perdido, solo es no laboral)
-            if ($esFinDeSemana && !$ignorarFinDeSemana) {
+            if ($esFinDeSemana && ! $ignorarFinDeSemana) {
                 $estado = 'INACTIVO';
-                $razon = "Fin de semana (no laboral)";
+                $razon = 'Fin de semana (no laboral)';
                 // NO incrementar totalDiasPerdidos - los fines de semana no generan déficit
             }
             // 1. Lluvia real en ventana operativa
@@ -118,24 +119,23 @@ class ClimaAnalisisService
                 $estado = 'INACTIVO';
                 $razon = ($madrugada > 2)
                     ? "Barro por lluvia de madrugada ({$madrugada} mm)"
-                    : "Lluvia diurna activa";
+                    : 'Lluvia diurna activa';
 
                 if ($diaCeroIndex === null) {
                     $diaCeroIndex = $index;
                 }
 
                 $totalDiasPerdidos++;
-            }
-            else {
+            } else {
                 // 2. Lluvia nocturna (operativo condicional)
                 if ($mm >= self::UMBRAL_LLUVIA && $lluviaDiurna <= 5) {
                     $estado = 'OPERATIVO_CONDICIONAL';
-                    $razon = "Lluvia nocturna";
+                    $razon = 'Lluvia nocturna';
                 }
                 // 3. Barro por saturación + nubosidad + poco viento (solo si ayer hubo lluvia real)
-                elseif ($saturacionAlta && $cloudCover > self::UMBRAL_NUBOSIDAD && !$secadoActivo && $lluviaRealAyer) {
+                elseif ($saturacionAlta && $cloudCover > self::UMBRAL_NUBOSIDAD && ! $secadoActivo && $lluviaRealAyer) {
                     $estado = 'INACTIVO';
-                    $razon = "Saturación alta + nubosidad + poco viento";
+                    $razon = 'Saturación alta + nubosidad + poco viento';
 
                     if ($diaCeroIndex === null) {
                         $diaCeroIndex = $index;
@@ -168,7 +168,7 @@ class ClimaAnalisisService
         $diasOperativosPrevios = 0;
         $diasOperativosPosterior = 0;
         $totalDiasOperativos = 0;
-        
+
         if ($diaCeroIndex !== null) {
             // Contar días operativos ANTES del primer día de lluvia
             for ($i = 0; $i < $diaCeroIndex; $i++) {
@@ -176,7 +176,7 @@ class ClimaAnalisisService
                     $diasOperativosPrevios++;
                 }
             }
-            
+
             // Contar días operativos DESPUÉS de la ventana de lluvia
             for ($i = $diaCeroIndex + 1; $i < count($diasDetalle); $i++) {
                 if (in_array($diasDetalle[$i]['estado'], ['OPERATIVO', 'OPERATIVO_CONDICIONAL'], true)) {
@@ -184,7 +184,7 @@ class ClimaAnalisisService
                 }
             }
         }
-        
+
         // Contar TODOS los días operativos en la ventana de 7 días
         foreach ($diasDetalle as $dia) {
             if (in_array($dia['estado'], ['OPERATIVO', 'OPERATIVO_CONDICIONAL'], true)) {
@@ -222,7 +222,7 @@ class ClimaAnalisisService
 
         // Convertir de kilos a toneladas
         $promedioToneladas = $promedioHistorico ? $promedioHistorico / 1000.0 : 50;
-        
+
         return round($promedioToneladas, 2); // Default 50 ton si no hay histórico
     }
 
@@ -234,14 +234,14 @@ class ClimaAnalisisService
         $costoTotal = 0;
 
         // A) Costo de empleados activos (sin fecha_fin_actividades o fecha futura)
-        $empleadosActivos = \App\Models\Empleado::where(function($query) {
+        $empleadosActivos = \App\Models\Empleado::where(function ($query) {
             $query->whereNull('fecha_fin_actividades')
-                  ->orWhere('fecha_fin_actividades', '>', Carbon::today());
+                ->orWhere('fecha_fin_actividades', '>', Carbon::today());
         })->get();
-        
+
         foreach ($empleadosActivos as $empleado) {
             try {
-                $costoTotal += $empleado->calcularCostoDia(Carbon::today(), true, null);
+                $costoTotal += EmpleadoPagoService::calcularCostoDia($empleado, Carbon::today(), true, null);
             } catch (\Exception $e) {
                 // Si no hay histórico, ignorar este empleado
             }
@@ -249,7 +249,7 @@ class ClimaAnalisisService
 
         // B) Costo de maquinaria en alquiler
         $maquinariasAlquiladas = Maquinaria::where('es_alquilada', true)->get();
-        
+
         foreach ($maquinariasAlquiladas as $maquinaria) {
             // Estimar costo diario: usar toneladas_acumuladas si existe
             $toneladas = $maquinaria->toneladas_acumuladas ?? 10;
@@ -265,6 +265,6 @@ class ClimaAnalisisService
      */
     public function extraerDiasInactivos(array $diasDetalle): array
     {
-        return array_filter($diasDetalle, fn($dia) => $dia['estado'] === 'INACTIVO');
+        return array_filter($diasDetalle, fn ($dia) => $dia['estado'] === 'INACTIVO');
     }
 }

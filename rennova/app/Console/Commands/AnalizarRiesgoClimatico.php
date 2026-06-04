@@ -2,13 +2,14 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Empleado;
+use App\Models\Lote;
+use App\Models\Maquinaria;
+use App\Services\EmpleadoPagoService;
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use App\Models\Lote;
-use App\Models\Empleado;
-use App\Models\Maquinaria;
-use Carbon\Carbon;
 
 class AnalizarRiesgoClimatico extends Command
 {
@@ -37,7 +38,7 @@ class AnalizarRiesgoClimatico extends Command
     public function handle()
     {
         $diasAnalizar = (int) $this->option('dias');
-        
+
         $this->info("🌦️  Iniciando análisis climático para los próximos {$diasAnalizar} días...");
         $this->newLine();
 
@@ -50,6 +51,7 @@ class AnalizarRiesgoClimatico extends Command
         if ($lotes->isEmpty()) {
             $this->warn('⚠️  No hay lotes activos con coordenadas GPS configuradas.');
             $this->line('💡 Agregue coordenadas a los lotes desde el menú de gestión para habilitar alertas climáticas.');
+
             return Command::SUCCESS;
         }
 
@@ -61,13 +63,14 @@ class AnalizarRiesgoClimatico extends Command
 
         foreach ($lotes as $lote) {
             $this->line("🌲 Lote: <fg=cyan>{$lote->propietario}</> - {$lote->ubicacion}");
-            
+
             try {
                 // 2. Consultar API Open-Meteo
                 $pronostico = $this->obtenerPronosticoLluvia($lote, $diasAnalizar);
-                
-                if (!$pronostico) {
-                    $this->error("   ❌ Error al obtener pronóstico para este lote");
+
+                if (! $pronostico) {
+                    $this->error('   ❌ Error al obtener pronóstico para este lote');
+
                     continue;
                 }
 
@@ -75,7 +78,8 @@ class AnalizarRiesgoClimatico extends Command
                 $diasCaidosPronosticados = $this->analizarDiasDeLluvia($pronostico);
 
                 if (empty($diasCaidosPronosticados)) {
-                    $this->line("   ✅ Sin riesgo de lluvia significativa (< " . self::UMBRAL_LLUVIA . "mm)");
+                    $this->line('   ✅ Sin riesgo de lluvia significativa (< '.self::UMBRAL_LLUVIA.'mm)');
+
                     continue;
                 }
 
@@ -93,7 +97,7 @@ class AnalizarRiesgoClimatico extends Command
                 $this->error("   ❌ Error: {$e->getMessage()}");
                 Log::error("Error en análisis climático para lote {$lote->id_lote}", [
                     'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
+                    'trace' => $e->getTraceAsString(),
                 ]);
             }
 
@@ -101,16 +105,16 @@ class AnalizarRiesgoClimatico extends Command
         }
 
         // Resumen final
-        $this->info("═══════════════════════════════════════════════════");
-        $this->info("📊 RESUMEN DEL ANÁLISIS CLIMÁTICO");
-        $this->info("═══════════════════════════════════════════════════");
+        $this->info('═══════════════════════════════════════════════════');
+        $this->info('📊 RESUMEN DEL ANÁLISIS CLIMÁTICO');
+        $this->info('═══════════════════════════════════════════════════');
         $this->line("   Lotes analizados: <fg=cyan>{$lotes->count()}</>");
         $this->line("   Alertas generadas: <fg=yellow>{$alertasGeneradas}</>");
-        $this->line("   Costo evitable estimado: <fg=green>$" . number_format($costosEvitables, 2) . "</>");
+        $this->line('   Costo evitable estimado: <fg=green>$'.number_format($costosEvitables, 2).'</>');
         $this->newLine();
 
         if ($alertasGeneradas > 0) {
-            $this->warn("💡 RECOMENDACIÓN: Considere aumentar la producción hoy para compensar las pérdidas estimadas.");
+            $this->warn('💡 RECOMENDACIÓN: Considere aumentar la producción hoy para compensar las pérdidas estimadas.');
         }
 
         return Command::SUCCESS;
@@ -121,8 +125,8 @@ class AnalizarRiesgoClimatico extends Command
      */
     private function obtenerPronosticoLluvia(Lote $lote, int $dias): ?array
     {
-        $url = "https://api.open-meteo.com/v1/forecast";
-        
+        $url = 'https://api.open-meteo.com/v1/forecast';
+
         $params = [
             'latitude' => $lote->latitud,
             'longitude' => $lote->longitud,
@@ -134,17 +138,18 @@ class AnalizarRiesgoClimatico extends Command
         try {
             $response = Http::timeout(10)->get($url, $params);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 throw new \Exception("API respondió con status {$response->status()}");
             }
 
             return $response->json();
 
         } catch (\Exception $e) {
-            Log::error("Error al consultar Open-Meteo API", [
+            Log::error('Error al consultar Open-Meteo API', [
                 'lote_id' => $lote->id_lote,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return null;
         }
     }
@@ -156,7 +161,7 @@ class AnalizarRiesgoClimatico extends Command
     {
         $diasCaidos = [];
 
-        if (!isset($pronostico['daily']['time']) || !isset($pronostico['daily']['precipitation_sum'])) {
+        if (! isset($pronostico['daily']['time']) || ! isset($pronostico['daily']['precipitation_sum'])) {
             return $diasCaidos;
         }
 
@@ -186,11 +191,11 @@ class AnalizarRiesgoClimatico extends Command
 
         // A) Costo de empleados asignados al lote (usar jornal diario promedio)
         $empleadosActivos = Empleado::where('estado', 'activo')->get();
-        
+
         foreach ($empleadosActivos as $empleado) {
             // Usar costo de día caído del trait
             try {
-                $costoTotal += $empleado->calcularCostoDia(Carbon::today(), true, null);
+                $costoTotal += EmpleadoPagoService::calcularCostoDia($empleado, Carbon::today(), true, null);
             } catch (\Exception $e) {
                 // Si no hay histórico, usar un costo base estimado
                 Log::warning("Sin histórico de tarifa para empleado {$empleado->id_empleado}");
@@ -199,7 +204,7 @@ class AnalizarRiesgoClimatico extends Command
 
         // B) Costo de maquinaria en alquiler (costo fijo estimado)
         $maquinariasAlquiladas = Maquinaria::where('tipo_maquinaria', 'alquiler')->get();
-        
+
         foreach ($maquinariasAlquiladas as $maquinaria) {
             // Estimar costo diario basado en precio de alquiler
             // Asumimos que el precio_alquiler_destajo es por tonelada, estimamos 10 ton/día
@@ -218,11 +223,11 @@ class AnalizarRiesgoClimatico extends Command
         $mm = $diaLluvia['mm'];
 
         $mensaje = sprintf(
-            "⚠️  ALERTA CLIMÁTICA - Lote %s (%s)\n" .
-            "    📅 Fecha: %s\n" .
-            "    🌧️  Lluvia pronosticada: %.1f mm\n" .
-            "    💰 Riesgo de pérdida: $%s\n" .
-            "    💡 Sugerencia: Aumentar producción hoy para compensar.",
+            "⚠️  ALERTA CLIMÁTICA - Lote %s (%s)\n".
+            "    📅 Fecha: %s\n".
+            "    🌧️  Lluvia pronosticada: %.1f mm\n".
+            "    💰 Riesgo de pérdida: $%s\n".
+            '    💡 Sugerencia: Aumentar producción hoy para compensar.',
             $lote->propietario,
             $lote->ubicacion,
             $fecha->format('d/m/Y'),

@@ -314,7 +314,7 @@ class ForestalStatsService
         foreach ($partes as $parte) {
             foreach ($parte->empleados as $empleado) {
                 try {
-                    $total += $empleado->calcularCostoDia($parte->fecha, (bool) $parte->es_dia_caido, $parte->cargas);
+                    $total += EmpleadoPagoService::calcularCostoDia($empleado, $parte->fecha, (bool) $parte->es_dia_caido, $parte->cargas);
                 } catch (\Throwable $e) {
                     // Si no hay lógica o datos, ignoramos ese empleado
                 }

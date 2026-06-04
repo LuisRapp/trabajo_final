@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Models\Traits\CalculaCostosLaborales;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -10,7 +9,6 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class Empleado extends Model implements Auditable
 {
-    use CalculaCostosLaborales;
     use HasFactory, \OwenIt\Auditing\Auditable, SoftDeletes;
 
     protected $table = 'empleados';

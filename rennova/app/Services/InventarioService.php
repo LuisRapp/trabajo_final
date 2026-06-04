@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Insumo;
 use App\Models\LoteInventario;
 use App\Models\MovimientoStock;
 use Illuminate\Support\Facades\DB;
@@ -227,5 +228,28 @@ class InventarioService
         return $query->get()->filter(function ($lote) {
             return $lote->estaProximoAgotar();
         });
+    }
+
+    /**
+     * Retorna query builder de Insumo con stock y precio promedio precalculados.
+     * Reemplaza el scope Insumo::conStockYPrecio() para centralizar lógica en Servicios.
+     */
+    public static function queryInsumosConStockYPrecio()
+    {
+        return Insumo::query()->addSelect([
+            'insumos.*',
+            'stock' => LoteInventario::selectRaw('COALESCE(SUM(cantidad_disponible), 0)')
+                ->whereColumn('lotes_inventario.id_insumo', 'insumos.id_insumo')
+                ->where('agotado', false),
+            'precio_promedio' => LoteInventario::selectRaw('
+                CASE 
+                    WHEN SUM(cantidad_disponible) > 0 THEN 
+                        SUM(cantidad_disponible * precio_unitario) / SUM(cantidad_disponible)
+                    ELSE 0 
+                END
+            ')
+                ->whereColumn('lotes_inventario.id_insumo', 'insumos.id_insumo')
+                ->where('agotado', false),
+        ]);
     }
 }

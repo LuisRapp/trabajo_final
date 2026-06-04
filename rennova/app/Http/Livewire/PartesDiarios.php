@@ -1188,7 +1188,7 @@ class PartesDiarios extends Component
 
     public function getInsumosProperty()
     {
-        return Insumo::conStockYPrecio()
+        return InventarioService::queryInsumosConStockYPrecio()
             ->with('unidadMedida')
             ->orderBy('nombre')
             ->get();
