@@ -721,7 +721,7 @@ class SystemWhiteBoxTest extends TestCase
             'longitud' => null,
         ]);
 
-        $service = new ClimaDecisionService;
+        $service = app(ClimaDecisionService::class);
         $resultado = $service->analizarYRecomendar($loteSinCoord);
 
         $this->assertFalse($resultado['success']);

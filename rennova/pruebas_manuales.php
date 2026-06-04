@@ -610,7 +610,7 @@ try {
         'longitud' => null
     ]);
     
-    $service = new ClimaDecisionService();
+    $service = app(ClimaDecisionService::class);
     $resultado = $service->analizarYRecomendar($loteSinCoord);
     
     print_section("Validación de Coordenadas");

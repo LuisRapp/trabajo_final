@@ -23,12 +23,19 @@ class SincronizarClimaReal extends Command
      */
     protected $description = 'Sincroniza clima real (historico) para el dia objetivo';
 
+    protected ClimaDecisionService $climaService;
+
+    public function __construct(ClimaDecisionService $climaService)
+    {
+        parent::__construct();
+        $this->climaService = $climaService;
+    }
+
     /**
      * Execute the console command.
      */
     public function handle(): int
     {
-        $climaService = new ClimaDecisionService();
 
         $fecha = $this->option('fecha');
         $fechaObjetivo = $fecha
@@ -54,7 +61,7 @@ class SincronizarClimaReal extends Command
         $errores = 0;
 
         foreach ($lotes as $lote) {
-            $resultado = $climaService->sincronizarReal($lote, $fechaObjetivo);
+            $resultado = $this->climaService->sincronizarReal($lote, $fechaObjetivo);
             if (!$resultado['success']) {
                 $errores++;
                 $this->error("Lote {$lote->id_lote}: {$resultado['error']}");

@@ -22,6 +22,14 @@ class AnalizarDecisionesClimaticas extends Command
      */
     protected $description = 'Analiza el clima y genera recomendaciones operativas inteligentes (Anticipación/Reacción)';
 
+    protected ClimaDecisionService $climaService;
+
+    public function __construct(ClimaDecisionService $climaService)
+    {
+        parent::__construct();
+        $this->climaService = $climaService;
+    }
+
     /**
      * Execute the console command.
      */
@@ -30,8 +38,6 @@ class AnalizarDecisionesClimaticas extends Command
         $this->info("🌦️  Sistema de Decisiones Climáticas Inteligentes");
         $this->info("═══════════════════════════════════════════════════");
         $this->newLine();
-
-        $climaService = new ClimaDecisionService();
 
         // Filtrar por lote específico o analizar todos
         $loteId = $this->option('lote');
@@ -69,7 +75,7 @@ class AnalizarDecisionesClimaticas extends Command
             $this->line("🌲 <fg=cyan>{$lote->propietario}</> - {$lote->ubicacion}");
             $this->newLine();
 
-            $resultado = $climaService->analizarYRecomendar($lote);
+            $resultado = $this->climaService->analizarYRecomendar($lote);
 
             if (!$resultado['success']) {
                 $this->error("   ❌ {$resultado['error']}");

@@ -25,7 +25,7 @@ echo "════════════════════════�
 echo "\n";
 
 try {
-    $climaService = new ClimaDecisionService();
+    $climaService = app(ClimaDecisionService::class);
 
     // Buscar o crear lote de prueba
     $lote = Lote::first();
