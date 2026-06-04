@@ -13,29 +13,7 @@
         <h1 class="text-3xl font-bold"><i class="bi bi-clipboard-check mr-3"></i>Partes Diarios</h1>
     </div>
 
-    @if (session()->has('message'))
-        <div x-data="{ open: true }" x-show="open" x-transition class="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg flex items-start gap-3">
-            <i class="bi bi-check-circle-fill text-green-600 mt-0.5"></i>
-            <div class="flex-1">
-                <p class="text-green-800">{{ session('message') }}</p>
-            </div>
-            <button type="button" @click="open = false" class="text-green-600 hover:text-green-800">
-                <i class="bi bi-x-lg"></i>
-            </button>
-        </div>
-    @endif
-
-    @if (session()->has('error'))
-        <div x-data="{ open: true }" x-show="open" x-transition class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
-            <i class="bi bi-exclamation-triangle-fill text-red-600 mt-0.5"></i>
-            <div class="flex-1">
-                <p class="text-red-800">{{ session('error') }}</p>
-            </div>
-            <button type="button" @click="open = false" class="text-red-600 hover:text-red-800">
-                <i class="bi bi-x-lg"></i>
-            </button>
-        </div>
-    @endif
+    <x-flash-messages />
 
     <!-- Tabs -->
     <div class="mb-6 flex gap-0">
