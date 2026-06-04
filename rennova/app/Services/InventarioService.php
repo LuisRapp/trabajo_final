@@ -15,13 +15,18 @@ class InventarioService
         try {
             $fecha = $fecha ?? now()->format('Y-m-d');
 
-            $resultado = DB::selectOne(
-                'SELECT * FROM calcular_costo_fifo(?, ?)',
-                [$idInsumo, $cantidad]
-            );
+            if (DB::connection()->getDriverName() === 'pgsql') {
+                $resultado = DB::selectOne(
+                    'SELECT * FROM calcular_costo_fifo(?, ?)',
+                    [$idInsumo, $cantidad]
+                );
 
-            $costoTotal = $resultado->v_costo_total;
-            $lotesConsumidos = json_decode($resultado->v_lotes_consumidos, true);
+                $costoTotal = $resultado->v_costo_total;
+                $lotesConsumidos = json_decode($resultado->v_lotes_consumidos, true);
+            } else {
+                $lotesConsumidos = self::calcularCostoFifoManual($idInsumo, $cantidad);
+                $costoTotal = collect($lotesConsumidos)->sum('costo_parcial');
+            }
 
             $movimientos = [];
             foreach ($lotesConsumidos as $lote) {
@@ -101,22 +106,46 @@ class InventarioService
 
     public static function stockDisponible($idInsumo)
     {
-        $resultado = DB::selectOne(
-            'SELECT obtener_stock_disponible(?) as stock',
-            [$idInsumo]
-        );
+        // Usar función PostgreSQL si está disponible, sino calcular con Eloquent
+        if (DB::connection()->getDriverName() === 'pgsql') {
+            $resultado = DB::selectOne(
+                'SELECT obtener_stock_disponible(?) as stock',
+                [$idInsumo]
+            );
 
-        return $resultado->stock ?? 0;
+            return $resultado->stock ?? 0;
+        }
+
+        return self::stockTotalDisponible($idInsumo);
     }
 
     public static function precioPromedio($idInsumo)
     {
-        $resultado = DB::selectOne(
-            'SELECT obtener_precio_promedio(?) as precio',
-            [$idInsumo]
-        );
+        // Usar función PostgreSQL si está disponible, sino calcular con Eloquent
+        if (DB::connection()->getDriverName() === 'pgsql') {
+            $resultado = DB::selectOne(
+                'SELECT obtener_precio_promedio(?) as precio',
+                [$idInsumo]
+            );
 
-        return $resultado->precio ?? 0;
+            return $resultado->precio ?? 0;
+        }
+
+        return self::calcularPrecioPromedio($idInsumo);
+    }
+
+    private static function calcularPrecioPromedio($idInsumo)
+    {
+        $lotes = LoteInventario::porInsumo($idInsumo)
+            ->disponibles()
+            ->get();
+
+        $totalCantidad = $lotes->sum('cantidad_disponible');
+        $totalValor = $lotes->sum(function ($lote) {
+            return $lote->cantidad_disponible * $lote->precio_unitario;
+        });
+
+        return $totalCantidad > 0 ? $totalValor / $totalCantidad : 0;
     }
 
     public static function consumirLote(LoteInventario $lote, $cantidad)
@@ -136,6 +165,37 @@ class InventarioService
         }
 
         return $lote->save();
+    }
+
+    private static function calcularCostoFifoManual($idInsumo, $cantidad)
+    {
+        $lotes = LoteInventario::porInsumo($idInsumo)
+            ->disponibles()
+            ->orderBy('fecha_compra')
+            ->get();
+
+        $cantidadRestante = $cantidad;
+        $lotesConsumidos = [];
+
+        foreach ($lotes as $lote) {
+            if ($cantidadRestante <= 0) {
+                break;
+            }
+
+            $cantidadConsumida = min($cantidadRestante, $lote->cantidad_disponible);
+            $costoParcial = $cantidadConsumida * $lote->precio_unitario;
+
+            $lotesConsumidos[] = [
+                'id_lote_inventario' => $lote->id_lote_inventario,
+                'cantidad_consumida' => $cantidadConsumida,
+                'precio_unitario' => $lote->precio_unitario,
+                'costo_parcial' => $costoParcial,
+            ];
+
+            $cantidadRestante -= $cantidadConsumida;
+        }
+
+        return $lotesConsumidos;
     }
 
     public static function stockTotalDisponible($idInsumo)

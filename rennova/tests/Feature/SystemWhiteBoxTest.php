@@ -78,8 +78,8 @@ class SystemWhiteBoxTest extends TestCase
         // Registrar histórico de rol
         HistoricoRolLaboral::create([
             'rol_laboral_id' => $this->rolLaboral->id_rol_laboral,
-            'valor_jornal' => 1000,
-            'tarifa_fija_por_tonelada' => 50,
+            'jornal_diario' => 1000,
+            'precio_tonelada' => 50,
             'fecha_inicio' => now()->subMonths(6),
             'fecha_fin' => null,
         ]);
@@ -479,6 +479,17 @@ class SystemWhiteBoxTest extends TestCase
             'es_obligatorio' => true,
         ]);
 
+        // Crear lote de inventario para que el stock esté disponible
+        \App\Models\LoteInventario::create([
+            'id_insumo' => $insumo->id_insumo,
+            'cantidad_inicial' => 5,
+            'cantidad_disponible' => 5,
+            'precio_unitario' => 150.00,
+            'costo_total' => 750.00,
+            'fecha_compra' => now(),
+            'agotado' => false,
+        ]);
+
         // Registrar movimiento de entrada
         MovimientoStock::create([
             'id_insumo' => $insumo->id_insumo,
@@ -530,6 +541,17 @@ class SystemWhiteBoxTest extends TestCase
             'id_unidad_medida' => $unidadMedida->id_unidad_medida,
         ]);
 
+        // Crear lote de inventario para que el stock esté disponible
+        \App\Models\LoteInventario::create([
+            'id_insumo' => $insumo->id_insumo,
+            'cantidad_inicial' => 10,
+            'cantidad_disponible' => 10,
+            'precio_unitario' => 500.00,
+            'costo_total' => 5000.00,
+            'fecha_compra' => now(),
+            'agotado' => false,
+        ]);
+
         // Registrar stock
         MovimientoStock::create([
             'id_insumo' => $insumo->id_insumo,
@@ -544,7 +566,7 @@ class SystemWhiteBoxTest extends TestCase
             'id_tipo_mantenimiento' => $tipoMant->id_tipo_mantenimiento,
             'fecha_inicio' => now(),
             'fecha_programada' => now()->addDays(3),
-            'estado' => 'aprobado',
+            'estado' => 'en curso',
         ]);
 
         $service = new MantenimientoService;
