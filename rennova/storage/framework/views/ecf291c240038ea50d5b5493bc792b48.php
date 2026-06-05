@@ -199,6 +199,11 @@ unset($__errorArgs, $__bag); ?>
                         </tbody>
                     </table>
                 </div>
+
+                <div class="mt-4">
+                    <?php echo e($unidades->links()); ?>
+
+                </div>
             </div>
         </div>
     <?php endif; ?>

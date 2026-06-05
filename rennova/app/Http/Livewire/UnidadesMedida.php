@@ -3,11 +3,13 @@
 namespace App\Http\Livewire;
 
 use Livewire\Component;
+use Livewire\WithPagination;
 use App\Models\UnidadMedida;
 
 class UnidadesMedida extends Component
 {
-    public $unidades, $unidad_id, $nombre, $abreviatura, $busqueda = '';
+    use WithPagination;
+    public $unidad_id, $nombre, $abreviatura, $busqueda = '';
     public $tab_activo = 'listado';
 
     protected $rules = [
@@ -25,8 +27,9 @@ class UnidadesMedida extends Component
 
     public function render()
     {
-        $this->cargarUnidades();
-        return view('livewire.unidades-medida');
+        return view('livewire.unidades-medida', [
+            'unidades' => $this->cargarUnidades(),
+        ]);
     }
 
     public function cargarUnidades()
@@ -41,12 +44,12 @@ class UnidadesMedida extends Component
             });
         }
 
-        $this->unidades = $query->orderBy('id_unidad_medida', 'desc')->get();
+        return $query->orderBy('id_unidad_medida', 'desc')->paginate(15);
     }
 
     public function updatedBusqueda()
     {
-        $this->cargarUnidades();
+        $this->resetPage();
     }
 
     public function guardar()
