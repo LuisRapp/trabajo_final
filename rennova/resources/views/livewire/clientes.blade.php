@@ -117,6 +117,10 @@
                         </tbody>
                     </table>
                 </div>
+
+                <div class="mt-4">
+                    {{ $clientes->links() }}
+                </div>
             </div>
         </div>
     @endif

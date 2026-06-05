@@ -223,6 +223,11 @@
                         </tbody>
                     </table>
                 </div>
+
+                <div class="mt-4">
+                    <?php echo e($ventas->links()); ?>
+
+                </div>
             </div>
         </div>
     </div>

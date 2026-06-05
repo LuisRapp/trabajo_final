@@ -4,16 +4,18 @@ namespace App\Http\Livewire;
 
 use App\Models\TipoMantenimiento as TipoMantenimientoModel;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class TipoMantenimiento extends Component
 {
-    public $tipos;
+    use WithPagination;
 
     public $tipo_id;
 
     public $nombre;
 
     public $busqueda = '';
+
     public $tab_activo = 'listado';
 
     protected $rules = [
@@ -28,9 +30,9 @@ class TipoMantenimiento extends Component
 
     public function render()
     {
-        $this->cargarTipos();
-
-        return view('livewire.tipo-mantenimiento');
+        return view('livewire.tipo-mantenimiento', [
+            'tipos' => $this->cargarTipos(),
+        ]);
     }
 
     public function cargarTipos()
@@ -42,12 +44,12 @@ class TipoMantenimiento extends Component
             $query->where('nombre', 'ILIKE', '%'.$busq.'%');
         }
 
-        $this->tipos = $query->orderBy('id_tipo_mantenimiento', 'desc')->get();
+        return $query->orderBy('id_tipo_mantenimiento', 'desc')->paginate(15);
     }
 
     public function updatedBusqueda()
     {
-        $this->cargarTipos();
+        $this->resetPage();
     }
 
     public function guardar()

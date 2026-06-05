@@ -401,8 +401,13 @@ unset($__errorArgs, $__bag); ?>
                                 </tr>
                             <?php endif; ?>
                         </tbody>
-                    </table>
-                </div>
+                </table>
+            </div>
+
+            <div class="mt-4">
+                <?php echo e($lotes->links()); ?>
+
+            </div>
             </div>
         </div>
     </div>

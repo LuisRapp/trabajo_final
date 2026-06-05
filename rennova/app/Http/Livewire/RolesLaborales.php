@@ -4,16 +4,18 @@ namespace App\Http\Livewire;
 
 use App\Models\RolLaboral;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class RolesLaborales extends Component
 {
-    public $roles;
+    use WithPagination;
 
     public $rol_id;
 
     public $nombre;
 
     public $busqueda = '';
+
     public $tab_activo = 'listado';
 
     protected $rules = [
@@ -28,9 +30,9 @@ class RolesLaborales extends Component
 
     public function render()
     {
-        $this->cargarRoles();
-
-        return view('livewire.roles-laborales');
+        return view('livewire.roles-laborales', [
+            'roles' => $this->cargarRoles(),
+        ]);
     }
 
     public function cargarRoles()
@@ -42,12 +44,12 @@ class RolesLaborales extends Component
             $query->where('nombre', 'ILIKE', '%'.$busq.'%');
         }
 
-        $this->roles = $query->orderBy('id_rol_laboral', 'desc')->get();
+        return $query->orderBy('id_rol_laboral', 'desc')->paginate(15);
     }
 
     public function updatedBusqueda()
     {
-        $this->cargarRoles();
+        $this->resetPage();
     }
 
     public function guardar()

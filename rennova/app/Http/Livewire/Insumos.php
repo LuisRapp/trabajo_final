@@ -7,10 +7,11 @@ use App\Models\Proveedor;
 use App\Models\UnidadMedida;
 use App\Services\InventarioService;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class Insumos extends Component
 {
-    public $insumos;
+    use WithPagination;
 
     public $insumo_id;
 
@@ -52,9 +53,9 @@ class Insumos extends Component
 
     public function render()
     {
-        $this->cargarInsumos();
-
-        return view('livewire.insumos');
+        return view('livewire.insumos', [
+            'insumos' => $this->cargarInsumos(),
+        ]);
     }
 
     public function cargarInsumos()
@@ -78,12 +79,12 @@ class Insumos extends Component
             });
         }
 
-        $this->insumos = $query->orderBy('id_insumo', 'desc')->get();
+        return $query->orderBy('id_insumo', 'desc')->paginate(15);
     }
 
     public function updatedBusqueda()
     {
-        $this->cargarInsumos();
+        $this->resetPage();
     }
 
     public function guardar()

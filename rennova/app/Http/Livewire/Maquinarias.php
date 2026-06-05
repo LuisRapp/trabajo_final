@@ -2,14 +2,33 @@
 
 namespace App\Http\Livewire;
 
-use Livewire\Component;
 use App\Models\Maquinaria;
 use App\Models\TipoMaquinaria;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class Maquinarias extends Component
 {
-    public $maquinarias, $maquinaria_id, $id_tipo_maquinaria, $modelo, $estado, $es_alquilada, $fecha_inicio_actividades, $umbral_toneladas, $busqueda = '';
+    use WithPagination;
+
+    public $maquinaria_id;
+
+    public $id_tipo_maquinaria;
+
+    public $modelo;
+
+    public $estado;
+
+    public $es_alquilada;
+
+    public $fecha_inicio_actividades;
+
+    public $umbral_toneladas;
+
+    public $busqueda = '';
+
     public $tipos;
+
     public $tab_activo = 'listado';
 
     protected $rules = [
@@ -39,8 +58,9 @@ class Maquinarias extends Component
 
     public function render()
     {
-        $this->cargarMaquinarias();
-        return view('livewire.maquinarias');
+        return view('livewire.maquinarias', [
+            'maquinarias' => $this->cargarMaquinarias(),
+        ]);
     }
 
     public function cargarMaquinarias()
@@ -49,21 +69,21 @@ class Maquinarias extends Component
 
         if ($this->busqueda) {
             $busq = $this->busqueda;
-            $query->where(function($q) use ($busq) {
-                $q->where('modelo', 'ILIKE', '%' . $busq . '%')
-                  ->orWhere('estado', 'ILIKE', '%' . $busq . '%')
-                  ->orWhereHas('tipoMaquinaria', function($qt) use ($busq) {
-                      $qt->where('nombre', 'ILIKE', '%' . $busq . '%');
-                  });
+            $query->where(function ($q) use ($busq) {
+                $q->where('modelo', 'ILIKE', '%'.$busq.'%')
+                    ->orWhere('estado', 'ILIKE', '%'.$busq.'%')
+                    ->orWhereHas('tipoMaquinaria', function ($qt) use ($busq) {
+                        $qt->where('nombre', 'ILIKE', '%'.$busq.'%');
+                    });
             });
         }
 
-        $this->maquinarias = $query->orderBy('id_maquinaria', 'desc')->get();
+        return $query->orderBy('id_maquinaria', 'desc')->paginate(15);
     }
 
     public function updatedBusqueda()
     {
-        $this->cargarMaquinarias();
+        $this->resetPage();
     }
 
     public function guardar()

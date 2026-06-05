@@ -325,12 +325,10 @@ unset($__errorArgs, $__bag); ?>
                     </table>
                 </div>
 
-                <?php if($empleados->hasPages()): ?>
-                    <div class="mt-6">
-                        <?php echo e($empleados->links('pagination::tailwind')); ?>
+                <div class="mt-4">
+                    <?php echo e($empleados->links()); ?>
 
-                    </div>
-                <?php endif; ?>
+                </div>
             </div>
         </div>
     <?php endif; ?>

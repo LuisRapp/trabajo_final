@@ -2,12 +2,26 @@
 
 namespace App\Http\Livewire;
 
-use Livewire\Component;
 use App\Models\Cliente;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class Clientes extends Component
 {
-    public $clientes, $cliente_id, $razon_social, $cuit, $direccion, $contacto, $busqueda = '';
+    use WithPagination;
+
+    public $cliente_id;
+
+    public $razon_social;
+
+    public $cuit;
+
+    public $direccion;
+
+    public $contacto;
+
+    public $busqueda = '';
+
     public $tab_activo = 'listado';
 
     protected $rules = [
@@ -28,29 +42,30 @@ class Clientes extends Component
 
     public function render()
     {
-           $this->cargarClientes();
-        return view('livewire.clientes');
+        return view('livewire.clientes', [
+            'clientes' => $this->cargarClientes(),
+        ]);
     }
 
-        public function cargarClientes()
-        {
-            $query = Cliente::query();
+    public function cargarClientes()
+    {
+        $query = Cliente::query();
 
-            if ($this->busqueda) {
-                $query->where(function($q) {
-                    $q->where('razon_social', 'ILIKE', '%' . $this->busqueda . '%')
-                      ->orWhere('cuit', 'ILIKE', '%' . $this->busqueda . '%')
-                      ->orWhere('contacto', 'ILIKE', '%' . $this->busqueda . '%');
-                });
-            }
-
-            $this->clientes = $query->orderBy('id_cliente', 'desc')->get();
+        if ($this->busqueda) {
+            $query->where(function ($q) {
+                $q->where('razon_social', 'ILIKE', '%'.$this->busqueda.'%')
+                    ->orWhere('cuit', 'ILIKE', '%'.$this->busqueda.'%')
+                    ->orWhere('contacto', 'ILIKE', '%'.$this->busqueda.'%');
+            });
         }
 
-        public function updatedBusqueda()
-        {
-            $this->cargarClientes();
-        }
+        return $query->orderBy('id_cliente', 'desc')->paginate(15);
+    }
+
+    public function updatedBusqueda()
+    {
+        $this->resetPage();
+    }
 
     public function guardar()
     {
@@ -69,7 +84,7 @@ class Clientes extends Component
         session()->flash('message', $this->cliente_id ? 'Cliente actualizado correctamente.' : 'Cliente creado correctamente.');
         $this->tab_activo = 'listado';
         $this->resetCampos();
-            $this->dispatch('clienteGuardado');
+        $this->dispatch('clienteGuardado');
     }
 
     public function editar($id)

@@ -126,6 +126,10 @@
                         </tbody>
                     </table>
                 </div>
+
+                <div class="mt-4">
+                    {{ $proveedores->links() }}
+                </div>
             </div>
         </div>
     @endif

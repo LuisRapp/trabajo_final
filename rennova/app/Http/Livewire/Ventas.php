@@ -8,9 +8,12 @@ use App\Models\Venta;
 use App\Services\VentaService;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class Ventas extends Component
 {
+    use WithPagination;
+
     // Control de pestañas
     public $tab_activo = 'historial';
 
@@ -28,8 +31,6 @@ class Ventas extends Component
     public $observaciones = '';
 
     // Historial
-    public $ventas = [];
-
     public $busqueda = '';
 
     // Modal detalle
@@ -49,7 +50,6 @@ class Ventas extends Component
     {
         $this->fecha_desde = date('Y-m-d', strtotime('-7 days'));
         $this->fecha_hasta = date('Y-m-d');
-        $this->cargarVentas();
     }
 
     public function buscarCargasPendientes()
@@ -156,8 +156,6 @@ class Ventas extends Component
             $this->observaciones = '';
             $this->id_cliente = null;
 
-            $this->cargarVentas();
-
             session()->flash('message', 'Venta registrada exitosamente. ID: '.$venta->id_recibo);
 
         } catch (\Exception $e) {
@@ -182,12 +180,12 @@ class Ventas extends Component
             });
         }
 
-        $this->ventas = $query->get();
+        return $query->paginate(15);
     }
 
     public function updatedBusqueda()
     {
-        $this->cargarVentas();
+        $this->resetPage();
     }
 
     public function verDetalle($id_recibo)
@@ -243,7 +241,6 @@ class Ventas extends Component
                 'monto' => $this->monto_edicion,
             ]);
 
-            $this->cargarVentas();
             $this->modo_edicion = false;
             session()->flash('message', 'Venta actualizada exitosamente.');
 
@@ -257,7 +254,6 @@ class Ventas extends Component
         try {
             VentaService::darDeBaja($id_recibo);
 
-            $this->cargarVentas();
             $this->cerrarModal();
             session()->flash('message', 'Venta dada de baja exitosamente. Las cargas están disponibles nuevamente.');
 
@@ -289,6 +285,9 @@ class Ventas extends Component
     {
         $clientes = Cliente::orderBy('razon_social')->get();
 
-        return view('livewire.ventas', compact('clientes'));
+        return view('livewire.ventas', [
+            'ventas' => $this->cargarVentas(),
+            'clientes' => $clientes,
+        ]);
     }
 }

@@ -2,12 +2,20 @@
 
 namespace App\Http\Livewire;
 
-use Livewire\Component;
 use App\Models\TipoMaquinaria;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class TiposMaquinaria extends Component
 {
-    public $tipos, $tipo_id, $nombre, $busqueda = '';
+    use WithPagination;
+
+    public $tipo_id;
+
+    public $nombre;
+
+    public $busqueda = '';
+
     public $tab_activo = 'listado';
 
     protected $messages = [
@@ -22,15 +30,16 @@ class TiposMaquinaria extends Component
             'nombre' => [
                 'required',
                 'min:3',
-                'unique:tipo_maquinarias,nombre,' . ($this->tipo_id ?? 'NULL') . ',id_tipo_maquinaria'
+                'unique:tipo_maquinarias,nombre,'.($this->tipo_id ?? 'NULL').',id_tipo_maquinaria',
             ],
         ];
     }
 
     public function render()
     {
-        $this->cargarTipos();
-        return view('livewire.tipos-maquinaria');
+        return view('livewire.tipos-maquinaria', [
+            'tipos' => $this->cargarTipos(),
+        ]);
     }
 
     public function cargarTipos()
@@ -39,15 +48,15 @@ class TiposMaquinaria extends Component
 
         if ($this->busqueda) {
             $busq = $this->busqueda;
-            $query->where('nombre', 'ILIKE', '%' . $busq . '%');
+            $query->where('nombre', 'ILIKE', '%'.$busq.'%');
         }
 
-        $this->tipos = $query->orderBy('id_tipo_maquinaria', 'desc')->get();
+        return $query->orderBy('id_tipo_maquinaria', 'desc')->paginate(15);
     }
 
     public function updatedBusqueda()
     {
-        $this->cargarTipos();
+        $this->resetPage();
     }
 
     public function guardar()

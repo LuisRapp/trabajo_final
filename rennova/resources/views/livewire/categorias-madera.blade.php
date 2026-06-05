@@ -94,6 +94,10 @@
                         </tbody>
                     </table>
                 </div>
+
+                <div class="mt-4">
+                    {{ $categorias->links() }}
+                </div>
             </div>
         </div>
     @endif

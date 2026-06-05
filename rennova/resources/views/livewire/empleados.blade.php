@@ -151,11 +151,9 @@
                     </table>
                 </div>
 
-                @if($empleados->hasPages())
-                    <div class="mt-6">
-                        {{ $empleados->links('pagination::tailwind') }}
-                    </div>
-                @endif
+                <div class="mt-4">
+                    {{ $empleados->links() }}
+                </div>
             </div>
         </div>
     @endif

@@ -5,10 +5,11 @@ namespace App\Http\Livewire;
 use App\Models\Empleado;
 use App\Models\Recibo;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class Recibos extends Component
 {
-    public $recibos;
+    use WithPagination;
 
     public $recibo_id;
 
@@ -66,9 +67,9 @@ class Recibos extends Component
 
     public function render()
     {
-        $this->cargarRecibos();
-
-        return view('livewire.recibos');
+        return view('livewire.recibos', [
+            'recibos' => $this->cargarRecibos(),
+        ]);
     }
 
     public function cargarRecibos()
@@ -88,12 +89,12 @@ class Recibos extends Component
             });
         }
 
-        $this->recibos = $query->orderBy('id_recibo', 'desc')->get();
+        return $query->orderBy('id_recibo', 'desc')->paginate(15);
     }
 
     public function updatedBusqueda()
     {
-        $this->cargarRecibos();
+        $this->resetPage();
     }
 
     public function guardar()

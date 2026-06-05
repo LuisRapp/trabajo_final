@@ -4,10 +4,11 @@ namespace App\Http\Livewire;
 
 use App\Models\Proveedor;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class Proveedores extends Component
 {
-    public $proveedores;
+    use WithPagination;
 
     public $proveedor_id;
 
@@ -22,6 +23,7 @@ class Proveedores extends Component
     public $email;
 
     public $busqueda = '';
+
     public $tab_activo = 'listado';
 
     protected $rules = [
@@ -44,9 +46,9 @@ class Proveedores extends Component
 
     public function render()
     {
-        $this->cargarProveedores();
-
-        return view('livewire.proveedores');
+        return view('livewire.proveedores', [
+            'proveedores' => $this->cargarProveedores(),
+        ]);
     }
 
     public function cargarProveedores()
@@ -61,12 +63,12 @@ class Proveedores extends Component
             });
         }
 
-        $this->proveedores = $query->orderBy('id_proveedor', 'desc')->get();
+        return $query->orderBy('id_proveedor', 'desc')->paginate(15);
     }
 
     public function updatedBusqueda()
     {
-        $this->cargarProveedores();
+        $this->resetPage();
     }
 
     public function guardar()

@@ -135,6 +135,10 @@
                         </tbody>
                     </table>
                 </div>
+
+                <div class="mt-4">
+                    {{ $recibos->links() }}
+                </div>
             </div>
         </div>
     @endif

@@ -6,10 +6,11 @@ use App\Models\Usuario;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class Usuarios extends Component
 {
-    public $usuarios;
+    use WithPagination;
 
     public $usuario_id;
 
@@ -28,6 +29,7 @@ class Usuarios extends Component
     public $activo;
 
     public $busqueda = '';
+
     public $tab_activo = 'listado';
 
     protected function rules()
@@ -66,9 +68,9 @@ class Usuarios extends Component
 
     public function render()
     {
-        $this->cargarUsuarios();
-
-        return view('livewire.usuarios');
+        return view('livewire.usuarios', [
+            'usuarios' => $this->cargarUsuarios(),
+        ]);
     }
 
     public function cargarUsuarios()
@@ -85,12 +87,12 @@ class Usuarios extends Component
             });
         }
 
-        $this->usuarios = $query->orderBy('id', 'desc')->get();
+        return $query->orderBy('id', 'desc')->paginate(15);
     }
 
     public function updatedBusqueda()
     {
-        $this->cargarUsuarios();
+        $this->resetPage();
     }
 
     public function guardar()

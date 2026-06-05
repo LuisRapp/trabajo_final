@@ -245,12 +245,10 @@ unset($__errorArgs, $__bag); ?>
                     </table>
                 </div>
 
-                <?php if($adelantos->hasPages()): ?>
-                    <div class="mt-6">
-                        <?php echo e($adelantos->links('pagination::tailwind')); ?>
+                <div class="mt-4">
+                    <?php echo e($adelantos->links()); ?>
 
-                    </div>
-                <?php endif; ?>
+                </div>
             </div>
         </div>
     <?php endif; ?>

@@ -5,10 +5,11 @@ namespace App\Http\Livewire;
 use App\Models\HistoricoRolLaboral;
 use App\Models\RolLaboral;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class HistoricoRolesLaborales extends Component
 {
-    public $historicos = [];
+    use WithPagination;
 
     public $roles = [];
 
@@ -48,7 +49,6 @@ class HistoricoRolesLaborales extends Component
     public function mount()
     {
         $this->roles = RolLaboral::orderBy('nombre')->get();
-        $this->cargarHistoricos();
     }
 
     public function cargarHistoricos()
@@ -69,19 +69,19 @@ class HistoricoRolesLaborales extends Component
             });
         }
 
-        $this->historicos = $query->orderByDesc('fecha_inicio')->get();
+        return $query->orderByDesc('fecha_inicio')->paginate(15);
     }
 
     public function updatedBusqueda()
     {
-        $this->cargarHistoricos();
+        $this->resetPage();
     }
 
     public function render()
     {
-        $this->cargarHistoricos();
-
-        return view('livewire.historico-roles-laborales');
+        return view('livewire.historico-roles-laborales', [
+            'historicos' => $this->cargarHistoricos(),
+        ]);
     }
 
     public function guardar()
@@ -100,7 +100,6 @@ class HistoricoRolesLaborales extends Component
             ]
         );
 
-        $this->cargarHistoricos();
         session()->flash('message', $this->historico_id ? 'Histórico actualizado correctamente.' : 'Histórico creado correctamente.');
         $this->resetCampos();
         $this->dispatch('historicoGuardado');
@@ -121,7 +120,6 @@ class HistoricoRolesLaborales extends Component
     public function eliminar($id)
     {
         HistoricoRolLaboral::findOrFail($id)->delete();
-        $this->cargarHistoricos();
         session()->flash('message', 'Histórico eliminado correctamente.');
         $this->resetCampos();
     }

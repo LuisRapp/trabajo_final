@@ -13,10 +13,11 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Validator;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class Lotes extends Component
 {
-    public $lotes;
+    use WithPagination;
 
     public $propietario;
 
@@ -87,7 +88,6 @@ class Lotes extends Component
     public function mount()
     {
         $this->resetCampos();
-        $this->cargarLotes();
     }
 
     public function cargarLotes()
@@ -103,13 +103,13 @@ class Lotes extends Component
             });
         }
 
-        $this->lotes = $query->orderBy('id_lote', 'desc')->get();
+        return $query->orderBy('id_lote', 'desc')->paginate(15);
     }
 
     // Actualizar listado cuando cambie la búsqueda
     public function updatedBusqueda()
     {
-        $this->cargarLotes();
+        $this->resetPage();
     }
 
     public function resetCampos()
@@ -173,7 +173,6 @@ class Lotes extends Component
             return;
         }
         $this->resetCampos();
-        $this->cargarLotes();
 
         // Emitir evento para cambiar a la pestaña de listado
         $this->dispatch('loteGuardado');
@@ -199,7 +198,6 @@ class Lotes extends Component
         Lote::destroy($id);
         session()->flash('message', 'Lote eliminado correctamente.');
         $this->resetCampos();
-        $this->cargarLotes();
     }
 
     public function finalizarLote($id)
@@ -229,7 +227,6 @@ class Lotes extends Component
             });
 
             session()->flash('message', 'Lote finalizado correctamente. Los recursos han sido liberados.');
-            $this->cargarLotes();
         } catch (\Throwable $e) {
             session()->flash('error', 'Error al finalizar el lote: '.$e->getMessage());
         }
@@ -863,6 +860,8 @@ class Lotes extends Component
 
     public function render()
     {
-        return view('livewire.lotes');
+        return view('livewire.lotes', [
+            'lotes' => $this->cargarLotes(),
+        ]);
     }
 }

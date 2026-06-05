@@ -141,6 +141,10 @@
                         </tbody>
                     </table>
                 </div>
+
+                <div class="mt-4">
+                    {{ $precios->links() }}
+                </div>
             </div>
         </div>
     @endif

@@ -2,12 +2,22 @@
 
 namespace App\Http\Livewire;
 
-use Livewire\Component;
 use App\Models\CategoriaMadera;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class CategoriasMadera extends Component
 {
-    public $categorias, $categoria_id, $nombre, $descripcion, $busqueda = '';
+    use WithPagination;
+
+    public $categoria_id;
+
+    public $nombre;
+
+    public $descripcion;
+
+    public $busqueda = '';
+
     public $tab_activo = 'listado';
 
     protected $rules = [
@@ -23,8 +33,9 @@ class CategoriasMadera extends Component
 
     public function render()
     {
-        $this->cargarCategorias();
-        return view('livewire.categorias-madera');
+        return view('livewire.categorias-madera', [
+            'categorias' => $this->cargarCategorias(),
+        ]);
     }
 
     public function cargarCategorias()
@@ -33,18 +44,18 @@ class CategoriasMadera extends Component
 
         if ($this->busqueda) {
             $busq = $this->busqueda;
-            $query->where(function($q) use ($busq) {
-                $q->where('nombre', 'ILIKE', '%' . $busq . '%')
-                  ->orWhere('descripcion', 'ILIKE', '%' . $busq . '%');
+            $query->where(function ($q) use ($busq) {
+                $q->where('nombre', 'ILIKE', '%'.$busq.'%')
+                    ->orWhere('descripcion', 'ILIKE', '%'.$busq.'%');
             });
         }
 
-        $this->categorias = $query->orderBy('id_categoria_madera', 'desc')->get();
+        return $query->orderBy('id_categoria_madera', 'desc')->paginate(15);
     }
 
     public function updatedBusqueda()
     {
-        $this->cargarCategorias();
+        $this->resetPage();
     }
 
     public function guardar()

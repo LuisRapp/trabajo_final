@@ -285,6 +285,11 @@ unset($__errorArgs, $__bag); ?>
                         </tbody>
                     </table>
                 </div>
+
+                <div class="mt-4">
+                    <?php echo e($insumos->links()); ?>
+
+                </div>
             </div>
         </div>
     <?php endif; ?>

@@ -314,8 +314,12 @@
                                 </tr>
                             @endforelse
                         </tbody>
-                    </table>
-                </div>
+                </table>
+            </div>
+
+            <div class="mt-4">
+                {{ $lotes->links() }}
+            </div>
             </div>
         </div>
     </div>

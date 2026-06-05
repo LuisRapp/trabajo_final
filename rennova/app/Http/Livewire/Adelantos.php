@@ -2,15 +2,25 @@
 
 namespace App\Http\Livewire;
 
-use Livewire\Component;
-use Livewire\WithPagination;
 use App\Models\Adelanto;
 use App\Models\Empleado;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class Adelantos extends Component
 {
     use WithPagination;
-    public $adelanto_id, $id_empleado, $monto, $fecha_emision, $busqueda = '';
+
+    public $adelanto_id;
+
+    public $id_empleado;
+
+    public $monto;
+
+    public $fecha_emision;
+
+    public $busqueda = '';
+
     public $tab_activo = 'listado';
 
     protected $rules = [
@@ -29,7 +39,7 @@ class Adelantos extends Component
     public function render()
     {
         return view('livewire.adelantos', [
-            'adelantos' => $this->obtenerAdelantos()->paginate(10),
+            'adelantos' => $this->obtenerAdelantos()->paginate(15),
             'empleados' => Empleado::orderBy('apellido')->orderBy('nombre')->get(),
         ]);
     }
@@ -38,16 +48,15 @@ class Adelantos extends Component
     {
         $query = Adelanto::with('empleado');
 
-
         if ($this->busqueda) {
             $busq = $this->busqueda;
-            $query->where(function($q) use ($busq) {
-                $q->whereRaw("CAST(monto AS TEXT) ILIKE ?", ['%' . $busq . '%'])
-                  ->orWhereDate('fecha_emision', $busq)
-                  ->orWhereHas('empleado', function($qe) use ($busq) {
-                      $qe->where('apellido', 'ILIKE', '%' . $busq . '%')
-                         ->orWhere('nombre', 'ILIKE', '%' . $busq . '%');
-                  });
+            $query->where(function ($q) use ($busq) {
+                $q->whereRaw('CAST(monto AS TEXT) ILIKE ?', ['%'.$busq.'%'])
+                    ->orWhereDate('fecha_emision', $busq)
+                    ->orWhereHas('empleado', function ($qe) use ($busq) {
+                        $qe->where('apellido', 'ILIKE', '%'.$busq.'%')
+                            ->orWhere('nombre', 'ILIKE', '%'.$busq.'%');
+                    });
             });
         }
 

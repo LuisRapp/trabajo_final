@@ -127,11 +127,9 @@
                     </table>
                 </div>
 
-                @if($adelantos->hasPages())
-                    <div class="mt-6">
-                        {{ $adelantos->links('pagination::tailwind') }}
-                    </div>
-                @endif
+                <div class="mt-4">
+                    {{ $adelantos->links() }}
+                </div>
             </div>
         </div>
     @endif

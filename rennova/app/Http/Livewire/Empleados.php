@@ -62,13 +62,12 @@ class Empleados extends Component
     public function mount()
     {
         $this->roles = RolLaboral::all();
-        $this->empleados = $this->obtenerEmpleados();
     }
 
     public function render()
     {
         return view('livewire.empleados', [
-            'empleados' => $this->obtenerEmpleados()->paginate(10),
+            'empleados' => $this->obtenerEmpleados()->paginate(15),
         ]);
     }
 
@@ -91,15 +90,9 @@ class Empleados extends Component
         return $query->orderBy('id_empleado', 'desc');
     }
 
-    public function cargarEmpleados()
-    {
-        $this->empleados = $this->obtenerEmpleados();
-    }
-
     public function updatedBusqueda()
     {
         $this->resetPage();
-        $this->cargarEmpleados();
     }
 
     public function guardar()

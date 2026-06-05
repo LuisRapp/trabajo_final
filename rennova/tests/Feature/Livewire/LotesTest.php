@@ -431,12 +431,12 @@ class LotesTest extends TestCase
     {
         $lote = Lote::factory()->activo()->create();
 
-        Livewire::actingAs($this->usuario)
+        $component = Livewire::actingAs($this->usuario)
             ->test(Lotes::class)
-            ->call('finalizarLote', $lote->id_lote)
-            ->assertSet('lotes', function ($lotes) use ($lote) {
-                return $lotes->firstWhere('id_lote', $lote->id_lote)->estado === 'cerrado';
-            });
+            ->call('finalizarLote', $lote->id_lote);
+
+        $lotes = $component->viewData('lotes');
+        $this->assertSame('cerrado', $lotes->firstWhere('id_lote', $lote->id_lote)->estado);
     }
 
     public function test_finalizar_lote_handles_nonexistent_lote_gracefully(): void
@@ -1060,7 +1060,7 @@ class LotesTest extends TestCase
         $component = Livewire::actingAs($this->usuario)
             ->test(Lotes::class);
 
-        $lotes = $component->get('lotes');
+        $lotes = $component->viewData('lotes');
         $this->assertCount(3, $lotes);
         // Ordered by id_lote desc
         $this->assertSame($lote3->id_lote, $lotes->first()->id_lote);

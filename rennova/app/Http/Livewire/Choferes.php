@@ -2,23 +2,33 @@
 
 namespace App\Http\Livewire;
 
-use Livewire\Component;
 use App\Models\Chofer;
 use App\Models\Cliente;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class Choferes extends Component
 {
-    public $choferes;
+    use WithPagination;
+
     public $clientes = [];
+
     public $tab_activo = 'listado';
 
     public $chofer_id;
+
     public $id_cliente;
+
     public $apellido;
+
     public $nombre;
+
     public $dni;
+
     public $telefono;
+
     public $direccion;
+
     public $estado = true; // tratar como booleano
 
     public $busqueda = '';
@@ -26,22 +36,21 @@ class Choferes extends Component
     protected function rules()
     {
         $id = $this->chofer_id ?? 'NULL';
+
         return [
             'id_cliente' => 'required|exists:clientes,id_cliente',
-            'apellido'   => 'required|string|max:100',
-            'nombre'     => 'required|string|max:100',
-            'dni'        => 'required|string|max:20|unique:choferes,dni,' . $id . ',id_chofer',
-            'telefono'   => 'nullable|string|max:30',
-            'direccion'  => 'nullable|string|max:150',
-            'estado'     => 'boolean',
+            'apellido' => 'required|string|max:100',
+            'nombre' => 'required|string|max:100',
+            'dni' => 'required|string|max:20|unique:choferes,dni,'.$id.',id_chofer',
+            'telefono' => 'nullable|string|max:30',
+            'direccion' => 'nullable|string|max:150',
+            'estado' => 'boolean',
         ];
     }
 
     public function mount()
     {
         $this->clientes = Cliente::orderBy('razon_social')->get();
-        $this->choferes = [];
-        $this->cargarChoferes();
     }
 
     public function cargarChoferes()
@@ -50,29 +59,31 @@ class Choferes extends Component
 
         if ($this->busqueda) {
             $busq = $this->busqueda;
-            $query->where(function($q) use ($busq) {
+            $query->where(function ($q) use ($busq) {
                 $q->where('apellido', 'ILIKE', "%{$busq}%")
-                  ->orWhere('nombre', 'ILIKE', "%{$busq}%")
-                  ->orWhere('dni', 'ILIKE', "%{$busq}%")
-                  ->orWhere('telefono', 'ILIKE', "%{$busq}%")
-                  ->orWhere('direccion', 'ILIKE', "%{$busq}%")
-                  ->orWhereHas('cliente', function($qr) use ($busq) {
-                      $qr->where('razon_social', 'ILIKE', "%{$busq}%");
-                  });
+                    ->orWhere('nombre', 'ILIKE', "%{$busq}%")
+                    ->orWhere('dni', 'ILIKE', "%{$busq}%")
+                    ->orWhere('telefono', 'ILIKE', "%{$busq}%")
+                    ->orWhere('direccion', 'ILIKE', "%{$busq}%")
+                    ->orWhereHas('cliente', function ($qr) use ($busq) {
+                        $qr->where('razon_social', 'ILIKE', "%{$busq}%");
+                    });
             });
         }
 
-        $this->choferes = $query->orderByDesc('id_chofer')->get();
+        return $query->orderByDesc('id_chofer')->paginate(15);
     }
 
     public function updatedBusqueda()
     {
-        $this->cargarChoferes();
+        $this->resetPage();
     }
 
     public function render()
     {
-        return view('livewire.choferes');
+        return view('livewire.choferes', [
+            'choferes' => $this->cargarChoferes(),
+        ]);
     }
 
     public function guardar()
@@ -83,16 +94,15 @@ class Choferes extends Component
             ['id_chofer' => $this->chofer_id],
             [
                 'id_cliente' => $this->id_cliente,
-                'apellido'   => $this->apellido,
-                'nombre'     => $this->nombre,
-                'dni'        => $this->dni,
-                'telefono'   => $this->telefono,
-                'direccion'  => $this->direccion,
-                'estado'     => (bool) $this->estado,
+                'apellido' => $this->apellido,
+                'nombre' => $this->nombre,
+                'dni' => $this->dni,
+                'telefono' => $this->telefono,
+                'direccion' => $this->direccion,
+                'estado' => (bool) $this->estado,
             ]
         );
 
-        $this->cargarChoferes();
         session()->flash('message', $this->chofer_id ? 'Chofer actualizado correctamente.' : 'Chofer creado correctamente.');
         $this->tab_activo = 'listado';
         $this->resetCampos();
@@ -116,7 +126,6 @@ class Choferes extends Component
     public function eliminar($id)
     {
         Chofer::findOrFail($id)->delete();
-        $this->cargarChoferes();
         session()->flash('message', 'Chofer eliminado correctamente.');
         $this->resetCampos();
     }
@@ -124,7 +133,7 @@ class Choferes extends Component
     public function resetCampos()
     {
         $this->reset([
-            'chofer_id', 'id_cliente', 'apellido', 'nombre', 'dni', 'telefono', 'direccion', 'estado'
+            'chofer_id', 'id_cliente', 'apellido', 'nombre', 'dni', 'telefono', 'direccion', 'estado',
         ]);
         $this->estado = true;
     }

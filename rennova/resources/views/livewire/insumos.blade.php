@@ -151,6 +151,10 @@
                         </tbody>
                     </table>
                 </div>
+
+                <div class="mt-4">
+                    {{ $insumos->links() }}
+                </div>
             </div>
         </div>
     @endif

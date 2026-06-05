@@ -2,14 +2,27 @@
 
 namespace App\Http\Livewire;
 
-use Livewire\Component;
 use App\Models\HistoricoCostosMaquinaria;
 use App\Models\Maquinaria;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class HistoricoCostosMaquinarias extends Component
 {
-    public $historicos, $historico_id, $id_maquinaria, $costo_por_tonelada, $fecha_inicio_vigencia, $fecha_fin_vigencia;
+    use WithPagination;
+
+    public $historico_id;
+
+    public $id_maquinaria;
+
+    public $costo_por_tonelada;
+
+    public $fecha_inicio_vigencia;
+
+    public $fecha_fin_vigencia;
+
     public $maquinarias;
+
     public $busqueda = '';
 
     protected $rules = [
@@ -34,8 +47,9 @@ class HistoricoCostosMaquinarias extends Component
 
     public function render()
     {
-        $this->cargarHistoricos();
-        return view('livewire.historico-costos-maquinarias');
+        return view('livewire.historico-costos-maquinarias', [
+            'historicos' => $this->cargarHistoricos(),
+        ]);
     }
 
     public function cargarHistoricos()
@@ -44,22 +58,22 @@ class HistoricoCostosMaquinarias extends Component
 
         if ($this->busqueda) {
             $busq = $this->busqueda;
-            $query->where(function($q) use ($busq) {
-                $q->whereRaw("CAST(costo_por_tonelada AS TEXT) ILIKE ?", ["%{$busq}%"]) 
-                  ->orWhereDate('fecha_inicio_vigencia', $busq)
-                  ->orWhereDate('fecha_fin_vigencia', $busq)
-                  ->orWhereHas('maquinaria', function($qr) use ($busq) {
-                      $qr->where('modelo', 'ILIKE', "%{$busq}%");
-                  });
+            $query->where(function ($q) use ($busq) {
+                $q->whereRaw('CAST(costo_por_tonelada AS TEXT) ILIKE ?', ["%{$busq}%"])
+                    ->orWhereDate('fecha_inicio_vigencia', $busq)
+                    ->orWhereDate('fecha_fin_vigencia', $busq)
+                    ->orWhereHas('maquinaria', function ($qr) use ($busq) {
+                        $qr->where('modelo', 'ILIKE', "%{$busq}%");
+                    });
             });
         }
 
-        $this->historicos = $query->orderBy('id_costo', 'desc')->get();
+        return $query->orderBy('id_costo', 'desc')->paginate(15);
     }
 
     public function updatedBusqueda()
     {
-        $this->cargarHistoricos();
+        $this->resetPage();
     }
 
     public function guardar()
