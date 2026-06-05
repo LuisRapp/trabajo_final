@@ -1,180 +1,165 @@
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="mb-0"><i class="bi bi-boxes"></i> Gestión de Stock (FIFO)</h1>
+<div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold text-slate-900">📦 Gestión de Stock (FIFO)</h1>
         @can('crear-gestion-stock')
-        <button class="btn btn-primary" wire:click="abrirModal">
-            <i class="bi bi-plus-circle"></i> Registrar Entrada
+        <button class="inline-flex items-center gap-1.5 px-5 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-lg text-sm font-medium shadow-sm transition-colors" wire:click="abrirModal">
+            ➕ Registrar Entrada
         </button>
         @endcan
     </div>
 
     @if (session()->has('message'))
-        <div class="alert alert-{{ session('alert-type', 'success') }} alert-dismissible fade show" role="alert">
-            <i class="bi bi-check-circle-fill"></i> {{ session('message') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <div x-data="{ open: true }" x-show="open" x-transition
+            class="mb-6 flex items-center gap-3 rounded-xl border {{ session('alert-type', 'success') === 'danger' ? 'border-red-200 bg-red-50 text-red-800' : 'border-emerald-200 bg-emerald-50 text-emerald-800' }} px-5 py-3 shadow-sm" role="alert">
+            <span class="{{ session('alert-type', 'success') === 'danger' ? 'text-red-600' : 'text-emerald-600' }}">✓</span>
+            <span class="flex-1 text-sm font-medium">{{ session('message') }}</span>
+            <button type="button" class="{{ session('alert-type', 'success') === 'danger' ? 'text-red-600 hover:text-red-800' : 'text-emerald-600 hover:text-emerald-800' }}" @click="open = false">✕</button>
         </div>
     @endif
 
     <!-- Estadísticas -->
-    <div class="row g-3 mb-4">
-        <div class="col-md-3">
-            <div class="card shadow-sm">
-                <div class="card-body text-center">
-                    <h6 class="text-muted mb-2"><i class="bi bi-archive"></i> Lotes Activos</h6>
-                    <h3 class="mb-0 text-primary">{{ $estadisticas['total_lotes'] }}</h3>
-                </div>
-            </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white rounded-xl shadow-sm p-6 text-center">
+            <h6 class="text-slate-500 mb-2">📦 Lotes Activos</h6>
+            <h3 class="text-2xl font-bold text-brand">{{ $estadisticas['total_lotes'] }}</h3>
         </div>
-        <div class="col-md-3">
-            <div class="card shadow-sm">
-                <div class="card-body text-center">
-                    <h6 class="text-muted mb-2"><i class="bi bi-box-seam"></i> Stock Total</h6>
-                    <h3 class="mb-0 text-info">{{ number_format($estadisticas['stock_total'], 2) }}</h3>
-                </div>
-            </div>
+        <div class="bg-white rounded-xl shadow-sm p-6 text-center">
+            <h6 class="text-slate-500 mb-2">📦 Stock Total</h6>
+            <h3 class="text-2xl font-bold text-cyan-600">{{ number_format($estadisticas['stock_total'], 2) }}</h3>
         </div>
-        <div class="col-md-3">
-            <div class="card shadow-sm">
-                <div class="card-body text-center">
-                    <h6 class="text-muted mb-2"><i class="bi bi-currency-dollar"></i> Valor Inventario</h6>
-                    <h3 class="mb-0 text-success">${{ number_format($estadisticas['valor_inventario'], 2) }}</h3>
-                </div>
-            </div>
+        <div class="bg-white rounded-xl shadow-sm p-6 text-center">
+            <h6 class="text-slate-500 mb-2">💰 Valor Inventario</h6>
+            <h3 class="text-2xl font-bold text-emerald-600">${{ number_format($estadisticas['valor_inventario'], 2) }}</h3>
         </div>
-        <div class="col-md-3">
-            <div class="card shadow-sm">
-                <div class="card-body text-center">
-                    <h6 class="text-muted mb-2"><i class="bi bi-exclamation-triangle"></i> Próximos a Agotar</h6>
-                    <h3 class="mb-0 {{ $estadisticas['lotes_proximos_agotar'] > 0 ? 'text-warning' : 'text-secondary' }}">{{ $estadisticas['lotes_proximos_agotar'] }}</h3>
-                </div>
-            </div>
+        <div class="bg-white rounded-xl shadow-sm p-6 text-center">
+            <h6 class="text-slate-500 mb-2">⚠ Próximos a Agotar</h6>
+            <h3 class="text-2xl font-bold {{ $estadisticas['lotes_proximos_agotar'] > 0 ? 'text-amber-500' : 'text-slate-400' }}">{{ $estadisticas['lotes_proximos_agotar'] }}</h3>
         </div>
     </div>
 
     <!-- Filtros -->
-    <div class="card shadow-sm mb-4">
-        <div class="card-header bg-light">
-            <h5 class="mb-0"><i class="bi bi-funnel"></i> Filtros</h5>
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6">
+        <div class="bg-slate-50 border-b border-slate-200 px-6 py-4">
+            <h5 class="text-lg font-semibold text-slate-800">🔍 Filtros</h5>
         </div>
-        <div class="card-body">
-            <div class="row g-3">
-                <div class="col-md-3">
-                    <label class="form-label fw-semibold">Insumo</label>
-                    <select class="form-select" wire:model.live="filtro_insumo">
+        <div class="p-6">
+            <div class="grid grid-cols-1 md:grid-cols-6 gap-4">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1.5">Insumo</label>
+                    <select class="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20" wire:model.live="filtro_insumo">
                         <option value="">Todos los insumos</option>
                         @foreach($insumos as $insumo)
                             <option value="{{ $insumo->id_insumo }}" wire:key="option-{{ $insumo->id_insumo }}">{{ $insumo->nombre }}</option>
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-3">
-                    <label class="form-label fw-semibold">Proveedor</label>
-                    <select class="form-select" wire:model.live="filtro_proveedor">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1.5">Proveedor</label>
+                    <select class="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20" wire:model.live="filtro_proveedor">
                         <option value="">Todos los proveedores</option>
                         @foreach($proveedores as $proveedor)
                             <option value="{{ $proveedor->id_proveedor }}" wire:key="option-{{ $proveedor->id_proveedor }}">{{ $proveedor->razon_social }}</option>
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-2">
-                    <label class="form-label fw-semibold">Tipo Movimiento</label>
-                    <select class="form-select" wire:model.live="filtro_tipo">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1.5">Tipo Movimiento</label>
+                    <select class="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20" wire:model.live="filtro_tipo">
                         <option value="">Todos</option>
                         <option value="compra">Compra</option>
                         <option value="ajuste_entrada">Ajuste Entrada</option>
                         <option value="devolucion">Devolución</option>
                     </select>
                 </div>
-                <div class="col-md-2">
-                    <label class="form-label fw-semibold">Estado</label>
-                    <select class="form-select" wire:model.live="filtro_estado">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1.5">Estado</label>
+                    <select class="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20" wire:model.live="filtro_estado">
                         <option value="disponibles">Disponibles</option>
                         <option value="agotados">Agotados</option>
                         <option value="todos">Todos</option>
                     </select>
                 </div>
-                <div class="col-md-2">
-                    <label class="form-label">&nbsp;</label>
-                    <button class="btn btn-secondary w-100" wire:click="limpiarFiltros">
-                        <i class="bi bi-x-circle"></i> Limpiar
+                <div class="flex items-end">
+                    <button class="inline-flex items-center gap-1.5 px-4 py-2.5 border border-slate-300 bg-white text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors w-full justify-center" wire:click="limpiarFiltros">
+                        ✕ Limpiar
                     </button>
                 </div>
-            </div>
-            <div class="row g-3 mt-2">
-                <div class="col-md-3">
-                    <label class="form-label fw-semibold">Fecha Desde</label>
-                    <input type="date" class="form-control" wire:model.live="filtro_fecha_inicio">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1.5">Fecha Desde</label>
+                    <input type="date" class="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20" wire:model.live="filtro_fecha_inicio">
                 </div>
-                <div class="col-md-3">
-                    <label class="form-label fw-semibold">Fecha Hasta</label>
-                    <input type="date" class="form-control" wire:model.live="filtro_fecha_fin">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1.5">Fecha Hasta</label>
+                    <input type="date" class="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20" wire:model.live="filtro_fecha_fin">
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Tabla de lotes -->
-    <div class="card shadow-sm">
-        <div class="card-header bg-light">
-            <h5 class="mb-0"><i class="bi bi-table"></i> Lotes de Inventario</h5>
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="bg-slate-50 border-b border-slate-200 px-6 py-4">
+            <h5 class="text-lg font-semibold text-slate-800">📋 Lotes de Inventario</h5>
         </div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>ID Lote</th>
-                            <th>Insumo</th>
-                            <th>Proveedor</th>
-                            <th>Fecha Compra</th>
-                            <th>Tipo</th>
-                            <th class="text-end">Cant. Inicial</th>
-                            <th class="text-end">Disponible</th>
-                            <th class="text-end">Precio Unit.</th>
-                            <th class="text-end">Valor Disp.</th>
-                            <th class="text-center">Estado</th>
-                            <th class="text-center">Acciones</th>
+        <div class="p-0">
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="bg-slate-50 border-b border-slate-200">
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">ID Lote</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Insumo</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Proveedor</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Fecha Compra</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Tipo</th>
+                            <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Cant. Inicial</th>
+                            <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Disponible</th>
+                            <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Precio Unit.</th>
+                            <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Valor Disp.</th>
+                            <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Estado</th>
+                            <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Acciones</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody class="divide-y divide-slate-100">
                         @forelse($lotes as $lote)
-                            <tr class="{{ $lote->agotado ? 'table-secondary' : '' }}" wire:key="row-{{ $lote->id_lote_inventario }}">
-                                <td><strong>{{ $lote->id_lote_inventario }}</strong></td>
-                                <td>{{ $lote->insumo->nombre ?? 'N/A' }}</td>
-                                <td>{{ $lote->proveedor->razon_social ?? 'N/A' }}</td>
-                                <td>{{ $lote->fecha_compra->format('d/m/Y') }}</td>
-                                <td>
-                                    <span class="badge bg-{{ $lote->tipo_movimiento === 'compra' ? 'primary' : 'info' }}">
+                            <tr class="{{ $lote->agotado ? 'bg-slate-50' : '' }} hover:bg-slate-50 transition-colors" wire:key="row-{{ $lote->id_lote_inventario }}">
+                                <td class="px-4 py-2.5"><strong>{{ $lote->id_lote_inventario }}</strong></td>
+                                <td class="px-4 py-2.5 text-slate-700">{{ $lote->insumo->nombre ?? 'N/A' }}</td>
+                                <td class="px-4 py-2.5 text-slate-700">{{ $lote->proveedor->razon_social ?? 'N/A' }}</td>
+                                <td class="px-4 py-2.5 text-slate-600">{{ $lote->fecha_compra->format('d/m/Y') }}</td>
+                                <td class="px-4 py-2.5">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {{ $lote->tipo_movimiento === 'compra' ? 'bg-brand/10 text-brand' : 'bg-cyan-100 text-cyan-700' }}">
                                         {{ ucfirst(str_replace('_', ' ', $lote->tipo_movimiento)) }}
                                     </span>
                                 </td>
-                                <td class="text-end">{{ number_format($lote->cantidad_inicial, 2) }}</td>
-                                <td class="text-end">
-                                    <span class="{{ \App\Services\InventarioService::estaProximoAgotar($lote) ? 'text-warning fw-bold' : '' }}">
+                                <td class="px-4 py-2.5 text-right text-slate-600">{{ number_format($lote->cantidad_inicial, 2) }}</td>
+                                <td class="px-4 py-2.5 text-right">
+                                    <span class="{{ \App\Services\InventarioService::estaProximoAgotar($lote) ? 'text-amber-500 font-bold' : 'text-slate-700' }}">
                                         {{ number_format($lote->cantidad_disponible, 2) }}
                                     </span>
                                 </td>
-                                <td class="text-end">${{ number_format($lote->precio_unitario, 2) }}</td>
-                                <td class="text-end">${{ number_format($lote->valor_disponible, 2) }}</td>
-                                <td class="text-center">
+                                <td class="px-4 py-2.5 text-right text-slate-600">${{ number_format($lote->precio_unitario, 2) }}</td>
+                                <td class="px-4 py-2.5 text-right text-slate-600">${{ number_format($lote->valor_disponible, 2) }}</td>
+                                <td class="px-4 py-2.5 text-center">
                                     @if($lote->agotado)
-                                        <span class="badge bg-secondary"><i class="bi bi-x-circle"></i> Agotado</span>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">✖ Agotado</span>
                                     @elseif(\App\Services\InventarioService::estaProximoAgotar($lote))
-                                        <span class="badge bg-warning"><i class="bi bi-exclamation-triangle"></i> Bajo</span>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">⚠ Bajo</span>
                                     @else
-                                        <span class="badge bg-success"><i class="bi bi-check-circle"></i> Disponible</span>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">✓ Disponible</span>
                                     @endif
                                 </td>
-                                <td class="text-center">
-                                    <button class="btn btn-info btn-sm" wire:click="verDetalle({{ $lote->id_lote_inventario }})" title="Ver detalle">
-                                        <i class="bi bi-eye"></i>
+                                <td class="px-4 py-2.5 text-center">
+                                    <button class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-medium shadow-sm transition-colors"
+                                        wire:click="verDetalle({{ $lote->id_lote_inventario }})" title="Ver detalle">
+                                        👁️
                                     </button>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="11" class="text-center text-muted py-4">
-                                    <i class="bi bi-inbox"></i> No hay lotes de inventario registrados con los filtros aplicados
+                                <td colspan="11" class="text-center py-8 text-slate-400">
+                                    <div class="text-3xl mb-2">📥</div>
+                                    No hay lotes de inventario registrados con los filtros aplicados
                                 </td>
                             </tr>
                         @endforelse
@@ -182,110 +167,117 @@
                 </table>
             </div>
         </div>
-        <div class="card-footer">
+        <div class="px-6 py-4 bg-slate-50 border-t border-slate-200">
             {{ $lotes->links() }}
         </div>
     </div>
 
     <!-- Modal: Registrar Entrada -->
     @if($mostrarModal)
-        <div class="modal fade show d-block" style="background: rgba(0,0,0,0.5);" tabindex="-1" wire:ignore.self>
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header bg-primary text-white">
-                        <h5 class="modal-title">
-                            <i class="bi bi-box-seam"></i> Registrar Entrada de Stock
-                        </h5>
-                        <button type="button" class="btn-close btn-close-white" wire:click="cerrarModal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <form wire:submit.prevent="guardar">
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label class="form-label fw-semibold">Insumo <span class="text-danger">*</span></label>
-                                    <select class="form-select @error('id_insumo') is-invalid @enderror" wire:model="id_insumo">
-                                        <option value="">Seleccione un insumo</option>
-                                        @foreach($insumos as $insumo)
-                                            <option value="{{ $insumo->id_insumo }}" wire:key="option-{{ $insumo->id_insumo }}">
-                                                {{ $insumo->nombre }} (Stock: {{ number_format($insumo->stock ?? 0, 2) }})
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    @error('id_insumo') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label fw-semibold">Proveedor</label>
-                                    <select class="form-select @error('id_proveedor') is-invalid @enderror" wire:model="id_proveedor">
-                                        <option value="">Seleccione un proveedor</option>
-                                        @foreach($proveedores as $proveedor)
-                                            <option value="{{ $proveedor->id_proveedor }}" wire:key="option-{{ $proveedor->id_proveedor }}">{{ $proveedor->razon_social }}</option>
-                                        @endforeach
-                                    </select>
-                                    @error('id_proveedor') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                                </div>
-
-                                <div class="col-md-4">
-                                    <label class="form-label fw-semibold">Cantidad <span class="text-danger">*</span></label>
-                                    <input type="number" step="0.1" min="0" class="form-control @error('cantidad') is-invalid @enderror" wire:model.live="cantidad">
-                                    @error('cantidad') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                                </div>
-
-                                <div class="col-md-4">
-                                    <label class="form-label fw-semibold">Precio Unitario <span class="text-danger">*</span></label>
-                                    <input type="number" step="0.1" min="0" class="form-control @error('precio_unitario') is-invalid @enderror" wire:model.live="precio_unitario">
-                                    @error('precio_unitario') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                                </div>
-
-                                <div class="col-md-4">
-                                    <label class="form-label fw-semibold">Costo Total</label>
-                                    <input type="text" class="form-control bg-light" 
-                                           value="${{ number_format(floatval($cantidad ?? 0) * floatval($precio_unitario ?? 0), 2) }}" 
-                                           disabled readonly>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label fw-semibold">Número de Factura</label>
-                                    <input type="text" class="form-control @error('numero_factura') is-invalid @enderror" wire:model="numero_factura">
-                                    @error('numero_factura') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label fw-semibold">Fecha de Compra <span class="text-danger">*</span></label>
-                                    <input type="date" class="form-control @error('fecha_compra') is-invalid @enderror" wire:model="fecha_compra">
-                                    @error('fecha_compra') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                                </div>
-
-                                <div class="col-md-12">
-                                    <label class="form-label fw-semibold">Tipo de Movimiento <span class="text-danger">*</span></label>
-                                    <select class="form-select @error('tipo_movimiento') is-invalid @enderror" wire:model="tipo_movimiento">
-                                        <option value="">Seleccione un tipo</option>
-                                        <option value="compra">Compra</option>
-                                        <option value="ajuste_entrada">Ajuste de Entrada</option>
-                                        <option value="devolucion">Devolución</option>
-                                    </select>
-                                    @error('tipo_movimiento') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                                </div>
-
-                                <div class="col-md-12">
-                                    <label class="form-label fw-semibold">Observaciones</label>
-                                    <textarea class="form-control @error('observaciones') is-invalid @enderror" 
-                                              rows="3" wire:model="observaciones" placeholder="Observaciones adicionales..."></textarea>
-                                    @error('observaciones') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                                </div>
+        <div class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center" wire:ignore.self>
+            <div class="bg-white rounded-xl shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+                <div class="bg-brand text-white px-6 py-4 rounded-t-xl flex justify-between items-center">
+                    <h5 class="text-lg font-semibold">
+                        📦 Registrar Entrada de Stock
+                    </h5>
+                    <button type="button" class="text-white/80 hover:text-white" wire:click="cerrarModal">✕</button>
+                </div>
+                <div class="p-6">
+                    <form wire:submit.prevent="guardar">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1.5">Insumo <span class="text-red-500">*</span></label>
+                                <select class="w-full px-4 py-2.5 border rounded-lg text-sm transition-colors @error('id_insumo') border-red-400 bg-red-50 @else border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 @enderror" wire:model="id_insumo">
+                                    <option value="">Seleccione un insumo</option>
+                                    @foreach($insumos as $insumo)
+                                        <option value="{{ $insumo->id_insumo }}" wire:key="option-{{ $insumo->id_insumo }}">
+                                            {{ $insumo->nombre }} (Stock: {{ number_format($insumo->stock ?? 0, 2) }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('id_insumo') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
                             </div>
-                        </form>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" wire:click="cerrarModal">
-                            <i class="bi bi-x-circle"></i> Cancelar
-                        </button>
-                        @can('crear-gestion-stock')
-                        <button type="button" class="btn btn-primary" wire:click="guardar">
-                            <i class="bi bi-save"></i> Guardar Entrada
-                        </button>
-                        @endcan
-                    </div>
+
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1.5">Proveedor</label>
+                                <select class="w-full px-4 py-2.5 border rounded-lg text-sm transition-colors @error('id_proveedor') border-red-400 bg-red-50 @else border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 @enderror" wire:model="id_proveedor">
+                                    <option value="">Seleccione un proveedor</option>
+                                    @foreach($proveedores as $proveedor)
+                                        <option value="{{ $proveedor->id_proveedor }}" wire:key="option-{{ $proveedor->id_proveedor }}">{{ $proveedor->razon_social }}</option>
+                                    @endforeach
+                                </select>
+                                @error('id_proveedor') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1.5">Cantidad <span class="text-red-500">*</span></label>
+                                <input type="number" step="0.1" min="0"
+                                    class="w-full px-4 py-2.5 border rounded-lg text-sm transition-colors @error('cantidad') border-red-400 bg-red-50 @else border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 @enderror"
+                                    wire:model.live="cantidad">
+                                @error('cantidad') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1.5">Precio Unitario <span class="text-red-500">*</span></label>
+                                <input type="number" step="0.1" min="0"
+                                    class="w-full px-4 py-2.5 border rounded-lg text-sm transition-colors @error('precio_unitario') border-red-400 bg-red-50 @else border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 @enderror"
+                                    wire:model.live="precio_unitario">
+                                @error('precio_unitario') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1.5">Costo Total</label>
+                                <input type="text"
+                                    class="w-full px-4 py-2.5 border border-slate-300 bg-slate-50 rounded-lg text-sm text-slate-500 cursor-not-allowed"
+                                    value="${{ number_format(floatval($cantidad ?? 0) * floatval($precio_unitario ?? 0), 2) }}"
+                                    disabled readonly>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1.5">Número de Factura</label>
+                                <input type="text"
+                                    class="w-full px-4 py-2.5 border rounded-lg text-sm transition-colors @error('numero_factura') border-red-400 bg-red-50 @else border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 @enderror"
+                                    wire:model="numero_factura">
+                                @error('numero_factura') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1.5">Fecha de Compra <span class="text-red-500">*</span></label>
+                                <input type="date"
+                                    class="w-full px-4 py-2.5 border rounded-lg text-sm transition-colors @error('fecha_compra') border-red-400 bg-red-50 @else border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 @enderror"
+                                    wire:model="fecha_compra">
+                                @error('fecha_compra') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+                            </div>
+
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-semibold text-slate-700 mb-1.5">Tipo de Movimiento <span class="text-red-500">*</span></label>
+                                <select class="w-full px-4 py-2.5 border rounded-lg text-sm transition-colors @error('tipo_movimiento') border-red-400 bg-red-50 @else border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 @enderror" wire:model="tipo_movimiento">
+                                    <option value="">Seleccione un tipo</option>
+                                    <option value="compra">Compra</option>
+                                    <option value="ajuste_entrada">Ajuste de Entrada</option>
+                                    <option value="devolucion">Devolución</option>
+                                </select>
+                                @error('tipo_movimiento') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+                            </div>
+
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-semibold text-slate-700 mb-1.5">Observaciones</label>
+                                <textarea class="w-full px-4 py-2.5 border rounded-lg text-sm transition-colors @error('observaciones') border-red-400 bg-red-50 @else border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 @enderror"
+                                          rows="3" wire:model="observaciones" placeholder="Observaciones adicionales..."></textarea>
+                                @error('observaciones') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="flex justify-end gap-2 px-6 py-4 bg-slate-50 border-t border-slate-200 rounded-b-xl">
+                    <button type="button" class="inline-flex items-center gap-1.5 px-4 py-2.5 border border-slate-300 bg-white text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors" wire:click="cerrarModal">
+                        ✕ Cancelar
+                    </button>
+                    @can('crear-gestion-stock')
+                    <button type="button" class="inline-flex items-center gap-1.5 px-5 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-lg text-sm font-medium shadow-sm transition-colors" wire:click="guardar">
+                        💾 Guardar Entrada
+                    </button>
+                    @endcan
                 </div>
             </div>
         </div>
@@ -293,135 +285,128 @@
 
     <!-- Modal: Detalle de Lote -->
     @if($loteSeleccionado)
-        <div class="modal fade show d-block" style="background: rgba(0,0,0,0.5);" tabindex="-1" wire:ignore.self>
-            <div class="modal-dialog modal-xl">
-                <div class="modal-content">
-                    <div class="modal-header bg-info text-white">
-                        <h5 class="modal-title">
-                            <i class="bi bi-info-circle"></i> Detalle del Lote #{{ $loteSeleccionado?->id_lote_inventario }}
-                        </h5>
-                        <button type="button" class="btn-close btn-close-white" wire:click="cerrarDetalle"></button>
-                    </div>
-                    <div class="modal-body">
-                        <!-- Información del Lote -->
-                        <div class="row mb-4">
-                            <div class="col-md-6">
-                                <div class="card shadow-sm">
-                                    <div class="card-header bg-light">
-                                        <h6 class="mb-0"><i class="bi bi-file-text"></i> Información General</h6>
-                                    </div>
-                                    <div class="card-body">
-                                        <table class="table table-sm table-borderless mb-0">
-                                            <tr>
-                                                <th width="50%">Insumo:</th>
-                                                <td>{{ $loteSeleccionado?->insumo?->nombre ?? 'N/A' }}</td>
-                                            </tr>
-                                            <tr>
-                                                <th>Proveedor:</th>
-                                                <td>{{ $loteSeleccionado?->proveedor?->razon_social ?? 'N/A' }}</td>
-                                            </tr>
-                                            <tr>
-                                                <th>Fecha Compra:</th>
-                                                <td>{{ optional($loteSeleccionado?->fecha_compra)->format('d/m/Y') }}</td>
-                                            </tr>
-                                            <tr>
-                                                <th>Número Factura:</th>
-                                                <td>{{ $loteSeleccionado?->numero_factura ?? 'N/A' }}</td>
-                                            </tr>
-                                        </table>
-                                    </div>
-                                </div>
+        <div class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center" wire:ignore.self>
+            <div class="bg-white rounded-xl shadow-xl max-w-5xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+                <div class="bg-cyan-600 text-white px-6 py-4 rounded-t-xl flex justify-between items-center">
+                    <h5 class="text-lg font-semibold">
+                        ℹ️ Detalle del Lote #{{ $loteSeleccionado?->id_lote_inventario }}
+                    </h5>
+                    <button type="button" class="text-white/80 hover:text-white" wire:click="cerrarDetalle">✕</button>
+                </div>
+                <div class="p-6">
+                    <!-- Información del Lote -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                            <div class="bg-slate-50 border-b border-slate-200 px-6 py-4">
+                                <h6 class="font-semibold text-slate-800">📄 Información General</h6>
                             </div>
-                            <div class="col-md-6">
-                                <div class="card shadow-sm">
-                                    <div class="card-header bg-light">
-                                        <h6 class="mb-0"><i class="bi bi-graph-up"></i> Cantidades y Valores</h6>
-                                    </div>
-                                    <div class="card-body">
-                                        <table class="table table-sm table-borderless mb-3">
-                                            <tr>
-                                                <th width="50%">Cantidad Inicial:</th>
-                                                <td class="text-end">{{ number_format($loteSeleccionado?->cantidad_inicial ?? 0, 2) }}</td>
-                                            </tr>
-                                            <tr>
-                                                <th>Cantidad Disponible:</th>
-                                                <td class="text-end fw-bold text-success">{{ number_format($loteSeleccionado?->cantidad_disponible ?? 0, 2) }}</td>
-                                            </tr>
-                                            <tr>
-                                                <th>Precio Unitario:</th>
-                                                <td class="text-end">${{ number_format($loteSeleccionado?->precio_unitario ?? 0, 2) }}</td>
-                                            </tr>
-                                        </table>
-                                        <div>
-                                            <label class="form-label fw-semibold">Porcentaje Consumido:</label>
-                                            <div class="progress" style="height: 25px;">
-                                                <div class="progress-bar {{ ($loteSeleccionado?->porcentaje_consumido ?? 0) > 80 ? 'bg-warning' : 'bg-primary' }}" 
-                                                     role="progressbar" 
-                                                     style="width: {{ $loteSeleccionado?->porcentaje_consumido ?? 0 }}%">
-                                                    {{ number_format($loteSeleccionado?->porcentaje_consumido ?? 0, 1) }}%
-                                                </div>
-                                            </div>
+                            <div class="p-6">
+                                <table class="w-full text-sm">
+                                    <tr class="border-b border-slate-100">
+                                        <th class="text-left py-2 w-1/2 text-slate-500 font-medium">Insumo:</th>
+                                        <td class="py-2">{{ $loteSeleccionado?->insumo?->nombre ?? 'N/A' }}</td>
+                                    </tr>
+                                    <tr class="border-b border-slate-100">
+                                        <th class="text-left py-2 text-slate-500 font-medium">Proveedor:</th>
+                                        <td class="py-2">{{ $loteSeleccionado?->proveedor?->razon_social ?? 'N/A' }}</td>
+                                    </tr>
+                                    <tr class="border-b border-slate-100">
+                                        <th class="text-left py-2 text-slate-500 font-medium">Fecha Compra:</th>
+                                        <td class="py-2">{{ optional($loteSeleccionado?->fecha_compra)->format('d/m/Y') }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th class="text-left py-2 text-slate-500 font-medium">Número Factura:</th>
+                                        <td class="py-2">{{ $loteSeleccionado?->numero_factura ?? 'N/A' }}</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                            <div class="bg-slate-50 border-b border-slate-200 px-6 py-4">
+                                <h6 class="font-semibold text-slate-800">📈 Cantidades y Valores</h6>
+                            </div>
+                            <div class="p-6">
+                                <table class="w-full text-sm mb-4">
+                                    <tr class="border-b border-slate-100">
+                                        <th class="text-left py-2 w-1/2 text-slate-500 font-medium">Cantidad Inicial:</th>
+                                        <td class="py-2 text-right">{{ number_format($loteSeleccionado?->cantidad_inicial ?? 0, 2) }}</td>
+                                    </tr>
+                                    <tr class="border-b border-slate-100">
+                                        <th class="text-left py-2 text-slate-500 font-medium">Cantidad Disponible:</th>
+                                        <td class="py-2 text-right font-bold text-emerald-600">{{ number_format($loteSeleccionado?->cantidad_disponible ?? 0, 2) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th class="text-left py-2 text-slate-500 font-medium">Precio Unitario:</th>
+                                        <td class="py-2 text-right">${{ number_format($loteSeleccionado?->precio_unitario ?? 0, 2) }}</td>
+                                    </tr>
+                                </table>
+                                <div>
+                                    <label class="block text-sm font-semibold text-slate-700 mb-1.5">Porcentaje Consumido:</label>
+                                    <div class="w-full bg-slate-200 rounded-full h-6">
+                                        <div class="h-full rounded-full text-xs text-white text-center leading-6 {{ ($loteSeleccionado?->porcentaje_consumido ?? 0) > 80 ? 'bg-amber-500' : 'bg-brand' }}"
+                                             style="width: {{ $loteSeleccionado?->porcentaje_consumido ?? 0 }}%">
+                                            {{ number_format($loteSeleccionado?->porcentaje_consumido ?? 0, 1) }}%
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
+                    </div>
 
-                        @if(($loteSeleccionado?->observaciones ?? null))
-                            <div class="alert alert-info">
-                                <strong><i class="bi bi-chat-left-text"></i> Observaciones:</strong> {{ $loteSeleccionado?->observaciones }}
-                            </div>
-                        @endif
+                    @if(($loteSeleccionado?->observaciones ?? null))
+                        <div class="flex items-center gap-3 bg-cyan-50 border border-cyan-200 text-cyan-800 rounded-xl px-5 py-3 text-sm mb-6">
+                            <span>💬</span> <strong>Observaciones:</strong> {{ $loteSeleccionado?->observaciones }}
+                        </div>
+                    @endif
 
-                        <div class="card shadow-sm">
-                            <div class="card-header bg-light">
-                                <h6 class="mb-0"><i class="bi bi-clock-history"></i> Historial de Movimientos</h6>
-                            </div>
-                            <div class="card-body p-0">
-                                <div class="table-responsive">
-                                    <table class="table table-hover table-sm mb-0">
-                                        <thead class="table-light">
-                                            <tr>
-                                                <th>Fecha</th>
-                                                <th>Tipo</th>
-                                                <th class="text-end">Cantidad</th>
-                                                <th class="text-end">Precio Unit.</th>
-                                                <th class="text-end">Costo Total</th>
-                                                <th>Motivo</th>
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="bg-slate-50 border-b border-slate-200 px-6 py-4">
+                            <h6 class="font-semibold text-slate-800">🕐 Historial de Movimientos</h6>
+                        </div>
+                        <div class="p-0">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm">
+                                    <thead>
+                                        <tr class="bg-slate-50 border-b border-slate-200">
+                                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Fecha</th>
+                                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Tipo</th>
+                                            <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Cantidad</th>
+                                            <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Precio Unit.</th>
+                                            <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Costo Total</th>
+                                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Motivo</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100">
+                                        @forelse(($loteSeleccionado?->movimientos ?? []) as $mov)
+                                            <tr wire:key="row-{{ $mov->id }}" class="hover:bg-slate-50 transition-colors">
+                                                <td class="px-4 py-2.5 text-slate-600">{{ optional(\Carbon\Carbon::parse($mov->fecha))->format('d/m/Y H:i') }}</td>
+                                                <td class="px-4 py-2.5">
+                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {{ $mov->tipo === 'entrada' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700' }}">
+                                                        {{ ucfirst($mov->tipo) }}
+                                                    </span>
+                                                </td>
+                                                <td class="px-4 py-2.5 text-right text-slate-600">{{ number_format($mov->cantidad, 2) }}</td>
+                                                <td class="px-4 py-2.5 text-right text-slate-600">${{ number_format($mov->precio_unitario, 2) }}</td>
+                                                <td class="px-4 py-2.5 text-right text-slate-600">${{ number_format($mov->costo_total_movimiento ?? 0, 2) }}</td>
+                                                <td class="px-4 py-2.5 text-slate-600">{{ $mov->motivo ?? '-' }}</td>
                                             </tr>
-                                        </thead>
-                                        <tbody>
-                                            @forelse(($loteSeleccionado?->movimientos ?? []) as $mov)
-                                                <tr wire:key="row-{{ $mov->id }}">
-                                                    <td>{{ optional(\Carbon\Carbon::parse($mov->fecha))->format('d/m/Y H:i') }}</td>
-                                                    <td>
-                                                        <span class="badge bg-{{ $mov->tipo === 'entrada' ? 'success' : 'danger' }}">
-                                                            {{ ucfirst($mov->tipo) }}
-                                                        </span>
-                                                    </td>
-                                                    <td class="text-end">{{ number_format($mov->cantidad, 2) }}</td>
-                                                    <td class="text-end">${{ number_format($mov->precio_unitario, 2) }}</td>
-                                                    <td class="text-end">${{ number_format($mov->costo_total_movimiento ?? 0, 2) }}</td>
-                                                    <td>{{ $mov->motivo ?? '-' }}</td>
-                                                </tr>
-                                            @empty
-                                                <tr>
-                                                    <td colspan="6" class="text-center text-muted py-3">
-                                                        <i class="bi bi-inbox"></i> No hay movimientos registrados
-                                                    </td>
-                                                </tr>
-                                            @endforelse
-                                        </tbody>
-                                    </table>
-                                </div>
+                                        @empty
+                                            <tr>
+                                                <td colspan="6" class="text-center py-8 text-slate-400">
+                                                    <div class="text-xl mb-2">📥</div> No hay movimientos registrados
+                                                </td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" wire:click="cerrarDetalle">
-                            <i class="bi bi-x-circle"></i> Cerrar
-                        </button>
-                    </div>
+                </div>
+                <div class="flex justify-end gap-2 px-6 py-4 bg-slate-50 border-t border-slate-200 rounded-b-xl">
+                    <button type="button" class="inline-flex items-center gap-1.5 px-4 py-2.5 border border-slate-300 bg-white text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors" wire:click="cerrarDetalle">
+                        ✕ Cerrar
+                    </button>
                 </div>
             </div>
         </div>

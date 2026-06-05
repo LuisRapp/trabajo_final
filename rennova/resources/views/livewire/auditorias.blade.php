@@ -1,51 +1,56 @@
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h1 class="mb-0"><i class="bi bi-file-earmark-text"></i> Auditorías del Sistema</h1>
+<div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+    <div class="flex justify-between items-center mb-4">
+        <h1 class="text-2xl font-bold text-slate-900">📄 Auditorías del Sistema</h1>
     </div>
 
-    <div class="card">
-        <div class="card-header bg-secondary text-white">
-            <div class="row align-items-center">
-                <div class="col">
-                    <strong><i class="bi bi-clock-history"></i> Registro de Cambios</strong>
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="bg-slate-600 text-white px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <strong>🕐 Registro de Cambios</strong>
                 </div>
-                <div class="col-auto">
-                    <button type="button" class="btn btn-sm btn-light" wire:click="toggleFiltros" aria-controls="filtrosAuditoria" aria-expanded="{{ $mostrarFiltros ? 'true' : 'false' }}">
-                        <i class="bi bi-funnel"></i> Filtros
+                <div>
+                    <button type="button" class="inline-flex items-center gap-1.5 px-4 py-2 bg-white/20 text-white rounded-lg text-sm font-medium hover:bg-white/30 transition-colors" wire:click="toggleFiltros" aria-controls="filtrosAuditoria" aria-expanded="{{ $mostrarFiltros ? 'true' : 'false' }}">
+                        🔍 Filtros
                     </button>
                 </div>
             </div>
         </div>
-        <div class="card-body">
+        <div class="p-6">
             <!-- Filtros Colapsables -->
             @if($mostrarFiltros)
             <div id="filtrosAuditoria">
-                <div class="row g-3 mb-3 pb-3 border-bottom">
-                    <div class="col-md-4">
-                        <label class="form-label fw-semibold">Buscar</label>
-                        <input type="text" wire:model.live.debounce.400ms="busqueda" class="form-control" placeholder="URL, IP o tag...">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 pb-4 border-b border-slate-200">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Buscar</label>
+                        <input type="text" wire:model.live.debounce.400ms="busqueda"
+                            class="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20"
+                            placeholder="URL, IP o tag...">
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label fw-semibold">Modelo</label>
-                        <select wire:model.live="filtroModelo" class="form-select">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Modelo</label>
+                        <select wire:model.live="filtroModelo"
+                            class="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20">
                             <option value="">Todos los modelos</option>
                             @foreach($modelos as $modelo)
                                 <option value="{{ $modelo['value'] }}" wire:key="option-{{ $modelo['value'] }}">{{ $modelo['label'] }}</option>
                             @endforeach
                         </select>
                     </div>
-                    <div class="col-md-2">
-                        <label class="form-label fw-semibold">Evento</label>
-                        <select wire:model.live="filtroEvento" class="form-select">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Evento</label>
+                        <select wire:model.live="filtroEvento"
+                            class="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20">
                             <option value="">Todos</option>
                             <option value="created">Creado</option>
                             <option value="updated">Actualizado</option>
                             <option value="deleted">Eliminado</option>
                         </select>
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label fw-semibold">Usuario</label>
-                        <select wire:model.live="filtroUsuario" class="form-select">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Usuario</label>
+                        <select wire:model.live="filtroUsuario"
+                            class="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20">
                             <option value="">Todos los usuarios</option>
                             @foreach($usuarios as $usuario)
                                 <option value="{{ $usuario['id'] }}" wire:key="option-{{ $usuario['id'] }}">{{ $usuario['nombre'] }}</option>
@@ -53,18 +58,21 @@
                         </select>
                     </div>
                 </div>
-                <div class="row g-3 mb-3">
-                    <div class="col-md-2">
-                        <label class="form-label fw-semibold">Desde</label>
-                        <input type="date" wire:model.live="filtroFechaDesde" class="form-control">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Desde</label>
+                        <input type="date" wire:model.live="filtroFechaDesde"
+                            class="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20">
                     </div>
-                    <div class="col-md-2">
-                        <label class="form-label fw-semibold">Hasta</label>
-                        <input type="date" wire:model.live="filtroFechaHasta" class="form-control">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Hasta</label>
+                        <input type="date" wire:model.live="filtroFechaHasta"
+                            class="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20">
                     </div>
-                    <div class="col-md-2 d-flex align-items-end">
-                        <button type="button" wire:click="limpiarFiltros" class="btn btn-outline-secondary w-100">
-                            <i class="bi bi-x-circle"></i> Limpiar
+                    <div class="flex items-end">
+                        <button type="button" wire:click="limpiarFiltros"
+                            class="inline-flex items-center gap-1.5 px-4 py-2.5 border border-slate-300 bg-white text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors w-full justify-center">
+                            ✕ Limpiar
                         </button>
                     </div>
                 </div>
@@ -72,61 +80,62 @@
             @endif
 
             <!-- Tabla de Auditorías -->
-            <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead class="table-light">
-                        <tr>
-                            <th>ID</th>
-                            <th>Modelo / Registro</th>
-                            <th>Evento</th>
-                            <th>Usuario</th>
-                            <th>Fecha</th>
-                            <th class="text-center">Acciones</th>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="bg-slate-50 border-b border-slate-200">
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">ID</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Modelo / Registro</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Evento</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Usuario</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Fecha</th>
+                            <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Acciones</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody class="divide-y divide-slate-100">
                         @forelse($auditorias as $auditoria)
-                            <tr wire:key="row-{{ $auditoria->id }}">
-                                <td><span class="badge bg-secondary">#{{ $auditoria->id }}</span></td>
-                                <td>
+                            <tr wire:key="row-{{ $auditoria->id }}" class="hover:bg-slate-50 transition-colors">
+                                <td class="px-4 py-2.5"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">#{{ $auditoria->id }}</span></td>
+                                <td class="px-4 py-2.5">
                                     <strong>{{ class_basename($auditoria->auditable_type) }}</strong><br>
-                                    <small class="text-muted">ID: {{ $auditoria->auditable_id }}</small>
+                                    <small class="text-slate-500">ID: {{ $auditoria->auditable_id }}</small>
                                 </td>
-                                <td>
+                                <td class="px-4 py-2.5">
                                     @if($auditoria->event === 'created')
-                                        <span class="badge bg-success"><i class="bi bi-plus-circle"></i> Creado</span>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">➕ Creado</span>
                                     @elseif($auditoria->event === 'updated')
-                                        <span class="badge bg-primary"><i class="bi bi-pencil"></i> Actualizado</span>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-brand/10 text-brand">✏️ Actualizado</span>
                                     @elseif($auditoria->event === 'deleted')
-                                        <span class="badge bg-danger"><i class="bi bi-trash"></i> Eliminado</span>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">🗑️ Eliminado</span>
                                     @else
-                                        <span class="badge bg-secondary">{{ ucfirst($auditoria->event) }}</span>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">{{ ucfirst($auditoria->event) }}</span>
                                     @endif
                                 </td>
-                                <td>
+                                <td class="px-4 py-2.5">
                                     @if($auditoria->user)
-                                        <i class="bi bi-person-circle text-primary"></i> {{ $auditoria->user->name }}<br>
-                                        <small class="text-muted">{{ $auditoria->ip_address ?? 'N/A' }}</small>
+                                        <span class="text-brand">👤</span> {{ $auditoria->user->name }}<br>
+                                        <small class="text-slate-500">{{ $auditoria->ip_address ?? 'N/A' }}</small>
                                     @else
-                                        <span class="text-muted"><i class="bi bi-robot"></i> Sistema</span><br>
-                                        <small class="text-muted">{{ $auditoria->ip_address ?? 'N/A' }}</small>
+                                        <span class="text-slate-500">🤖 Sistema</span><br>
+                                        <small class="text-slate-500">{{ $auditoria->ip_address ?? 'N/A' }}</small>
                                     @endif
                                 </td>
-                                <td>
+                                <td class="px-4 py-2.5">
                                     {{ $auditoria->created_at->format('d/m/Y H:i') }}<br>
-                                    <small class="text-muted">{{ $auditoria->created_at->diffForHumans() }}</small>
+                                    <small class="text-slate-500">{{ $auditoria->created_at->diffForHumans() }}</small>
                                 </td>
-                                <td class="text-center">
-                                    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modalDetalle{{ $auditoria->id }}">
-                                        <i class="bi bi-eye"></i> Ver
+                                <td class="px-4 py-2.5 text-center">
+                                    <button type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand hover:bg-brand-hover text-white rounded-lg text-xs font-medium shadow-sm transition-colors"
+                                        wire:click="$set('modalDetalle', {{ $auditoria->id }})">
+                                        👁️ Ver
                                     </button>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="text-center py-5 text-muted">
-                                    <i class="bi bi-inbox" style="font-size: 3rem;"></i>
-                                    <p class="mb-0 mt-2">No hay auditorías registradas con los filtros aplicados.</p>
+                                <td colspan="6" class="text-center py-12 text-slate-400">
+                                    <div class="text-5xl mb-2">📥</div>
+                                    <p>No hay auditorías registradas con los filtros aplicados.</p>
                                 </td>
                             </tr>
                         @endforelse
@@ -134,101 +143,102 @@
                 </table>
             </div>
         </div>
-        <div class="card-footer">
+        <div class="px-6 py-4 bg-slate-50 border-t border-slate-200">
             {{ $auditorias->links() }}
         </div>
     </div>
 
     <!-- Modales de Detalles -->
     @foreach($auditorias as $auditoria)
-        <div class="modal fade" id="modalDetalle{{ $auditoria->id }}" tabindex="-1" aria-hidden="true" wire:key="modal-{{ $auditoria->id }}">
-            <div class="modal-dialog modal-lg modal-dialog-scrollable">
-                <div class="modal-content">
-                    <div class="modal-header bg-light">
-                        <h5 class="modal-title">
-                            <i class="bi bi-info-circle"></i> Detalles de Auditoría #{{ $auditoria->id }}
-                        </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="row mb-3 pb-3 border-bottom">
-                            <div class="col-md-6">
-                                <p class="mb-2"><strong>Modelo:</strong> {{ class_basename($auditoria->auditable_type) }}</p>
-                                <p class="mb-2"><strong>ID del Registro:</strong> #{{ $auditoria->auditable_id }}</p>
-                                <p class="mb-0"><strong>Evento:</strong> 
-                                    @if($auditoria->event === 'created')
-                                        <span class="badge bg-success">Creado</span>
-                                    @elseif($auditoria->event === 'updated')
-                                        <span class="badge bg-primary">Actualizado</span>
-                                    @elseif($auditoria->event === 'deleted')
-                                        <span class="badge bg-danger">Eliminado</span>
-                                    @endif
-                                </p>
-                            </div>
-                            <div class="col-md-6">
-                                <p class="mb-2"><strong>Usuario:</strong> {{ $auditoria->user->name ?? 'Sistema' }}</p>
-                                <p class="mb-2"><strong>IP:</strong> {{ $auditoria->ip_address ?? 'N/A' }}</p>
-                                <p class="mb-0"><strong>Fecha:</strong> {{ $auditoria->created_at->format('d/m/Y H:i:s') }}</p>
-                            </div>
+        @if(isset($modalDetalle) && $modalDetalle == $auditoria->id)
+        <div class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center" wire:key="modal-{{ $auditoria->id }}">
+            <div class="bg-white rounded-xl shadow-xl max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+                <div class="bg-slate-50 border-b border-slate-200 px-6 py-4 rounded-t-xl flex justify-between items-center">
+                    <h5 class="text-lg font-semibold text-slate-800">
+                        ℹ️ Detalles de Auditoría #{{ $auditoria->id }}
+                    </h5>
+                    <button type="button" class="text-slate-400 hover:text-slate-600" wire:click="$set('modalDetalle', null)">✕</button>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 pb-4 border-b border-slate-200">
+                        <div>
+                            <p class="mb-2"><strong>Modelo:</strong> {{ class_basename($auditoria->auditable_type) }}</p>
+                            <p class="mb-2"><strong>ID del Registro:</strong> #{{ $auditoria->auditable_id }}</p>
+                            <p><strong>Evento:</strong>
+                                @if($auditoria->event === 'created')
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">Creado</span>
+                                @elseif($auditoria->event === 'updated')
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-brand/10 text-brand">Actualizado</span>
+                                @elseif($auditoria->event === 'deleted')
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">Eliminado</span>
+                                @endif
+                            </p>
                         </div>
-
-                        @if($auditoria->url)
-                            <div class="mb-3">
-                                <strong>URL:</strong> <code class="d-block bg-light p-2 rounded">{{ $auditoria->url }}</code>
-                            </div>
-                        @endif
-
-                        @if($auditoria->event === 'updated' && $auditoria->old_values && $auditoria->new_values)
-                            <h6 class="mb-3"><i class="bi bi-arrow-left-right"></i> Cambios Realizados</h6>
-                            <div class="table-responsive">
-                                <table class="table table-sm table-bordered">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th style="width: 30%;">Campo</th>
-                                            <th style="width: 35%;">Valor Anterior</th>
-                                            <th style="width: 35%;">Valor Nuevo</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach($auditoria->new_values as $campo => $valorNuevo)
-                                            @if(isset($auditoria->old_values[$campo]) && $auditoria->old_values[$campo] != $valorNuevo)
-                                                <tr wire:key="field-{{ $campo }}">
-                                                    <td><strong>{{ $campo }}</strong></td>
-                                                    <td>
-                                                        <div class="text-break">
-                                                            {{ is_array($auditoria->old_values[$campo]) ? json_encode($auditoria->old_values[$campo], JSON_UNESCAPED_UNICODE) : ($auditoria->old_values[$campo] ?? 'null') }}
-                                                        </div>
-                                                    </td>
-                                                    <td>
-                                                        <div class="text-break">
-                                                            {{ is_array($valorNuevo) ? json_encode($valorNuevo, JSON_UNESCAPED_UNICODE) : ($valorNuevo ?? 'null') }}
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            @endif
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                        @elseif($auditoria->event === 'created' && $auditoria->new_values)
-                            <h6 class="mb-3"><i class="bi bi-plus-circle"></i> Datos Creados</h6>
-                            <div class="bg-light p-3 rounded">
-                                <pre class="mb-0" style="max-height: 400px; overflow-y: auto;"><code>{{ json_encode($auditoria->new_values, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</code></pre>
-                            </div>
-                        @elseif($auditoria->event === 'deleted' && $auditoria->old_values)
-                            <h6 class="mb-3"><i class="bi bi-trash"></i> Datos Eliminados</h6>
-                            <div class="bg-light p-3 rounded">
-                                <pre class="mb-0" style="max-height: 400px; overflow-y: auto;"><code>{{ json_encode($auditoria->old_values, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</code></pre>
-                            </div>
-                        @endif
+                        <div>
+                            <p class="mb-2"><strong>Usuario:</strong> {{ $auditoria->user->name ?? 'Sistema' }}</p>
+                            <p class="mb-2"><strong>IP:</strong> {{ $auditoria->ip_address ?? 'N/A' }}</p>
+                            <p><strong>Fecha:</strong> {{ $auditoria->created_at->format('d/m/Y H:i:s') }}</p>
+                        </div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                            <i class="bi bi-x-circle"></i> Cerrar
-                        </button>
-                    </div>
+
+                    @if($auditoria->url)
+                        <div class="mb-4">
+                            <strong>URL:</strong> <code class="block bg-slate-100 p-3 rounded-lg mt-1 text-sm">{{ $auditoria->url }}</code>
+                        </div>
+                    @endif
+
+                    @if($auditoria->event === 'updated' && $auditoria->old_values && $auditoria->new_values)
+                        <h6 class="mb-3 font-semibold text-slate-800">↔️ Cambios Realizados</h6>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm border border-slate-200 rounded-lg">
+                                <thead>
+                                    <tr class="bg-slate-50 border-b border-slate-200">
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider w-[30%]">Campo</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider w-[35%]">Valor Anterior</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider w-[35%]">Valor Nuevo</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    @foreach($auditoria->new_values as $campo => $valorNuevo)
+                                        @if(isset($auditoria->old_values[$campo]) && $auditoria->old_values[$campo] != $valorNuevo)
+                                            <tr wire:key="field-{{ $campo }}">
+                                                <td class="px-4 py-2.5"><strong>{{ $campo }}</strong></td>
+                                                <td class="px-4 py-2.5">
+                                                    <div class="break-all">
+                                                        {{ is_array($auditoria->old_values[$campo]) ? json_encode($auditoria->old_values[$campo], JSON_UNESCAPED_UNICODE) : ($auditoria->old_values[$campo] ?? 'null') }}
+                                                    </div>
+                                                </td>
+                                                <td class="px-4 py-2.5">
+                                                    <div class="break-all">
+                                                        {{ is_array($valorNuevo) ? json_encode($valorNuevo, JSON_UNESCAPED_UNICODE) : ($valorNuevo ?? 'null') }}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        @endif
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @elseif($auditoria->event === 'created' && $auditoria->new_values)
+                        <h6 class="mb-3 font-semibold text-slate-800">➕ Datos Creados</h6>
+                        <div class="bg-slate-100 p-4 rounded-lg">
+                            <pre class="text-sm max-h-[400px] overflow-y-auto"><code>{{ json_encode($auditoria->new_values, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</code></pre>
+                        </div>
+                    @elseif($auditoria->event === 'deleted' && $auditoria->old_values)
+                        <h6 class="mb-3 font-semibold text-slate-800">🗑️ Datos Eliminados</h6>
+                        <div class="bg-slate-100 p-4 rounded-lg">
+                            <pre class="text-sm max-h-[400px] overflow-y-auto"><code>{{ json_encode($auditoria->old_values, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</code></pre>
+                        </div>
+                    @endif
+                </div>
+                <div class="flex justify-end gap-2 px-6 py-4 bg-slate-50 border-t border-slate-200 rounded-b-xl">
+                    <button type="button" class="inline-flex items-center gap-1.5 px-4 py-2.5 border border-slate-300 bg-white text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors"
+                        wire:click="$set('modalDetalle', null)">
+                        ✕ Cerrar
+                    </button>
                 </div>
             </div>
         </div>
+        @endif
     @endforeach
 </div>

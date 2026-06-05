@@ -1,32 +1,32 @@
-<li class="nav-item dropdown" id="notificaciones-dropdown">
-    <a class="nav-link position-relative" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" id="notificaciones-toggle">
-        <i class="bi bi-bell-fill" style="font-size: 1.3rem;"></i>
+<li class="relative" x-data="{ open: false }" @click.outside="open = false" id="notificaciones-dropdown">
+    <a class="relative cursor-pointer inline-flex items-center gap-1.5 px-3 py-2 text-slate-600 hover:text-slate-800 transition-colors" @click="open = !open" id="notificaciones-toggle">
+        <span class="text-xl">🔔</span>
         <?php if($cantidadNoLeidas > 0): ?>
-            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.65rem;">
+            <span class="absolute -top-0.5 -right-0.5 inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-[0.65rem] font-bold bg-red-500 text-white leading-none">
                 <?php echo e($cantidadNoLeidas > 9 ? '9+' : $cantidadNoLeidas); ?>
 
             </span>
         <?php endif; ?>
     </a>
 
-    <ul class="dropdown-menu dropdown-menu-end" style="width: 380px; max-height: 500px; overflow-y: auto;">
+    <ul x-show="open" x-transition
+        class="absolute right-0 mt-2 w-[380px] max-h-[500px] overflow-y-auto bg-white rounded-xl shadow-lg border border-slate-200 z-50">
         <!-- Header -->
-        <li class="px-3 py-2 border-bottom">
-            <div class="d-flex justify-content-between align-items-center">
-                <h6 class="mb-0 fw-bold">Notificaciones</h6>
-                <div class="d-flex gap-2">
+        <li class="px-4 py-3 border-b border-slate-200">
+            <div class="flex justify-between items-center">
+                <h6 class="font-bold text-slate-800">Notificaciones</h6>
+                <div class="flex gap-2">
                     <?php if($cantidadNoLeidas > 0): ?>
-                        <button 
-                            wire:click="marcarTodasComoLeidas" 
-                            class="btn btn-sm btn-link text-primary p-0"
-                            style="font-size: 0.85rem;"
+                        <button
+                            wire:click="marcarTodasComoLeidas"
+                            class="text-brand text-sm hover:underline p-0 bg-transparent border-0"
                             type="button"
                         >
                             Marcar todas como leídas
                         </button>
                     <?php endif; ?>
-                    <a href="<?php echo e(route('notificaciones.index')); ?>" class="btn btn-sm btn-link text-secondary p-0" style="font-size: 0.85rem;">
-                        <i class="bi bi-list-ul"></i> Historial
+                    <a href="<?php echo e(route('notificaciones.index')); ?>" class="text-slate-500 text-sm hover:underline">
+                        📋 Historial
                     </a>
                 </div>
             </div>
@@ -36,34 +36,33 @@
         <?php if($notificaciones->count() > 0): ?>
             <?php $__currentLoopData = $notificaciones; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $notificacion): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                 <li wire:key="notif-<?php echo e($notificacion->id); ?>">
-                    <div 
+                    <div
                         wire:click="irANotificacion(<?php echo e($notificacion->id); ?>)"
                         onclick="event.stopPropagation()"
-                        class="dropdown-item px-3 py-2 border-bottom"
-                        style="white-space: normal; background: <?php echo e($notificacion->leida ? '#fff' : '#f8f9fa'); ?>; cursor: pointer;"
+                        class="px-4 py-3 border-b border-slate-100 cursor-pointer <?php echo e($notificacion->leida ? 'bg-white' : 'bg-slate-50'); ?> hover:bg-slate-100 transition-colors"
                     >
-                        <div class="d-flex align-items-start">
+                        <div class="flex items-start">
                             <!-- Icono según tipo -->
-                            <div class="me-2 mt-1" style="min-width: 30px;">
+                            <div class="mr-2 mt-1 shrink-0">
                                 <?php if($notificacion->tipo === 'umbral_alcanzado'): ?>
-                                    <i class="bi bi-exclamation-triangle-fill text-warning" style="font-size: 1.2rem;"></i>
+                                    <span class="text-lg text-amber-500">⚠</span>
                                 <?php elseif($notificacion->tipo === 'stock_insuficiente'): ?>
-                                    <i class="bi bi-box-seam text-danger" style="font-size: 1.2rem;"></i>
+                                    <span class="text-lg text-red-500">📦</span>
                                 <?php elseif($notificacion->tipo === 'recordatorio_programado'): ?>
-                                    <i class="bi bi-calendar-check text-info" style="font-size: 1.2rem;"></i>
+                                    <span class="text-lg text-cyan-500">📅</span>
                                 <?php else: ?>
-                                    <i class="bi bi-bell text-secondary" style="font-size: 1.2rem;"></i>
+                                    <span class="text-lg text-slate-400">🔔</span>
                                 <?php endif; ?>
                             </div>
 
                             <!-- Contenido -->
-                            <div class="grow">
-                                <div class="fw-semibold" style="font-size: 0.9rem;"><?php echo e($notificacion->titulo); ?></div>
-                                <div class="text-muted small mt-1" style="font-size: 0.82rem;">
+                            <div class="flex-1 min-w-0">
+                                <div class="font-semibold text-sm text-slate-800"><?php echo e($notificacion->titulo); ?></div>
+                                <div class="text-slate-500 text-xs mt-1">
                                     <?php echo e(Str::limit($notificacion->mensaje, 100)); ?>
 
                                 </div>
-                                
+
                                 <!-- Info de fecha limite y dias restantes -->
                                 <?php if($notificacion->fecha_limite): ?>
                                     <?php
@@ -72,19 +71,19 @@
                                     <div class="mt-1">
                                         <?php if($diasRestantes !== null): ?>
                                             <?php if($diasRestantes >= 0): ?>
-                                                <span class="badge bg-warning text-dark" style="font-size: 0.7rem;">
-                                                    <i class="bi bi-clock"></i> <?php echo e($diasRestantes); ?> dia(s) restante(s)
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[0.7rem] font-medium bg-amber-100 text-amber-700">
+                                                    🕐 <?php echo e($diasRestantes); ?> dia(s) restante(s)
                                                 </span>
                                             <?php else: ?>
-                                                <span class="badge bg-danger" style="font-size: 0.7rem;">
-                                                    <i class="bi bi-x-circle"></i> Vencida
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[0.7rem] font-medium bg-red-100 text-red-700">
+                                                    ✖ Vencida
                                                 </span>
                                             <?php endif; ?>
                                         <?php endif; ?>
                                     </div>
                                 <?php endif; ?>
 
-                                <div class="text-muted small mt-1" style="font-size: 0.75rem;">
+                                <div class="text-slate-400 text-xs mt-1">
                                     <?php echo e($notificacion->created_at->diffForHumans()); ?>
 
                                 </div>
@@ -95,15 +94,15 @@
             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
 
             <!-- Ver todas -->
-            <li class="text-center py-2">
-                <a href="<?php echo e(route('notificaciones.index')); ?>" class="btn btn-sm btn-link text-primary">
+            <li class="text-center py-3">
+                <a href="<?php echo e(route('notificaciones.index')); ?>" class="text-brand text-sm hover:underline">
                     Ver todas las notificaciones
                 </a>
             </li>
         <?php else: ?>
-            <li class="text-center py-4 text-muted">
-                <i class="bi bi-inbox" style="font-size: 2rem;"></i>
-                <p class="mb-0 mt-2">No tienes notificaciones nuevas</p>
+            <li class="text-center py-8 text-slate-400">
+                <div class="text-3xl mb-2">📥</div>
+                <p>No tienes notificaciones nuevas</p>
             </li>
         <?php endif; ?>
     </ul>
@@ -111,149 +110,107 @@
 
 <!-- Modal de Programación de Mantenimiento -->
 <?php if($mostrarModalProgramacion && $notificacionSeleccionada && $mantenimientoSeleccionado): ?>
-<div class="modal fade show" style="display: block; background: rgba(0,0,0,0.5);" tabindex="-1" wire:click.self="cerrarModalProgramacion">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title">
-                    <i class="bi bi-calendar-check"></i> Programar Mantenimiento
-                </h5>
-                <button type="button" class="btn-close btn-close-white" wire:click="cerrarModalProgramacion"></button>
+<div class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center" wire:click.self="cerrarModalProgramacion">
+    <div class="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="bg-brand text-white px-6 py-4 rounded-t-xl">
+            <h5 class="text-lg font-semibold">
+                📅 Programar Mantenimiento
+            </h5>
+            <button type="button" class="absolute top-4 right-4 text-white/80 hover:text-white" wire:click="cerrarModalProgramacion">✕</button>
+        </div>
+        <div class="p-6">
+            <!-- Información de la notificación -->
+            <div class="flex items-start gap-3 bg-cyan-50 border border-cyan-200 text-cyan-800 rounded-xl px-5 py-3 text-sm mb-4">
+                <span class="text-2xl">ℹ️</span>
+                <div>
+                    <strong><?php echo e($notificacionSeleccionada->titulo); ?></strong>
+                    <p class="mt-1 text-xs"><?php echo e($notificacionSeleccionada->mensaje); ?></p>
+                </div>
             </div>
-            <div class="modal-body">
-                <!-- Información de la notificación -->
-                <div class="alert alert-info mb-3">
-                    <div class="d-flex align-items-start">
-                        <i class="bi bi-info-circle-fill me-2" style="font-size: 1.5rem;"></i>
+
+            <!-- Información del mantenimiento -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-4">
+                <div class="p-6">
+                    <h6 class="text-brand font-semibold mb-3">
+                        🔧 Detalles del Mantenimiento
+                    </h6>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="col-span-2">
+                            <small class="text-slate-500">Maquinaria:</small>
+                            <div class="font-semibold"><?php echo e($mantenimientoSeleccionado->maquinaria->nombre ?? 'N/A'); ?></div>
+                        </div>
                         <div>
-                            <strong><?php echo e($notificacionSeleccionada->titulo); ?></strong>
-                            <p class="mb-0 mt-1 small"><?php echo e($notificacionSeleccionada->mensaje); ?></p>
+                            <small class="text-slate-500">Tipo:</small>
+                            <div class="font-semibold"><?php echo e($mantenimientoSeleccionado->tipoMantenimiento->nombre ?? 'N/A'); ?></div>
                         </div>
-                    </div>
-                </div>
-
-                <!-- Información del mantenimiento -->
-                <div class="card mb-3">
-                    <div class="card-body">
-                        <h6 class="card-title text-primary mb-3">
-                            <i class="bi bi-tools"></i> Detalles del Mantenimiento
-                        </h6>
-                        <div class="row g-2">
-                            <div class="col-12">
-                                <small class="text-muted">Maquinaria:</small>
-                                <div class="fw-semibold"><?php echo e($mantenimientoSeleccionado->maquinaria->nombre ?? 'N/A'); ?></div>
-                            </div>
-                            <div class="col-6">
-                                <small class="text-muted">Tipo:</small>
-                                <div class="fw-semibold"><?php echo e($mantenimientoSeleccionado->tipoMantenimiento->nombre ?? 'N/A'); ?></div>
-                            </div>
-                            <div class="col-6">
-                                <small class="text-muted">Estado:</small>
-                                <div>
-                                    <?php if($mantenimientoSeleccionado->estado === 'pendiente'): ?>
-                                        <span class="badge bg-warning">Pendiente</span>
-                                    <?php elseif($mantenimientoSeleccionado->estado === 'programado'): ?>
-                                        <span class="badge bg-info">Programado</span>
-                                    <?php elseif($mantenimientoSeleccionado->estado === 'completado'): ?>
-                                        <span class="badge bg-success">Completado</span>
-                                    <?php else: ?>
-                                        <span class="badge bg-secondary"><?php echo e(ucfirst($mantenimientoSeleccionado->estado)); ?></span>
-                                    <?php endif; ?>
-                                </div>
+                        <div>
+                            <small class="text-slate-500">Estado:</small>
+                            <div>
+                                <?php if($mantenimientoSeleccionado->estado === 'pendiente'): ?>
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">Pendiente</span>
+                                <?php elseif($mantenimientoSeleccionado->estado === 'programado'): ?>
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-cyan-100 text-cyan-700">Programado</span>
+                                <?php elseif($mantenimientoSeleccionado->estado === 'completado'): ?>
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">Completado</span>
+                                <?php else: ?>
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600"><?php echo e(ucfirst($mantenimientoSeleccionado->estado)); ?></span>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Formulario de programación -->
-                <form wire:submit.prevent="programarMantenimiento">
-                    <div class="mb-3">
-                        <label for="fechaProgramada" class="form-label fw-semibold">
-                            <i class="bi bi-calendar3"></i> Fecha Programada
-                        </label>
-                        <input 
-                            type="date" 
-                            class="form-control <?php $__errorArgs = ['fechaProgramada'];
+            <!-- Formulario de programación -->
+            <form wire:submit.prevent="programarMantenimiento">
+                <div class="mb-4">
+                    <label for="fechaProgramada" class="block text-sm font-semibold text-slate-700 mb-1.5">
+                        📅 Fecha Programada
+                    </label>
+                    <input
+                        type="date"
+                        class="w-full px-4 py-2.5 border rounded-lg text-sm transition-colors <?php $__errorArgs = ['fechaProgramada'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+$message = $__bag->first($__errorArgs[0]); ?> border-red-400 bg-red-50 <?php else: ?> border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
-unset($__errorArgs, $__bag); ?>" 
-                            id="fechaProgramada" 
-                            wire:model="fechaProgramada"
-                            min="<?php echo e($fechaMinima); ?>"
-                            max="<?php echo e($fechaMaxima); ?>"
-                        >
-                        <?php $__errorArgs = ['fechaProgramada'];
+unset($__errorArgs, $__bag); ?>"
+                        id="fechaProgramada"
+                        wire:model="fechaProgramada"
+                        min="<?php echo e($fechaMinima); ?>"
+                        max="<?php echo e($fechaMaxima); ?>"
+                    >
+                    <?php $__errorArgs = ['fechaProgramada'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
 $message = $__bag->first($__errorArgs[0]); ?>
-                            <div class="invalid-feedback"><?php echo e($message); ?></div>
-                        <?php unset($message);
+                        <p class="text-red-600 text-xs mt-1"><?php echo e($message); ?></p>
+                    <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>
-                        <div class="form-text">
-                            <i class="bi bi-info-circle"></i> 
-                            Debes programar el mantenimiento entre el 
-                            <strong><?php echo e(\Carbon\Carbon::parse($fechaMinima)->format('d/m/Y')); ?></strong> y el 
-                            <strong><?php echo e(\Carbon\Carbon::parse($fechaMaxima)->format('d/m/Y')); ?></strong>
-                            (maximo 7 dias desde la notificacion).
-                        </div>
-                    </div>
+                    <small class="text-slate-500 text-xs mt-1 block">
+                        ℹ️
+                        Debes programar el mantenimiento entre el
+                        <strong><?php echo e(\Carbon\Carbon::parse($fechaMinima)->format('d/m/Y')); ?></strong> y el
+                        <strong><?php echo e(\Carbon\Carbon::parse($fechaMaxima)->format('d/m/Y')); ?></strong>
+                        (maximo 7 dias desde la notificacion).
+                    </small>
+                </div>
 
-                    <div class="modal-footer px-0 pb-0">
-                        <button type="button" class="btn btn-secondary" wire:click="cerrarModalProgramacion">
-                            <i class="bi bi-x-circle"></i> Cancelar
-                        </button>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-check-circle"></i> Confirmar Programación
-                        </button>
-                    </div>
-                </form>
-            </div>
+                <div class="flex justify-end gap-2 mt-6 pt-4 border-t border-slate-200">
+                    <button type="button" class="inline-flex items-center gap-1.5 px-4 py-2.5 border border-slate-300 bg-white text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors" wire:click="cerrarModalProgramacion">
+                        ✕ Cancelar
+                    </button>
+                    <button type="submit" class="inline-flex items-center gap-1.5 px-5 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-lg text-sm font-medium shadow-sm transition-colors">
+                        ✓ Confirmar Programación
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
-<?php endif; ?>
-<?php $__env->startPush('scripts'); ?>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        initNotificacionesDropdown();
-    });
-
-    // Reinicializar después de cada actualización de Livewire
-    document.addEventListener('livewire:update', function() {
-        setTimeout(initNotificacionesDropdown, 100);
-    });
-
-    function initNotificacionesDropdown() {
-        // Esperar a que Bootstrap esté disponible
-        const checkBootstrap = setInterval(function() {
-            if (window.bootstrap && window.bootstrap.Dropdown) {
-                clearInterval(checkBootstrap);
-                
-                const dropdownElement = document.getElementById('notificaciones-toggle');
-                if (dropdownElement) {
-                    // Destruir instancia anterior si existe
-                    const existingInstance = bootstrap.Dropdown.getInstance(dropdownElement);
-                    if (existingInstance) {
-                        existingInstance.dispose();
-                    }
-                    
-                    // Crear nueva instancia
-                    new bootstrap.Dropdown(dropdownElement);
-                    
-                    console.log('✓ Dropdown de notificaciones inicializado');
-                }
-            }
-        }, 100);
-        
-        // Timeout de seguridad (5 segundos)
-        setTimeout(() => clearInterval(checkBootstrap), 5000);
-    }
-</script>
-<?php $__env->stopPush(); ?><?php /**PATH /home/rluis/Escritorio/trabajo_final/rennova/resources/views/livewire/notificaciones-campana.blade.php ENDPATH**/ ?>
+<?php endif; ?><?php /**PATH /home/rluis/Escritorio/trabajo_final/rennova/resources/views/livewire/notificaciones-campana.blade.php ENDPATH**/ ?>
