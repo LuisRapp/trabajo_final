@@ -27,20 +27,10 @@
         </div>
     @endif
 
-    <div class="mb-6 flex gap-0">
-        @can('crear-ventas')
-        <button type="button" wire:click="$set('tab_activo','nuevo')"
-            class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border border-r-0 rounded-l-lg transition-all {{ $tab_activo === 'nuevo' ? 'text-white' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}"
-            style="{{ $tab_activo === 'nuevo' ? 'background-color: #2d7a4f; border-color: #2d7a4f' : '' }}">
-            <i class="bi bi-plus-circle"></i> Nueva Venta
-        </button>
-        @endcan
-        <button type="button" wire:click="$set('tab_activo','historial')"
-            class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border rounded-r-lg transition-all {{ $tab_activo === 'historial' ? 'text-white' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}"
-            style="{{ $tab_activo === 'historial' ? 'background-color: #2d7a4f; border-color: #2d7a4f' : '' }}">
-            <i class="bi bi-list-ul"></i> Historial de Ventas
-        </button>
-    </div>
+    <x-tab-nav :tabs="[
+        ['value' => 'nuevo', 'label' => 'Nueva Venta', 'icon' => 'plus-circle', 'can' => auth()->user()->can('crear-ventas')],
+        ['value' => 'historial', 'label' => 'Historial de Ventas', 'icon' => 'list-ul'],
+    ]" activeTab="{{ $tab_activo }}" tabProperty="tab_activo" />
 
     @if($tab_activo === 'nuevo')
     @can('crear-ventas')
@@ -186,14 +176,9 @@
                                         </button>
                                     </td>
                                 </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="7" class="px-3 py-8 text-center">
-                                        <i class="bi bi-inbox text-slate-300 block mb-2" style="font-size: 2rem;"></i>
-                                        <p class="text-slate-500 font-medium">No hay ventas registradas</p>
-                                    </td>
-                                </tr>
-                            @endforelse
+                                @empty
+                                    <x-empty-state :colspan="7" message="No hay ventas registradas." />
+                                @endforelse
                         </tbody>
                     </table>
                 </div>
@@ -305,7 +290,7 @@
                             </button>
                             @endcan
                             @can('eliminar-ventas')
-                            <button type="button" class="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium text-sm" wire:click="darDeBaja({{ $venta_seleccionada->id_recibo }})" onclick="return confirm('¿Está seguro de dar de baja esta venta?')">
+                            <button type="button" class="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium text-sm" wire:click="darDeBaja({{ $venta_seleccionada->id_recibo }})" wire:confirm="¿Está seguro de dar de baja esta venta?">
                                 <i class="bi bi-trash"></i> Dar de Baja
                             </button>
                             @endcan

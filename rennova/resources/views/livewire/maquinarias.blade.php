@@ -16,20 +16,10 @@
         </div>
     @endif
 
-    <div class="mb-6 flex gap-0">
-        @canany(['crear-maquinarias', 'editar-maquinarias'])
-        <button type="button" wire:click="$set('tab_activo','nuevo')"
-            class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border border-r-0 rounded-l-lg transition-all {{ $tab_activo === 'nuevo' ? 'text-white' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}"
-            style="{{ $tab_activo === 'nuevo' ? 'background-color: #2d7a4f; border-color: #2d7a4f' : '' }}">
-            <i class="bi bi-plus-circle"></i> Nueva Maquinaria
-        </button>
-        @endcanany
-        <button type="button" wire:click="$set('tab_activo','listado')"
-            class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border rounded-r-lg transition-all {{ $tab_activo === 'listado' ? 'text-white' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}"
-            style="{{ $tab_activo === 'listado' ? 'background-color: #2d7a4f; border-color: #2d7a4f' : '' }}">
-            <i class="bi bi-list-ul"></i> Listado de Maquinarias
-        </button>
-    </div>
+    <x-tab-nav :tabs="[
+        ['value' => 'nuevo', 'label' => 'Nueva Maquinaria', 'icon' => 'plus-circle', 'can' => auth()->user()->canAny(['crear-maquinarias', 'editar-maquinarias'])],
+        ['value' => 'listado', 'label' => 'Listado de Maquinarias', 'icon' => 'list-ul'],
+    ]" activeTab="{{ $tab_activo }}" tabProperty="tab_activo" />
 
     @if($tab_activo === 'nuevo')
         @canany(['crear-maquinarias', 'editar-maquinarias'])
@@ -63,37 +53,32 @@
                                 <label class="block text-sm font-semibold text-slate-700 mb-2">Estado <span class="text-red-500">*</span></label>
                                 <select wire:model="estado" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('estado') ring-2 ring-red-500 @enderror">
                                     <option value="">Seleccione...</option>
-                                    <option value="operativa">Operativa</option>
+                                    <option value="disponible">Disponible</option>
+                                    <option value="asignada">Asignada</option>
                                     <option value="en_mantenimiento">En Mantenimiento</option>
-                                    <option value="fuera_de_servicio">Fuera de Servicio</option>
                                 </select>
                                 @error('estado') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
                             </div>
                         </div>
-
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                             <div>
-                                <label class="block text-sm font-semibold text-slate-700 mb-2">¿Es Alquilada?</label>
-                                <select wire:model="es_alquilada" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('es_alquilada') ring-2 ring-red-500 @enderror">
-                                    <option value="">Seleccione...</option>
+                                <label class="block text-sm font-semibold text-slate-700 mb-2">¿Es alquilada?</label>
+                                <select wire:model="es_alquilada" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors">
                                     <option value="0">No</option>
                                     <option value="1">Sí</option>
                                 </select>
-                                @error('es_alquilada') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
                             </div>
                             <div>
-                                <label class="block text-sm font-semibold text-slate-700 mb-2">Fecha Inicio Actividades</label>
+                                <label class="block text-sm font-semibold text-slate-700 mb-2">Fecha Inicio Actividades <span class="text-red-500">*</span></label>
                                 <input type="date" wire:model="fecha_inicio_actividades" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('fecha_inicio_actividades') ring-2 ring-red-500 @enderror">
                                 @error('fecha_inicio_actividades') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
                             </div>
                             <div>
-                                <label class="block text-sm font-semibold text-slate-700 mb-2">Umbral Mantenimiento (ton)</label>
-                                <input type="number" step="0.1" min="0" wire:model="umbral_toneladas" placeholder="Ej: 100.00" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('umbral_toneladas') ring-2 ring-red-500 @enderror">
-                                <small class="text-slate-500 text-xs mt-1 block">Toneladas acumuladas para mantenimiento</small>
+                                <label class="block text-sm font-semibold text-slate-700 mb-2">Umbral Toneladas <span class="text-red-500">*</span></label>
+                                <input type="number" wire:model="umbral_toneladas" placeholder="Ej: 1000" step="0.01" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('umbral_toneladas') ring-2 ring-red-500 @enderror">
                                 @error('umbral_toneladas') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
                             </div>
                         </div>
-
                         <div class="flex gap-2 justify-end">
                             @if ($maquinaria_id)
                                 <button type="button" wire:click="resetCampos" class="inline-flex items-center gap-2 px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors font-medium text-sm">
@@ -115,15 +100,8 @@
         <div>
             <div class="bg-white rounded-lg shadow-sm border border-slate-200">
                 <div class="p-6">
-                    <!-- Buscador -->
-                    <div class="mb-6">
-                        <div class="flex items-center gap-2 px-4 py-3 border border-slate-300 rounded-lg bg-slate-50">
-                            <i class="bi bi-search text-slate-500"></i>
-                            <input type="text" wire:model.live="busqueda" placeholder="Buscar por tipo, modelo o estado..." class="flex-1 bg-slate-50 border-0 focus:ring-0 focus:outline-none text-slate-700 placeholder-slate-400">
-                        </div>
-                    </div>
+                    <x-search-input placeholder="Buscar por tipo, modelo o estado..." />
 
-                    <!-- Tabla -->
                     <div class="overflow-x-auto">
                         <table class="w-full">
                             <thead>
@@ -133,8 +111,7 @@
                                     <th class="px-3 py-3 text-left text-xs font-semibold uppercase text-slate-600">Modelo</th>
                                     <th class="px-3 py-3 text-left text-xs font-semibold uppercase text-slate-600">Estado</th>
                                     <th class="px-3 py-3 text-left text-xs font-semibold uppercase text-slate-600">Alquilada</th>
-                                    <th class="px-3 py-3 text-left text-xs font-semibold uppercase text-slate-600">Umbral (ton)</th>
-                                    <th class="px-3 py-3 text-left text-xs font-semibold uppercase text-slate-600">Fecha Inicio</th>
+                                    <th class="px-3 py-3 text-right text-xs font-semibold uppercase text-slate-600">Umbral (ton)</th>
                                     <th class="px-3 py-3 text-center text-xs font-semibold uppercase text-slate-600">Acciones</th>
                                 </tr>
                             </thead>
@@ -142,55 +119,29 @@
                                 @forelse ($maquinarias as $maquinaria)
                                     <tr class="hover:bg-slate-50 transition-colors" wire:key="row-{{ $maquinaria->id_maquinaria }}">
                                         <td class="px-3 py-3"><span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">{{ $maquinaria->id_maquinaria }}</span></td>
-                                        <td class="px-3 py-3 font-semibold text-slate-800">{{ $maquinaria->tipoMaquinaria?->nombre ?? 'N/A' }}</td>
-                                        <td class="px-3 py-3 text-slate-600">{{ $maquinaria->modelo }}</td>
+                                        <td class="px-3 py-3 text-slate-600">{{ $maquinaria->tipoMaquinaria->nombre ?? 'N/A' }}</td>
+                                        <td class="px-3 py-3 font-semibold text-slate-800">{{ $maquinaria->modelo }}</td>
                                         <td class="px-3 py-3">
-                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
-                                                {{ $maquinaria->estado == 'operativa' ? 'bg-green-50 text-green-700 border border-green-200' : 
-                                                   ($maquinaria->estado == 'en_mantenimiento' ? 'bg-amber-50 text-amber-700 border border-amber-200' : 
-                                                   'bg-red-50 text-red-700 border border-red-200') }}">
-                                                {{ ucfirst(str_replace('_', ' ', $maquinaria->estado)) }}
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold
+                                                {{ $maquinaria->estado === 'disponible' ? 'bg-green-50 text-green-700 border border-green-200' : '' }}
+                                                {{ $maquinaria->estado === 'asignada' ? 'bg-blue-50 text-blue-700 border border-blue-200' : '' }}
+                                                {{ $maquinaria->estado === 'en_mantenimiento' ? 'bg-amber-50 text-amber-700 border border-amber-200' : '' }}">
+                                                {{ ucfirst($maquinaria->estado) }}
                                             </span>
                                         </td>
-                                        <td class="px-3 py-3 text-slate-600">
-                                            @if($maquinaria->es_alquilada)
-                                                <i class="bi bi-check-circle-fill" style="color: #2d7a4f;"></i> Sí
-                                            @else
-                                                <i class="bi bi-x-circle-fill text-slate-400"></i> No
-                                            @endif
-                                        </td>
-                                        <td class="px-3 py-3">
-                                            @if($maquinaria->umbral_toneladas)
-                                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
-                                                    <i class="bi bi-speedometer2"></i> {{ number_format($maquinaria->umbral_toneladas, 2) }}
-                                                </span>
-                                            @else
-                                                <span class="text-slate-400">No configurado</span>
-                                            @endif
-                                        </td>
-                                        <td class="px-3 py-3 text-slate-600">{{ $maquinaria->fecha_inicio_actividades ? \Carbon\Carbon::parse($maquinaria->fecha_inicio_actividades)->format('d/m/Y') : 'N/A' }}</td>
+                                        <td class="px-3 py-3 text-slate-600">{{ $maquinaria->es_alquilada ? 'Sí' : 'No' }}</td>
+                                        <td class="px-3 py-3 text-right text-slate-600">{{ number_format($maquinaria->umbral_toneladas, 2, ',', '.') }}</td>
                                         <td class="px-3 py-3 text-center">
-                                            <div class="flex gap-1 justify-center">
-                                                @can('editar-maquinarias')
-                                                <button wire:click="editar({{ $maquinaria->id_maquinaria }})" @click="$set('tab_activo', 'nuevo')" title="Editar" class="inline-flex items-center px-2 py-1 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded transition-colors border border-blue-200">
-                                                    <i class="bi bi-pencil text-sm"></i>
-                                                </button>
-                                                @endcan
-                                                @can('eliminar-maquinarias')
-                                                <button wire:click="eliminar({{ $maquinaria->id_maquinaria }})" onclick="return confirm('¿Está seguro de eliminar esta maquinaria?')" title="Eliminar" class="inline-flex items-center px-2 py-1 bg-red-50 text-red-700 hover:bg-red-100 rounded transition-colors border border-red-200">
-                                                    <i class="bi bi-trash text-sm"></i>
-                                                </button>
-                                                @endcan
-                                            </div>
+                                            <x-action-buttons
+                                                editWireClick="editar({{ $maquinaria->id_maquinaria }})"
+                                                deleteWireClick="eliminar({{ $maquinaria->id_maquinaria }})"
+                                                deleteMessage="¿Está seguro de eliminar esta maquinaria?"
+                                                :canEdit="auth()->user()->can('editar-maquinarias')"
+                                                :canDelete="auth()->user()->can('eliminar-maquinarias')" />
                                         </td>
                                     </tr>
                                 @empty
-                                    <tr>
-                                        <td colspan="8" class="px-3 py-8 text-center">
-                                            <i class="bi bi-inbox text-slate-300 block mb-2" style="font-size: 2rem;"></i>
-                                            <p class="text-slate-500 font-medium">No hay maquinarias registradas.</p>
-                                        </td>
-                                    </tr>
+                                    <x-empty-state :colspan="7" message="No hay maquinarias registradas." />
                                 @endforelse
                             </tbody>
                         </table>
@@ -200,13 +151,3 @@
         </div>
     @endif
 </div>
-
-<!-- JavaScript para cambiar entre pestañas -->
-<script>
-    document.addEventListener('livewire:init', () => {
-        Livewire.on('maquinariaGuardada', () => {
-            // Livewire actualizará automáticamente
-        });
-    });
-</script>
-</script>

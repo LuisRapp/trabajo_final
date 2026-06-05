@@ -16,23 +16,11 @@
         </div>
     @endif
 
-    <!-- Tabs Navigation -->
-    <div class="mb-6 flex gap-0">
-        @canany(['crear-empleados', 'editar-empleados'])
-        <button type="button" wire:click="$set('tab_activo','nuevo')"
-            class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border border-r-0 rounded-l-lg transition-all {{ $tab_activo === 'nuevo' ? 'text-white' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}"
-            style="{{ $tab_activo === 'nuevo' ? 'background-color: #2d7a4f; border-color: #2d7a4f' : '' }}">
-            <i class="bi bi-plus-circle"></i> Nuevo Empleado
-        </button>
-        @endcanany
-        <button type="button" wire:click="$set('tab_activo','listado')"
-            class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border rounded-r-lg transition-all {{ $tab_activo === 'listado' ? 'text-white' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}"
-            style="{{ $tab_activo === 'listado' ? 'background-color: #2d7a4f; border-color: #2d7a4f' : '' }}">
-            <i class="bi bi-list-ul"></i> Listado de Empleados
-        </button>
-    </div>
+    <x-tab-nav :tabs="[
+        ['value' => 'nuevo', 'label' => 'Nuevo Empleado', 'icon' => 'plus-circle', 'can' => auth()->user()->canAny(['crear-empleados', 'editar-empleados'])],
+        ['value' => 'listado', 'label' => 'Listado de Empleados', 'icon' => 'list-ul'],
+    ]" activeTab="{{ $tab_activo }}" tabProperty="tab_activo" />
 
-    <!-- Tab 1: Nuevo Empleado -->
     @if($tab_activo === 'nuevo')
         @canany(['crear-empleados', 'editar-empleados'])
         <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
@@ -110,22 +98,14 @@
         @endcanany
     @endif
 
-    <!-- Tab 2: Listado de Empleados -->
     @if($tab_activo === 'listado')
         <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
             <div class="bg-slate-100 border-b border-slate-200 px-6 py-4">
                 <h5 class="text-lg font-semibold text-slate-800 mb-0">Listado de Empleados</h5>
             </div>
             <div class="p-6">
-                <!-- Buscador -->
-                <div class="mb-6">
-                    <div class="flex items-center gap-2 px-4 py-3 border border-slate-300 rounded-lg bg-slate-50">
-                        <i class="bi bi-search text-slate-500"></i>
-                        <input type="text" wire:model.live="busqueda" placeholder="Buscar por apellido, nombre, DNI o rol..." class="flex-1 bg-slate-50 border-0 focus:ring-0 focus:outline-none text-slate-700 placeholder-slate-400">
-                    </div>
-                </div>
+                <x-search-input placeholder="Buscar por apellido, nombre, DNI o rol..." />
 
-                <!-- Tabla -->
                 <div class="overflow-x-auto">
                     <table class="w-full">
                         <thead>
@@ -149,33 +129,21 @@
                                     <td class="px-3 py-3 text-slate-600">{{ $empleado->fecha_nacimiento ? \Carbon\Carbon::parse($empleado->fecha_nacimiento)->format('d/m/Y') : 'N/A' }}</td>
                                     <td class="px-3 py-3 text-slate-600">{{ $empleado->fecha_inicio_actividades ? \Carbon\Carbon::parse($empleado->fecha_inicio_actividades)->format('d/m/Y') : 'N/A' }}</td>
                                     <td class="px-3 py-3 text-center">
-                                        <div class="flex gap-1 justify-center">
-                                            @can('editar-empleados')
-                                            <button type="button" class="inline-flex items-center px-2 py-1 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded transition-colors border border-blue-200" wire:click="editar({{ $empleado->id_empleado }})" title="Editar">
-                                                <i class="bi bi-pencil text-sm"></i>
-                                            </button>
-                                            @endcan
-                                            @can('eliminar-empleados')
-                                            <button type="button" class="inline-flex items-center px-2 py-1 bg-red-50 text-red-700 hover:bg-red-100 rounded transition-colors border border-red-200" wire:click="eliminar({{ $empleado->id_empleado }})" onclick="return confirm('¿Está seguro de eliminar este empleado?')" title="Eliminar">
-                                                <i class="bi bi-trash text-sm"></i>
-                                            </button>
-                                            @endcan
-                                        </div>
+                                        <x-action-buttons
+                                            editWireClick="editar({{ $empleado->id_empleado }})"
+                                            deleteWireClick="eliminar({{ $empleado->id_empleado }})"
+                                            deleteMessage="¿Está seguro de eliminar este empleado?"
+                                            :canEdit="auth()->user()->can('editar-empleados')"
+                                            :canDelete="auth()->user()->can('eliminar-empleados')" />
                                     </td>
                                 </tr>
                             @empty
-                                <tr>
-                                    <td colspan="7" class="px-3 py-8 text-center">
-                                        <i class="bi bi-inbox text-slate-300 block mb-2" style="font-size: 2rem;"></i>
-                                        <p class="text-slate-500 font-medium">No hay empleados registrados.</p>
-                                    </td>
-                                </tr>
+                                <x-empty-state :colspan="7" message="No hay empleados registrados." />
                             @endforelse
                         </tbody>
                     </table>
                 </div>
 
-                <!-- Paginación -->
                 @if($empleados->hasPages())
                     <div class="mt-6">
                         {{ $empleados->links('pagination::tailwind') }}
@@ -185,14 +153,3 @@
         </div>
     @endif
 </div>
-
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const successAlert = document.querySelector('[x-data*="open"]');
-        if (successAlert && window.Alpine) {
-            setTimeout(() => {
-                successAlert.remove?.();
-            }, 3000);
-        }
-    });
-</script>

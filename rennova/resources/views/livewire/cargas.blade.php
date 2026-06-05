@@ -16,20 +16,10 @@
         </div>
     @endif
 
-    <div class="mb-6 flex gap-0">
-        @canany(['crear-cargas', 'editar-cargas'])
-        <button type="button" wire:click="$set('tab_activo','nuevo')"
-            class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border border-r-0 rounded-l-lg transition-all {{ $tab_activo === 'nuevo' ? 'text-white' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}"
-            style="{{ $tab_activo === 'nuevo' ? 'background-color: #2d7a4f; border-color: #2d7a4f' : '' }}">
-            <i class="bi bi-plus-circle"></i> Nueva Carga
-        </button>
-        @endcanany
-        <button type="button" wire:click="$set('tab_activo','listado')"
-            class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border rounded-r-lg transition-all {{ $tab_activo === 'listado' ? 'text-white' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}"
-            style="{{ $tab_activo === 'listado' ? 'background-color: #2d7a4f; border-color: #2d7a4f' : '' }}">
-            <i class="bi bi-list-ul"></i> Listado de Cargas
-        </button>
-    </div>
+    <x-tab-nav :tabs="[
+        ['value' => 'nuevo', 'label' => 'Nueva Carga', 'icon' => 'plus-circle', 'can' => auth()->user()->canAny(['crear-cargas', 'editar-cargas'])],
+        ['value' => 'listado', 'label' => 'Listado de Cargas', 'icon' => 'list-ul'],
+    ]" activeTab="{{ $tab_activo }}" tabProperty="tab_activo" />
 
     @if($tab_activo === 'nuevo')
         @canany(['crear-cargas', 'editar-cargas'])
@@ -135,13 +125,7 @@
         <div>
             <div class="bg-white rounded-lg shadow-sm border border-slate-200">
                 <div class="p-6">
-                    <!-- Buscador -->
-                    <div class="mb-6">
-                        <div class="flex items-center gap-2 px-4 py-3 border border-slate-300 rounded-lg bg-slate-50">
-                            <i class="bi bi-search text-slate-500"></i>
-                            <input type="text" wire:model.live="busqueda" placeholder="Buscar por lote, ticket, destino, chofer o fecha..." class="flex-1 bg-slate-50 border-0 focus:ring-0 focus:outline-none text-slate-700 placeholder-slate-400">
-                        </div>
-                    </div>
+                    <x-search-input placeholder="Buscar por lote, ticket, destino, chofer o fecha..." />
 
                     <!-- Tabla -->
                     <div class="overflow-x-auto">
@@ -183,27 +167,16 @@
                                         <td class="px-3 py-3 text-slate-600">{{ $carga->destino ?? '-' }}</td>
                                         <td class="px-3 py-3 text-slate-600">{{ \Carbon\Carbon::parse($carga->fecha_carga)->format('d/m/Y') }}</td>
                                         <td class="px-3 py-3 text-center">
-                                            <div class="flex gap-1 justify-center">
-                                                @can('editar-cargas')
-                                                <button wire:click="editar({{ $carga->id_carga }})" @click="$set('tab_activo', 'nuevo')" title="Editar" class="inline-flex items-center px-2 py-1 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded transition-colors border border-blue-200">
-                                                    <i class="bi bi-pencil text-sm"></i>
-                                                </button>
-                                                @endcan
-                                                @can('eliminar-cargas')
-                                                <button wire:click="eliminar({{ $carga->id_carga }})" onclick="return confirm('¿Eliminar esta carga?')" title="Eliminar" class="inline-flex items-center px-2 py-1 bg-red-50 text-red-700 hover:bg-red-100 rounded transition-colors border border-red-200">
-                                                    <i class="bi bi-trash text-sm"></i>
-                                                </button>
-                                                @endcan
-                                            </div>
+                                            <x-action-buttons
+                                                editWireClick="editar({{ $carga->id_carga }})"
+                                                deleteWireClick="eliminar({{ $carga->id_carga }})"
+                                                deleteMessage="¿Eliminar esta carga?"
+                                                :canEdit="auth()->user()->can('editar-cargas')"
+                                                :canDelete="auth()->user()->can('eliminar-cargas')" />
                                         </td>
                                     </tr>
                                 @empty
-                                    <tr>
-                                        <td colspan="12" class="px-3 py-8 text-center">
-                                            <i class="bi bi-inbox text-slate-300 block mb-2" style="font-size: 2rem;"></i>
-                                            <p class="text-slate-500 font-medium">No hay cargas registradas.</p>
-                                        </td>
-                                    </tr>
+                                    <x-empty-state :colspan="12" message="No hay cargas registradas." />
                                 @endforelse
                             </tbody>
                         </table>
@@ -248,12 +221,3 @@
         </div>
     @endif
 </div>
-
-<!-- JavaScript para cambiar entre pestañas -->
-<script>
-    document.addEventListener('livewire:init', () => {
-        Livewire.on('cargaGuardada', () => {
-            // Livewire actualizará automáticamente
-        });
-    });
-</script>

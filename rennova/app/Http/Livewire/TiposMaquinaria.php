@@ -8,6 +8,7 @@ use App\Models\TipoMaquinaria;
 class TiposMaquinaria extends Component
 {
     public $tipos, $tipo_id, $nombre, $busqueda = '';
+    public $tab_activo = 'listado';
 
     protected $messages = [
         'nombre.required' => 'El nombre es obligatorio.',
@@ -61,12 +62,14 @@ class TiposMaquinaria extends Component
         );
 
         session()->flash('message', $this->tipo_id ? 'Tipo actualizado correctamente.' : 'Tipo creado correctamente.');
+        $this->tab_activo = 'listado';
         $this->resetCampos();
         $this->dispatch('tipoGuardado');
     }
 
     public function editar($id)
     {
+        $this->tab_activo = 'nuevo';
         $tipo = TipoMaquinaria::findOrFail($id);
         $this->tipo_id = $tipo->id_tipo_maquinaria;
         $this->nombre = $tipo->nombre;

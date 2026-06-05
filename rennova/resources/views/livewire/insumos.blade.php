@@ -16,20 +16,10 @@
         </div>
     @endif
 
-    <div class="mb-6 flex gap-0">
-        @canany(['crear-insumos', 'editar-insumos'])
-        <button type="button" wire:click="$set('tab_activo','nuevo')"
-            class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border border-r-0 rounded-l-lg transition-all {{ $tab_activo === 'nuevo' ? 'text-white' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}"
-            style="{{ $tab_activo === 'nuevo' ? 'background-color: #2d7a4f; border-color: #2d7a4f' : '' }}">
-            <i class="bi bi-plus-circle"></i> Nuevo Insumo
-        </button>
-        @endcanany
-        <button type="button" wire:click="$set('tab_activo','listado')"
-            class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border rounded-r-lg transition-all {{ $tab_activo === 'listado' ? 'text-white' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}"
-            style="{{ $tab_activo === 'listado' ? 'background-color: #2d7a4f; border-color: #2d7a4f' : '' }}">
-            <i class="bi bi-list-ul"></i> Listado de Insumos
-        </button>
-    </div>
+    <x-tab-nav :tabs="[
+        ['value' => 'nuevo', 'label' => 'Nuevo Insumo', 'icon' => 'plus-circle', 'can' => auth()->user()->canAny(['crear-insumos', 'editar-insumos'])],
+        ['value' => 'listado', 'label' => 'Listado de Insumos', 'icon' => 'list-ul'],
+    ]" activeTab="{{ $tab_activo }}" tabProperty="tab_activo" />
 
     @if($tab_activo === 'nuevo')
         @canany(['crear-insumos', 'editar-insumos'])
@@ -103,15 +93,8 @@
         <div>
             <div class="bg-white rounded-lg shadow-sm border border-slate-200">
                 <div class="p-6">
-                    <!-- Buscador -->
-                    <div class="mb-6">
-                        <div class="flex items-center gap-2 px-4 py-3 border border-slate-300 rounded-lg bg-slate-50">
-                            <i class="bi bi-search text-slate-500"></i>
-                            <input type="text" wire:model.live="busqueda" placeholder="Buscar por nombre, descripción, proveedor, unidad o costo..." class="flex-1 bg-slate-50 border-0 focus:ring-0 focus:outline-none text-slate-700 placeholder-slate-400">
-                        </div>
-                    </div>
+                    <x-search-input placeholder="Buscar por nombre, descripción, proveedor, unidad o costo..." />
 
-                    <!-- Tabla -->
                     <div class="overflow-x-auto">
                         <table class="w-full">
                             <thead>
@@ -154,27 +137,16 @@
                                             @endif
                                         </td>
                                         <td class="px-3 py-3 text-center">
-                                            <div class="flex gap-1 justify-center">
-                                                @can('editar-insumos')
-                                                <button wire:click="editar({{ $insumo->id_insumo }})" @click="$set('tab_activo', 'nuevo')" title="Editar" class="inline-flex items-center px-2 py-1 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded transition-colors border border-blue-200">
-                                                    <i class="bi bi-pencil text-sm"></i>
-                                                </button>
-                                                @endcan
-                                                @can('eliminar-insumos')
-                                                <button wire:click="eliminar({{ $insumo->id_insumo }})" onclick="return confirm('¿Está seguro de eliminar este insumo?')" title="Eliminar" class="inline-flex items-center px-2 py-1 bg-red-50 text-red-700 hover:bg-red-100 rounded transition-colors border border-red-200">
-                                                    <i class="bi bi-trash text-sm"></i>
-                                                </button>
-                                                @endcan
-                                            </div>
+                                            <x-action-buttons
+                                                editWireClick="editar({{ $insumo->id_insumo }})"
+                                                deleteWireClick="eliminar({{ $insumo->id_insumo }})"
+                                                deleteMessage="¿Está seguro de eliminar este insumo?"
+                                                :canEdit="auth()->user()->can('editar-insumos')"
+                                                :canDelete="auth()->user()->can('eliminar-insumos')" />
                                         </td>
                                     </tr>
                                 @empty
-                                    <tr>
-                                        <td colspan="8" class="px-3 py-8 text-center">
-                                            <i class="bi bi-inbox text-slate-300 block mb-2" style="font-size: 2rem;"></i>
-                                            <p class="text-slate-500 font-medium">No hay insumos registrados.</p>
-                                        </td>
-                                    </tr>
+                                    <x-empty-state :colspan="8" message="No hay insumos registrados." />
                                 @endforelse
                             </tbody>
                         </table>
@@ -184,12 +156,3 @@
         </div>
     @endif
 </div>
-
-<!-- JavaScript para cambiar entre pestañas -->
-<script>
-    document.addEventListener('livewire:init', () => {
-        Livewire.on('insumoGuardado', () => {
-            // Livewire actualizará automáticamente
-        });
-    });
-</script>

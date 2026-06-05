@@ -101,12 +101,14 @@ class Insumos extends Component
         );
 
         session()->flash('message', $this->insumo_id ? 'Insumo actualizado correctamente.' : 'Insumo creado correctamente.');
+        $this->tab_activo = 'listado';
         $this->resetCampos();
         $this->dispatch('insumoGuardado');
     }
 
     public function editar($id)
     {
+        $this->tab_activo = 'nuevo';
         $insumo = Insumo::findOrFail($id);
         $this->insumo_id = $insumo->id_insumo;
         $this->nombre = $insumo->nombre;

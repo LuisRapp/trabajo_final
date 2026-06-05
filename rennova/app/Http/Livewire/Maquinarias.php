@@ -83,12 +83,14 @@ class Maquinarias extends Component
         );
 
         session()->flash('message', $this->maquinaria_id ? 'Maquinaria actualizada correctamente.' : 'Maquinaria creada correctamente.');
+        $this->tab_activo = 'listado';
         $this->resetCampos();
         $this->dispatch('maquinariaGuardada');
     }
 
     public function editar($id)
     {
+        $this->tab_activo = 'nuevo';
         $maquinaria = Maquinaria::findOrFail($id);
         $this->maquinaria_id = $maquinaria->id_maquinaria;
         $this->id_tipo_maquinaria = $maquinaria->id_tipo_maquinaria;

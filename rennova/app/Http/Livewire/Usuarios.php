@@ -28,6 +28,7 @@ class Usuarios extends Component
     public $activo;
 
     public $busqueda = '';
+    public $tab_activo = 'listado';
 
     protected function rules()
     {
@@ -119,12 +120,14 @@ class Usuarios extends Component
         }
 
         session()->flash('message', $this->usuario_id ? 'Usuario actualizado correctamente.' : 'Usuario creado correctamente.');
+        $this->tab_activo = 'listado';
         $this->resetCampos();
         $this->dispatch('usuarioGuardado');
     }
 
     public function editar($id)
     {
+        $this->tab_activo = 'nuevo';
         $usuario = Usuario::findOrFail($id);
         $this->usuario_id = $usuario->id;
         $this->nombre = $usuario->nombre;

@@ -16,20 +16,10 @@
         </div>
     @endif
 
-    <div class="mb-6 flex gap-0">
-        @canany(['crear-choferes', 'editar-choferes'])
-        <button type="button" wire:click="$set('tab_activo','nuevo')"
-            class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border border-r-0 rounded-l-lg transition-all {{ $tab_activo === 'nuevo' ? 'text-white' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}"
-            style="{{ $tab_activo === 'nuevo' ? 'background-color: #2d7a4f; border-color: #2d7a4f' : '' }}">
-            <i class="bi bi-plus-circle"></i> Nuevo Chofer
-        </button>
-        @endcanany
-        <button type="button" wire:click="$set('tab_activo','listado')"
-            class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border rounded-r-lg transition-all {{ $tab_activo === 'listado' ? 'text-white' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}"
-            style="{{ $tab_activo === 'listado' ? 'background-color: #2d7a4f; border-color: #2d7a4f' : '' }}">
-            <i class="bi bi-list-ul"></i> Listado de Choferes
-        </button>
-    </div>
+    <x-tab-nav :tabs="[
+        ['value' => 'nuevo', 'label' => 'Nuevo Chofer', 'icon' => 'plus-circle', 'can' => auth()->user()->canAny(['crear-choferes', 'editar-choferes'])],
+        ['value' => 'listado', 'label' => 'Listado de Choferes', 'icon' => 'list-ul'],
+    ]" activeTab="{{ $tab_activo }}" tabProperty="tab_activo" />
 
     @if($tab_activo === 'nuevo')
         @canany(['crear-choferes', 'editar-choferes'])
@@ -38,70 +28,50 @@
                 <div class="bg-slate-100 border-b border-slate-200 px-6 py-4">
                     <h5 class="flex items-center gap-2 text-lg font-semibold text-slate-800 mb-0">
                         <i class="bi bi-{{ $chofer_id ? 'pencil-square' : 'plus-circle' }}"></i> 
-                        {{ $chofer_id ? 'Modificar Chofer' : 'Nuevo Chofer' }}
+                        {{ $chofer_id ? 'Editar Chofer' : 'Nuevo Chofer' }}
                     </h5>
                 </div>
                 <div class="p-6">
                     <form wire:submit.prevent="guardar">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                             <div>
                                 <label class="block text-sm font-semibold text-slate-700 mb-2">Cliente <span class="text-red-500">*</span></label>
                                 <select wire:model="id_cliente" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('id_cliente') ring-2 ring-red-500 @enderror">
-                                    <option value="">Seleccione un cliente...</option>
+                                    <option value="">Seleccione...</option>
                                     @foreach($clientes as $cliente)
-                                        <option value="{{ $cliente->id_cliente }}" wire:key="option-{{ $cliente->id_cliente }}">{{ $cliente->razon_social ?? $cliente->nombre }}</option>
+                                        <option value="{{ $cliente->id_cliente }}" wire:key="option-{{ $cliente->id_cliente }}">{{ $cliente->razon_social }}</option>
                                     @endforeach
                                 </select>
                                 @error('id_cliente') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
-                                <small class="text-slate-500 text-xs">El chofer estará asociado a este cliente</small>
                             </div>
                             <div>
                                 <label class="block text-sm font-semibold text-slate-700 mb-2">Apellido <span class="text-red-500">*</span></label>
-                                <input type="text" wire:model="apellido" placeholder="Apellido del chofer" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('apellido') ring-2 ring-red-500 @enderror">
+                                <input type="text" wire:model="apellido" placeholder="Apellido" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('apellido') ring-2 ring-red-500 @enderror">
                                 @error('apellido') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
                             </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                             <div>
                                 <label class="block text-sm font-semibold text-slate-700 mb-2">Nombre <span class="text-red-500">*</span></label>
-                                <input type="text" wire:model="nombre" placeholder="Nombre del chofer" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('nombre') ring-2 ring-red-500 @enderror">
+                                <input type="text" wire:model="nombre" placeholder="Nombre" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('nombre') ring-2 ring-red-500 @enderror">
                                 @error('nombre') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
                             </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                             <div>
                                 <label class="block text-sm font-semibold text-slate-700 mb-2">DNI <span class="text-red-500">*</span></label>
-                                <input type="text" wire:model="dni" placeholder="DNI del chofer" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('dni') ring-2 ring-red-500 @enderror">
+                                <input type="text" wire:model="dni" placeholder="12345678" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('dni') ring-2 ring-red-500 @enderror">
                                 @error('dni') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
                             </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                             <div>
                                 <label class="block text-sm font-semibold text-slate-700 mb-2">Teléfono</label>
-                                <input type="text" wire:model="telefono" placeholder="Teléfono de contacto" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('telefono') ring-2 ring-red-500 @enderror">
+                                <input type="text" wire:model="telefono" placeholder="Teléfono" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('telefono') ring-2 ring-red-500 @enderror">
                                 @error('telefono') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
                             </div>
                             <div>
                                 <label class="block text-sm font-semibold text-slate-700 mb-2">Dirección</label>
-                                <input type="text" wire:model="direccion" placeholder="Dirección del chofer" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('direccion') ring-2 ring-red-500 @enderror">
+                                <input type="text" wire:model="direccion" placeholder="Dirección" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('direccion') ring-2 ring-red-500 @enderror">
                                 @error('direccion') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
                             </div>
                         </div>
-
-                        <div class="mb-6">
-                            <label class="block text-sm font-semibold text-slate-700 mb-3">Estado</label>
-                            <div class="flex items-center gap-3">
-                                <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" wire:model="estado" class="sr-only peer">
-                                    <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
-                                </label>
-                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold {{ $estado ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-slate-100 text-slate-600 border border-slate-200' }}">
-                                    {{ $estado ? 'Activo' : 'Inactivo' }}
-                                </span>
-                            </div>
-                            <small class="text-slate-500 text-xs mt-2 block">Los choferes inactivos no aparecerán en los formularios de carga</small>
-                        </div>
-
                         <div class="flex gap-2 justify-end">
                             @if ($chofer_id)
                                 <button type="button" wire:click="resetCampos" class="inline-flex items-center gap-2 px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors font-medium text-sm">
@@ -123,15 +93,8 @@
         <div>
             <div class="bg-white rounded-lg shadow-sm border border-slate-200">
                 <div class="p-6">
-                    <!-- Buscador -->
-                    <div class="mb-6">
-                        <div class="flex items-center gap-2 px-4 py-3 border border-slate-300 rounded-lg bg-slate-50">
-                            <i class="bi bi-search text-slate-500"></i>
-                            <input type="text" wire:model.live="busqueda" placeholder="Buscar por cliente, apellido, nombre, DNI, teléfono o dirección..." class="flex-1 bg-slate-50 border-0 focus:ring-0 focus:outline-none text-slate-700 placeholder-slate-400">
-                        </div>
-                    </div>
+                    <x-search-input placeholder="Buscar por apellido, nombre, DNI, cliente..." />
 
-                    <!-- Tabla -->
                     <div class="overflow-x-auto">
                         <table class="w-full">
                             <thead>
@@ -141,45 +104,28 @@
                                     <th class="px-3 py-3 text-left text-xs font-semibold uppercase text-slate-600">Apellido y Nombre</th>
                                     <th class="px-3 py-3 text-left text-xs font-semibold uppercase text-slate-600">DNI</th>
                                     <th class="px-3 py-3 text-left text-xs font-semibold uppercase text-slate-600">Teléfono</th>
-                                    <th class="px-3 py-3 text-left text-xs font-semibold uppercase text-slate-600">Estado</th>
                                     <th class="px-3 py-3 text-center text-xs font-semibold uppercase text-slate-600">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-200">
-                                @forelse($choferes as $c)
+                                @forelse ($choferes as $c)
                                     <tr class="hover:bg-slate-50 transition-colors" wire:key="row-{{ $c->id_chofer }}">
                                         <td class="px-3 py-3"><span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">{{ $c->id_chofer }}</span></td>
-                                        <td class="px-3 py-3 text-slate-600">{{ $c->cliente?->razon_social ?? $c->cliente?->nombre ?? 'Sin cliente' }}</td>
-                                        <td class="px-3 py-3 text-slate-600">{{ $c->apellido }}, {{ $c->nombre }}</td>
+                                        <td class="px-3 py-3 text-slate-600">{{ $c->cliente->razon_social ?? 'N/A' }}</td>
+                                        <td class="px-3 py-3 font-semibold text-slate-800">{{ $c->apellido }}, {{ $c->nombre }}</td>
                                         <td class="px-3 py-3 text-slate-600">{{ $c->dni }}</td>
                                         <td class="px-3 py-3 text-slate-600">{{ $c->telefono ?? '-' }}</td>
-                                        <td class="px-3 py-3">
-                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $c->estado ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-slate-100 text-slate-600 border border-slate-200' }}">
-                                                {{ $c->estado ? 'Activo' : 'Inactivo' }}
-                                            </span>
-                                        </td>
                                         <td class="px-3 py-3 text-center">
-                                            <div class="flex gap-1 justify-center">
-                                                @can('editar-choferes')
-                                                <button wire:click="editar({{ $c->id_chofer }})" @click="$set('tab_activo', 'nuevo')" title="Editar" class="inline-flex items-center px-2 py-1 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded transition-colors border border-blue-200">
-                                                    <i class="bi bi-pencil text-sm"></i>
-                                                </button>
-                                                @endcan
-                                                @can('eliminar-choferes')
-                                                <button wire:click="eliminar({{ $c->id_chofer }})" onclick="return confirm('¿Está seguro de eliminar este chofer?')" title="Eliminar" class="inline-flex items-center px-2 py-1 bg-red-50 text-red-700 hover:bg-red-100 rounded transition-colors border border-red-200">
-                                                    <i class="bi bi-trash text-sm"></i>
-                                                </button>
-                                                @endcan
-                                            </div>
+                                            <x-action-buttons
+                                                editWireClick="editar({{ $c->id_chofer }})"
+                                                deleteWireClick="eliminar({{ $c->id_chofer }})"
+                                                deleteMessage="¿Está seguro de eliminar este chofer?"
+                                                :canEdit="auth()->user()->can('editar-choferes')"
+                                                :canDelete="auth()->user()->can('eliminar-choferes')" />
                                         </td>
                                     </tr>
                                 @empty
-                                    <tr>
-                                        <td colspan="7" class="px-3 py-8 text-center">
-                                            <i class="bi bi-inbox text-slate-300 block mb-2" style="font-size: 2rem;"></i>
-                                            <p class="text-slate-500 font-medium">No hay choferes registrados.</p>
-                                        </td>
-                                    </tr>
+                                    <x-empty-state :colspan="6" message="No hay choferes registrados." />
                                 @endforelse
                             </tbody>
                         </table>
@@ -189,12 +135,3 @@
         </div>
     @endif
 </div>
-
-<!-- JavaScript para cambiar entre pestañas -->
-<script>
-    document.addEventListener('livewire:init', () => {
-        Livewire.on('choferGuardado', () => {
-            // Livewire actualizará automáticamente
-        });
-    });
-</script>

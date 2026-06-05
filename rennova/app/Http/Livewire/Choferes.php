@@ -94,12 +94,14 @@ class Choferes extends Component
 
         $this->cargarChoferes();
         session()->flash('message', $this->chofer_id ? 'Chofer actualizado correctamente.' : 'Chofer creado correctamente.');
+        $this->tab_activo = 'listado';
         $this->resetCampos();
         $this->dispatch('choferGuardado');
     }
 
     public function editar($id)
     {
+        $this->tab_activo = 'nuevo';
         $chofer = Chofer::findOrFail($id);
         $this->chofer_id = $chofer->id_chofer;
         $this->id_cliente = $chofer->id_cliente;

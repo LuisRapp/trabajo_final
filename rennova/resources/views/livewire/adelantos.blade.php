@@ -19,20 +19,10 @@
     @endif
 
     <!-- Tabs -->
-    <div class="mb-6 flex gap-0">
-        @canany(['crear-adelantos', 'editar-adelantos'])
-        <button type="button" wire:click="$set('tab_activo','nuevo')"
-            class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border border-r-0 rounded-l-lg transition-all {{ $tab_activo === 'nuevo' ? 'text-white' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}"
-            style="{{ $tab_activo === 'nuevo' ? 'background-color: #2d7a4f; border-color: #2d7a4f' : '' }}">
-            <i class="bi bi-plus-circle"></i> Nuevo Adelanto
-        </button>
-        @endcanany
-        <button type="button" wire:click="$set('tab_activo','listado')"
-            class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border rounded-r-lg transition-all {{ $tab_activo === 'listado' ? 'text-white' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}"
-            style="{{ $tab_activo === 'listado' ? 'background-color: #2d7a4f; border-color: #2d7a4f' : '' }}">
-            <i class="bi bi-list-ul"></i> Listado de Adelantos
-        </button>
-    </div>
+    <x-tab-nav :tabs="[
+        ['value' => 'nuevo', 'label' => 'Nuevo Adelanto', 'icon' => 'plus-circle', 'can' => auth()->user()->canAny(['crear-adelantos', 'editar-adelantos'])],
+        ['value' => 'listado', 'label' => 'Listado de Adelantos', 'icon' => 'list-ul'],
+    ]" activeTab="{{ $tab_activo }}" tabProperty="tab_activo" />
 
     <!-- Tab 1: Nuevo Adelanto -->
     @if($tab_activo === 'nuevo')
@@ -109,13 +99,7 @@
                 <h5 class="text-lg font-semibold text-slate-800 mb-0">Listado de Adelantos</h5>
             </div>
             <div class="p-6">
-                <!-- Buscador -->
-                <div class="mb-6">
-                    <div class="flex items-center gap-2 px-4 py-3 border border-slate-300 rounded-lg bg-slate-50">
-                        <i class="bi bi-search text-slate-500"></i>
-                        <input type="text" wire:model.live="busqueda" placeholder="Buscar por empleado, monto o fecha..." class="flex-1 bg-slate-50 border-0 focus:ring-0 focus:outline-none text-slate-700 placeholder-slate-400">
-                    </div>
-                </div>
+                    <x-search-input placeholder="Buscar por empleado, monto o fecha..." />
 
                 <!-- Tabla -->
                 <div class="overflow-x-auto">
@@ -145,27 +129,16 @@
                                         @endif
                                     </td>
                                     <td class="px-3 py-3 text-center">
-                                        <div class="flex gap-1 justify-center">
-                                            @can('editar-adelantos')
-                                            <button type="button" class="inline-flex items-center px-2 py-1 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded transition-colors border border-blue-200" wire:click="editar({{ $adelanto->id_adelanto }})" title="Editar">
-                                                <i class="bi bi-pencil text-sm"></i>
-                                            </button>
-                                            @endcan
-                                            @can('eliminar-adelantos')
-                                            <button type="button" class="inline-flex items-center px-2 py-1 bg-red-50 text-red-700 hover:bg-red-100 rounded transition-colors border border-red-200" wire:click="eliminar({{ $adelanto->id_adelanto }})" onclick="return confirm('¿Está seguro de eliminar este adelanto?')" title="Eliminar">
-                                                <i class="bi bi-trash text-sm"></i>
-                                            </button>
-                                            @endcan
-                                        </div>
+                                        <x-action-buttons
+                                            editWireClick="editar({{ $adelanto->id_adelanto }})"
+                                            deleteWireClick="eliminar({{ $adelanto->id_adelanto }})"
+                                            deleteMessage="¿Está seguro de eliminar este adelanto?"
+                                            :canEdit="auth()->user()->can('editar-adelantos')"
+                                            :canDelete="auth()->user()->can('eliminar-adelantos')" />
                                     </td>
                                 </tr>
                             @empty
-                                <tr>
-                                    <td colspan="6" class="px-3 py-8 text-center">
-                                        <i class="bi bi-inbox text-slate-300 block mb-2" style="font-size: 2rem;"></i>
-                                        <p class="text-slate-500 font-medium">No hay adelantos registrados.</p>
-                                    </td>
-                                </tr>
+                                <x-empty-state :colspan="6" message="No hay adelantos registrados." />
                             @endforelse
                         </tbody>
                     </table>
@@ -181,12 +154,3 @@
         </div>
     @endif
 </div>
-
-<script>
-    document.addEventListener('livewire:init', () => {
-        Livewire.on('adelantoGuardado', () => {
-            @this.set('tab_activo', 'listado');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        });
-    });
-</script>

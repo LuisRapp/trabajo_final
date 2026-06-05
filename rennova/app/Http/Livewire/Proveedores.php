@@ -22,6 +22,7 @@ class Proveedores extends Component
     public $email;
 
     public $busqueda = '';
+    public $tab_activo = 'listado';
 
     protected $rules = [
         'razon_social' => 'required|min:3',
@@ -84,12 +85,14 @@ class Proveedores extends Component
         );
 
         session()->flash('message', $this->proveedor_id ? 'Proveedor actualizado correctamente.' : 'Proveedor creado correctamente.');
+        $this->tab_activo = 'listado';
         $this->resetCampos();
         $this->dispatch('proveedorGuardado');
     }
 
     public function editar($id)
     {
+        $this->tab_activo = 'nuevo';
         $proveedor = Proveedor::findOrFail($id);
         $this->proveedor_id = $proveedor->id_proveedor;
         $this->razon_social = $proveedor->razon_social;
