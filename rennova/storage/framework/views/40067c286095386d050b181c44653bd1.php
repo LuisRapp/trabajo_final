@@ -152,7 +152,7 @@
                                 </td>
                                 <td class="text-end"><?php echo e(number_format($lote->cantidad_inicial, 2)); ?></td>
                                 <td class="text-end">
-                                    <span class="<?php echo e($lote->estaProximoAgotar() ? 'text-warning fw-bold' : ''); ?>">
+                                    <span class="<?php echo e(\App\Services\InventarioService::estaProximoAgotar($lote) ? 'text-warning fw-bold' : ''); ?>">
                                         <?php echo e(number_format($lote->cantidad_disponible, 2)); ?>
 
                                     </span>
@@ -162,7 +162,7 @@
                                 <td class="text-center">
                                     <?php if($lote->agotado): ?>
                                         <span class="badge bg-secondary"><i class="bi bi-x-circle"></i> Agotado</span>
-                                    <?php elseif($lote->estaProximoAgotar()): ?>
+                                    <?php elseif(\App\Services\InventarioService::estaProximoAgotar($lote)): ?>
                                         <span class="badge bg-warning"><i class="bi bi-exclamation-triangle"></i> Bajo</span>
                                     <?php else: ?>
                                         <span class="badge bg-success"><i class="bi bi-check-circle"></i> Disponible</span>

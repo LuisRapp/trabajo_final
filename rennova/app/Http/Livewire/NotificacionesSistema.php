@@ -2,16 +2,18 @@
 
 namespace App\Http\Livewire;
 
+use App\Models\NotificacionSistema;
+use App\Services\NotificacionService;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
-use App\Models\NotificacionSistema;
-use Illuminate\Support\Facades\Auth;
 
 class NotificacionesSistema extends Component
 {
     use WithPagination;
 
     public $filtroTipo = 'todas';
+
     public $filtroEstado = 'todas';
 
     protected $queryString = ['filtroTipo', 'filtroEstado'];
@@ -33,7 +35,7 @@ class NotificacionesSistema extends Component
             ->first();
 
         if ($notificacion) {
-            $notificacion->marcarComoLeida();
+            NotificacionService::marcarComoLeida($notificacion);
             $this->dispatch('notificacionActualizada');
         }
     }
@@ -45,7 +47,7 @@ class NotificacionesSistema extends Component
             ->first();
 
         if ($notificacion) {
-            $notificacion->marcarComoAccionada();
+            NotificacionService::marcarComoAccionada($notificacion);
             $this->dispatch('notificacionActualizada');
         }
     }
@@ -66,6 +68,7 @@ class NotificacionesSistema extends Component
     public function irAMantenimiento($mantenimientoId, $notificacionId)
     {
         $this->marcarComoLeida($notificacionId);
+
         return redirect()->route('mantenimientos.index', ['highlight' => $mantenimientoId]);
     }
 

@@ -7,6 +7,7 @@ use App\Models\Maquinaria;
 use App\Models\NotificacionSistema;
 use App\Models\TipoMantenimiento;
 use App\Services\InventarioService;
+use App\Services\NotificacionService;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -547,7 +548,7 @@ class Mantenimientos extends Component
                 ->first();
 
             if ($notificacion) {
-                $notificacion->marcarComoAccionada();
+                NotificacionService::marcarComoAccionada($notificacion);
                 \Log::info("Notificación #{$notificacion->id} marcada como accionada para mantenimiento #{$mantenimientoId}");
             }
         } catch (\Exception $e) {

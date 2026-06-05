@@ -2,12 +2,14 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Cache\RateLimiting\Limit;
 use App\Events\CargaRegistrada;
 use App\Listeners\ActualizarOdometroMaquina;
+use App\Models\Lote;
+use App\Observers\LoteObserver;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -24,6 +26,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Registrar observadores
+        Lote::observe(LoteObserver::class);
+
         // Registrar listener para actualización de odómetro
         Event::listen(
             CargaRegistrada::class,
@@ -44,4 +49,3 @@ class AppServiceProvider extends ServiceProvider
         });
     }
 }
-

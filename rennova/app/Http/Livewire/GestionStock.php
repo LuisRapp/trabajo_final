@@ -147,7 +147,7 @@ class GestionStock extends Component
             'valor_inventario' => $lotes->sum(function ($lote) {
                 return $lote->cantidad_disponible * $lote->precio_unitario;
             }),
-            'lotes_proximos_agotar' => $lotes->filter(fn ($l) => $l->estaProximoAgotar())->count(),
+            'lotes_proximos_agotar' => $lotes->filter(fn ($l) => InventarioService::estaProximoAgotar($l))->count(),
         ];
     }
 

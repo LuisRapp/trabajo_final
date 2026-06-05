@@ -150,7 +150,7 @@
                                 </td>
                                 <td class="text-end">{{ number_format($lote->cantidad_inicial, 2) }}</td>
                                 <td class="text-end">
-                                    <span class="{{ $lote->estaProximoAgotar() ? 'text-warning fw-bold' : '' }}">
+                                    <span class="{{ \App\Services\InventarioService::estaProximoAgotar($lote) ? 'text-warning fw-bold' : '' }}">
                                         {{ number_format($lote->cantidad_disponible, 2) }}
                                     </span>
                                 </td>
@@ -159,7 +159,7 @@
                                 <td class="text-center">
                                     @if($lote->agotado)
                                         <span class="badge bg-secondary"><i class="bi bi-x-circle"></i> Agotado</span>
-                                    @elseif($lote->estaProximoAgotar())
+                                    @elseif(\App\Services\InventarioService::estaProximoAgotar($lote))
                                         <span class="badge bg-warning"><i class="bi bi-exclamation-triangle"></i> Bajo</span>
                                     @else
                                         <span class="badge bg-success"><i class="bi bi-check-circle"></i> Disponible</span>

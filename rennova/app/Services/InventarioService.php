@@ -234,8 +234,22 @@ class InventarioService
         }
 
         return $query->get()->filter(function ($lote) {
-            return $lote->estaProximoAgotar();
+            return self::estaProximoAgotar($lote);
         });
+    }
+
+    /**
+     * Verifica si un lote está próximo a agotarse (menos del 20% disponible)
+     */
+    public static function estaProximoAgotar(LoteInventario $lote): bool
+    {
+        if ($lote->cantidad_inicial <= 0) {
+            return false;
+        }
+
+        $porcentajeDisponible = ($lote->cantidad_disponible / $lote->cantidad_inicial) * 100;
+
+        return $porcentajeDisponible < 20 && ! $lote->agotado;
     }
 
     /**
