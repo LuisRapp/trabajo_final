@@ -5,17 +5,17 @@
 }" class="mx-auto max-w-7xl px-4 py-8">
     <div class="mb-8 flex items-center justify-between">
         <h1 class="flex items-center gap-2 text-3xl font-bold text-slate-800">
-            <i class="bi bi-tools"></i> Kits de Mantenimiento Preventivo
+            🔧 Kits de Mantenimiento Preventivo
         </h1>
     </div>
 
     @if (session()->has('message'))
         <div x-data="{ open: true }" x-show="open" x-transition
             class="mb-6 flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-4 text-green-700 shadow-sm" role="alert">
-            <i class="bi bi-check-circle-fill"></i>
+            ✅
             <span class="flex-1 font-medium">{{ session('message') }}</span>
             <button type="button" class="text-green-600 hover:text-green-800" @click="open = false">
-                <i class="bi bi-x-lg"></i>
+                ✕
             </button>
         </div>
     @endif
@@ -23,10 +23,10 @@
     @if (session()->has('error'))
         <div x-data="{ open: true }" x-show="open" x-transition
             class="mb-6 flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700 shadow-sm" role="alert">
-            <i class="bi bi-exclamation-triangle-fill"></i>
+            ⚠️
             <span class="flex-1 font-medium">{{ session('error') }}</span>
             <button type="button" class="text-red-600 hover:text-red-800" @click="open = false">
-                <i class="bi bi-x-lg"></i>
+                ✕
             </button>
         </div>
     @endif
@@ -34,14 +34,12 @@
     <!-- Tabs Navigation -->
     <div class="mb-6 flex gap-0">
         <button type="button" wire:click="$set('activeTab','nuevo')"
-            class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border border-r-0 rounded-l-lg transition-all {{ $activeTab === 'nuevo' ? 'text-white' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}"
-            style="{{ $activeTab === 'nuevo' ? 'background-color: #2d7a4f; border-color: #2d7a4f' : '' }}">
-            <i class="bi bi-{{ $editando_kit ? 'pencil-square' : 'plus-circle' }}"></i> {{ $editando_kit ? 'Editar Kit' : 'Nuevo Kit' }}
+            class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border border-r-0 rounded-l-lg transition-all {{ $activeTab === 'nuevo' ? 'text-white bg-brand border-brand' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}">
+            {{ $editando_kit ? '✏️' : '➕' }} {{ $editando_kit ? 'Editar Kit' : 'Nuevo Kit' }}
         </button>
         <button type="button" wire:click="$set('activeTab','listado')"
-            class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border rounded-r-lg transition-all {{ $activeTab === 'listado' ? 'text-white' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}"
-            style="{{ $activeTab === 'listado' ? 'background-color: #2d7a4f; border-color: #2d7a4f' : '' }}">
-            <i class="bi bi-list-ul"></i> Listado de Kits
+            class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border rounded-r-lg transition-all {{ $activeTab === 'listado' ? 'text-white bg-brand border-brand' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}">
+            📋 Listado de Kits
         </button>
     </div>
 
@@ -51,7 +49,7 @@
             <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
                 <div class="bg-slate-100 border-b border-slate-200 px-6 py-4">
                     <h5 class="flex items-center gap-2 text-lg font-semibold text-slate-800 mb-0">
-                        <i class="bi bi-{{ $editando_kit ? 'pencil-square' : 'plus-circle' }}"></i> 
+                        {{ $editando_kit ? '✏️' : '➕' }} 
                         {{ $editando_kit ? 'Editar Kit' : 'Configurar Kit' }}
                     </h5>
                 </div>
@@ -59,9 +57,9 @@
                     <!-- Selector de Maquinaria -->
                     <div class="mb-6">
                         <label for="maquinaria_select" class="block text-sm font-semibold text-slate-700 mb-2">
-                            <i class="bi bi-truck"></i> Maquinaria <span class="text-red-500">*</span>
+                            🚛 Maquinaria <span class="text-red-500">*</span>
                         </label>
-                        <select wire:model.live="maquinaria_seleccionada" id="maquinaria_select" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('maquinaria_seleccionada') ring-2 ring-red-500 @enderror" @if($editando_kit) disabled @endif>
+                        <select wire:model.live="maquinaria_seleccionada" id="maquinaria_select" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('maquinaria_seleccionada') ring-2 ring-red-500 @enderror" @if($editando_kit) disabled @endif>
                             <option value="">Seleccione una maquinaria</option>
                             @foreach ($maquinarias as $maq)
                                 <option value="{{ $maq->id_maquinaria }}" wire:key="option-{{ $maq->id_maquinaria }}">{{ $maq->modelo }} ({{ $maq->tipoMaquinaria ? $maq->tipoMaquinaria->nombre : 'Sin tipo' }})</option>
@@ -72,26 +70,26 @@
 
                     @if(!$maquinaria_seleccionada)
                         <div class="flex flex-col items-center justify-center py-12 rounded-lg bg-blue-50 border border-blue-200">
-                            <i class="bi bi-arrow-up-circle text-4xl text-blue-600 mb-3"></i>
+                            <span class="text-4xl text-blue-600 mb-3">⬆️</span>
                             <p class="text-blue-700 font-medium">Seleccione una maquinaria para configurar su kit de mantenimiento preventivo</p>
                         </div>
                     @else
                         <!-- Acciones -->
                         <div class="flex gap-2 mb-6">
-                            <button wire:click="abrirModalAgregar" type="button" class="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-colors font-medium text-sm" style="background-color: #2d7a4f;" onmouseover="this.style.backgroundColor='#245c3d'" onmouseout="this.style.backgroundColor='#2d7a4f'">
-                                <i class="bi bi-plus-circle"></i> Agregar Insumo
+                            <button wire:click="abrirModalAgregar" type="button" class="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-colors font-medium text-sm bg-brand hover:bg-brand-hover">
+                                ➕ Agregar Insumo
                             </button>
                             @if($editando_kit)
                                 <button wire:click="limpiarKit" type="button" class="inline-flex items-center gap-2 px-4 py-2 bg-slate-600 text-white hover:bg-slate-700 rounded-lg transition-colors font-medium text-sm">
-                                    <i class="bi bi-x-circle"></i> Cancelar Edición
+                                    ✕ Cancelar Edición
                                 </button>
                             @else
                                 @if($items_count > 0)
                                     <button wire:click="registrarKit" type="button" class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white hover:bg-green-700 rounded-lg transition-colors font-medium text-sm">
-                                        <i class="bi bi-check-circle"></i> Registrar Kit
+                                        ✓ Registrar Kit
                                     </button>
                                     <button wire:click="limpiarKit" type="button" class="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white hover:bg-red-700 rounded-lg transition-colors font-medium text-sm">
-                                        <i class="bi bi-trash"></i> Limpiar Todo
+                                        🗑️ Limpiar Todo
                                     </button>
                                 @endif
                             @endif
@@ -99,7 +97,7 @@
 
                         @if($kit_modificado && !$editando_kit && $items_count > 0)
                             <div class="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-700">
-                                <i class="bi bi-exclamation-triangle"></i>
+                                ⚠️
                                 Hay cambios sin guardar. Haz clic en <strong>Registrar Kit</strong> para confirmar.
                             </div>
                         @endif
@@ -107,7 +105,7 @@
                         <!-- Insumos Table with Pagination -->
                         <div class="mb-6">
                             <h6 class="mb-4 font-semibold text-slate-700 flex items-center gap-2">
-                                <i class="bi bi-list-check"></i> Insumos del Kit
+                                📋 Insumos del Kit
                                 @if($items_count > 0)
                                     <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">{{ $items_count }}</span>
                                 @endif
@@ -150,10 +148,10 @@
                                                     <td class="px-3 py-3 text-center">
                                                         <div class="flex gap-1 justify-center">
                                                             <button wire:click="abrirModalEditar({{ $item->id_kit ?? $item->id }})" type="button" class="inline-flex items-center px-2 py-1 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded transition-colors border border-blue-200" title="Editar">
-                                                                <i class="bi bi-pencil text-sm"></i>
+                                                                ✏️
                                                             </button>
                                                             <button wire:click="eliminar({{ $item->id_kit ?? $item->id }})" type="button" class="inline-flex items-center px-2 py-1 bg-red-50 text-red-700 hover:bg-red-100 rounded transition-colors border border-red-200" onclick="return confirm('¿Dar de baja este insumo del kit?')" title="Dar de baja">
-                                                                <i class="bi bi-trash text-sm"></i>
+                                                                🗑️
                                                             </button>
                                                         </div>
                                                     </td>
@@ -164,10 +162,10 @@
                                 </div>
                             @else
                                 <div class="text-center py-8 rounded-lg bg-slate-50 border border-slate-200">
-                                    <i class="bi bi-inbox text-3xl text-slate-300 mb-2"></i>
+                                    <span class="text-3xl text-slate-300 mb-2">📭</span>
                                     <p class="text-slate-600 font-medium mb-3">No hay insumos configurados para este kit</p>
-                                    <button wire:click="abrirModalAgregar" type="button" class="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-colors font-medium text-sm" style="background-color: #2d7a4f;" onmouseover="this.style.backgroundColor='#245c3d'" onmouseout="this.style.backgroundColor='#2d7a4f'">
-                                        <i class="bi bi-plus-circle"></i> Agregar Primer Insumo
+                                    <button wire:click="abrirModalAgregar" type="button" class="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-colors font-medium text-sm bg-brand hover:bg-brand-hover">
+                                        ➕ Agregar Primer Insumo
                                     </button>
                                 </div>
                             @endif
@@ -199,7 +197,7 @@
                         <!-- Historial Bajas Table -->
                         <div class="border-t border-slate-200 pt-6">
                             <h6 class="mb-4 font-semibold text-slate-700 flex items-center gap-2">
-                                <i class="bi bi-archive"></i> Historial de Bajas
+                                📦 Historial de Bajas
                             </h6>
 
                             @if($historial->count() > 0)
@@ -226,12 +224,12 @@
                                                     </td>
                                                     <td class="px-3 py-3 text-slate-600">{{ number_format($item->cantidad_requerida, 2) }}</td>
                                                     <td class="px-3 py-3 text-slate-600">
-                                                        <i class="bi bi-clock-history text-slate-400"></i>
+                                                        <span class="text-slate-400">🕐</span>
                                                         <small class="text-xs">{{ $item->deleted_at ? $item->deleted_at->format('d/m/Y H:i') : '—' }}</small>
                                                     </td>
                                                     <td class="px-3 py-3 text-center">
                                                         <button wire:click="restaurar({{ $item->id_kit ?? $item->id }})" type="button" class="inline-flex items-center gap-2 px-3 py-1 bg-green-600 text-white hover:bg-green-700 rounded text-sm transition-colors" title="Restaurar">
-                                                            <i class="bi bi-arrow-counterclockwise"></i> Restaurar
+                                                            ↩️ Restaurar
                                                         </button>
                                                     </td>
                                                 </tr>
@@ -241,7 +239,7 @@
                                 </div>
                             @else
                                 <div class="text-center py-8 rounded-lg bg-slate-50 border border-slate-200">
-                                    <i class="bi bi-archive text-3xl text-slate-300 mb-2"></i>
+                                    <span class="text-3xl text-slate-300 mb-2">📦</span>
                                     <p class="text-slate-600 font-medium">No hay bajas registradas para este kit</p>
                                 </div>
                             @endif
@@ -256,7 +254,7 @@
             <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
                 <div class="bg-slate-100 border-b border-slate-200 px-6 py-4">
                     <h5 class="flex items-center gap-2 text-lg font-semibold text-slate-800 mb-0">
-                        <i class="bi bi-list-ul"></i> Kits Registrados por Maquinaria
+                        📋 Kits Registrados por Maquinaria
                     </h5>
                 </div>
                 <div class="p-6">
@@ -267,7 +265,7 @@
                                     <div class="flex items-center justify-between bg-slate-50 border-b border-slate-200 px-6 py-4">
                                         <div>
                                             <h6 class="mb-1 font-semibold text-slate-800 flex items-center gap-2">
-                                                <i class="bi bi-gear-fill text-blue-600"></i> 
+                                                <span class="text-blue-600">⚙️</span> 
                                                 <strong>{{ optional($kit['maquinaria'])->modelo }}</strong> 
                                                 <span class="text-slate-500">({{ optional(optional($kit['maquinaria'])->tipoMaquinaria)->nombre }})</span>
                                             </h6>
@@ -275,10 +273,10 @@
                                         </div>
                                         <div class="flex gap-2">
                                             <button wire:click="editarKit({{ $maqId }})" type="button" class="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded text-sm transition-colors border border-blue-200" title="Editar kit">
-                                                <i class="bi bi-pencil"></i> Editar
+                                                ✏️ Editar
                                             </button>
                                             <button wire:click="eliminarKit({{ $maqId }})" type="button" class="inline-flex items-center gap-2 px-3 py-1 bg-red-50 text-red-700 hover:bg-red-100 rounded text-sm transition-colors border border-red-200" onclick="return confirm('¿Está seguro de eliminar este kit completo?')" title="Eliminar kit">
-                                                <i class="bi bi-trash"></i>
+                                                🗑️
                                             </button>
                                         </div>
                                     </div>
@@ -328,10 +326,10 @@
                         </div>
                     @else
                         <div class="text-center py-12 rounded-lg bg-slate-50 border border-slate-200">
-                            <i class="bi bi-inbox text-4xl text-slate-300 mb-3"></i>
+                            <span class="text-4xl text-slate-300 mb-3">📭</span>
                             <p class="text-slate-600 font-medium mb-4">No hay kits registrados aún</p>
-                            <button class="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-colors font-medium text-sm" style="background-color: #2d7a4f;" onmouseover="this.style.backgroundColor='#245c3d'" onmouseout="this.style.backgroundColor='#2d7a4f'" wire:click="$set('activeTab','nuevo')">
-                                <i class="bi bi-plus-circle"></i> Crear Primer Kit
+                            <button class="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-colors font-medium text-sm bg-brand hover:bg-brand-hover" wire:click="$set('activeTab','nuevo')">
+                                ➕ Crear Primer Kit
                             </button>
                         </div>
                     @endif
@@ -344,19 +342,19 @@
     @if($modal_item)
         <div class="fixed inset-0 z-50 flex items-start justify-center bg-black/40 p-4 py-8" style="overflow-y: auto;">
             <div class="w-full max-w-md rounded-lg bg-white shadow-2xl">
-                <div class="flex items-center justify-between border-b px-6 py-4" style="background-color: #2d7a4f; color: white;">
+                <div class="flex items-center justify-between border-b px-6 py-4 bg-brand text-white">
                     <h5 class="font-semibold flex items-center gap-2">
-                        <i class="bi bi-{{ $item_id ? 'pencil-square' : 'plus-circle' }}"></i>
+                        {{ $item_id ? '✏️' : '➕' }}
                         {{ $item_id ? 'Editar' : 'Agregar' }} Insumo al Kit
                     </h5>
                     <button type="button" wire:click="cerrarModal" class="text-white hover:text-gray-200">
-                        <i class="bi bi-x-lg"></i>
+                        ✕
                     </button>
                 </div>
                 <div class="p-6">
                     <div class="mb-4">
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Insumo <span class="text-red-500">*</span></label>
-                        <select wire:model="insumo_id" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('insumo_id') ring-2 ring-red-500 @enderror">
+                        <select wire:model="insumo_id" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('insumo_id') ring-2 ring-red-500 @enderror">
                             <option value="">Seleccionar insumo...</option>
                             @foreach($insumos as $insumo)
                                 <option value="{{ $insumo->id_insumo }}" wire:key="option-{{ $insumo->id_insumo }}">
@@ -368,7 +366,7 @@
                     </div>
                     <div class="mb-4">
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Cantidad Requerida <span class="text-red-500">*</span></label>
-                        <input type="number" wire:model="cantidad_requerida" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('cantidad_requerida') ring-2 ring-red-500 @enderror" step="0.1" min="0.01" placeholder="Ej: 10.00">
+                        <input type="number" wire:model="cantidad_requerida" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('cantidad_requerida') ring-2 ring-red-500 @enderror" step="0.1" min="0.01" placeholder="Ej: 10.00">
                         @error('cantidad_requerida') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
                     </div>
                     <div class="mb-4">
@@ -383,8 +381,8 @@
                     <button type="button" wire:click="cerrarModal" class="inline-flex items-center gap-2 px-4 py-2 bg-slate-600 text-white hover:bg-slate-700 rounded-lg transition-colors font-medium text-sm">
                         Cancelar
                     </button>
-                    <button type="button" wire:click="guardar" class="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-colors font-medium text-sm" style="background-color: #2d7a4f;" onmouseover="this.style.backgroundColor='#245c3d'" onmouseout="this.style.backgroundColor='#2d7a4f'">
-                        <i class="bi bi-save"></i> {{ $item_id ? 'Actualizar' : 'Agregar' }}
+                    <button type="button" wire:click="guardar" class="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-colors font-medium text-sm bg-brand hover:bg-brand-hover">
+                        💾 {{ $item_id ? 'Actualizar' : 'Agregar' }}
                     </button>
                 </div>
             </div>

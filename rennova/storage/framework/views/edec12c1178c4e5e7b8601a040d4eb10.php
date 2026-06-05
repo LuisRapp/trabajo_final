@@ -1,17 +1,17 @@
 <div class="mx-auto max-w-7xl px-4 py-8">
     <div class="mb-6 flex items-center justify-between">
         <h1 class="flex items-center gap-2 text-3xl font-bold text-slate-800">
-            <i class="bi bi-calculator"></i> Liquidación de Pagos a Empleados
+            🧮 Liquidación de Pagos a Empleados
         </h1>
     </div>
 
     <?php if(session()->has('message')): ?>
         <div x-data="{ open: true }" x-show="open" x-transition
             class="mb-6 flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-4 text-green-700 shadow-sm" role="alert">
-            <i class="bi bi-check-circle-fill"></i>
+            ✅
             <span class="flex-1 font-medium"><?php echo e(session('message')); ?></span>
             <button type="button" class="text-green-600 hover:text-green-800" @click="open = false">
-                <i class="bi bi-x-lg"></i>
+                ✕
             </button>
         </div>
     <?php endif; ?>
@@ -19,10 +19,10 @@
     <?php if(session()->has('error')): ?>
         <div x-data="{ open: true }" x-show="open" x-transition
             class="mb-6 flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700 shadow-sm" role="alert">
-            <i class="bi bi-exclamation-triangle-fill"></i>
+            ⚠️
             <span class="flex-1 font-medium"><?php echo e(session('error')); ?></span>
             <button type="button" class="text-red-600 hover:text-red-800" @click="open = false">
-                <i class="bi bi-x-lg"></i>
+                ✕
             </button>
         </div>
     <?php endif; ?>
@@ -38,7 +38,7 @@
                     <div class="md:col-span-5">
                         <label for="id_empleado" class="block text-sm font-semibold text-slate-700 mb-2">Empleado *</label>
                         <select wire:model="id_empleado" id="id_empleado"
-                            class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors <?php $__errorArgs = ['id_empleado'];
+                            class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors <?php $__errorArgs = ['id_empleado'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
@@ -71,7 +71,7 @@ unset($__errorArgs, $__bag); ?>
                     <div class="md:col-span-3">
                         <label for="fecha_inicio" class="block text-sm font-semibold text-slate-700 mb-2">Fecha Inicio *</label>
                         <input type="date" wire:model="fecha_inicio" id="fecha_inicio"
-                            class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors <?php $__errorArgs = ['fecha_inicio'];
+                            class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors <?php $__errorArgs = ['fecha_inicio'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
@@ -92,7 +92,7 @@ unset($__errorArgs, $__bag); ?>
                     <div class="md:col-span-3">
                         <label for="fecha_fin" class="block text-sm font-semibold text-slate-700 mb-2">Fecha Fin *</label>
                         <input type="date" wire:model="fecha_fin" id="fecha_fin"
-                            class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors <?php $__errorArgs = ['fecha_fin'];
+                            class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors <?php $__errorArgs = ['fecha_fin'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
@@ -112,7 +112,7 @@ unset($__errorArgs, $__bag); ?>
 
                     <div class="md:col-span-1 flex items-end">
                         <button type="submit" class="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-green-700 px-4 py-3 text-white font-semibold shadow-sm hover:bg-green-800">
-                            <i class="bi bi-calculator"></i> Calcular
+                            🧮 Calcular
                         </button>
                     </div>
                     <div class="md:col-span-12">
@@ -123,7 +123,7 @@ unset($__errorArgs, $__bag); ?>
             <?php else: ?>
                 <div class="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4 text-blue-800">
                     <h5 class="mb-1 flex items-center gap-2 font-semibold">
-                        <i class="bi bi-person-circle"></i>
+                        👤
                         <?php echo e($empleado_seleccionado->apellido); ?>, <?php echo e($empleado_seleccionado->nombre); ?>
 
                     </h5>
@@ -140,7 +140,7 @@ unset($__errorArgs, $__bag); ?>
                             <div class="rounded-lg border border-slate-200 bg-white shadow-sm">
                                 <div class="border-b border-slate-200 bg-slate-100 px-4 py-3">
                                     <h6 class="mb-0 flex items-center gap-2 font-semibold text-slate-800">
-                                        <i class="bi bi-info-circle"></i> Detalle del Cálculo
+                                        ℹ️ Detalle del Cálculo
                                     </h6>
                                 </div>
                                 <div class="p-4">
@@ -183,7 +183,7 @@ unset($__errorArgs, $__bag); ?>
                                 <div class="rounded-lg border border-amber-200 bg-amber-50 shadow-sm">
                                     <div class="border-b border-amber-200 px-4 py-3 text-amber-900">
                                         <h6 class="mb-0 flex items-center gap-2 font-semibold">
-                                            <i class="bi bi-cash-stack"></i> Adelantos Pendientes
+                                            💰 Adelantos Pendientes
                                         </h6>
                                     </div>
                                     <div class="p-4">
@@ -212,7 +212,7 @@ unset($__errorArgs, $__bag); ?>
                                             </table>
                                         </div>
                                         <div class="mt-3 rounded-md border border-blue-200 bg-blue-50 p-3 text-xs text-blue-800">
-                                            <i class="bi bi-info-circle"></i> Estos adelantos se descontarán automáticamente y se marcarán como "pagados" al generar el recibo.
+                                            ℹ️ Estos adelantos se descontarán automáticamente y se marcarán como "pagados" al generar el recibo.
                                         </div>
                                     </div>
                                 </div>
@@ -222,7 +222,7 @@ unset($__errorArgs, $__bag); ?>
                         <div class="rounded-lg border border-slate-200 bg-white shadow-sm">
                             <div class="border-b border-slate-200 bg-slate-100 px-4 py-3">
                                 <h6 class="mb-0 flex items-center gap-2 font-semibold text-slate-800">
-                                    <i class="bi bi-pencil-square"></i> Datos del Recibo (Editable)
+                                    ✏️ Datos del Recibo (Editable)
                                 </h6>
                             </div>
                             <div class="p-4">
@@ -230,7 +230,7 @@ unset($__errorArgs, $__bag); ?>
                                     <div>
                                         <label for="monto_bruto" class="block text-sm font-semibold text-slate-700 mb-2">Monto Bruto *</label>
                                         <input type="number" wire:model.live="monto_bruto" id="monto_bruto" step="0.1" min="0"
-                                            class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors <?php $__errorArgs = ['monto_bruto'];
+                                            class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors <?php $__errorArgs = ['monto_bruto'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
@@ -254,12 +254,12 @@ unset($__errorArgs, $__bag); ?>
                                             Descuentos
                                             <?php if($total_adelantos > 0): ?>
                                                 <span class="ml-2 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-800">
-                                                    <i class="bi bi-cash-stack"></i> Incluye adelantos
+                                                    💰 Incluye adelantos
                                                 </span>
                                             <?php endif; ?>
                                         </label>
                                         <input type="number" wire:model.live="descuentos" id="descuentos" step="0.1" min="0"
-                                            class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors <?php $__errorArgs = ['descuentos'];
+                                            class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors <?php $__errorArgs = ['descuentos'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
@@ -294,7 +294,7 @@ unset($__errorArgs, $__bag); ?>
                                     <div>
                                         <label for="observaciones" class="block text-sm font-semibold text-slate-700 mb-2">Observaciones</label>
                                         <textarea wire:model="observaciones" id="observaciones" rows="3"
-                                            class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors <?php $__errorArgs = ['observaciones'];
+                                            class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors <?php $__errorArgs = ['observaciones'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
@@ -315,11 +315,11 @@ unset($__errorArgs, $__bag); ?>
                                     <div class="flex flex-col gap-2">
                                         <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->any(['crear-liquidacion-pagos', 'editar-liquidacion-pagos'])): ?>
                                         <button type="submit" class="inline-flex items-center justify-center gap-2 rounded-lg bg-green-700 px-4 py-3 text-white font-semibold shadow-sm hover:bg-green-800">
-                                            <i class="bi bi-check-circle"></i> Generar Recibo
+                                            ✓ Generar Recibo
                                         </button>
                                         <?php endif; ?>
                                         <button type="button" wire:click="nuevaLiquidacion" class="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-200 px-4 py-3 text-slate-700 font-semibold hover:bg-slate-300">
-                                            <i class="bi bi-x-circle"></i> Cancelar
+                                            ✕ Cancelar
                                         </button>
                                     </div>
                                 </form>
@@ -328,12 +328,12 @@ unset($__errorArgs, $__bag); ?>
                     </div>
                 <?php else: ?>
                     <div class="rounded-lg border border-green-200 bg-green-50 p-8 text-center text-green-800">
-                        <i class="bi bi-check-circle-fill text-5xl"></i>
+                        <span class="text-5xl">✅</span>
                         <h3 class="mt-3 text-2xl font-semibold">¡Recibo generado correctamente!</h3>
                         <p class="mt-2 text-sm">El pago ha sido registrado en el sistema.</p>
                         <button type="button" wire:click="nuevaLiquidacion"
                             class="mt-4 inline-flex items-center justify-center gap-2 rounded-lg bg-green-700 px-4 py-3 text-white font-semibold shadow-sm hover:bg-green-800">
-                            <i class="bi bi-plus-circle"></i> Nueva Liquidación
+                            ➕ Nueva Liquidación
                         </button>
                     </div>
                 <?php endif; ?>

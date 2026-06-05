@@ -68,10 +68,10 @@ unset($__errorArgs, $__bag); ?>
                 <table class="w-full text-sm">
                     <thead>
                         <tr class="bg-slate-50 border-b border-slate-200">
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider" style="width: 220px;">Tipo de tarea</th>
-                            <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider" style="width: 160px;">Superficie (ha)</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider w-[220px]">Tipo de tarea</th>
+                            <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider w-[160px]">Superficie (ha)</th>
                             <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Observaciones</th>
-                            <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider" style="width: 80px;">Acción</th>
+                            <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider w-[80px]">Acción</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">

@@ -2,7 +2,7 @@
     <div class="mx-auto max-w-7xl px-4 py-8" x-data="{ tab: 'listado' }">
     <div class="mb-8 flex items-center justify-between">
         <h1 class="flex items-center gap-2 text-3xl font-bold text-slate-800">
-            <i class="bi bi-geo-alt"></i> Lotes
+            📍 Lotes
         </h1>
     </div>
 
@@ -31,16 +31,14 @@
         <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->any(['crear-lotes', 'editar-lotes'])): ?>
         <button type="button" @click="tab = 'nuevo'; $wire.$refresh()"
             class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border border-r-0 rounded-l-lg transition-all"
-            :class="tab === 'nuevo' ? 'text-white' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'"
-            :style="tab === 'nuevo' ? 'background-color: #2d7a4f; border-color: #2d7a4f' : ''">
-            <i class="bi bi-plus-circle"></i> Nuevo Lote
+            :class="tab === 'nuevo' ? 'text-white bg-brand border-brand' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'">
+            ➕ Nuevo Lote
         </button>
         <?php endif; ?>
         <button type="button" @click="tab = 'listado'; $wire.$refresh()"
             class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border rounded-r-lg transition-all"
-            :class="tab === 'listado' ? 'text-white' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'"
-            :style="tab === 'listado' ? 'background-color: #2d7a4f; border-color: #2d7a4f' : ''">
-            <i class="bi bi-list-ul"></i> Listado de Lotes
+            :class="tab === 'listado' ? 'text-white bg-brand border-brand' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'">
+            📋 Listado de Lotes
         </button>
     </div>
 
@@ -50,7 +48,8 @@
             <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-md">
                 <div class="border-b border-slate-200 bg-slate-50 px-6 py-4">
                     <h5 class="flex items-center gap-2 text-lg font-semibold text-slate-700">
-                        <i class="bi bi-<?php echo e($lote_id ? 'pencil-square' : 'plus-circle'); ?>"></i>
+                        <?php echo e($lote_id ? '✏️' : '➕'); ?>
+
                         <?php echo e($lote_id ? 'Modificar Lote' : 'Nuevo Lote'); ?>
 
                     </h5>
@@ -61,7 +60,7 @@
                             <div>
                                 <label class="mb-1 block text-sm font-semibold text-slate-700">Propietario <span class="text-red-500">*</span></label>
                                 <input type="text" wire:model="propietario"
-                                    class="w-full rounded-lg border border-default py-3 px-4 shadow-sm focus:border-green-700 focus:ring-green-600 transition-colors <?php echo e($errors->has('propietario') ? 'ring-2 ring-red-500' : ''); ?>"
+                                    class="w-full rounded-lg border border-slate-300 py-3 px-4 shadow-sm focus:border-green-700 focus:ring-green-600 transition-colors <?php echo e($errors->has('propietario') ? 'ring-2 ring-red-500' : ''); ?>"
                                     placeholder="Nombre del propietario">
                                 <?php $__errorArgs = ['propietario'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
@@ -75,7 +74,7 @@ unset($__errorArgs, $__bag); ?>
                             <div>
                                 <label class="mb-1 block text-sm font-semibold text-slate-700">Ubicación <span class="text-red-500">*</span></label>
                                 <input type="text" wire:model="ubicacion"
-                                    class="w-full rounded-lg border border-default py-3 px-4 shadow-sm focus:border-green-700 focus:ring-green-600 transition-colors <?php echo e($errors->has('ubicacion') ? 'ring-2 ring-red-500' : ''); ?>"
+                                    class="w-full rounded-lg border border-slate-300 py-3 px-4 shadow-sm focus:border-green-700 focus:ring-green-600 transition-colors <?php echo e($errors->has('ubicacion') ? 'ring-2 ring-red-500' : ''); ?>"
                                     placeholder="Ubicación del lote">
                                 <?php $__errorArgs = ['ubicacion'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
@@ -92,7 +91,7 @@ unset($__errorArgs, $__bag); ?>
                             <div>
                                 <label class="mb-1 block text-sm font-semibold text-slate-700">Especie</label>
                                 <input type="text" wire:model="especie"
-                                    class="w-full rounded-lg border border-default py-3 px-4 shadow-sm focus:border-green-700 focus:ring-green-600 transition-colors <?php echo e($errors->has('especie') ? 'ring-2 ring-red-500' : ''); ?>"
+                                    class="w-full rounded-lg border border-slate-300 py-3 px-4 shadow-sm focus:border-green-700 focus:ring-green-600 transition-colors <?php echo e($errors->has('especie') ? 'ring-2 ring-red-500' : ''); ?>"
                                     placeholder="Especie de madera">
                                 <?php $__errorArgs = ['especie'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
@@ -106,7 +105,7 @@ unset($__errorArgs, $__bag); ?>
                             <div>
                                 <label class="mb-1 block text-sm font-semibold text-slate-700">Superficie (ha)</label>
                                 <input type="number" wire:model="superficie" step="0.1" min="0"
-                                    class="w-full rounded-lg border border-default py-3 px-4 shadow-sm focus:border-green-700 focus:ring-green-600 transition-colors <?php echo e($errors->has('superficie') ? 'ring-2 ring-red-500' : ''); ?>"
+                                    class="w-full rounded-lg border border-slate-300 py-3 px-4 shadow-sm focus:border-green-700 focus:ring-green-600 transition-colors <?php echo e($errors->has('superficie') ? 'ring-2 ring-red-500' : ''); ?>"
                                     placeholder="0.00">
                                 <?php $__errorArgs = ['superficie'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
@@ -123,7 +122,7 @@ unset($__errorArgs, $__bag); ?>
                             <div>
                                 <label class="mb-1 block text-sm font-semibold text-slate-700">Condición de compra</label>
                                 <select wire:model="condicion_compra"
-                                    class="w-full rounded-lg border border-default py-3 px-4 shadow-sm focus:border-green-700 focus:ring-green-600 transition-colors <?php echo e($errors->has('condicion_compra') ? 'ring-2 ring-red-500' : ''); ?>">
+                                    class="w-full rounded-lg border border-slate-300 py-3 px-4 shadow-sm focus:border-green-700 focus:ring-green-600 transition-colors <?php echo e($errors->has('condicion_compra') ? 'ring-2 ring-red-500' : ''); ?>">
                                     <option value="">Seleccione...</option>
                                     <option value="propio">Vuelo Forestal</option>
                                     <option value="alquilado">Compra por tonelada</option>
@@ -140,7 +139,7 @@ unset($__errorArgs, $__bag); ?>
                             <div>
                                 <label class="mb-1 block text-sm font-semibold text-slate-700">Estado</label>
                                 <select wire:model="estado"
-                                    class="w-full rounded-lg border border-default py-3 px-4 shadow-sm focus:border-green-700 focus:ring-green-600 transition-colors <?php echo e($errors->has('estado') ? 'ring-2 ring-red-500' : ''); ?>">
+                                    class="w-full rounded-lg border border-slate-300 py-3 px-4 shadow-sm focus:border-green-700 focus:ring-green-600 transition-colors <?php echo e($errors->has('estado') ? 'ring-2 ring-red-500' : ''); ?>">
                                     <option value="activo">Activo</option>
                                     <option value="en_proceso">En Explotación</option>
                                     <option value="inactivo">Inactivo</option>
@@ -161,7 +160,7 @@ unset($__errorArgs, $__bag); ?>
                         <div>
                             <label class="mb-1 block text-sm font-semibold text-slate-700">Tarea principal <span class="text-red-500">*</span></label>
                             <select wire:model="main_task_type"
-                                class="w-full rounded-lg border border-default py-3 px-4 shadow-sm focus:border-green-700 focus:ring-green-600 transition-colors <?php echo e($errors->has('main_task_type') ? 'ring-2 ring-red-500' : ''); ?>">
+                                class="w-full rounded-lg border border-slate-300 py-3 px-4 shadow-sm focus:border-green-700 focus:ring-green-600 transition-colors <?php echo e($errors->has('main_task_type') ? 'ring-2 ring-red-500' : ''); ?>">
                                 <option value="">Seleccione...</option>
                                 <?php $__currentLoopData = $this->taskTypes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $tt): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                     <option value="<?php echo e($tt->value); ?>" wire:key="option-<?php echo e($tt->value); ?>"><?php echo e($tt->label()); ?></option>
@@ -179,7 +178,7 @@ unset($__errorArgs, $__bag); ?>
 
                         <div class="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
                             <div class="flex items-center gap-2 font-semibold">
-                                <i class="bi bi-info-circle"></i>
+                                ℹ️
                                 Coordenadas GPS (Opcional)
                             </div>
                             <p class="mt-1 text-blue-700">
@@ -190,9 +189,9 @@ unset($__errorArgs, $__bag); ?>
 
                         <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                             <div>
-                                <label class="mb-1 block text-sm font-semibold text-slate-700"><i class="bi bi-geo"></i> Latitud</label>
+                                <label class="mb-1 block text-sm font-semibold text-slate-700">🌐 Latitud</label>
                                 <input type="number" wire:model="latitud" step="0.00000001" min="-90" max="90"
-                                    class="w-full rounded-lg border border-default py-3 px-4 shadow-sm focus:border-green-700 focus:ring-green-600 transition-colors <?php echo e($errors->has('latitud') ? 'ring-2 ring-red-500' : ''); ?>"
+                                    class="w-full rounded-lg border border-slate-300 py-3 px-4 shadow-sm focus:border-green-700 focus:ring-green-600 transition-colors <?php echo e($errors->has('latitud') ? 'ring-2 ring-red-500' : ''); ?>"
                                     placeholder="-27.469771">
                                 <?php $__errorArgs = ['latitud'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
@@ -205,9 +204,9 @@ unset($__errorArgs, $__bag); ?>
                                 <p class="mt-1 text-xs text-slate-500">Ejemplo: -27.469771 (entre -90 y 90)</p>
                             </div>
                             <div>
-                                <label class="mb-1 block text-sm font-semibold text-slate-700"><i class="bi bi-geo-alt"></i> Longitud</label>
+                                <label class="mb-1 block text-sm font-semibold text-slate-700">📍 Longitud</label>
                                 <input type="number" wire:model="longitud" step="0.00000001" min="-180" max="180"
-                                    class="w-full rounded-lg border border-default py-3 px-4 shadow-sm focus:border-green-700 focus:ring-green-600 transition-colors <?php echo e($errors->has('longitud') ? 'ring-2 ring-red-500' : ''); ?>"
+                                    class="w-full rounded-lg border border-slate-300 py-3 px-4 shadow-sm focus:border-green-700 focus:ring-green-600 transition-colors <?php echo e($errors->has('longitud') ? 'ring-2 ring-red-500' : ''); ?>"
                                     placeholder="-58.832443">
                                 <?php $__errorArgs = ['longitud'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
@@ -224,12 +223,12 @@ unset($__errorArgs, $__bag); ?>
                         <div class="flex justify-end gap-3 pt-2">
                             <button type="button" wire:click="resetCampos"
                                 class="lotes-form-btn lotes-form-btn--secondary">
-                                <i class="bi bi-x-circle"></i> Cancelar
+                                ✕ Cancelar
                             </button>
                             <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->any(['crear-lotes', 'editar-lotes'])): ?>
                             <button type="submit"
                                 class="lotes-form-btn lotes-form-btn--primary">
-                                <i class="bi bi-check-circle"></i> <?php echo e($lote_id ? 'Actualizar' : 'Guardar'); ?>
+                                ✓ <?php echo e($lote_id ? 'Actualizar' : 'Guardar'); ?>
 
                             </button>
                             <?php endif; ?>
@@ -245,7 +244,7 @@ unset($__errorArgs, $__bag); ?>
                 <div class="border-b border-slate-200 bg-slate-50 p-6">
                     <div class="relative max-w-md">
                         <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
-                            <i class="bi bi-search"></i>
+                            🔍
                         </span>
                         <input type="text" wire:model.live="busqueda"
                             class="block w-full rounded-lg border-slate-300 pl-10 focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
@@ -282,11 +281,11 @@ unset($__errorArgs, $__bag); ?>
                                         <?php if($lote->latitud && $lote->longitud): ?>
                                             <a href="https://www.google.com/maps?q=<?php echo e($lote->latitud); ?>,<?php echo e($lote->longitud); ?>" target="_blank"
                                                 class="inline-flex items-center gap-2 text-sm text-blue-700 hover:text-blue-900">
-                                                <i class="bi bi-geo-alt-fill"></i>
+                                                📍
                                                 <span class="tabular-nums"><?php echo e(number_format($lote->latitud, 6)); ?>, <?php echo e(number_format($lote->longitud, 6)); ?></span>
                                             </a>
                                         <?php else: ?>
-                                            <span class="text-slate-400"><i class="bi bi-geo"></i> Sin coordenadas</span>
+                                            <span class="text-slate-400">🌐 Sin coordenadas</span>
                                         <?php endif; ?>
                                     </td>
                                     <td class="px-3 py-4">
@@ -296,7 +295,7 @@ unset($__errorArgs, $__bag); ?>
                                                     ? 'Vuelo Forestal'
                                                     : 'Compra por tonelada';
                                             ?>
-                                            <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium <?php echo e($lote->condicion_compra == 'propio' ? 'bg-green-50 border border-green-200' : 'bg-blue-100 text-blue-800'); ?>" style="<?php echo e($lote->condicion_compra == 'propio' ? 'color: #2d7a4f' : ''); ?>">
+                                            <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium <?php echo e($lote->condicion_compra == 'propio' ? 'bg-green-50 border border-green-200 text-brand' : 'bg-blue-100 text-blue-800'); ?>">
                                                 <?php echo e($condicionLabel); ?>
 
                                             </span>
@@ -306,10 +305,9 @@ unset($__errorArgs, $__bag); ?>
                                     </td>
                                     <td class="px-3 py-4">
                                         <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
-                                            <?php echo e($lote->estado === 'activo' ? 'bg-green-50 border border-green-200' : ($lote->estado === 'en_proceso' ? 'bg-amber-100 text-amber-800' : ($lote->estado === 'cerrado' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-800'))); ?>"
-                                            style="<?php echo e($lote->estado === 'activo' ? 'color: #2d7a4f' : ''); ?>">
+                                            <?php echo e($lote->estado === 'activo' ? 'bg-green-50 border border-green-200 text-brand' : ($lote->estado === 'en_proceso' ? 'bg-amber-100 text-amber-800' : ($lote->estado === 'cerrado' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-800'))); ?>">
                                             <?php if($lote->estado === 'cerrado'): ?>
-                                                <i class="bi bi-check-circle-fill me-1"></i>
+                                                ✅
                                             <?php endif; ?>
                                             <?php echo e(ucfirst(str_replace('_', ' ', $lote->estado))); ?>
 
@@ -338,8 +336,8 @@ unset($__errorArgs, $__bag); ?>
                                         ?>
                                         <div class="flex items-center justify-end gap-2">
                                             <?php if($esCerrado): ?>
-                                                <span class="inline-flex h-8 w-24 shrink-0 items-center justify-center whitespace-nowrap rounded-lg border text-[10px] font-bold uppercase bg-green-50" style="color: #2d7a4f; border-color: #2d7a4f;">
-                                                    <i class="bi bi-check-circle-fill me-1"></i> Finalizado
+                                                <span class="inline-flex h-8 w-24 shrink-0 items-center justify-center whitespace-nowrap rounded-lg border text-[10px] font-bold uppercase bg-green-50 text-brand border-brand">
+                                                    ✅ Finalizado
                                                 </span>
                                             <?php elseif($esInactivo): ?>
                                                 <span class="inline-flex h-8 w-24 shrink-0 items-center justify-center whitespace-nowrap rounded-lg border border-slate-200 bg-slate-100 text-[10px] font-bold uppercase text-slate-400">
@@ -358,11 +356,8 @@ unset($__errorArgs, $__bag); ?>
                                                     <button type="button" 
                                                         wire:click="finalizarLote(<?php echo e($lote->id_lote); ?>)"
                                                         onclick="return confirm('¿Finalizar este lote? Se liberarán todos los empleados y maquinarias asignadas.')"
-                                                        class="inline-flex h-8 w-24 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border text-xs font-bold uppercase text-white transition-all hover:shadow-md"
-                                                        style="background-color: #2d7a4f; border-color: #2d7a4f;"
-                                                        onmouseover="this.style.backgroundColor='#245c3d'"
-                                                        onmouseout="this.style.backgroundColor='#2d7a4f'">
-                                                        <i class="bi bi-flag-fill"></i>
+                                                        class="inline-flex h-8 w-24 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border text-xs font-bold uppercase text-white transition-all hover:shadow-md bg-brand border-brand hover:brightness-90">
+                                                        🚩
                                                         <span>Finalizar</span>
                                                     </button>
                                                 <?php endif; ?>
@@ -373,7 +368,7 @@ unset($__errorArgs, $__bag); ?>
                                             <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->any(['editar-lotes', 'eliminar-lotes'])): ?>
                                             <div x-data="{ open: false }" class="relative">
                                                 <button @click="open = !open" class="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 transition-colors">
-                                                    <i class="bi bi-three-dots-vertical text-lg"></i>
+                                                    ⋮
                                                 </button>
                                                 <div x-show="open" @click.away="open = false" x-transition
                                                     class="absolute right-0 z-20 mt-2 w-44 origin-top-right rounded-lg border border-slate-100 bg-white shadow-xl ring-1 ring-black ring-opacity-5">
@@ -381,13 +376,13 @@ unset($__errorArgs, $__bag); ?>
                                                         <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('editar-lotes')): ?>
                                                         <button wire:click="editar(<?php echo e($lote->id_lote); ?>)" onclick="cambiarAPestanaFormulario()"
                                                             class="flex w-full items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
-                                                            <i class="bi bi-pencil me-3"></i> Editar
+                                                            ✏️ Editar
                                                         </button>
                                                         <?php endif; ?>
                                                         <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('eliminar-lotes')): ?>
                                                         <button wire:click="eliminar(<?php echo e($lote->id_lote); ?>)" onclick="return confirm('¿Está seguro de eliminar este lote?')"
                                                             class="flex w-full items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50">
-                                                            <i class="bi bi-trash me-3"></i> Eliminar
+                                                            🗑️ Eliminar
                                                         </button>
                                                         <?php endif; ?>
                                                     </div>
@@ -400,7 +395,7 @@ unset($__errorArgs, $__bag); ?>
                             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                                 <tr>
                                     <td colspan="9" class="px-6 py-12 text-center text-slate-400">
-                                        <i class="bi bi-inbox text-4xl mb-3 block"></i>
+                                        📭
                                         <p class="mb-0">No hay lotes registrados.</p>
                                     </td>
                                 </tr>

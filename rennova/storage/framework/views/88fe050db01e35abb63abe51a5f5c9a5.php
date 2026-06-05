@@ -28,17 +28,28 @@ foreach ($attributes->all() as $__key => $__value) {
 
 unset($__defined_vars, $__key, $__value); ?>
 
+<?php
+$iconMap = [
+    'plus-circle' => '➕',
+    'list-ul' => '📋',
+    'pencil-square' => '✏️',
+    'check-circle' => '✓',
+];
+?>
+
 <div class="mb-6 flex gap-0">
     <?php $__currentLoopData = $tabs; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $tab): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
         <?php if(($tab['can'] ?? true) === true): ?>
             <?php
                 $isActive = $activeTab === $tab['value'];
+                $emoji = $iconMap[$tab['icon'] ?? ''] ?? '';
             ?>
             <button type="button"
                 wire:click="$set('<?php echo e($tabProperty); ?>', '<?php echo e($tab['value']); ?>')"
                 class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border transition-all <?php echo e($loop->first ? 'rounded-l-lg' : ''); ?> <?php echo e(!$loop->first ? 'border-l-0' : ''); ?> <?php echo e($loop->last ? 'rounded-r-lg' : ''); ?> <?php echo e($isActive ? 'bg-green-800 text-white border-green-800' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'); ?>">
                 <?php if(isset($tab['icon'])): ?>
-                    <i class="bi bi-<?php echo e($tab['icon']); ?>"></i>
+                    <?php echo e($emoji); ?>
+
                 <?php endif; ?>
                 <?php echo e($tab['label']); ?>
 
