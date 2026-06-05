@@ -10,7 +10,7 @@ use Carbon\Carbon;
 
 /**
  * Servicio de Asignación Automática (Orquestador)
- * 
+ *
  * Coordina los servicios especializados para generar propuestas de asignación
  * de recursos (empleados, maquinarias, insumos) a lotes y tareas.
  */
@@ -24,7 +24,18 @@ class AutomaticAllocationService
     ) {}
 
     /**
-     * Genera propuesta de asignación para un lote y tipo de tarea
+     * Generate an allocation proposal for a lot and task type.
+     *
+     * Uses historical production data with a cascading fallback strategy:
+     * task+species → task → species → global. Creates the proposal and
+     * populates candidate employees, machinery, and inputs.
+     *
+     * @param  \App\Models\Lote  $lote  The forest lot to generate a proposal for
+     * @param  \App\Enums\TaskType  $taskType  The type of task to plan
+     * @param  \Carbon\Carbon|null  $since  Start date for historical data (default: 24 months ago)
+     * @param  int  $minSamples  Minimum number of production runs required (default: 5)
+     * @param  int  $gapDaysForRunSplit  Days gap to split a continuous run (default: 7)
+     * @return \App\Models\PropuestaAsignacion The created proposal with candidates
      */
     public function proposeForLotAndTask(
         Lote $lote,
@@ -75,7 +86,18 @@ class AutomaticAllocationService
     }
 
     /**
-     * Genera propuesta de asignación para una LoteTarea específica
+     * Generate an allocation proposal for a specific LoteTarea.
+     *
+     * Same fallback strategy as proposeForLotAndTask() but scoped to a
+     * specific task record with its own surface area.
+     *
+     * @param  \App\Models\LoteTarea  $tarea  The lot task to generate a proposal for
+     * @param  \Carbon\Carbon|null  $since  Start date for historical data
+     * @param  int  $minSamples  Minimum production runs required
+     * @param  int  $gapDaysForRunSplit  Days gap to split continuous runs
+     * @return \App\Models\PropuestaAsignacion The created proposal
+     *
+     * @throws \InvalidArgumentException If the task has no associated lot or invalid task type
      */
     public function proposeForLoteTarea(
         LoteTarea $tarea,
@@ -135,7 +157,13 @@ class AutomaticAllocationService
     }
 
     /**
-     * Delega al servicio de insumos para asegurar estimaciones de semana 1
+     * Ensure week-1 supply estimates are calculated for a proposal.
+     *
+     * Delegates to AsignacionInsumosService to estimate input quantities
+     * needed for the first week of work based on historical consumption rates.
+     *
+     * @param  \App\Models\PropuestaAsignacion  $proposal  The proposal to estimate supplies for
+     * @param  \Carbon\Carbon|null  $since  Start date for historical data
      */
     public function ensureWeek1SupplyEstimates(PropuestaAsignacion $proposal, ?Carbon $since = null): void
     {

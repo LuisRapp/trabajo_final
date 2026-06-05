@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Models\Usuario;
 
 class NotificacionSistema extends Model
 {
@@ -61,52 +60,46 @@ class NotificacionSistema extends Model
     {
         return $query->where(function ($q) {
             $q->whereNull('fecha_limite')
-              ->orWhere('fecha_limite', '>=', now()->toDateString());
+                ->orWhere('fecha_limite', '>=', now()->toDateString());
         });
     }
 
     public function scopeVencidas($query)
     {
         return $query->whereNotNull('fecha_limite')
-                    ->where('fecha_limite', '<', now()->toDateString())
-                    ->where('accionada', false);
+            ->where('fecha_limite', '<', now()->toDateString())
+            ->where('accionada', false);
     }
 
     // Métodos helper
+    /**
+     * @deprecated Use NotificacionService::marcarComoLeida($notificacion) instead
+     */
     public function marcarComoLeida(): void
     {
-        if (!$this->leida) {
-            $this->update([
-                'leida' => true,
-                'leida_at' => now(),
-            ]);
-        }
+        \App\Services\NotificacionService::marcarComoLeida($this);
     }
 
+    /**
+     * @deprecated Use NotificacionService::marcarComoAccionada($notificacion) instead
+     */
     public function marcarComoAccionada(): void
     {
-        if (!$this->accionada) {
-            $this->update([
-                'accionada' => true,
-                'accionada_at' => now(),
-                'leida' => true,
-                'leida_at' => $this->leida_at ?? now(),
-            ]);
-        }
+        \App\Services\NotificacionService::marcarComoAccionada($this);
     }
 
     public function estaVencida(): bool
     {
-        if (!$this->fecha_limite || $this->accionada) {
+        if (! $this->fecha_limite || $this->accionada) {
             return false;
         }
-        
+
         return $this->fecha_limite->isPast();
     }
 
     public function diasRestantes(): ?int
     {
-        if (!$this->fecha_limite || $this->accionada) {
+        if (! $this->fecha_limite || $this->accionada) {
             return null;
         }
 

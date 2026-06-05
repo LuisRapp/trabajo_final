@@ -2,13 +2,14 @@
 
 namespace App\Http\Livewire;
 
-use Livewire\Component;
-use App\Models\ConfiguracionSistema;
+use App\Services\ConfiguracionService;
 use Illuminate\Support\Facades\Artisan;
+use Livewire\Component;
 
 class ConfiguracionMantenimiento extends Component
 {
     public $hora_recordatorio = '08:00';
+
     public $expresion_cron = '*/30 * * * *';
 
     public function mount()
@@ -18,8 +19,8 @@ class ConfiguracionMantenimiento extends Component
 
     public function cargarConfiguracion()
     {
-        $this->hora_recordatorio = ConfiguracionSistema::obtener('mantenimiento_hora_recordatorio', '08:00');
-        $this->expresion_cron = ConfiguracionSistema::obtener('mantenimiento_hora_verificacion_umbrales', '*/30 * * * *');
+        $this->hora_recordatorio = ConfiguracionService::obtener('mantenimiento_hora_recordatorio', '08:00');
+        $this->expresion_cron = ConfiguracionService::obtener('mantenimiento_hora_verificacion_umbrales', '*/30 * * * *');
     }
 
     public function guardarConfiguracion()
@@ -34,14 +35,14 @@ class ConfiguracionMantenimiento extends Component
         ]);
 
         try {
-            ConfiguracionSistema::establecer(
+            ConfiguracionService::establecer(
                 'mantenimiento_hora_recordatorio',
                 $this->hora_recordatorio,
                 'Hora para enviar recordatorios de mantenimientos programados (formato HH:MM)',
                 'time'
             );
 
-            ConfiguracionSistema::establecer(
+            ConfiguracionService::establecer(
                 'mantenimiento_hora_verificacion_umbrales',
                 $this->expresion_cron,
                 'Expresión cron para verificación de umbrales',
@@ -49,9 +50,9 @@ class ConfiguracionMantenimiento extends Component
             );
 
             session()->flash('message', 'Configuración de mantenimiento guardada correctamente.');
-            
+
         } catch (\Exception $e) {
-            session()->flash('error', 'Error al guardar configuración: ' . $e->getMessage());
+            session()->flash('error', 'Error al guardar configuración: '.$e->getMessage());
         }
     }
 
@@ -63,7 +64,7 @@ class ConfiguracionMantenimiento extends Component
             session()->flash('message', 'Verificación de umbrales ejecutada correctamente.');
             session()->flash('command_output', $output);
         } catch (\Exception $e) {
-            session()->flash('error', 'Error al ejecutar verificación: ' . $e->getMessage());
+            session()->flash('error', 'Error al ejecutar verificación: '.$e->getMessage());
         }
     }
 
@@ -75,7 +76,7 @@ class ConfiguracionMantenimiento extends Component
             session()->flash('message', 'Verificación de mantenimientos programados ejecutada correctamente.');
             session()->flash('command_output', $output);
         } catch (\Exception $e) {
-            session()->flash('error', 'Error al ejecutar verificación: ' . $e->getMessage());
+            session()->flash('error', 'Error al ejecutar verificación: '.$e->getMessage());
         }
     }
 

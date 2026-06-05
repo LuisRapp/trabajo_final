@@ -11,10 +11,17 @@ use Illuminate\Support\Facades\DB;
 class EmpleadoPagoService
 {
     /**
-     * Calcular el costo de mano de obra de un empleado para un día específico.
+     * Calculate the labor cost of an employee for a specific day.
      *
-     * @param  string|\DateTimeInterface  $fecha
-     * @param  \Illuminate\Support\Collection|null  $cargasDelDia
+     * For rainy days (dia caido): returns the daily wage (jornal diario).
+     * For production days: returns tons processed × rate per ton.
+     * Uses the active salary record from HistoricoRolLaboral for the given date.
+     *
+     * @param  \App\Models\Empleado  $empleado  The employee to calculate cost for
+     * @param  string|\DateTimeInterface  $fecha  The date to calculate cost for
+     * @param  bool  $esDiaCaido  Whether this is a non-productive (rainy) day
+     * @param  \Illuminate\Support\Collection|null  $cargasDelDia  Pre-loaded loads for the day (with empleados relation)
+     * @return float Rounded cost (2 decimals)
      */
     public static function calcularCostoDia(Empleado $empleado, $fecha, bool $esDiaCaido, $cargasDelDia = null): float
     {
@@ -25,11 +32,7 @@ class EmpleadoPagoService
 
         if ($rolId) {
             $hist = HistoricoRolLaboral::where('rol_laboral_id', $rolId)
-                ->whereDate('fecha_inicio', '<=', $fecha)
-                ->where(function ($q) use ($fecha) {
-                    $q->whereNull('fecha_fin')->orWhereDate('fecha_fin', '>=', $fecha);
-                })
-                ->orderBy('fecha_inicio', 'desc')
+                ->vigenteEnFecha($fecha)
                 ->first();
 
             if ($hist) {
@@ -64,7 +67,28 @@ class EmpleadoPagoService
         return round($totalToneladasEmpleado * $tarifaPorTonelada, 2);
     }
 
-    public static function calcularPagoRango(Empleado $empleado, $fechaInicio, $fechaFin)
+    /**
+     * Calculate total payment for an employee over a date range.
+     *
+     * Combines two payment components:
+     * - Rainy days: count of days × daily wage
+     * - Production days: total tons processed × rate per ton
+     *
+     * @param  \App\Models\Empleado  $empleado  The employee to calculate payment for
+     * @param  string  $fechaInicio  Start date (Y-m-d)
+     * @param  string  $fechaFin  End date (Y-m-d)
+     * @return array{
+     *     cantidad_dias_caidos: int,
+     *     total_peso_neto: float,
+     *     total_peso_toneladas: float,
+     *     valor_jornal: float,
+     *     tarifa_fija_por_tonelada: float,
+     *     total_pagar_jornales: float,
+     *     total_pagar_produccion: float,
+     *     total_pagar_final: float
+     * }
+     */
+    public static function calcularPagoRango(Empleado $empleado, $fechaInicio, $fechaFin): array
     {
         $cantidad_dias_caidos = 0;
         $total_peso_neto = 0.0;
@@ -81,20 +105,12 @@ class EmpleadoPagoService
 
         if ($rolId) {
             $hist = HistoricoRolLaboral::where('rol_laboral_id', $rolId)
-                ->whereDate('fecha_inicio', '<=', $fechaFin)
-                ->where(function ($q) use ($fechaFin) {
-                    $q->whereNull('fecha_fin')->orWhereDate('fecha_fin', '>=', $fechaFin);
-                })
-                ->orderBy('fecha_inicio', 'desc')
+                ->vigenteEnFecha($fechaFin)
                 ->first();
 
             if (! $hist) {
                 $hist = HistoricoRolLaboral::where('rol_laboral_id', $rolId)
-                    ->whereDate('fecha_inicio', '<=', $fechaInicio)
-                    ->where(function ($q) use ($fechaInicio) {
-                        $q->whereNull('fecha_fin')->orWhereDate('fecha_fin', '>=', $fechaInicio);
-                    })
-                    ->orderBy('fecha_inicio', 'desc')
+                    ->vigenteEnFecha($fechaInicio)
                     ->first();
             }
 
@@ -111,7 +127,17 @@ class EmpleadoPagoService
 
         $partes = ParteDiario::whereBetween('fecha', [$fechaInicio, $fechaFin])->get();
 
+        // Pre-load all cargas for the date range with empleados to avoid N+1
+        $cargasDelRango = Carga::whereBetween('fecha_carga', [$fechaInicio, $fechaFin])
+            ->with('empleados')
+            ->get()
+            ->groupBy(function ($carga) {
+                return \Carbon\Carbon::parse($carga->fecha_carga)->format('Y-m-d');
+            });
+
         foreach ($partes as $parte) {
+            $fechaStr = \Carbon\Carbon::parse($parte->fecha)->format('Y-m-d');
+
             if ($parte->es_dia_caido) {
                 $trabajoEseDia = DB::table('parte_diario_empleado')
                     ->where('id_parte_diario', $parte->id_parte_diario)
@@ -122,12 +148,10 @@ class EmpleadoPagoService
                     $cantidad_dias_caidos += 1;
                 }
             } else {
-                $cargasDelDia = Carga::whereDate('fecha_carga', $parte->fecha)
-                    ->whereHas('empleados', function ($query) use ($empleado) {
-                        $query->where('empleados.id_empleado', $empleado->id_empleado);
-                    })
-                    ->with('empleados')
-                    ->get();
+                $cargasDelDia = collect($cargasDelRango[$fechaStr] ?? [])
+                    ->filter(function ($carga) use ($empleado) {
+                        return $carga->empleados->contains('id_empleado', $empleado->id_empleado);
+                    });
 
                 foreach ($cargasDelDia as $carga) {
                     $cantidadEmpleados = $carga->empleados->count();

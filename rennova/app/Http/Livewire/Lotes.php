@@ -62,6 +62,8 @@ class Lotes extends Component
 
     public $editProposedInsumos = [];
 
+    public $editingProposals = [];
+
     protected $rules = [
         'propietario' => 'required|string|min:3|max:100',
         'ubicacion' => 'required|string|min:3|max:150',

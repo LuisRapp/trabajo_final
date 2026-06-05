@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Jobs\ProcessAllocationProposal;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -55,18 +54,6 @@ class Lote extends Model implements AuditableContract
 
     // Nota: evitamos enganchar eventos inexistentes de pivot a nivel de modelo.
     // La auditoría de asignaciones se realiza en el flujo de guardado del componente Livewire.
-
-    protected static function booted(): void
-    {
-        static::saved(function (self $lote) {
-            if ($lote->wasRecentlyCreated || $lote->wasChanged(['estado', 'especie', 'superficie', 'main_task_type'])) {
-                // Use afterCommit to avoid database transaction conflicts
-                \DB::afterCommit(function () use ($lote) {
-                    ProcessAllocationProposal::dispatch($lote->id_lote);
-                });
-            }
-        });
-    }
 
     public function parteDiarios()
     {

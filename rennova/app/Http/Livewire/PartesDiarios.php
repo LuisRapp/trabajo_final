@@ -653,11 +653,7 @@ class PartesDiarios extends Component
             return null;
         }
         $hist = \App\Models\HistoricoRolLaboral::where('rol_laboral_id', $rolId)
-            ->whereDate('fecha_inicio', '<=', $fecha)
-            ->where(function ($q) use ($fecha) {
-                $q->whereNull('fecha_fin')->orWhereDate('fecha_fin', '>=', $fecha);
-            })
-            ->orderBy('fecha_inicio', 'desc')
+            ->vigenteEnFecha($fecha)
             ->first();
         if ($hist) {
             return (float) ($hist->jornal_diario ?? 0);
@@ -929,13 +925,7 @@ class PartesDiarios extends Component
             // 3. Guardar Movimientos de Insumos (siempre se guardan)
             // Si estamos en edición, eliminar movimientos previos de este parte para no duplicar
             if ($this->parte_id) {
-                MovimientoStock::where(function ($query) use ($parteDiarioId) {
-                    $query->where('id_parte_diario', $parteDiarioId)
-                        ->orWhere(function ($fallback) use ($parteDiarioId) {
-                            $fallback->whereNull('id_parte_diario')
-                                ->where('motivo', 'ILIKE', 'Parte Diario #'.$parteDiarioId.' - %');
-                        });
-                })->delete();
+                MovimientoStock::delParteDiario($parteDiarioId)->delete();
             }
 
             // Registrar movimientos con cálculo FIFO automático para salidas
@@ -1031,9 +1021,16 @@ class PartesDiarios extends Component
             $cargas = Carga::with(['empleados', 'maquinarias'])
                 ->where('id_parte_diario', $parte->id_parte_diario)
                 ->get();
+
+            // Pre-cargar clientes para evitar N+1
+            $destinos = $cargas->pluck('destino')->filter()->unique()->values();
+            $clientesMap = Cliente::whereIn('razon_social', $destinos)
+                ->get()
+                ->keyBy('razon_social');
+
             foreach ($cargas as $c) {
                 // Buscar el ID del cliente a partir del nombre guardado en destino
-                $cliente = Cliente::where('razon_social', $c->destino)->first();
+                $cliente = $clientesMap[$c->destino] ?? null;
                 $idCliente = $cliente ? $cliente->id_cliente : null;
 
                 $this->cargas[] = [
@@ -1069,14 +1066,7 @@ class PartesDiarios extends Component
 
         // Cargar MOVIMIENTOS vinculados a este parte (por motivo y fecha)
         $this->movimientos = [];
-        $movs = MovimientoStock::where(function ($query) use ($parte) {
-            $query->where('id_parte_diario', $parte->id_parte_diario)
-                ->orWhere(function ($fallback) use ($parte) {
-                    $fallback->whereNull('id_parte_diario')
-                        ->whereDate('fecha', $this->fecha)
-                        ->where('motivo', 'ILIKE', 'Parte Diario #'.$parte->id_parte_diario.' - %');
-                });
-        })
+        $movs = MovimientoStock::delParteDiario($parte->id_parte_diario, $this->fecha)
             ->get();
 
         // Agrupar múltiples movimientos FIFO del mismo insumo en uno solo para edición
