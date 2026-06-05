@@ -51,6 +51,23 @@ class MovimientoStock extends Model implements Auditable
     }
 
     /**
+     * Filter movements linked to a specific parte diario (direct or by fallback matching).
+     */
+    public function scopeDelParteDiario($query, int $parteDiarioId, ?string $fecha = null): void
+    {
+        $query->where(function ($q) use ($parteDiarioId, $fecha) {
+            $q->where('id_parte_diario', $parteDiarioId)
+                ->orWhere(function ($fallback) use ($parteDiarioId, $fecha) {
+                    $fallback->whereNull('id_parte_diario')
+                        ->where('motivo', 'LIKE', 'Parte Diario #'.$parteDiarioId.'%');
+                    if ($fecha) {
+                        $fallback->whereDate('fecha', $fecha);
+                    }
+                });
+        });
+    }
+
+    /**
      * @deprecated Use InventarioService::registrarSalida() instead
      */
 

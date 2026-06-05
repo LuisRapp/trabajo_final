@@ -7,7 +7,11 @@ use App\Models\NotificacionSistema;
 class NotificacionService
 {
     /**
-     * Marcar una notificación como leída
+     * Mark a notification as read.
+     *
+     * Sets leida=true and records the timestamp. No-op if already read.
+     *
+     * @param  \App\Models\NotificacionSistema  $notificacion  The notification to mark as read
      */
     public static function marcarComoLeida(NotificacionSistema $notificacion): void
     {
@@ -20,7 +24,12 @@ class NotificacionService
     }
 
     /**
-     * Marcar una notificación como accionada
+     * Mark a notification as actioned (resolved).
+     *
+     * Sets accionada=true and records the timestamp. Also marks as read if not already.
+     * No-op if already actioned.
+     *
+     * @param  \App\Models\NotificacionSistema  $notificacion  The notification to mark as actioned
      */
     public static function marcarComoAccionada(NotificacionSistema $notificacion): void
     {

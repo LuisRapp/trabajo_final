@@ -345,7 +345,7 @@ unset($__errorArgs, $__bag); ?>
     <?php endif; ?>
 
     <!-- CSS y Modal - preservados del original -->
-    <?php if (! $__env->hasRenderedOnce('ad091b33-11ad-403c-86cf-afec1a5dc703')): $__env->markAsRenderedOnce('ad091b33-11ad-403c-86cf-afec1a5dc703'); ?>
+    <?php if (! $__env->hasRenderedOnce('b077ff47-8bd6-4c14-b167-08ca7b65fa3a')): $__env->markAsRenderedOnce('b077ff47-8bd6-4c14-b167-08ca7b65fa3a'); ?>
         <style>
             .lw-modal-overlay {
                 position: fixed;

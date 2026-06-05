@@ -26,4 +26,16 @@ class HistoricoRolLaboral extends Model implements Auditable
     {
         return $this->belongsTo(RolLaboral::class, 'rol_laboral_id', 'id_rol_laboral');
     }
+
+    /**
+     * Filter to records active on a given date.
+     */
+    public function scopeVigenteEnFecha($query, $fecha): void
+    {
+        $query->whereDate('fecha_inicio', '<=', $fecha)
+            ->where(function ($q) use ($fecha) {
+                $q->whereNull('fecha_fin')->orWhereDate('fecha_fin', '>=', $fecha);
+            })
+            ->orderBy('fecha_inicio', 'desc');
+    }
 }

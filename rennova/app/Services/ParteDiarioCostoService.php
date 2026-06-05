@@ -9,7 +9,20 @@ use App\Models\ParteDiario;
 
 class ParteDiarioCostoService
 {
-    public static function calcularYGuardarCostos(ParteDiario $parteDiario)
+    /**
+     * Calculate and persist all cost components for a daily report.
+     *
+     * Computes three cost components:
+     * - Mano de obra (labor): Sum of employee costs via EmpleadoPagoService
+     * - Insumos (materials): Sum of FIFO stock movement costs
+     * Maquinaria (machinery): Rental costs per ton + completed maintenance costs
+     *
+     * Also calculates unit cost (cost per ton) when not a rainy day and tons > 0.
+     * Results are saved directly to the ParteDiario model via updateQuietly().
+     *
+     * @param  \App\Models\ParteDiario  $parteDiario  The daily report to calculate costs for
+     */
+    public static function calcularYGuardarCostos(ParteDiario $parteDiario): void
     {
         $costoManoObra = 0.0;
         $costoInsumos = 0.0;
@@ -18,14 +31,16 @@ class ParteDiarioCostoService
 
         $empleados = $parteDiario->empleados()->with('rolLaboral')->get();
 
+        // Pre-load all cargas for this date with empleados to avoid N+1
+        $cargasDelDia = Carga::whereDate('fecha_carga', $parteDiario->fecha)
+            ->with('empleados')
+            ->get();
+
         if (! $empleados->isEmpty()) {
             foreach ($empleados as $empleado) {
-                $cargasDelEmpleado = Carga::whereDate('fecha_carga', $parteDiario->fecha)
-                    ->whereHas('empleados', function ($q) use ($empleado) {
-                        $q->where('empleados.id_empleado', $empleado->id_empleado);
-                    })
-                    ->with('empleados')
-                    ->get();
+                $cargasDelEmpleado = $cargasDelDia->filter(function ($carga) use ($empleado) {
+                    return $carga->empleados->contains('id_empleado', $empleado->id_empleado);
+                });
 
                 $costoEmpleado = EmpleadoPagoService::calcularCostoDia(
                     $empleado,
@@ -38,15 +53,7 @@ class ParteDiarioCostoService
             }
         }
 
-        $movimientos = MovimientoStock::where('tipo', 'salida')
-            ->where(function ($query) use ($parteDiario) {
-                $query->where('id_parte_diario', $parteDiario->id_parte_diario)
-                    ->orWhere(function ($fallback) use ($parteDiario) {
-                        $fallback->whereNull('id_parte_diario')
-                            ->whereDate('fecha', $parteDiario->fecha)
-                            ->where('motivo', 'LIKE', 'Parte Diario #'.$parteDiario->id_parte_diario.'%');
-                    });
-            })
+        $movimientos = MovimientoStock::delParteDiario($parteDiario->id_parte_diario, $parteDiario->fecha)
             ->get();
 
         foreach ($movimientos as $mov) {
