@@ -13,355 +13,77 @@
 
     <!-- Scripts & Styles (Tailwind CSS via Vite) -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <style>
-        :root {
-            --navbar-height: 38px;
-            --sidebar-width: 220px;
-            --footer-height: 40px;
-            --primary-color: #0f172a;
-            --primary-light: #e2e8f0;
-            --bg-light: #f8fafc;
-            --sidebar-bg: #ffffff;
-            --sidebar-header-bg: #f1f5f9;
-        }
-
-        body {
-            background-color: var(--bg-light);
-            margin: 0;
-            padding: 0;
-        }
-
-        /* Navbar */
-        .navbar {
-            flex-shrink: 0;
-        }
-
-        /* Sidebar Styles */
-        .layout-container {
-            display: flex;
-            flex: 1;
-            overflow: hidden;
-            min-height: 0;
-            height: calc(100vh - var(--navbar-height));
-        }
-        .sidebar {
-            width: var(--sidebar-width);
-            min-width: var(--sidebar-width);
-            background: var(--sidebar-bg);
-            color: #0f172a;
-            overflow-y: auto;
-            box-shadow: 2px 0 8px rgba(0, 0, 0, 0.08);
-            transition: margin-left 0.3s ease-in-out;
-            flex-shrink: 0;
-            height: 100%;
-            padding-bottom: 1.5rem;
-        }
-        .sidebar.collapsed {
-            margin-left: calc(-1 * var(--sidebar-width));
-        }
-        .sidebar-header {
-            padding: 0.75rem;
-            font-weight: bold;
-            background: var(--sidebar-header-bg);
-        }
-        .sidebar-header h6 {
-            color: var(--primary-color);
-            font-size: 0.85rem;
-        }
-        .sidebar-section {
-            padding: 0.5rem 0.75rem 0.25rem 0.75rem;
-            font-size: 0.8rem;
-            color: var(--primary-color);
-            font-weight: 600;
-        }
-        .sidebar-link {
-            display: flex;
-            align-items: center;
-            padding: 0.5rem 0.75rem;
-            color: #334155;
-            text-decoration: none;
-            transition: all 0.2s;
-            border-left: 2px solid transparent;
-            font-size: 0.85rem;
-        }
-        .sidebar-link:hover {
-            background: var(--bg-light);
-            color: var(--primary-color);
-            border-left-color: var(--primary-color);
-            padding-left: 0.9rem;
-        }
-        .sidebar-link.active {
-            background: var(--bg-light);
-            color: var(--primary-color);
-            border-left-color: var(--primary-color);
-            font-weight: 500;
-        }
-        .sidebar-link i {
-            margin-right: 0.4rem;
-            width: 16px;
-            text-align: center;
-            font-size: 0.9rem;
-        }
-
-        /* Sidebar collapse sections */
-        .sidebar-collapse-btn {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0.5rem 0.75rem;
-            color: var(--primary-color);
-            background: transparent;
-            border: none;
-            text-decoration: none;
-            transition: all 0.2s;
-            cursor: pointer;
-            width: 100%;
-            text-align: left;
-            font-weight: 600;
-            font-size: 0.85rem;
-        }
-        .sidebar-collapse-btn:hover {
-            background: var(--bg-light);
-        }
-        .sidebar-collapse-btn i.toggle-arrow {
-            transition: transform 0.3s;
-            font-size: 0.7rem;
-        }
-        .sidebar-collapse-btn.collapsed i.toggle-arrow {
-            transform: rotate(-90deg);
-        }
-        .sidebar-submenu {
-            padding-left: 0.75rem;
-            background: rgba(0, 0, 0, 0.02);
-        }
-        .sidebar-submenu .sidebar-link {
-            padding: 0.4rem 0.75rem;
-            font-size: 0.8rem;
-            border-left: 2px solid transparent;
-        }
-        .sidebar-submenu .sidebar-link:hover {
-            padding-left: 0.9rem;
-        }
-
-        /* Page wrapper */
-        .page-wrapper {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            min-height: 0;
-            overflow: hidden;
-        }
-
-        /* Main content */
-        .main-content {
-            padding: 1rem;
-            overflow-y: auto;
-            flex: 1;
-        }
-
-        /* Footer */
-        footer {
-            flex-shrink: 0;
-        }
-        
-        /* Navbar Styles */
-        .navbar-brand {
-            cursor: pointer;
-            user-select: none;
-        }
-        .navbar-brand:hover {
-            opacity: 0.9;
-        }
-        .toggle-icon {
-            transition: transform 0.3s;
-            display: inline-block;
-            margin-right: 0.5rem;
-        }
-        .toggle-icon.rotated {
-            transform: rotate(90deg);
-        }
-
-        /* Overlay for mobile */
-        .sidebar-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1039;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s, visibility 0.3s;
-        }
-        .sidebar-overlay.show {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        /* Scrollbar Styles */
-        .sidebar::-webkit-scrollbar {
-            width: 6px;
-        }
-        .sidebar::-webkit-scrollbar-track {
-            background: var(--sidebar-header-bg);
-        }
-        .sidebar::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 3px;
-        }
-        .sidebar::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .sidebar {
-                position: fixed;
-                top: var(--navbar-height);
-                left: 0;
-                height: calc(100vh - var(--navbar-height));
-                z-index: 1040;
-                transform: translateX(-100%);
-            }
-            .sidebar.show {
-                transform: translateX(0);
-            }
-            .sidebar.collapsed {
-                margin-left: 0;
-            }
-            .main-content {
-                padding: 0.75rem;
-            }
-        }
-    </style>
-
-    <!-- Scripts -->
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <!-- Livewire Styles -->
     @livewireStyles
 </head>
-<body class="d-flex flex-column" style="height: 100vh;">
-    @include('partials.header')
+<body class="bg-slate-50 flex flex-col" style="height: 100vh;">
+    <div x-data="layoutState()" x-cloak>
+        @include('partials.header')
 
-    <!-- Sidebar Overlay (for mobile) -->
-    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+        <!-- Sidebar Overlay (for mobile) -->
+        <div class="sidebar-overlay" :class="{ 'show': mobileOpen }" @click="mobileOpen = false"></div>
 
-    <div class="layout-container">
-        @include('partials.sidebar')
+        <div class="layout-container">
+            @include('partials.sidebar')
 
-        <!-- Main Content + Footer -->
-        <div class="page-wrapper flex-grow-1 d-flex flex-column bg-slate-50" id="pageWrapper">
-            <main class="main-content flex-fill" id="mainContent">
-                <div class="flex-fill">
-                    @if(session('status'))
-                        <div class="container py-2">
-                            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                                <i class="bi bi-check-circle-fill"></i> {{ session('status') }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <!-- Main Content + Footer -->
+            <div class="page-wrapper grow flex flex-col bg-slate-50" id="pageWrapper">
+                <main class="main-content flex-1" id="mainContent">
+                    <div class="flex-1">
+                        @if(session('status'))
+                            <div class="max-w-7xl mx-auto px-4 py-2">
+                                <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl px-5 py-3 flex items-center justify-between" role="alert">
+                                    <span><i class="bi bi-check-circle-fill"></i> {{ session('status') }}</span>
+                                    <button type="button" class="text-emerald-600 hover:text-emerald-800 ml-4" @click="$el.closest('[role=alert]').remove()">
+                                        &times;
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                    @endif
-                    @if(session('error'))
-                        <div class="container py-2">
-                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                                <i class="bi bi-exclamation-triangle-fill"></i> {{ session('error') }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        @endif
+                        @if(session('error'))
+                            <div class="max-w-7xl mx-auto px-4 py-2">
+                                <div class="bg-red-50 border border-red-200 text-red-800 rounded-xl px-5 py-3 flex items-center justify-between" role="alert">
+                                    <span><i class="bi bi-exclamation-triangle-fill"></i> {{ session('error') }}</span>
+                                    <button type="button" class="text-red-600 hover:text-red-800 ml-4" @click="$el.closest('[role=alert]').remove()">
+                                        &times;
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                    @endif
-                    
-                    @if (isset($slot))
-                        {{ $slot }}
-                    @else
-                        @yield('content')
-                    @endif
-                    
-                </div>
-            </main>
-            @include('partials.footer')
+                        @endif
+
+                        @if (isset($slot))
+                            {{ $slot }}
+                        @else
+                            @yield('content')
+                        @endif
+
+                    </div>
+                </main>
+                @include('partials.footer')
+            </div>
         </div>
     </div>
 
     @stack('scripts')
 
-    <!-- Sidebar Toggle Script -->
+    <!-- Layout State (Alpine.js) -->
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeSidebar();
-        });
-
-        function initializeSidebar() {
-            const sidebarToggle = document.getElementById('sidebarToggle');
-            const sidebar = document.getElementById('sidebar');
-            const sidebarOverlay = document.getElementById('sidebarOverlay');
-            const toggleIcon = document.getElementById('toggleIcon');
-            
-            if (!sidebar || !sidebarToggle) return;
-            
-            // Cargar estado del sidebar (expandido/colapsado) desde localStorage
-            const sidebarState = localStorage.getItem('sidebarCollapsed');
-            if (sidebarState === 'true') {
-                sidebar.classList.add('collapsed');
-                if (toggleIcon) toggleIcon.classList.add('rotated');
-            }
-
-            // Toggle sidebar al hacer clic en el logo
-            sidebarToggle.addEventListener('click', function(e) {
-                e.preventDefault();
-                
-                if (window.innerWidth <= 768) {
-                    sidebar.classList.toggle('show');
-                    if (sidebarOverlay) sidebarOverlay.classList.toggle('show');
-                } else {
-                    sidebar.classList.toggle('collapsed');
-                    if (toggleIcon) toggleIcon.classList.toggle('rotated');
-                    localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
-                }
-            });
-
-            // Cerrar sidebar al hacer clic en el overlay (móvil)
-            if (sidebarOverlay) {
-                sidebarOverlay.addEventListener('click', function() {
-                    sidebar.classList.remove('show');
-                    sidebarOverlay.classList.remove('show');
-                });
-            }
-
-            // Marcar link activo
-            const currentPath = window.location.pathname.replace(/\/+$/, '') || '/';
-            const sidebarLinks = document.querySelectorAll('.sidebar-link');
-            
-            sidebarLinks.forEach(link => {
-                try {
-                    const linkPath = new URL(link.href).pathname.replace(/\/+$/, '') || '/';
-                    const isActive = (linkPath === '/') 
-                        ? currentPath === '/'
-                        : (currentPath === linkPath || currentPath.startsWith(linkPath + '/'));
-                    
-                    if (isActive) link.classList.add('active');
-                } catch (_) {}
-            });
-
-            // Responsive: resetear estado en cambio de tamaño
-            let resizeTimer;
-            window.addEventListener('resize', function() {
-                clearTimeout(resizeTimer);
-                resizeTimer = setTimeout(function() {
-                    if (window.innerWidth > 768) {
-                        sidebar.classList.remove('show');
-                        if (sidebarOverlay) sidebarOverlay.classList.remove('show');
+        function layoutState() {
+            return {
+                collapsed: false,
+                mobileOpen: false,
+                init() {
+                    this.collapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+                },
+                toggleSidebar() {
+                    if (window.innerWidth <= 768) {
+                        this.mobileOpen = !this.mobileOpen;
+                    } else {
+                        this.collapsed = !this.collapsed;
+                        localStorage.setItem('sidebarCollapsed', this.collapsed);
                     }
-                }, 250);
-            });
-            
-            // Detector de cambios en el sidebar (Livewire puede reemplazar el DOM)
-            if (sidebarElement) {
-                const observer = new MutationObserver(() => {
-                    initializeSidebar();
-                });
-                observer.observe(sidebarElement, { childList: true, subtree: true });
+                }
             }
         }
     </script>
