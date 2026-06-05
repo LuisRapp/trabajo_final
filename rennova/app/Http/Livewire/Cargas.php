@@ -116,6 +116,7 @@ class Cargas extends Component
             ]
         );
         session()->flash('message', $this->carga_id ? 'Carga actualizada correctamente.' : 'Carga creada correctamente.');
+        $this->tab_activo = 'listado';
         $this->resetCampos();
         $this->resetPage();
         $this->dispatch('cargaGuardada');
@@ -123,6 +124,7 @@ class Cargas extends Component
 
     public function editar($id)
     {
+        $this->tab_activo = 'nuevo';
         $carga = Carga::findOrFail($id);
         $this->carga_id = $carga->id_carga;
         $this->id_lote = $carga->id_lote;

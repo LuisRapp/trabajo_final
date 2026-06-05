@@ -2,16 +2,9 @@
 
 namespace App\Http\Livewire;
 
-use App\Jobs\GenerateAllocationProposalsForLote;
 use App\Models\Lote;
 use App\Models\PropuestaAsignacion;
-use App\Models\PropuestaAsignacionEmpleado;
-use App\Models\PropuestaAsignacionInsumo;
-use App\Models\PropuestaAsignacionMaquinaria;
-use App\Notifications\OrdenCompraPropuestaNotification;
-use App\Services\AutomaticAllocationService;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Notification;
+use App\Services\PropuestaAsignacionService;
 use Livewire\Component;
 
 class AllocationProposals extends Component
@@ -100,7 +93,7 @@ class AllocationProposals extends Component
             return;
         }
 
-        GenerateAllocationProposalsForLote::dispatch($loteId);
+        app(PropuestaAsignacionService::class)->despacharGeneracionRecomendaciones($loteId);
         session()->flash('message', 'Generación solicitada. Refrescá en unos segundos.');
     }
 
@@ -175,25 +168,13 @@ class AllocationProposals extends Component
         $this->guardando = true;
 
         try {
-            DB::transaction(function () {
-                foreach ($this->employeeSelected as $rowId => $selected) {
-                    PropuestaAsignacionEmpleado::where('id_allocation_proposal_employee', (int) $rowId)
-                        ->where('id_allocation_proposal', (int) $this->selected_proposal_id)
-                        ->update(['selected' => (bool) $selected]);
-                }
-
-                foreach ($this->maquinariaSelected as $rowId => $selected) {
-                    PropuestaAsignacionMaquinaria::where('id_allocation_proposal_maquinaria', (int) $rowId)
-                        ->where('id_allocation_proposal', (int) $this->selected_proposal_id)
-                        ->update(['selected' => (bool) $selected]);
-                }
-
-                foreach ($this->insumoSelected as $rowId => $selected) {
-                    PropuestaAsignacionInsumo::where('id_allocation_proposal_insumo', (int) $rowId)
-                        ->where('id_allocation_proposal', (int) $this->selected_proposal_id)
-                        ->update(['selected' => (bool) $selected]);
-                }
-            });
+            $servicio = app(PropuestaAsignacionService::class);
+            $servicio->guardarSeleccion(
+                (int) $this->selected_proposal_id,
+                $this->employeeSelected,
+                $this->maquinariaSelected,
+                $this->insumoSelected
+            );
 
             $this->loadSelectedProposal();
             session()->flash('message', 'Selección guardada correctamente.');
@@ -215,21 +196,9 @@ class AllocationProposals extends Component
         try {
             $this->guardarSeleccion();
 
-            $proposal = PropuestaAsignacion::find((int) $this->selected_proposal_id);
-            if ($proposal) {
-                $meta = $proposal->meta ?? [];
-                if ($this->isLowConfidence($meta)) {
-                    $meta['review_required'] = true;
-                    $meta['reviewed_at'] = now()->toISOString();
-                }
-
-                $proposal->status = 'confirmed';
-                $proposal->confirmed_at = now();
-                $proposal->meta = $meta;
-                $proposal->save();
-            }
-
-            $this->enviarOrdenCompraSiCorresponde((int) $this->selected_proposal_id);
+            $servicio = app(PropuestaAsignacionService::class);
+            $servicio->confirmarRecomendacion((int) $this->selected_proposal_id);
+            $servicio->enviarOrdenCompraSiCorresponde((int) $this->selected_proposal_id);
 
             $this->loadSelectedProposal();
             $this->refreshProposals();
@@ -252,66 +221,9 @@ class AllocationProposals extends Component
         try {
             $this->guardarSeleccion();
 
-            DB::transaction(function () {
-                /** @var PropuestaAsignacion $proposal */
-                $proposal = PropuestaAsignacion::query()
-                    ->with(['lote', 'proposedEmployees', 'proposedMaquinarias'])
-                    ->lockForUpdate()
-                    ->findOrFail((int) $this->selected_proposal_id);
-
-                if ($proposal->status === 'applied') {
-                    return;
-                }
-
-                $lote = $proposal->lote;
-                if (! $lote) {
-                    throw new \RuntimeException('La propuesta no tiene lote asociado.');
-                }
-
-                $meta = $proposal->meta ?? [];
-                $lowConfidence = $this->isLowConfidence($meta);
-                if ($lowConfidence && $proposal->status !== 'confirmed') {
-                    throw new \RuntimeException('Propuesta con baja confianza. Confirma primero para revision manual.');
-                }
-
-                $empleadosIds = $proposal->proposedEmployees
-                    ->where('selected', true)
-                    ->pluck('id_empleado')
-                    ->map(fn ($v) => (int) $v)
-                    ->values()
-                    ->toArray();
-
-                $maquinariasIds = $proposal->proposedMaquinarias
-                    ->where('selected', true)
-                    ->pluck('id_maquinaria')
-                    ->map(fn ($v) => (int) $v)
-                    ->values()
-                    ->toArray();
-
-                $busyEmployees = $this->findBusyEmployees($empleadosIds, (int) $lote->id_lote);
-                if (! empty($busyEmployees)) {
-                    throw new \RuntimeException('Algunos empleados ya estan asignados a otros lotes en proceso.');
-                }
-
-                $busyMaquinarias = $this->findBusyMaquinarias($maquinariasIds, (int) $lote->id_lote);
-                if (! empty($busyMaquinarias)) {
-                    throw new \RuntimeException('Algunas maquinarias ya estan asignadas a otros lotes en proceso.');
-                }
-
-                $this->closeOtherProposals($proposal);
-
-                $lote->empleados()->sync($empleadosIds);
-                $lote->maquinarias()->sync($maquinariasIds);
-
-                $proposal->status = 'applied';
-                if (! $proposal->confirmed_at) {
-                    $proposal->confirmed_at = now();
-                }
-                $proposal->applied_at = now();
-                $proposal->save();
-            });
-
-            $this->enviarOrdenCompraSiCorresponde((int) $this->selected_proposal_id);
+            $servicio = app(PropuestaAsignacionService::class);
+            $servicio->aplicarPropuesta((int) $this->selected_proposal_id);
+            $servicio->enviarOrdenCompraSiCorresponde((int) $this->selected_proposal_id);
 
             $this->loadSelectedProposal();
             $this->refreshProposals();
@@ -323,176 +235,8 @@ class AllocationProposals extends Component
         }
     }
 
-    private function isLowConfidence($meta): bool
-    {
-        if (! is_array($meta)) {
-            return false;
-        }
-
-        if (! empty($meta['review_required'])) {
-            return true;
-        }
-
-        $reason = $meta['default_rates']['reason'] ?? null;
-
-        return $reason === 'sin_historico';
-    }
-
-    private function closeOtherProposals(PropuestaAsignacion $proposal): void
-    {
-        $query = PropuestaAsignacion::query()
-            ->where('id_lote', $proposal->id_lote)
-            ->where('id_allocation_proposal', '!=', $proposal->id_allocation_proposal);
-
-        if (! empty($proposal->id_lote_tarea)) {
-            $query->where('id_lote_tarea', $proposal->id_lote_tarea);
-        } else {
-            $query->whereNull('id_lote_tarea')
-                ->where('tipo_tarea', $proposal->tipo_tarea);
-        }
-
-        $query->where(function ($q) {
-            $q->whereNull('status')
-                ->orWhereIn('status', ['draft', 'confirmed', 'applied']);
-        })->update(['status' => 'closed']);
-    }
-
-    private function findBusyEmployees(array $empleadosIds, int $currentLoteId): array
-    {
-        if (empty($empleadosIds)) {
-            return [];
-        }
-
-        return DB::table('lote_empleado as le')
-            ->join('lotes as l', 'l.id_lote', '=', 'le.id_lote')
-            ->where('l.estado', 'en_proceso')
-            ->where('l.id_lote', '!=', $currentLoteId)
-            ->whereIn('le.id_empleado', $empleadosIds)
-            ->pluck('le.id_empleado')
-            ->unique()
-            ->values()
-            ->all();
-    }
-
-    private function findBusyMaquinarias(array $maquinariasIds, int $currentLoteId): array
-    {
-        if (empty($maquinariasIds)) {
-            return [];
-        }
-
-        return DB::table('lote_maquinaria as lm')
-            ->join('lotes as l', 'l.id_lote', '=', 'lm.id_lote')
-            ->where('l.estado', 'en_proceso')
-            ->where('l.id_lote', '!=', $currentLoteId)
-            ->whereIn('lm.id_maquinaria', $maquinariasIds)
-            ->pluck('lm.id_maquinaria')
-            ->unique()
-            ->values()
-            ->all();
-    }
-
     public function render()
     {
         return view('livewire.allocation-proposals');
-    }
-
-    private function enviarOrdenCompraSiCorresponde(int $proposalId): void
-    {
-        /** @var PropuestaAsignacion|null $proposal */
-        $proposal = PropuestaAsignacion::query()
-            ->with([
-                'lote',
-                'loteTarea',
-                'proposedEmployees.empleado.rolLaboral',
-                'proposedMaquinarias.maquinaria.tipoMaquinaria',
-                'proposedInsumos.insumo.unidadMedida',
-            ])
-            ->find($proposalId);
-
-        if (! $proposal) {
-            return;
-        }
-
-        // Evitar re-envíos (guardado en meta JSON).
-        $meta = $proposal->meta ?? [];
-        if (! empty($meta['purchase_order']['sent_at'] ?? null)) {
-            return;
-        }
-
-        // Completa cantidades/costos si faltan.
-        app(AutomaticAllocationService::class)->ensureWeek1SupplyEstimates($proposal);
-        $proposal->refresh();
-        $proposal->load([
-            'proposedEmployees.empleado.rolLaboral',
-            'proposedMaquinarias.maquinaria.tipoMaquinaria',
-            'proposedInsumos.insumo.unidadMedida',
-        ]);
-
-        $emails = $this->resolvePurchaseOrderRecipients($proposal);
-        if (empty($emails)) {
-            return;
-        }
-
-        foreach ($emails as $email) {
-            Notification::route('mail', $email)->notify(new OrdenCompraPropuestaNotification($proposal));
-        }
-
-        $meta['purchase_order'] = [
-            'sent_at' => now()->toISOString(),
-            'recipients' => $emails,
-        ];
-        $proposal->meta = $meta;
-        $proposal->save();
-    }
-
-    private function resolvePurchaseOrderRecipients(PropuestaAsignacion $proposal): array
-    {
-        $emails = [];
-
-        foreach ((array) config('mail.purchase_order_emails', []) as $e) {
-            $e = trim((string) $e);
-            if ($e !== '') {
-                $emails[] = $e;
-            }
-        }
-
-        // Prioriza capataz seleccionado (si tiene email).
-        foreach ($proposal->proposedEmployees->where('selected', true) as $row) {
-            $email = trim((string) ($row->empleado->email ?? ''));
-            if ($email === '') {
-                continue;
-            }
-
-            $rol = mb_strtolower((string) ($row->rol_sugerido ?? ($row->empleado->rolLaboral->nombre ?? '')));
-            if ($rol !== '' && str_contains($rol, 'capataz')) {
-                $emails[] = $email;
-            }
-        }
-
-        // Fallback: primer empleado seleccionado con email.
-        if (empty($emails)) {
-            $fallback = $proposal->proposedEmployees
-                ->where('selected', true)
-                ->map(fn ($r) => trim((string) ($r->empleado->email ?? '')))
-                ->filter()
-                ->first();
-
-            if ($fallback) {
-                $emails[] = (string) $fallback;
-            }
-        }
-
-        // Último fallback: admin_email.
-        if (empty($emails)) {
-            $admin = trim((string) config('mail.admin_email', ''));
-            if ($admin !== '') {
-                $emails[] = $admin;
-            }
-        }
-
-        // Unifica.
-        $emails = array_values(array_unique(array_filter($emails)));
-
-        return $emails;
     }
 }

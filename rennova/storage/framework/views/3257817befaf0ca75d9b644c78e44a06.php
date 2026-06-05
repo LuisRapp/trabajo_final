@@ -200,6 +200,7 @@ unset($__errorArgs, $__bag); ?>
                                 role="listitem"
                                 class="select-text"
                                 wire:loading.class="opacity-50 animate-pulse"
+                                wire:key="code-<?php echo e($loop->index); ?>"
                             >
                                 <?php echo e($code); ?>
 

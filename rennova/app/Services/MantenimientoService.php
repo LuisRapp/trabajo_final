@@ -197,4 +197,119 @@ class MantenimientoService
             ->with('insumo')
             ->get();
     }
+
+    /**
+     * Create a new maintenance order.
+     *
+     * @param  array  $datos  Validated data: id_maquinaria, id_tipo_mantenimiento, fecha_inicio, fecha_programada?, estado
+     */
+    public function crearMantenimiento(array $datos): Mantenimiento
+    {
+        return Mantenimiento::create([
+            'id_maquinaria' => $datos['id_maquinaria'],
+            'id_tipo_mantenimiento' => $datos['id_tipo_mantenimiento'],
+            'fecha_inicio' => $datos['fecha_inicio'],
+            'fecha_programada' => $datos['fecha_programada'] ?? null,
+            'estado' => $datos['estado'],
+        ]);
+    }
+
+    /**
+     * Complete a maintenance order with FIFO-based input consumption.
+     *
+     * Performs inside a DB transaction:
+     * - Updates the order with fecha_fin, costo_total, estado='completado'
+     * - For each input used: validates stock, exits via InventarioService::registrarSalida (FIFO)
+     * - Records each input in the mantenimiento_insumos table
+     *
+     * @param  int  $mantenimientoId  The maintenance order ID
+     * @param  string  $fechaFin  Completion date (Y-m-d)
+     * @param  float  $costoBase  Base labor/additional cost
+     * @param  array  $insumos  Array of ['id_insumo' => int, 'cantidad' => float]
+     * @param  string  $tipoMantenimiento  'Preventivo' or 'Correctivo' for the movement reason
+     * @return array{costo_total: float, costo_insumos: float}
+     *
+     * @throws \Exception If stock is insufficient or a DB error occurs
+     */
+    public function completarMantenimientoConFifo(int $mantenimientoId, string $fechaFin, float $costoBase, array $insumos, string $tipoMantenimiento = 'Preventivo'): array
+    {
+        $orden = Mantenimiento::with(['maquinaria', 'tipoMantenimiento'])->findOrFail($mantenimientoId);
+
+        $insumosValidados = [];
+        $costoInsumos = 0;
+
+        foreach ($insumos as $insumo) {
+            if (empty($insumo['id_insumo']) || empty($insumo['cantidad'])) {
+                continue;
+            }
+
+            $cantidad = floatval($insumo['cantidad']);
+
+            $stockDisponible = InventarioService::stockDisponible($insumo['id_insumo']);
+            if ($stockDisponible < $cantidad) {
+                $nombreInsumo = Insumo::find($insumo['id_insumo'])->nombre ?? 'ID '.$insumo['id_insumo'];
+                throw new \Exception("Stock insuficiente para {$nombreInsumo}. Disponible: {$stockDisponible}, Requerido: {$cantidad}");
+            }
+
+            $resultadoSimulado = DB::selectOne(
+                'SELECT * FROM calcular_costo_fifo(?, ?)',
+                [$insumo['id_insumo'], $cantidad]
+            );
+
+            $costoInsumos += $resultadoSimulado->v_costo_total;
+            $insumosValidados[] = $insumo;
+        }
+
+        $costoTotal = $costoBase + $costoInsumos;
+
+        DB::beginTransaction();
+
+        try {
+            $orden->fecha_fin = $fechaFin;
+            $orden->costo_total = $costoTotal;
+            $orden->estado = 'completado';
+            $orden->save();
+
+            foreach ($insumosValidados as $insumo) {
+                $cantidad = floatval($insumo['cantidad']);
+                $motivo = "Mantenimiento {$tipoMantenimiento} - Orden #".$orden->id_mantenimiento;
+
+                $resultadoSalida = InventarioService::registrarSalida(
+                    $insumo['id_insumo'],
+                    $cantidad,
+                    $motivo,
+                    $fechaFin
+                );
+
+                $costoRealInsumo = $resultadoSalida['costo_total'];
+
+                DB::table('mantenimiento_insumos')->insert([
+                    'id_mantenimiento' => $orden->id_mantenimiento,
+                    'id_insumo' => $insumo['id_insumo'],
+                    'cantidad_utilizada' => $cantidad,
+                    'costo_unitario' => $costoRealInsumo / $cantidad,
+                    'subtotal' => $costoRealInsumo,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+
+            DB::commit();
+
+            Log::info('Mantenimiento completado con FIFO', [
+                'mantenimiento_id' => $mantenimientoId,
+                'costo_total' => $costoTotal,
+                'costo_insumos' => $costoInsumos,
+            ]);
+
+            return [
+                'costo_total' => $costoTotal,
+                'costo_insumos' => $costoInsumos,
+            ];
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
 }

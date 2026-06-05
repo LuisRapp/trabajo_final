@@ -14,6 +14,7 @@ class TipoMantenimiento extends Component
     public $nombre;
 
     public $busqueda = '';
+    public $tab_activo = 'listado';
 
     protected $rules = [
         'nombre' => 'required|min:3|unique:tipo_mantenimientos,nombre',
@@ -59,12 +60,14 @@ class TipoMantenimiento extends Component
         );
 
         session()->flash('message', $this->tipo_id ? 'Tipo actualizado correctamente.' : 'Tipo creado correctamente.');
+        $this->tab_activo = 'listado';
         $this->resetCampos();
         $this->dispatch('tipoGuardado');
     }
 
     public function editar($id)
     {
+        $this->tab_activo = 'nuevo';
         $tipo = TipoMantenimientoModel::findOrFail($id);
         $this->tipo_id = $tipo->id_tipo_mantenimiento;
         $this->nombre = $tipo->nombre;

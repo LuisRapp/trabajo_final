@@ -120,12 +120,14 @@ class Empleados extends Component
         );
 
         session()->flash('message', $this->empleado_id ? 'Empleado actualizado correctamente.' : 'Empleado creado correctamente.');
+        $this->tab_activo = 'listado';
         $this->resetCampos();
         $this->dispatch('empleadoGuardado');
     }
 
     public function editar($id)
     {
+        $this->tab_activo = 'nuevo';
         $empleado = Empleado::findOrFail($id);
         $this->empleado_id = $empleado->id_empleado;
         $this->id_rol_laboral = $empleado->id_rol_laboral;

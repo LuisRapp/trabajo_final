@@ -1,308 +1,293 @@
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="mb-0"><i class="bi bi-tags"></i> Lista de Precios por Cliente</h1>
+<div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold text-slate-900">🏷️ Lista de Precios</h1>
     </div>
 
     <?php if(session()->has('message')): ?>
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="bi bi-check-circle-fill"></i> <?php echo e(session('message')); ?>
-
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <div x-data="{ open: true }" x-show="open" x-transition
+            class="mb-6 flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-emerald-800 shadow-sm" role="alert">
+            <span class="text-emerald-600">✓</span>
+            <span class="flex-1 text-sm font-medium"><?php echo e(session('message')); ?></span>
+            <button type="button" class="text-emerald-600 hover:text-emerald-800" @click="open = false">✕</button>
         </div>
     <?php endif; ?>
 
     <?php if(session()->has('error')): ?>
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="bi bi-exclamation-triangle-fill"></i> <?php echo e(session('error')); ?>
-
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <div x-data="{ open: true }" x-show="open" x-transition
+            class="mb-6 flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-red-800 shadow-sm" role="alert">
+            <span class="text-red-600">⚠</span>
+            <span class="flex-1 text-sm font-medium"><?php echo e(session('error')); ?></span>
+            <button type="button" class="text-red-600 hover:text-red-800" @click="open = false">✕</button>
         </div>
     <?php endif; ?>
 
-    <!-- Pestañas (Tabs) -->
-    <ul class="nav nav-tabs mb-4" id="preciosTabs" role="tablist">
-        <li class="nav-item" role="presentation">
-            <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->any(['crear-lista-precios', 'editar-lista-precios'])): ?>
-            <button class="nav-link" id="nuevo-tab" data-bs-toggle="tab" data-bs-target="#nuevo-precio" type="button" role="tab" aria-controls="nuevo-precio" aria-selected="false">
-                <i class="bi bi-plus-circle"></i> Nuevo Precio
-            </button>
-            <?php endif; ?>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="listado-tab" data-bs-toggle="tab" data-bs-target="#listado-precios" type="button" role="tab" aria-controls="listado-precios" aria-selected="true">
-                <i class="bi bi-list-ul"></i> Listado de Precios
-            </button>
-        </li>
-    </ul>
+    <?php if (isset($component)) { $__componentOriginal671874bf23aa9b9423bd98fb633269fa = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal671874bf23aa9b9423bd98fb633269fa = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.tab-nav','data' => ['tabs' => [
+        ['value' => 'nuevo', 'label' => 'Nuevo Precio', 'icon' => 'plus-circle', 'can' => auth()->user()->canAny(['crear-precios', 'editar-precios'])],
+        ['value' => 'listado', 'label' => 'Listado de Precios', 'icon' => 'list-ul'],
+    ],'activeTab' => ''.e($tab_activo).'','tabProperty' => 'tab_activo']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('tab-nav'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['tabs' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute([
+        ['value' => 'nuevo', 'label' => 'Nuevo Precio', 'icon' => 'plus-circle', 'can' => auth()->user()->canAny(['crear-precios', 'editar-precios'])],
+        ['value' => 'listado', 'label' => 'Listado de Precios', 'icon' => 'list-ul'],
+    ]),'activeTab' => ''.e($tab_activo).'','tabProperty' => 'tab_activo']); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal671874bf23aa9b9423bd98fb633269fa)): ?>
+<?php $attributes = $__attributesOriginal671874bf23aa9b9423bd98fb633269fa; ?>
+<?php unset($__attributesOriginal671874bf23aa9b9423bd98fb633269fa); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal671874bf23aa9b9423bd98fb633269fa)): ?>
+<?php $component = $__componentOriginal671874bf23aa9b9423bd98fb633269fa; ?>
+<?php unset($__componentOriginal671874bf23aa9b9423bd98fb633269fa); ?>
+<?php endif; ?>
 
-    <!-- Contenido de las Pestañas -->
-    <div class="tab-content" id="preciosTabContent">
-        <!-- Pestaña 1: Nuevo Precio (Formulario) -->
-        <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->any(['crear-lista-precios', 'editar-lista-precios'])): ?>
-        <div class="tab-pane fade" id="nuevo-precio" role="tabpanel" aria-labelledby="nuevo-tab">
-            <div class="card shadow">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0">
-                        <i class="bi bi-<?php echo e($precio_id ? 'pencil-square' : 'plus-circle'); ?>"></i> 
-                        <?php echo e($precio_id ? 'Modificar Precio' : 'Nuevo Precio'); ?>
+    <?php if($tab_activo === 'nuevo'): ?>
+        <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->any(['crear-precios', 'editar-precios'])): ?>
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6">
+            <div class="bg-slate-50 border-b border-slate-200 px-6 py-4">
+                <h5 class="text-lg font-semibold text-slate-800">
+                    <?php echo e($precio_id ? '✏️ Editar Precio' : '➕ Nuevo Precio'); ?>
 
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <form wire:submit.prevent="guardar">
-                        <!-- Fila 1: Cliente, Categoría, Precio (3 columnas) -->
-                        <div class="row g-3 mb-4">
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold">Cliente <span class="text-danger">*</span></label>
-                                <select wire:model="cliente_id" class="form-select <?php $__errorArgs = ['cliente_id'];
+                </h5>
+            </div>
+            <div class="p-6">
+                <form wire:submit.prevent="guardar">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-1.5">Cliente <span class="text-red-500">*</span></label>
+                            <select wire:model="cliente_id"
+                                class="w-full px-4 py-2.5 border rounded-lg text-sm transition-colors <?php $__errorArgs = ['cliente_id'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+$message = $__bag->first($__errorArgs[0]); ?> border-red-400 bg-red-50 <?php else: ?> border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>">
-                                    <option value="">Seleccione un cliente...</option>
-                                    <?php $__currentLoopData = $clientes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $cliente): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                        <option value="<?php echo e($cliente->id_cliente); ?>"><?php echo e($cliente->razon_social); ?></option>
-                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                                </select>
-                                <?php $__errorArgs = ['cliente_id'];
+                                <option value="">Seleccione...</option>
+                                <?php $__currentLoopData = $clientes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $cliente): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <option value="<?php echo e($cliente->id_cliente); ?>" wire:key="option-<?php echo e($cliente->id_cliente); ?>"><?php echo e($cliente->razon_social); ?></option>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                            </select>
+                            <?php $__errorArgs = ['cliente_id'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> <div class="invalid-feedback"><?php echo e($message); ?></div> <?php unset($message);
+$message = $__bag->first($__errorArgs[0]); ?> <p class="text-red-600 text-xs mt-1"><?php echo e($message); ?></p> <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold">Categoría de Madera <span class="text-danger">*</span></label>
-                                <select wire:model="categoria_id" class="form-select <?php $__errorArgs = ['categoria_id'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?>">
-                                    <option value="">Seleccione una categoría...</option>
-                                    <?php $__currentLoopData = $categorias; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $categoria): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                        <option value="<?php echo e($categoria->id_categoria_madera); ?>"><?php echo e($categoria->nombre); ?></option>
-                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                                </select>
-                                <?php $__errorArgs = ['categoria_id'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> <div class="invalid-feedback"><?php echo e($message); ?></div> <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold">Precio <span class="text-danger">*</span></label>
-                                <div class="input-group">
-                                    <span class="input-group-text">$</span>
-                                    <input type="number" wire:model="precio" step="0.1" min="0" class="form-control <?php $__errorArgs = ['precio'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?>" placeholder="0.00">
-                                    <?php $__errorArgs = ['precio'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> <div class="invalid-feedback"><?php echo e($message); ?></div> <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?>
-                                </div>
-                            </div>
                         </div>
-
-                        <!-- Fila 2: Vigencia Desde y Vigencia Hasta -->
-                        <div class="row g-3 mb-4">
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold">Vigencia Desde <span class="text-danger">*</span></label>
-                                <input type="date" wire:model="fecha_desde" class="form-control <?php $__errorArgs = ['fecha_desde'];
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-1.5">Categoría <span class="text-red-500">*</span></label>
+                            <select wire:model="categoria_id"
+                                class="w-full px-4 py-2.5 border rounded-lg text-sm transition-colors <?php $__errorArgs = ['categoria_id'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+$message = $__bag->first($__errorArgs[0]); ?> border-red-400 bg-red-50 <?php else: ?> border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>">
-                                <?php $__errorArgs = ['fecha_desde'];
+                                <option value="">Seleccione...</option>
+                                <?php $__currentLoopData = $categorias; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $cat): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <option value="<?php echo e($cat->id_categoria_madera); ?>" wire:key="option-<?php echo e($cat->id_categoria_madera); ?>"><?php echo e($cat->nombre); ?></option>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                            </select>
+                            <?php $__errorArgs = ['categoria_id'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> <div class="invalid-feedback"><?php echo e($message); ?></div> <?php unset($message);
+$message = $__bag->first($__errorArgs[0]); ?> <p class="text-red-600 text-xs mt-1"><?php echo e($message); ?></p> <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>
-                                <small class="text-muted">Fecha desde la cual este precio entra en vigencia</small>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold">Vigencia Hasta</label>
-                                <input type="date" wire:model="fecha_hasta" class="form-control <?php $__errorArgs = ['fecha_hasta'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?>">
-                                <?php $__errorArgs = ['fecha_hasta'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> <div class="invalid-feedback"><?php echo e($message); ?></div> <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?>
-                                <small class="text-muted">Dejar en blanco si es el precio actualmente vigente</small>
-                            </div>
                         </div>
-
-                        <div class="d-flex gap-2 justify-content-end">
-                            <?php if($precio_id): ?>
-                                <button type="button" wire:click="resetCampos" class="btn btn-secondary">
-                                    <i class="bi bi-x-circle"></i> Cancelar
-                                </button>
-                            <?php endif; ?>
-                            <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->any(['crear-lista-precios', 'editar-lista-precios'])): ?>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-check-circle"></i> <?php echo e($precio_id ? 'Actualizar' : 'Guardar'); ?>
-
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-1.5">Precio <span class="text-red-500">*</span></label>
+                            <input type="number" wire:model="precio" step="0.01"
+                                class="w-full px-4 py-2.5 border rounded-lg text-sm transition-colors <?php $__errorArgs = ['precio'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> border-red-400 bg-red-50 <?php else: ?> border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>"
+                                placeholder="0.00">
+                            <?php $__errorArgs = ['precio'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> <p class="text-red-600 text-xs mt-1"><?php echo e($message); ?></p> <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-1.5">Fecha Desde <span class="text-red-500">*</span></label>
+                            <input type="date" wire:model="fecha_desde"
+                                class="w-full px-4 py-2.5 border rounded-lg text-sm transition-colors <?php $__errorArgs = ['fecha_desde'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> border-red-400 bg-red-50 <?php else: ?> border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>">
+                            <?php $__errorArgs = ['fecha_desde'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> <p class="text-red-600 text-xs mt-1"><?php echo e($message); ?></p> <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-1.5">Fecha Hasta</label>
+                            <input type="date" wire:model="fecha_hasta"
+                                class="w-full px-4 py-2.5 border rounded-lg text-sm transition-colors <?php $__errorArgs = ['fecha_hasta'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> border-red-400 bg-red-50 <?php else: ?> border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>">
+                            <?php $__errorArgs = ['fecha_hasta'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> <p class="text-red-600 text-xs mt-1"><?php echo e($message); ?></p> <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+                        </div>
+                    </div>
+                    <div class="flex gap-2 justify-end">
+                        <?php if($precio_id): ?>
+                            <button type="button" wire:click="resetCampos"
+                                class="inline-flex items-center gap-1.5 px-4 py-2.5 border border-slate-300 bg-white text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors">
+                                ✕ Cancelar
                             </button>
-                            <?php endif; ?>
-                        </div>
-                    </form>
-                </div>
+                        <?php endif; ?>
+                        <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->any(['crear-precios', 'editar-precios'])): ?>
+                        <button type="submit"
+                            class="inline-flex items-center gap-1.5 px-5 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-lg text-sm font-medium shadow-sm transition-colors">
+                            ✓ <?php echo e($precio_id ? 'Actualizar' : 'Guardar'); ?>
+
+                        </button>
+                        <?php endif; ?>
+                    </div>
+                </form>
             </div>
         </div>
         <?php endif; ?>
+    <?php else: ?>
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="p-6">
+                <?php if (isset($component)) { $__componentOriginal1c4b45f62348de9b6fa41ee823d3fa96 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal1c4b45f62348de9b6fa41ee823d3fa96 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.search-input','data' => ['placeholder' => 'Buscar por cliente, categoría...']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('search-input'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['placeholder' => 'Buscar por cliente, categoría...']); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal1c4b45f62348de9b6fa41ee823d3fa96)): ?>
+<?php $attributes = $__attributesOriginal1c4b45f62348de9b6fa41ee823d3fa96; ?>
+<?php unset($__attributesOriginal1c4b45f62348de9b6fa41ee823d3fa96); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal1c4b45f62348de9b6fa41ee823d3fa96)): ?>
+<?php $component = $__componentOriginal1c4b45f62348de9b6fa41ee823d3fa96; ?>
+<?php unset($__componentOriginal1c4b45f62348de9b6fa41ee823d3fa96); ?>
+<?php endif; ?>
 
-        <!-- Pestaña 2: Listado de Precios (Tabla) -->
-        <div class="tab-pane fade show active" id="listado-precios" role="tabpanel" aria-labelledby="listado-tab">
-            <div class="card shadow">
-                <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0"><i class="bi bi-table"></i> Lista de Precios</h5>
-                    <div class="d-flex gap-3 align-items-center">
-                        <!-- Toggle para mostrar histórico -->
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" role="switch" id="mostrarHistorico" wire:model.live="mostrar_historico">
-                            <label class="form-check-label" for="mostrarHistorico">
-                                <i class="bi bi-clock-history"></i> Incluir Histórico
-                            </label>
-                        </div>
-                        <!-- Campo de búsqueda -->
-                        <div style="min-width: 300px;">
-                            <input type="text" wire:model.live="busqueda" class="form-control" placeholder="Buscar por cliente, categoría o precio...">
-                        </div>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <?php if(count($precios) > 0): ?>
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>#</th>
-                                        <th>Cliente</th>
-                                        <th>Categoría</th>
-                                        <th>Precio</th>
-                                        <th>Vigencia Desde</th>
-                                        <th>Vigencia Hasta</th>
-                                        <th class="text-center">Estado</th>
-                                        <th class="text-center">Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php $__currentLoopData = $precios; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $precioItem): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                        <tr class="<?php echo e($precioItem->fecha_hasta ? 'table-secondary' : ''); ?>">
-                                            <td><span class="badge bg-secondary"><?php echo e($index + 1); ?></span></td>
-                                            <td><strong><?php echo e($precioItem->cliente->razon_social); ?></strong></td>
-                                            <td><span class="badge bg-info"><?php echo e($precioItem->categoria->nombre); ?></span></td>
-                                            <td class="fw-bold text-success fs-5">$<?php echo e(number_format($precioItem->precio, 2)); ?></td>
-                                            <td>
-                                                <i class="bi bi-calendar-check text-primary"></i> 
-                                                <?php echo e($precioItem->fecha_desde->format('d/m/Y')); ?>
-
-                                            </td>
-                                            <td>
-                                                <?php if($precioItem->fecha_hasta): ?>
-                                                    <i class="bi bi-calendar-x text-danger"></i> 
-                                                    <?php echo e($precioItem->fecha_hasta->format('d/m/Y')); ?>
-
-                                                <?php else: ?>
-                                                    <span class="text-muted">-</span>
-                                                <?php endif; ?>
-                                            </td>
-                                            <td class="text-center">
-                                                <?php if(!$precioItem->fecha_hasta): ?>
-                                                    <span class="badge bg-success">
-                                                        <i class="bi bi-check-circle"></i> Vigente
-                                                    </span>
-                                                <?php else: ?>
-                                                    <span class="badge bg-secondary">
-                                                        <i class="bi bi-archive"></i> Histórico
-                                                    </span>
-                                                <?php endif; ?>
-                                            </td>
-                                            <td class="text-center">
-                                                <div class="btn-group btn-group-sm" role="group">
-                                                    <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('editar-lista-precios')): ?>
-                                                    <button class="btn btn-outline-primary" wire:click="editar(<?php echo e($precioItem->id); ?>)" onclick="cambiarAPestanaFormulario()" title="Editar">
-                                                        <i class="bi bi-pencil"></i>
-                                                    </button>
-                                                    <?php endif; ?>
-                                                    <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('eliminar-lista-precios')): ?>
-                                                    <button class="btn btn-outline-danger" wire:click="eliminar(<?php echo e($precioItem->id); ?>)" onclick="return confirm('¿Está seguro de eliminar este precio? Esta acción no se puede deshacer.')" title="Eliminar">
-                                                        <i class="bi bi-trash"></i>
-                                                    </button>
-                                                    <?php endif; ?>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                                </tbody>
-                            </table>
-                        </div>
-                    <?php else: ?>
-                        <div class="alert alert-info mb-0">
-                            <i class="bi bi-info-circle"></i> 
-                            <?php if($busqueda): ?>
-                                No hay precios que coincidan con la búsqueda "<?php echo e($busqueda); ?>".
-                            <?php elseif(!$mostrar_historico): ?>
-                                No hay precios vigentes registrados. Active "Incluir Histórico" para ver todos los registros.
-                            <?php else: ?>
-                                No hay precios registrados. Cree el primer precio desde la pestaña "Nuevo Precio".
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200">
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">ID</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Cliente</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Categoría</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Precio/Ton</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Desde</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Hasta</th>
+                                <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            <?php $__empty_1 = true; $__currentLoopData = $precios; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $precioItem): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                                <tr wire:key="row-<?php echo e($precioItem->id); ?>" class="hover:bg-slate-50 transition-colors">
+                                    <td class="px-4 py-2.5"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600"><?php echo e($precioItem->id); ?></span></td>
+                                    <td class="px-4 py-2.5 font-medium text-slate-800"><?php echo e($precioItem->cliente->razon_social ?? 'N/A'); ?></td>
+                                    <td class="px-4 py-2.5 text-slate-600"><?php echo e($precioItem->categoriaMadera->nombre ?? 'N/A'); ?></td>
+                                    <td class="px-4 py-2.5 text-slate-600">$<?php echo e(number_format($precioItem->precio, 2, ',', '.')); ?></td>
+                                    <td class="px-4 py-2.5 text-slate-600"><?php echo e($precioItem->fecha_desde ? \Carbon\Carbon::parse($precioItem->fecha_desde)->format('d/m/Y') : '-'); ?></td>
+                                    <td class="px-4 py-2.5 text-slate-600"><?php echo e($precioItem->fecha_hasta ? \Carbon\Carbon::parse($precioItem->fecha_hasta)->format('d/m/Y') : 'Vigente'); ?></td>
+                                    <td class="px-4 py-2.5 text-center">
+                                        <?php if (isset($component)) { $__componentOriginalf9332b595ad3d3a806f9da4dda8769dd = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalf9332b595ad3d3a806f9da4dda8769dd = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.action-buttons','data' => ['editWireClick' => 'editar('.e($precioItem->id).')','deleteWireClick' => 'eliminar('.e($precioItem->id).')','deleteMessage' => '¿Está seguro de eliminar este precio? Esta acción no se puede deshacer.','canEdit' => auth()->user()->can('editar-precios'),'canDelete' => auth()->user()->can('eliminar-precios')]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('action-buttons'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['editWireClick' => 'editar('.e($precioItem->id).')','deleteWireClick' => 'eliminar('.e($precioItem->id).')','deleteMessage' => '¿Está seguro de eliminar este precio? Esta acción no se puede deshacer.','canEdit' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(auth()->user()->can('editar-precios')),'canDelete' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(auth()->user()->can('eliminar-precios'))]); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalf9332b595ad3d3a806f9da4dda8769dd)): ?>
+<?php $attributes = $__attributesOriginalf9332b595ad3d3a806f9da4dda8769dd; ?>
+<?php unset($__attributesOriginalf9332b595ad3d3a806f9da4dda8769dd); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalf9332b595ad3d3a806f9da4dda8769dd)): ?>
+<?php $component = $__componentOriginalf9332b595ad3d3a806f9da4dda8769dd; ?>
+<?php unset($__componentOriginalf9332b595ad3d3a806f9da4dda8769dd); ?>
+<?php endif; ?>
+                                    </td>
+                                </tr>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
+                                <?php if (isset($component)) { $__componentOriginal074a021b9d42f490272b5eefda63257c = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal074a021b9d42f490272b5eefda63257c = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.empty-state','data' => ['colspan' => 7,'message' => 'No hay precios registrados.']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('empty-state'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['colspan' => 7,'message' => 'No hay precios registrados.']); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal074a021b9d42f490272b5eefda63257c)): ?>
+<?php $attributes = $__attributesOriginal074a021b9d42f490272b5eefda63257c; ?>
+<?php unset($__attributesOriginal074a021b9d42f490272b5eefda63257c); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal074a021b9d42f490272b5eefda63257c)): ?>
+<?php $component = $__componentOriginal074a021b9d42f490272b5eefda63257c; ?>
+<?php unset($__componentOriginal074a021b9d42f490272b5eefda63257c); ?>
+<?php endif; ?>
                             <?php endif; ?>
-                        </div>
-                    <?php endif; ?>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
-    </div>
-
-    <?php $__env->startPush('scripts'); ?>
-    <script>
-        // Función para cambiar a la pestaña de formulario al editar
-        function cambiarAPestanaFormulario() {
-            var tab = new bootstrap.Tab(document.querySelector('#nuevo-tab'));
-            tab.show();
-        }
-
-        // Listener para cambiar a pestaña de listado después de guardar
-        window.addEventListener('precioGuardado', event => {
-            var tab = new bootstrap.Tab(document.querySelector('#listado-tab'));
-            tab.show();
-        });
-    </script>
-    <?php $__env->stopPush(); ?>
+    <?php endif; ?>
 </div><?php /**PATH /home/rluis/Escritorio/trabajo_final/rennova/resources/views/livewire/lista-precios.blade.php ENDPATH**/ ?>

@@ -1,17 +1,17 @@
 <div class="mx-auto max-w-7xl px-4 py-8">
     <div class="mb-6 flex items-center justify-between">
         <h1 class="flex items-center gap-2 text-3xl font-bold text-slate-800">
-            <i class="bi bi-calculator"></i> Liquidación de Pagos a Empleados
+            🧮 Liquidación de Pagos a Empleados
         </h1>
     </div>
 
     @if (session()->has('message'))
         <div x-data="{ open: true }" x-show="open" x-transition
             class="mb-6 flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-4 text-green-700 shadow-sm" role="alert">
-            <i class="bi bi-check-circle-fill"></i>
+            ✅
             <span class="flex-1 font-medium">{{ session('message') }}</span>
             <button type="button" class="text-green-600 hover:text-green-800" @click="open = false">
-                <i class="bi bi-x-lg"></i>
+                ✕
             </button>
         </div>
     @endif
@@ -19,10 +19,10 @@
     @if (session()->has('error'))
         <div x-data="{ open: true }" x-show="open" x-transition
             class="mb-6 flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700 shadow-sm" role="alert">
-            <i class="bi bi-exclamation-triangle-fill"></i>
+            ⚠️
             <span class="flex-1 font-medium">{{ session('error') }}</span>
             <button type="button" class="text-red-600 hover:text-red-800" @click="open = false">
-                <i class="bi bi-x-lg"></i>
+                ✕
             </button>
         </div>
     @endif
@@ -38,10 +38,10 @@
                     <div class="md:col-span-5">
                         <label for="id_empleado" class="block text-sm font-semibold text-slate-700 mb-2">Empleado *</label>
                         <select wire:model="id_empleado" id="id_empleado"
-                            class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('id_empleado') ring-2 ring-red-500 @enderror" @disabled($liquidar_todos)>
+                            class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('id_empleado') ring-2 ring-red-500 @enderror" @disabled($liquidar_todos)>
                             <option value="">Seleccione un empleado</option>
                             @foreach ($empleados as $emp)
-                                <option value="{{ $emp->id_empleado }}">
+                                <option value="{{ $emp->id_empleado }}" wire:key="option-{{ $emp->id_empleado }}">
                                     {{ $emp->apellido }}, {{ $emp->nombre }} - {{ $emp->rolLaboral->nombre ?? 'Sin rol' }}
                                 </option>
                             @endforeach
@@ -56,20 +56,20 @@
                     <div class="md:col-span-3">
                         <label for="fecha_inicio" class="block text-sm font-semibold text-slate-700 mb-2">Fecha Inicio *</label>
                         <input type="date" wire:model="fecha_inicio" id="fecha_inicio"
-                            class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('fecha_inicio') ring-2 ring-red-500 @enderror">
+                            class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('fecha_inicio') ring-2 ring-red-500 @enderror">
                         @error('fecha_inicio') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
                     </div>
 
                     <div class="md:col-span-3">
                         <label for="fecha_fin" class="block text-sm font-semibold text-slate-700 mb-2">Fecha Fin *</label>
                         <input type="date" wire:model="fecha_fin" id="fecha_fin"
-                            class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('fecha_fin') ring-2 ring-red-500 @enderror">
+                            class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('fecha_fin') ring-2 ring-red-500 @enderror">
                         @error('fecha_fin') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
                     </div>
 
                     <div class="md:col-span-1 flex items-end">
                         <button type="submit" class="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-green-700 px-4 py-3 text-white font-semibold shadow-sm hover:bg-green-800">
-                            <i class="bi bi-calculator"></i> Calcular
+                            🧮 Calcular
                         </button>
                     </div>
                     <div class="md:col-span-12">
@@ -80,7 +80,7 @@
             @else
                 <div class="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4 text-blue-800">
                     <h5 class="mb-1 flex items-center gap-2 font-semibold">
-                        <i class="bi bi-person-circle"></i>
+                        👤
                         {{ $empleado_seleccionado->apellido }}, {{ $empleado_seleccionado->nombre }}
                     </h5>
                     <p class="text-sm">
@@ -95,7 +95,7 @@
                             <div class="rounded-lg border border-slate-200 bg-white shadow-sm">
                                 <div class="border-b border-slate-200 bg-slate-100 px-4 py-3">
                                     <h6 class="mb-0 flex items-center gap-2 font-semibold text-slate-800">
-                                        <i class="bi bi-info-circle"></i> Detalle del Cálculo
+                                        ℹ️ Detalle del Cálculo
                                     </h6>
                                 </div>
                                 <div class="p-4">
@@ -138,7 +138,7 @@
                                 <div class="rounded-lg border border-amber-200 bg-amber-50 shadow-sm">
                                     <div class="border-b border-amber-200 px-4 py-3 text-amber-900">
                                         <h6 class="mb-0 flex items-center gap-2 font-semibold">
-                                            <i class="bi bi-cash-stack"></i> Adelantos Pendientes
+                                            💰 Adelantos Pendientes
                                         </h6>
                                     </div>
                                     <div class="p-4">
@@ -152,7 +152,7 @@
                                                 </thead>
                                                 <tbody class="divide-y divide-amber-200 bg-white">
                                                     @foreach($adelantos_pendientes as $adelanto)
-                                                        <tr>
+                                                        <tr wire:key="row-{{ $adelanto->id }}">
                                                             <td class="px-3 py-2">{{ \Carbon\Carbon::parse($adelanto->fecha_emision)->format('d/m/Y') }}</td>
                                                             <td class="px-3 py-2 text-right">${{ number_format($adelanto->monto, 2) }}</td>
                                                         </tr>
@@ -167,7 +167,7 @@
                                             </table>
                                         </div>
                                         <div class="mt-3 rounded-md border border-blue-200 bg-blue-50 p-3 text-xs text-blue-800">
-                                            <i class="bi bi-info-circle"></i> Estos adelantos se descontarán automáticamente y se marcarán como "pagados" al generar el recibo.
+                                            ℹ️ Estos adelantos se descontarán automáticamente y se marcarán como "pagados" al generar el recibo.
                                         </div>
                                     </div>
                                 </div>
@@ -177,7 +177,7 @@
                         <div class="rounded-lg border border-slate-200 bg-white shadow-sm">
                             <div class="border-b border-slate-200 bg-slate-100 px-4 py-3">
                                 <h6 class="mb-0 flex items-center gap-2 font-semibold text-slate-800">
-                                    <i class="bi bi-pencil-square"></i> Datos del Recibo (Editable)
+                                    ✏️ Datos del Recibo (Editable)
                                 </h6>
                             </div>
                             <div class="p-4">
@@ -185,7 +185,7 @@
                                     <div>
                                         <label for="monto_bruto" class="block text-sm font-semibold text-slate-700 mb-2">Monto Bruto *</label>
                                         <input type="number" wire:model.live="monto_bruto" id="monto_bruto" step="0.1" min="0"
-                                            class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('monto_bruto') ring-2 ring-red-500 @enderror">
+                                            class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('monto_bruto') ring-2 ring-red-500 @enderror">
                                         @error('monto_bruto') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
                                         <p class="mt-1 text-xs text-slate-500">Puedes modificar el monto calculado si es necesario</p>
                                     </div>
@@ -195,12 +195,12 @@
                                             Descuentos
                                             @if($total_adelantos > 0)
                                                 <span class="ml-2 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-800">
-                                                    <i class="bi bi-cash-stack"></i> Incluye adelantos
+                                                    💰 Incluye adelantos
                                                 </span>
                                             @endif
                                         </label>
                                         <input type="number" wire:model.live="descuentos" id="descuentos" step="0.1" min="0"
-                                            class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('descuentos') ring-2 ring-red-500 @enderror">
+                                            class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('descuentos') ring-2 ring-red-500 @enderror">
                                         @error('descuentos') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
                                         <p class="mt-1 text-xs text-slate-500">
                                             @if($total_adelantos > 0)
@@ -221,18 +221,18 @@
                                     <div>
                                         <label for="observaciones" class="block text-sm font-semibold text-slate-700 mb-2">Observaciones</label>
                                         <textarea wire:model="observaciones" id="observaciones" rows="3"
-                                            class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('observaciones') ring-2 ring-red-500 @enderror" maxlength="150"></textarea>
+                                            class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('observaciones') ring-2 ring-red-500 @enderror" maxlength="150"></textarea>
                                         @error('observaciones') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
                                     </div>
 
                                     <div class="flex flex-col gap-2">
                                         @canany(['crear-liquidacion-pagos', 'editar-liquidacion-pagos'])
                                         <button type="submit" class="inline-flex items-center justify-center gap-2 rounded-lg bg-green-700 px-4 py-3 text-white font-semibold shadow-sm hover:bg-green-800">
-                                            <i class="bi bi-check-circle"></i> Generar Recibo
+                                            ✓ Generar Recibo
                                         </button>
                                         @endcanany
                                         <button type="button" wire:click="nuevaLiquidacion" class="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-200 px-4 py-3 text-slate-700 font-semibold hover:bg-slate-300">
-                                            <i class="bi bi-x-circle"></i> Cancelar
+                                            ✕ Cancelar
                                         </button>
                                     </div>
                                 </form>
@@ -241,12 +241,12 @@
                     </div>
                 @else
                     <div class="rounded-lg border border-green-200 bg-green-50 p-8 text-center text-green-800">
-                        <i class="bi bi-check-circle-fill text-5xl"></i>
+                        <span class="text-5xl">✅</span>
                         <h3 class="mt-3 text-2xl font-semibold">¡Recibo generado correctamente!</h3>
                         <p class="mt-2 text-sm">El pago ha sido registrado en el sistema.</p>
                         <button type="button" wire:click="nuevaLiquidacion"
                             class="mt-4 inline-flex items-center justify-center gap-2 rounded-lg bg-green-700 px-4 py-3 text-white font-semibold shadow-sm hover:bg-green-800">
-                            <i class="bi bi-plus-circle"></i> Nueva Liquidación
+                            ➕ Nueva Liquidación
                         </button>
                     </div>
                 @endif

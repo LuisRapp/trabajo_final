@@ -1,276 +1,287 @@
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="mb-0"><i class="bi bi-file-earmark-text"></i> Comprobantes de pago</h1>
+<div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-slate-900">🧾 Recibos</h1>
     </div>
 
     <?php if(session()->has('message')): ?>
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="bi bi-check-circle-fill"></i> <?php echo e(session('message')); ?>
-
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <div x-data="{ open: true }" x-show="open" x-transition
+            class="mb-6 flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-emerald-800 shadow-sm" role="alert">
+            <span class="text-emerald-600">✓</span>
+            <span class="flex-1 text-sm font-medium"><?php echo e(session('message')); ?></span>
+            <button type="button" class="text-emerald-600 hover:text-emerald-800" @click="open = false">✕</button>
         </div>
     <?php endif; ?>
 
-    <!-- Pestañas (Tabs) -->
-    <ul class="nav nav-tabs mb-4" id="recibosTabs" role="tablist">
-        <li class="nav-item" role="presentation">
-            <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->any(['crear-recibos', 'editar-recibos'])): ?>
-            <button class="nav-link" id="nuevo-tab" data-bs-toggle="tab" data-bs-target="#nuevo-recibo" type="button" role="tab" aria-controls="nuevo-recibo" aria-selected="false">
-                <i class="bi bi-plus-circle"></i> Nuevo Comprobante
-            </button>
-            <?php endif; ?>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="listado-tab" data-bs-toggle="tab" data-bs-target="#listado-recibos" type="button" role="tab" aria-controls="listado-recibos" aria-selected="true">
-                <i class="bi bi-list-ul"></i> Listado de Comprobantes
-            </button>
-        </li>
-    </ul>
+    <?php if (isset($component)) { $__componentOriginal671874bf23aa9b9423bd98fb633269fa = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal671874bf23aa9b9423bd98fb633269fa = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.tab-nav','data' => ['tabs' => [
+        ['value' => 'nuevo', 'label' => 'Nuevo Recibo', 'icon' => 'plus-circle', 'can' => auth()->user()->canAny(['crear-recibos', 'editar-recibos'])],
+        ['value' => 'listado', 'label' => 'Listado de Recibos', 'icon' => 'list-ul'],
+    ],'activeTab' => ''.e($tab_activo).'','tabProperty' => 'tab_activo']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('tab-nav'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['tabs' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute([
+        ['value' => 'nuevo', 'label' => 'Nuevo Recibo', 'icon' => 'plus-circle', 'can' => auth()->user()->canAny(['crear-recibos', 'editar-recibos'])],
+        ['value' => 'listado', 'label' => 'Listado de Recibos', 'icon' => 'list-ul'],
+    ]),'activeTab' => ''.e($tab_activo).'','tabProperty' => 'tab_activo']); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal671874bf23aa9b9423bd98fb633269fa)): ?>
+<?php $attributes = $__attributesOriginal671874bf23aa9b9423bd98fb633269fa; ?>
+<?php unset($__attributesOriginal671874bf23aa9b9423bd98fb633269fa); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal671874bf23aa9b9423bd98fb633269fa)): ?>
+<?php $component = $__componentOriginal671874bf23aa9b9423bd98fb633269fa; ?>
+<?php unset($__componentOriginal671874bf23aa9b9423bd98fb633269fa); ?>
+<?php endif; ?>
 
-    <div class="tab-content" id="recibosTabContent">
-        <!-- Pestaña 1: Nuevo Recibo (Formulario) -->
+    <?php if($tab_activo === 'nuevo'): ?>
         <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->any(['crear-recibos', 'editar-recibos'])): ?>
-        <div class="tab-pane fade" id="nuevo-recibo" role="tabpanel" aria-labelledby="nuevo-tab">
-            <div class="card shadow mb-4">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0"><i class="bi bi-<?php echo e($recibo_id ? 'pencil-square' : 'plus-circle'); ?>"></i> <?php echo e($recibo_id ? 'Editar Recibo' : 'Nuevo Recibo'); ?></h5>
-                </div>
-                <div class="card-body">
-                    <form wire:submit.prevent="guardar">
-                <div class="row g-3 mb-4">
-                    <div class="col-md-4">
-                        <label class="form-label fw-semibold">Empleado <span class="text-danger">*</span></label>
-                        <select wire:model="id_empleado" class="form-select <?php $__errorArgs = ['id_empleado'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?>">
-                            <option value="">Seleccione...</option>
-                            <?php $__currentLoopData = $empleados; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $empleado): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                <option value="<?php echo e($empleado->id_empleado); ?>"><?php echo e($empleado->apellido); ?>, <?php echo e($empleado->nombre); ?></option>
-                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                        </select>
-                        <?php $__errorArgs = ['id_empleado'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> <div class="invalid-feedback"><?php echo e($message); ?></div> <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label fw-semibold">Fecha Emisión <span class="text-danger">*</span></label>
-                        <input type="date" wire:model="fecha_emision" class="form-control <?php $__errorArgs = ['fecha_emision'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?>">
-                        <?php $__errorArgs = ['fecha_emision'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> <div class="invalid-feedback"><?php echo e($message); ?></div> <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label fw-semibold">Observaciones</label>
-                        <input type="text" wire:model="observaciones" class="form-control <?php $__errorArgs = ['observaciones'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?>" maxlength="150" placeholder="Observaciones">
-                        <?php $__errorArgs = ['observaciones'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> <div class="invalid-feedback"><?php echo e($message); ?></div> <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?>
-                    </div>
-                </div>
-                <div class="row g-3 mb-4">
-                    <div class="col-md-4">
-                        <label class="form-label fw-semibold">Monto Bruto <span class="text-danger">*</span></label>
-                        <div class="input-group">
-                            <span class="input-group-text">$</span>
-                            <input type="number" wire:model="monto_bruto" step="0.1" min="0" class="form-control <?php $__errorArgs = ['monto_bruto'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?>" placeholder="0.00">
-                        </div>
-                        <?php $__errorArgs = ['monto_bruto'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> <div class="invalid-feedback"><?php echo e($message); ?></div> <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label fw-semibold">Descuentos</label>
-                        <div class="input-group">
-                            <span class="input-group-text">$</span>
-                            <input type="number" wire:model="descuentos" step="0.1" min="0" class="form-control <?php $__errorArgs = ['descuentos'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?>" placeholder="0.00">
-                        </div>
-                        <?php $__errorArgs = ['descuentos'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> <div class="invalid-feedback"><?php echo e($message); ?></div> <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label fw-semibold">Monto Neto</label>
-                        <div class="input-group">
-                            <span class="input-group-text">$</span>
-                            <input type="number" wire:model="monto" step="0.1" min="0" class="form-control bg-light" placeholder="0.00" readonly>
-                        </div>
-                        <small class="text-muted">Se calcula automáticamente (Bruto - Descuentos)</small>
-                    </div>
-                </div>
-                <div class="d-flex gap-2 justify-content-end">
-                    <?php if($recibo_id): ?>
-                        <button type="button" wire:click="resetCampos" class="btn btn-secondary">
-                            <i class="bi bi-x-circle"></i> Cancelar
-                        </button>
-                    <?php endif; ?>
-                    <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->any(['crear-recibos', 'editar-recibos'])): ?>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-check-circle"></i> <?php echo e($recibo_id ? 'Actualizar' : 'Guardar'); ?>
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6">
+            <div class="bg-slate-50 border-b border-slate-200 px-6 py-4">
+                <h5 class="text-lg font-semibold text-slate-800">
+                    <?php echo e($recibo_id ? '✏️ Editar Recibo' : '➕ Nuevo Recibo'); ?>
 
-                    </button>
-                    <?php endif; ?>
-                </div>
-            </form>
-                </div>
+                </h5>
+            </div>
+            <div class="p-6">
+                <form wire:submit.prevent="guardar">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                        <div class="md:col-span-2">
+                            <label for="id_empleado" class="block text-sm font-semibold text-slate-700 mb-1.5">Empleado <span class="text-red-500">*</span></label>
+                            <select id="id_empleado" wire:model="id_empleado"
+                                class="w-full px-4 py-2.5 border rounded-lg text-sm transition-colors <?php $__errorArgs = ['id_empleado'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> border-red-400 bg-red-50 <?php else: ?> border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>">
+                                <option value="">Seleccione...</option>
+                                <?php $__currentLoopData = $empleados; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $emp): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <option value="<?php echo e($emp->id_empleado); ?>" wire:key="option-<?php echo e($emp->id_empleado); ?>"><?php echo e($emp->apellido); ?>, <?php echo e($emp->nombre); ?></option>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                            </select>
+                            <?php $__errorArgs = ['id_empleado'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> <p class="text-red-600 text-xs mt-1"><?php echo e($message); ?></p> <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+                        </div>
+                        <div>
+                            <label for="fecha_emision" class="block text-sm font-semibold text-slate-700 mb-1.5">Fecha Emisión <span class="text-red-500">*</span></label>
+                            <input type="date" id="fecha_emision" wire:model="fecha_emision"
+                                class="w-full px-4 py-2.5 border rounded-lg text-sm transition-colors <?php $__errorArgs = ['fecha_emision'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> border-red-400 bg-red-50 <?php else: ?> border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>">
+                            <?php $__errorArgs = ['fecha_emision'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> <p class="text-red-600 text-xs mt-1"><?php echo e($message); ?></p> <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+                        </div>
+                        <div>
+                            <label for="monto_bruto" class="block text-sm font-semibold text-slate-700 mb-1.5">Monto Bruto <span class="text-red-500">*</span></label>
+                            <input type="number" id="monto_bruto" wire:model.live="monto_bruto" step="0.01"
+                                class="w-full px-4 py-2.5 border rounded-lg text-sm transition-colors <?php $__errorArgs = ['monto_bruto'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> border-red-400 bg-red-50 <?php else: ?> border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>"
+                                placeholder="0.00">
+                            <?php $__errorArgs = ['monto_bruto'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> <p class="text-red-600 text-xs mt-1"><?php echo e($message); ?></p> <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div>
+                            <label for="descuentos" class="block text-sm font-semibold text-slate-700 mb-1.5">Descuentos</label>
+                            <input type="number" id="descuentos" wire:model.live="descuentos" step="0.01"
+                                class="w-full px-4 py-2.5 border rounded-lg text-sm transition-colors <?php $__errorArgs = ['descuentos'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> border-red-400 bg-red-50 <?php else: ?> border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>"
+                                placeholder="0.00" value="0">
+                            <?php $__errorArgs = ['descuentos'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> <p class="text-red-600 text-xs mt-1"><?php echo e($message); ?></p> <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+                        </div>
+                        <div>
+                            <label for="monto" class="block text-sm font-semibold text-slate-700 mb-1.5">Monto Neto</label>
+                            <input type="text" id="monto"
+                                class="w-full px-4 py-2.5 border border-slate-200 bg-slate-50 rounded-lg text-sm text-slate-600"
+                                value="<?php echo e(isset($monto) ? '$' . number_format($monto, 2, ',', '.') : ''); ?>" readonly>
+                        </div>
+                        <div>
+                            <label for="observaciones" class="block text-sm font-semibold text-slate-700 mb-1.5">Observaciones</label>
+                            <textarea id="observaciones" wire:model="observaciones" rows="1"
+                                class="w-full px-4 py-2.5 border rounded-lg text-sm transition-colors <?php $__errorArgs = ['observaciones'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> border-red-400 bg-red-50 <?php else: ?> border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>"
+                                placeholder="Observaciones"></textarea>
+                            <?php $__errorArgs = ['observaciones'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> <p class="text-red-600 text-xs mt-1"><?php echo e($message); ?></p> <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+                        </div>
+                    </div>
+                    <div class="flex gap-2 justify-end">
+                        <?php if($recibo_id): ?>
+                            <button type="button" wire:click="resetCampos"
+                                class="inline-flex items-center gap-1.5 px-4 py-2.5 border border-slate-300 bg-white text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors">
+                                ✕ Cancelar
+                            </button>
+                        <?php endif; ?>
+                        <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->any(['crear-recibos', 'editar-recibos'])): ?>
+                        <button type="submit"
+                            class="inline-flex items-center gap-1.5 px-5 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-lg text-sm font-medium shadow-sm transition-colors">
+                            ✓ <?php echo e($recibo_id ? 'Actualizar' : 'Guardar'); ?>
+
+                        </button>
+                        <?php endif; ?>
+                    </div>
+                </form>
             </div>
         </div>
         <?php endif; ?>
+    <?php else: ?>
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="p-6">
+                <?php if (isset($component)) { $__componentOriginal1c4b45f62348de9b6fa41ee823d3fa96 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal1c4b45f62348de9b6fa41ee823d3fa96 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.search-input','data' => ['placeholder' => 'Buscar por empleado...']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('search-input'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['placeholder' => 'Buscar por empleado...']); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal1c4b45f62348de9b6fa41ee823d3fa96)): ?>
+<?php $attributes = $__attributesOriginal1c4b45f62348de9b6fa41ee823d3fa96; ?>
+<?php unset($__attributesOriginal1c4b45f62348de9b6fa41ee823d3fa96); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal1c4b45f62348de9b6fa41ee823d3fa96)): ?>
+<?php $component = $__componentOriginal1c4b45f62348de9b6fa41ee823d3fa96; ?>
+<?php unset($__componentOriginal1c4b45f62348de9b6fa41ee823d3fa96); ?>
+<?php endif; ?>
 
-        <!-- Pestaña 2: Listado de Recibos (Tabla) -->
-        <div class="tab-pane fade show active" id="listado-recibos" role="tabpanel" aria-labelledby="listado-tab">
-            <div class="card shadow">
-                <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Listado de Recibos</h5>
-                </div>
-                <div class="card-body">
-                    <!-- Buscador -->
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <div class="input-group">
-                                <span class="input-group-text bg-light">
-                                    <i class="bi bi-search"></i>
-                                </span>
-                                <input type="text" wire:model.live="busqueda" class="form-control" placeholder="Buscar por empleado, monto o fecha...">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>ID</th>
-                            <th>Empleado</th>
-                            <th>Fecha Emisión</th>
-                            <th>Monto Bruto</th>
-                            <th>Descuentos</th>
-                            <th>Monto Neto</th>
-                            <th>Observaciones</th>
-                            <th>Estado</th>
-                            <th class="text-center">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php $__empty_1 = true; $__currentLoopData = $recibos; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $recibo): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
-                            <tr>
-                                <td><span class="badge bg-secondary"><?php echo e($recibo->id_recibo); ?></span></td>
-                                <td class="fw-semibold"><?php echo e($recibo->empleado?->apellido ?? 'N/A'); ?>, <?php echo e($recibo->empleado?->nombre ?? ''); ?></td>
-                                <td><?php echo e($recibo->fecha_emision ? \Carbon\Carbon::parse($recibo->fecha_emision)->format('d/m/Y') : 'N/A'); ?></td>
-                                <td>$<?php echo e(number_format($recibo->monto_bruto, 2, ',', '.')); ?></td>
-                                <td class="text-danger">$<?php echo e(number_format($recibo->descuentos, 2, ',', '.')); ?></td>
-                                <td class="text-success fw-semibold">$<?php echo e(number_format($recibo->monto, 2, ',', '.')); ?></td>
-                                <td><?php echo e($recibo->observaciones ?? '-'); ?></td>
-                                <td>
-                                    <?php if($recibo->activo): ?>
-                                        <span class="badge bg-success">Activo</span>
-                                    <?php else: ?>
-                                        <span class="badge bg-danger">Inactivo</span>
-                                    <?php endif; ?>
-                                </td>
-                                <td class="text-center">
-                                    <div class="btn-group btn-group-sm" role="group">
-                                        <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('editar-recibos')): ?>
-                                        <button class="btn btn-outline-primary" wire:click="editar(<?php echo e($recibo->id_recibo); ?>)" onclick="cambiarAPestanaFormulario()" title="Editar">
-                                            <i class="bi bi-pencil"></i>
-                                        </button>
-                                        <?php endif; ?>
-                                        <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('eliminar-recibos')): ?>
-                                        <button class="btn btn-outline-danger" wire:click="eliminar(<?php echo e($recibo->id_recibo); ?>)" onclick="return confirm('¿Está seguro de eliminar este recibo?')" title="Eliminar">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                        <?php endif; ?>
-                                    </div>
-                                </td>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200">
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">ID</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Empleado</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Fecha</th>
+                                <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Bruto</th>
+                                <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Descuentos</th>
+                                <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Neto</th>
+                                <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Acciones</th>
                             </tr>
-                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
-                            <tr>
-                                <td colspan="9" class="text-center py-5 text-muted">
-                                    <i class="bi bi-inbox" style="font-size: 3rem;"></i>
-                                    <p class="mb-0 mt-2">No hay comprobantes registrados.</p>
-                                </td>
-                            </tr>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
-                    </div>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            <?php $__empty_1 = true; $__currentLoopData = $recibos; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $recibo): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                                <tr wire:key="row-<?php echo e($recibo->id_recibo); ?>" class="hover:bg-slate-50 transition-colors">
+                                    <td class="px-4 py-2.5"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600"><?php echo e($recibo->id_recibo); ?></span></td>
+                                    <td class="px-4 py-2.5 font-medium text-slate-800"><?php echo e($recibo->empleado?->apellido); ?>, <?php echo e($recibo->empleado?->nombre); ?></td>
+                                    <td class="px-4 py-2.5 text-slate-600"><?php echo e(\Carbon\Carbon::parse($recibo->fecha_emision)->format('d/m/Y')); ?></td>
+                                    <td class="px-4 py-2.5 text-right text-slate-600">$<?php echo e(number_format($recibo->monto_bruto, 2, ',', '.')); ?></td>
+                                    <td class="px-4 py-2.5 text-right text-slate-600">$<?php echo e(number_format($recibo->descuentos ?? 0, 2, ',', '.')); ?></td>
+                                    <td class="px-4 py-2.5 text-right font-semibold text-slate-800">$<?php echo e(number_format($recibo->monto, 2, ',', '.')); ?></td>
+                                    <td class="px-4 py-2.5 text-right">
+                                        <?php if (isset($component)) { $__componentOriginalf9332b595ad3d3a806f9da4dda8769dd = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalf9332b595ad3d3a806f9da4dda8769dd = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.action-buttons','data' => ['editWireClick' => 'editar('.e($recibo->id_recibo).')','deleteWireClick' => 'eliminar('.e($recibo->id_recibo).')','deleteMessage' => '¿Está seguro de eliminar este recibo?','canEdit' => auth()->user()->can('editar-recibos'),'canDelete' => auth()->user()->can('eliminar-recibos')]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('action-buttons'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['editWireClick' => 'editar('.e($recibo->id_recibo).')','deleteWireClick' => 'eliminar('.e($recibo->id_recibo).')','deleteMessage' => '¿Está seguro de eliminar este recibo?','canEdit' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(auth()->user()->can('editar-recibos')),'canDelete' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(auth()->user()->can('eliminar-recibos'))]); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalf9332b595ad3d3a806f9da4dda8769dd)): ?>
+<?php $attributes = $__attributesOriginalf9332b595ad3d3a806f9da4dda8769dd; ?>
+<?php unset($__attributesOriginalf9332b595ad3d3a806f9da4dda8769dd); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalf9332b595ad3d3a806f9da4dda8769dd)): ?>
+<?php $component = $__componentOriginalf9332b595ad3d3a806f9da4dda8769dd; ?>
+<?php unset($__componentOriginalf9332b595ad3d3a806f9da4dda8769dd); ?>
+<?php endif; ?>
+                                    </td>
+                                </tr>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
+                                <?php if (isset($component)) { $__componentOriginal074a021b9d42f490272b5eefda63257c = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal074a021b9d42f490272b5eefda63257c = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.empty-state','data' => ['colspan' => 7,'message' => 'No hay recibos registrados.']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('empty-state'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['colspan' => 7,'message' => 'No hay recibos registrados.']); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal074a021b9d42f490272b5eefda63257c)): ?>
+<?php $attributes = $__attributesOriginal074a021b9d42f490272b5eefda63257c; ?>
+<?php unset($__attributesOriginal074a021b9d42f490272b5eefda63257c); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal074a021b9d42f490272b5eefda63257c)): ?>
+<?php $component = $__componentOriginal074a021b9d42f490272b5eefda63257c; ?>
+<?php unset($__componentOriginal074a021b9d42f490272b5eefda63257c); ?>
+<?php endif; ?>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
-    </div>
-</div>
-
-<!-- JavaScript para cambiar de pestaña al editar/guardar -->
-<script>
-    function cambiarAPestanaFormulario() {
-        const nuevoTab = document.getElementById('nuevo-tab');
-        const nuevoTabInstance = new bootstrap.Tab(nuevoTab);
-        nuevoTabInstance.show();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    document.addEventListener('livewire:init', () => {
-        Livewire.on('reciboGuardado', () => {
-            const listadoTab = document.getElementById('listado-tab');
-            const listadoTabInstance = new bootstrap.Tab(listadoTab);
-            listadoTabInstance.show();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        });
-    });
-</script><?php /**PATH /home/rluis/Escritorio/trabajo_final/rennova/resources/views/livewire/recibos.blade.php ENDPATH**/ ?>
+    <?php endif; ?>
+</div><?php /**PATH /home/rluis/Escritorio/trabajo_final/rennova/resources/views/livewire/recibos.blade.php ENDPATH**/ ?>

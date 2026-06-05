@@ -14,6 +14,7 @@ class RolesLaborales extends Component
     public $nombre;
 
     public $busqueda = '';
+    public $tab_activo = 'listado';
 
     protected $rules = [
         'nombre' => 'required|min:3|unique:roles_laborales,nombre',
@@ -59,12 +60,14 @@ class RolesLaborales extends Component
         );
 
         session()->flash('message', $this->rol_id ? 'Rol actualizado correctamente.' : 'Rol creado correctamente.');
+        $this->tab_activo = 'listado';
         $this->resetCampos();
         $this->dispatch('rolGuardado');
     }
 
     public function editar($id)
     {
+        $this->tab_activo = 'nuevo';
         $rol = RolLaboral::findOrFail($id);
         $this->rol_id = $rol->id_rol_laboral;
         $this->nombre = $rol->nombre;

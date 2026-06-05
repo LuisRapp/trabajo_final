@@ -1,158 +1,180 @@
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="mb-0"><i class="bi bi-gear-wide-connected"></i> Tipos de Maquinaria</h1>
+<div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-slate-900">⚙️ Tipos de Maquinaria</h1>
     </div>
 
     <?php if(session()->has('message')): ?>
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="bi bi-check-circle-fill"></i> <?php echo e(session('message')); ?>
+        <div class="mb-6 flex items-center gap-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl px-5 py-3 text-sm font-medium" role="alert">
+            <span class="text-emerald-600">✓</span> <?php echo e(session('message')); ?>
 
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     <?php endif; ?>
 
-    <!-- Pestañas (Tabs) -->
-    <ul class="nav nav-tabs mb-4" id="tiposTabs" role="tablist">
-        <li class="nav-item" role="presentation">
-            <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->any(['crear-tipos-maquinaria', 'editar-tipos-maquinaria'])): ?>
-            <button class="nav-link" id="nuevo-tab" data-bs-toggle="tab" data-bs-target="#nuevo-tipo" type="button" role="tab">
-                <i class="bi bi-plus-circle"></i> Nuevo Tipo
-            </button>
-            <?php endif; ?>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="listado-tab" data-bs-toggle="tab" data-bs-target="#listado-tipos" type="button" role="tab">
-                <i class="bi bi-list-ul"></i> Listado de Tipos
-            </button>
-        </li>
-    </ul>
+    <?php if (isset($component)) { $__componentOriginal671874bf23aa9b9423bd98fb633269fa = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal671874bf23aa9b9423bd98fb633269fa = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.tab-nav','data' => ['tabs' => [
+        ['value' => 'nuevo', 'label' => 'Nuevo Tipo', 'icon' => 'plus-circle', 'can' => auth()->user()->canAny(['crear-tipos-maquinaria', 'editar-tipos-maquinaria'])],
+        ['value' => 'listado', 'label' => 'Listado de Tipos', 'icon' => 'list-ul'],
+    ],'activeTab' => ''.e($tab_activo).'','tabProperty' => 'tab_activo']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('tab-nav'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['tabs' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute([
+        ['value' => 'nuevo', 'label' => 'Nuevo Tipo', 'icon' => 'plus-circle', 'can' => auth()->user()->canAny(['crear-tipos-maquinaria', 'editar-tipos-maquinaria'])],
+        ['value' => 'listado', 'label' => 'Listado de Tipos', 'icon' => 'list-ul'],
+    ]),'activeTab' => ''.e($tab_activo).'','tabProperty' => 'tab_activo']); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal671874bf23aa9b9423bd98fb633269fa)): ?>
+<?php $attributes = $__attributesOriginal671874bf23aa9b9423bd98fb633269fa; ?>
+<?php unset($__attributesOriginal671874bf23aa9b9423bd98fb633269fa); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal671874bf23aa9b9423bd98fb633269fa)): ?>
+<?php $component = $__componentOriginal671874bf23aa9b9423bd98fb633269fa; ?>
+<?php unset($__componentOriginal671874bf23aa9b9423bd98fb633269fa); ?>
+<?php endif; ?>
 
-    <div class="tab-content" id="tiposTabContent">
-        <!-- Tab 1: Formulario Nuevo Tipo -->
+    <?php if($tab_activo === 'nuevo'): ?>
         <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->any(['crear-tipos-maquinaria', 'editar-tipos-maquinaria'])): ?>
-        <div class="tab-pane fade" id="nuevo-tipo" role="tabpanel">
-            <div class="card shadow mb-4">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0"><i class="bi bi-<?php echo e($tipo_id ? 'pencil-square' : 'plus-circle'); ?>"></i> <?php echo e($tipo_id ? 'Editar Tipo' : 'Nuevo Tipo'); ?></h5>
-                </div>
-                <div class="card-body">
-            <form wire:submit.prevent="guardar">
-                <div class="row g-3 mb-4">
-                    <div class="col-md-12">
-                        <label class="form-label fw-semibold">Nombre del Tipo <span class="text-danger">*</span></label>
-                        <input type="text" wire:model="nombre" class="form-control <?php $__errorArgs = ['nombre'];
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6">
+            <div class="bg-slate-50 border-b border-slate-200 px-6 py-4">
+                <h5 class="text-lg font-semibold text-slate-800">
+                    <?php echo e($tipo_id ? '✏️ Editar Tipo' : '➕ Nuevo Tipo'); ?>
+
+                </h5>
+            </div>
+            <div class="p-6">
+                <form wire:submit.prevent="guardar">
+                    <div class="mb-6">
+                        <label for="nombre" class="block text-sm font-semibold text-slate-700 mb-1.5">Nombre del Tipo <span class="text-red-500">*</span></label>
+                        <input type="text" id="nombre" wire:model="nombre"
+                            class="w-full px-4 py-2.5 border rounded-lg text-sm transition-colors <?php $__errorArgs = ['nombre'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+$message = $__bag->first($__errorArgs[0]); ?> border-red-400 bg-red-50 <?php else: ?> border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
-unset($__errorArgs, $__bag); ?>" placeholder="Ej: Excavadora, Tractor, Cargadora">
+unset($__errorArgs, $__bag); ?>"
+                            placeholder="Ej: Cosechadora, Tractor...">
                         <?php $__errorArgs = ['nombre'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> <div class="invalid-feedback"><?php echo e($message); ?></div> <?php unset($message);
+$message = $__bag->first($__errorArgs[0]); ?> <p class="text-red-600 text-xs mt-1"><?php echo e($message); ?></p> <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>
                     </div>
-                </div>
-                <div class="d-flex gap-2 justify-content-end">
-                    <?php if($tipo_id): ?>
-                        <button type="button" wire:click="resetCampos" class="btn btn-secondary">
-                            <i class="bi bi-x-circle"></i> Cancelar
-                        </button>
-                    <?php endif; ?>
-                    <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->any(['crear-tipos-maquinaria', 'editar-tipos-maquinaria'])): ?>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-check-circle"></i> <?php echo e($tipo_id ? 'Actualizar' : 'Guardar'); ?>
-
-                    </button>
-                    <?php endif; ?>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-        <?php endif; ?>
-
-<!-- Tab 2: Listado de Tipos -->
-<div class="tab-pane fade show active" id="listado-tipos" role="tabpanel">
-    <div class="card shadow">
-        <div class="card-body">
-            <!-- Buscador -->
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <div class="input-group">
-                        <span class="input-group-text bg-light">
-                            <i class="bi bi-search"></i>
-                        </span>
-                        <input type="text" wire:model.live="busqueda" class="form-control" placeholder="Buscar por nombre...">
-                    </div>
-                </div>
-            </div>
-            <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead class="table-light">
-                        <tr>
-                            <th>ID</th>
-                            <th>Nombre</th>
-                            <th class="text-center">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php $__empty_1 = true; $__currentLoopData = $tipos; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $tipo): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
-                            <tr>
-                                <td><span class="badge bg-secondary"><?php echo e($tipo->id_tipo_maquinaria); ?></span></td>
-                                <td><span class="fw-semibold"><?php echo e($tipo->nombre); ?></span></td>
-                                <td class="text-center">
-                                    <div class="btn-group btn-group-sm" role="group">
-                                        <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('editar-tipos-maquinaria')): ?>
-                                        <button class="btn btn-outline-primary" wire:click="editar(<?php echo e($tipo->id_tipo_maquinaria); ?>)" onclick="cambiarAPestanaFormulario()" title="Editar">
-                                            <i class="bi bi-pencil"></i>
-                                        </button>
-                                        <?php endif; ?>
-                                        <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('eliminar-tipos-maquinaria')): ?>
-                                        <button class="btn btn-outline-danger" wire:click="eliminar(<?php echo e($tipo->id_tipo_maquinaria); ?>)" onclick="return confirm('¿Está seguro de eliminar este tipo?')" title="Eliminar">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                        <?php endif; ?>
-                                    </div>
-                                </td>
-                            </tr>
-                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
-                            <tr>
-                                <td colspan="3" class="text-center py-5 text-muted">
-                                    <i class="bi bi-inbox" style="font-size: 3rem;"></i>
-                                    <p class="mb-0 mt-2">No hay tipos registrados.</p>
-                                </td>
-                            </tr>
+                    <div class="flex gap-2 justify-end">
+                        <?php if($tipo_id): ?>
+                            <button type="button" wire:click="resetCampos"
+                                class="inline-flex items-center gap-1.5 px-4 py-2.5 border border-slate-300 bg-white text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors">
+                                ✕ Cancelar
+                            </button>
                         <?php endif; ?>
-                    </tbody>
-                </table>
+                        <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->any(['crear-tipos-maquinaria', 'editar-tipos-maquinaria'])): ?>
+                        <button type="submit"
+                            class="inline-flex items-center gap-1.5 px-5 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-lg text-sm font-medium shadow-sm transition-colors">
+                            ✓ <?php echo e($tipo_id ? 'Actualizar' : 'Guardar'); ?>
+
+                        </button>
+                        <?php endif; ?>
+                    </div>
+                </form>
             </div>
         </div>
-    </div>
-</div>
-</div>
-</div>
+        <?php endif; ?>
+    <?php else: ?>
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="p-6">
+                <?php if (isset($component)) { $__componentOriginal1c4b45f62348de9b6fa41ee823d3fa96 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal1c4b45f62348de9b6fa41ee823d3fa96 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.search-input','data' => ['placeholder' => 'Buscar por nombre...']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('search-input'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['placeholder' => 'Buscar por nombre...']); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal1c4b45f62348de9b6fa41ee823d3fa96)): ?>
+<?php $attributes = $__attributesOriginal1c4b45f62348de9b6fa41ee823d3fa96; ?>
+<?php unset($__attributesOriginal1c4b45f62348de9b6fa41ee823d3fa96); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal1c4b45f62348de9b6fa41ee823d3fa96)): ?>
+<?php $component = $__componentOriginal1c4b45f62348de9b6fa41ee823d3fa96; ?>
+<?php unset($__componentOriginal1c4b45f62348de9b6fa41ee823d3fa96); ?>
+<?php endif; ?>
 
-<!-- JavaScript para cambiar entre pestañas -->
-<script>
-    function cambiarAPestanaFormulario() {
-        const nuevoTab = document.getElementById('nuevo-tab');
-        const nuevoTabInstance = new bootstrap.Tab(nuevoTab);
-        nuevoTabInstance.show();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    document.addEventListener('livewire:init', () => {
-        Livewire.on('tipoGuardado', () => {
-            const listadoTab = document.getElementById('listado-tab');
-            const listadoTabInstance = new bootstrap.Tab(listadoTab);
-            listadoTabInstance.show();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        });
-    });
-</script><?php /**PATH /home/rluis/Escritorio/trabajo_final/rennova/resources/views/livewire/tipos-maquinaria.blade.php ENDPATH**/ ?>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200">
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">ID</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Nombre</th>
+                                <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            <?php $__empty_1 = true; $__currentLoopData = $tipos; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $tipo): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                                <tr wire:key="row-<?php echo e($tipo->id_tipo_maquinaria); ?>" class="hover:bg-slate-50 transition-colors">
+                                    <td class="px-4 py-2.5"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600"><?php echo e($tipo->id_tipo_maquinaria); ?></span></td>
+                                    <td class="px-4 py-2.5 font-medium text-slate-800"><?php echo e($tipo->nombre); ?></td>
+                                    <td class="px-4 py-2.5 text-right">
+                                        <?php if (isset($component)) { $__componentOriginalf9332b595ad3d3a806f9da4dda8769dd = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalf9332b595ad3d3a806f9da4dda8769dd = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.action-buttons','data' => ['editWireClick' => 'editar('.e($tipo->id_tipo_maquinaria).')','deleteWireClick' => 'eliminar('.e($tipo->id_tipo_maquinaria).')','deleteMessage' => '¿Está seguro de eliminar este tipo?','canEdit' => auth()->user()->can('editar-tipos-maquinaria'),'canDelete' => auth()->user()->can('eliminar-tipos-maquinaria')]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('action-buttons'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['editWireClick' => 'editar('.e($tipo->id_tipo_maquinaria).')','deleteWireClick' => 'eliminar('.e($tipo->id_tipo_maquinaria).')','deleteMessage' => '¿Está seguro de eliminar este tipo?','canEdit' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(auth()->user()->can('editar-tipos-maquinaria')),'canDelete' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(auth()->user()->can('eliminar-tipos-maquinaria'))]); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalf9332b595ad3d3a806f9da4dda8769dd)): ?>
+<?php $attributes = $__attributesOriginalf9332b595ad3d3a806f9da4dda8769dd; ?>
+<?php unset($__attributesOriginalf9332b595ad3d3a806f9da4dda8769dd); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalf9332b595ad3d3a806f9da4dda8769dd)): ?>
+<?php $component = $__componentOriginalf9332b595ad3d3a806f9da4dda8769dd; ?>
+<?php unset($__componentOriginalf9332b595ad3d3a806f9da4dda8769dd); ?>
+<?php endif; ?>
+                                    </td>
+                                </tr>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
+                                <?php if (isset($component)) { $__componentOriginal074a021b9d42f490272b5eefda63257c = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal074a021b9d42f490272b5eefda63257c = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.empty-state','data' => ['colspan' => 3,'message' => 'No hay tipos registrados.']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('empty-state'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['colspan' => 3,'message' => 'No hay tipos registrados.']); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal074a021b9d42f490272b5eefda63257c)): ?>
+<?php $attributes = $__attributesOriginal074a021b9d42f490272b5eefda63257c; ?>
+<?php unset($__attributesOriginal074a021b9d42f490272b5eefda63257c); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal074a021b9d42f490272b5eefda63257c)): ?>
+<?php $component = $__componentOriginal074a021b9d42f490272b5eefda63257c; ?>
+<?php unset($__componentOriginal074a021b9d42f490272b5eefda63257c); ?>
+<?php endif; ?>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    <?php endif; ?>
+</div><?php /**PATH /home/rluis/Escritorio/trabajo_final/rennova/resources/views/livewire/tipos-maquinaria.blade.php ENDPATH**/ ?>

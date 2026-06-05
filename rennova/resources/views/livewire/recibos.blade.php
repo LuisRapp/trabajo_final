@@ -1,204 +1,141 @@
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="mb-0"><i class="bi bi-file-earmark-text"></i> Comprobantes de pago</h1>
+<div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-slate-900">🧾 Recibos</h1>
     </div>
 
     @if (session()->has('message'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="bi bi-check-circle-fill"></i> {{ session('message') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <div x-data="{ open: true }" x-show="open" x-transition
+            class="mb-6 flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-emerald-800 shadow-sm" role="alert">
+            <span class="text-emerald-600">✓</span>
+            <span class="flex-1 text-sm font-medium">{{ session('message') }}</span>
+            <button type="button" class="text-emerald-600 hover:text-emerald-800" @click="open = false">✕</button>
         </div>
     @endif
 
-    <!-- Pestañas (Tabs) -->
-    <ul class="nav nav-tabs mb-4" id="recibosTabs" role="tablist">
-        <li class="nav-item" role="presentation">
-            @canany(['crear-recibos', 'editar-recibos'])
-            <button class="nav-link" id="nuevo-tab" data-bs-toggle="tab" data-bs-target="#nuevo-recibo" type="button" role="tab" aria-controls="nuevo-recibo" aria-selected="false">
-                <i class="bi bi-plus-circle"></i> Nuevo Comprobante
-            </button>
-            @endcanany
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="listado-tab" data-bs-toggle="tab" data-bs-target="#listado-recibos" type="button" role="tab" aria-controls="listado-recibos" aria-selected="true">
-                <i class="bi bi-list-ul"></i> Listado de Comprobantes
-            </button>
-        </li>
-    </ul>
+    <x-tab-nav :tabs="[
+        ['value' => 'nuevo', 'label' => 'Nuevo Recibo', 'icon' => 'plus-circle', 'can' => auth()->user()->canAny(['crear-recibos', 'editar-recibos'])],
+        ['value' => 'listado', 'label' => 'Listado de Recibos', 'icon' => 'list-ul'],
+    ]" activeTab="{{ $tab_activo }}" tabProperty="tab_activo" />
 
-    <div class="tab-content" id="recibosTabContent">
-        <!-- Pestaña 1: Nuevo Recibo (Formulario) -->
+    @if($tab_activo === 'nuevo')
         @canany(['crear-recibos', 'editar-recibos'])
-        <div class="tab-pane fade" id="nuevo-recibo" role="tabpanel" aria-labelledby="nuevo-tab">
-            <div class="card shadow mb-4">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0"><i class="bi bi-{{ $recibo_id ? 'pencil-square' : 'plus-circle' }}"></i> {{ $recibo_id ? 'Editar Recibo' : 'Nuevo Recibo' }}</h5>
-                </div>
-                <div class="card-body">
-                    <form wire:submit.prevent="guardar">
-                <div class="row g-3 mb-4">
-                    <div class="col-md-4">
-                        <label class="form-label fw-semibold">Empleado <span class="text-danger">*</span></label>
-                        <select wire:model="id_empleado" class="form-select @error('id_empleado') is-invalid @enderror">
-                            <option value="">Seleccione...</option>
-                            @foreach($empleados as $empleado)
-                                <option value="{{ $empleado->id_empleado }}">{{ $empleado->apellido }}, {{ $empleado->nombre }}</option>
-                            @endforeach
-                        </select>
-                        @error('id_empleado') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label fw-semibold">Fecha Emisión <span class="text-danger">*</span></label>
-                        <input type="date" wire:model="fecha_emision" class="form-control @error('fecha_emision') is-invalid @enderror">
-                        @error('fecha_emision') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label fw-semibold">Observaciones</label>
-                        <input type="text" wire:model="observaciones" class="form-control @error('observaciones') is-invalid @enderror" maxlength="150" placeholder="Observaciones">
-                        @error('observaciones') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                    </div>
-                </div>
-                <div class="row g-3 mb-4">
-                    <div class="col-md-4">
-                        <label class="form-label fw-semibold">Monto Bruto <span class="text-danger">*</span></label>
-                        <div class="input-group">
-                            <span class="input-group-text">$</span>
-                            <input type="number" wire:model="monto_bruto" step="0.1" min="0" class="form-control @error('monto_bruto') is-invalid @enderror" placeholder="0.00">
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6">
+            <div class="bg-slate-50 border-b border-slate-200 px-6 py-4">
+                <h5 class="text-lg font-semibold text-slate-800">
+                    {{ $recibo_id ? '✏️ Editar Recibo' : '➕ Nuevo Recibo' }}
+                </h5>
+            </div>
+            <div class="p-6">
+                <form wire:submit.prevent="guardar">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                        <div class="md:col-span-2">
+                            <label for="id_empleado" class="block text-sm font-semibold text-slate-700 mb-1.5">Empleado <span class="text-red-500">*</span></label>
+                            <select id="id_empleado" wire:model="id_empleado"
+                                class="w-full px-4 py-2.5 border rounded-lg text-sm transition-colors @error('id_empleado') border-red-400 bg-red-50 @else border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 @enderror">
+                                <option value="">Seleccione...</option>
+                                @foreach($empleados as $emp)
+                                    <option value="{{ $emp->id_empleado }}" wire:key="option-{{ $emp->id_empleado }}">{{ $emp->apellido }}, {{ $emp->nombre }}</option>
+                                @endforeach
+                            </select>
+                            @error('id_empleado') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
-                        @error('monto_bruto') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label fw-semibold">Descuentos</label>
-                        <div class="input-group">
-                            <span class="input-group-text">$</span>
-                            <input type="number" wire:model="descuentos" step="0.1" min="0" class="form-control @error('descuentos') is-invalid @enderror" placeholder="0.00">
+                        <div>
+                            <label for="fecha_emision" class="block text-sm font-semibold text-slate-700 mb-1.5">Fecha Emisión <span class="text-red-500">*</span></label>
+                            <input type="date" id="fecha_emision" wire:model="fecha_emision"
+                                class="w-full px-4 py-2.5 border rounded-lg text-sm transition-colors @error('fecha_emision') border-red-400 bg-red-50 @else border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 @enderror">
+                            @error('fecha_emision') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
-                        @error('descuentos') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label fw-semibold">Monto Neto</label>
-                        <div class="input-group">
-                            <span class="input-group-text">$</span>
-                            <input type="number" wire:model="monto" step="0.1" min="0" class="form-control bg-light" placeholder="0.00" readonly>
+                        <div>
+                            <label for="monto_bruto" class="block text-sm font-semibold text-slate-700 mb-1.5">Monto Bruto <span class="text-red-500">*</span></label>
+                            <input type="number" id="monto_bruto" wire:model.live="monto_bruto" step="0.01"
+                                class="w-full px-4 py-2.5 border rounded-lg text-sm transition-colors @error('monto_bruto') border-red-400 bg-red-50 @else border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 @enderror"
+                                placeholder="0.00">
+                            @error('monto_bruto') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
-                        <small class="text-muted">Se calcula automáticamente (Bruto - Descuentos)</small>
                     </div>
-                </div>
-                <div class="d-flex gap-2 justify-content-end">
-                    @if ($recibo_id)
-                        <button type="button" wire:click="resetCampos" class="btn btn-secondary">
-                            <i class="bi bi-x-circle"></i> Cancelar
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div>
+                            <label for="descuentos" class="block text-sm font-semibold text-slate-700 mb-1.5">Descuentos</label>
+                            <input type="number" id="descuentos" wire:model.live="descuentos" step="0.01"
+                                class="w-full px-4 py-2.5 border rounded-lg text-sm transition-colors @error('descuentos') border-red-400 bg-red-50 @else border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 @enderror"
+                                placeholder="0.00" value="0">
+                            @error('descuentos') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label for="monto" class="block text-sm font-semibold text-slate-700 mb-1.5">Monto Neto</label>
+                            <input type="text" id="monto"
+                                class="w-full px-4 py-2.5 border border-slate-200 bg-slate-50 rounded-lg text-sm text-slate-600"
+                                value="{{ isset($monto) ? '$' . number_format($monto, 2, ',', '.') : '' }}" readonly>
+                        </div>
+                        <div>
+                            <label for="observaciones" class="block text-sm font-semibold text-slate-700 mb-1.5">Observaciones</label>
+                            <textarea id="observaciones" wire:model="observaciones" rows="1"
+                                class="w-full px-4 py-2.5 border rounded-lg text-sm transition-colors @error('observaciones') border-red-400 bg-red-50 @else border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 @enderror"
+                                placeholder="Observaciones"></textarea>
+                            @error('observaciones') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
+                    <div class="flex gap-2 justify-end">
+                        @if ($recibo_id)
+                            <button type="button" wire:click="resetCampos"
+                                class="inline-flex items-center gap-1.5 px-4 py-2.5 border border-slate-300 bg-white text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors">
+                                ✕ Cancelar
+                            </button>
+                        @endif
+                        @canany(['crear-recibos', 'editar-recibos'])
+                        <button type="submit"
+                            class="inline-flex items-center gap-1.5 px-5 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-lg text-sm font-medium shadow-sm transition-colors">
+                            ✓ {{ $recibo_id ? 'Actualizar' : 'Guardar' }}
                         </button>
-                    @endif
-                    @canany(['crear-recibos', 'editar-recibos'])
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-check-circle"></i> {{ $recibo_id ? 'Actualizar' : 'Guardar' }}
-                    </button>
-                    @endcanany
-                </div>
-            </form>
-                </div>
+                        @endcanany
+                    </div>
+                </form>
             </div>
         </div>
         @endcanany
+    @else
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="p-6">
+                <x-search-input placeholder="Buscar por empleado..." />
 
-        <!-- Pestaña 2: Listado de Recibos (Tabla) -->
-        <div class="tab-pane fade show active" id="listado-recibos" role="tabpanel" aria-labelledby="listado-tab">
-            <div class="card shadow">
-                <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Listado de Recibos</h5>
-                </div>
-                <div class="card-body">
-                    <!-- Buscador -->
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <div class="input-group">
-                                <span class="input-group-text bg-light">
-                                    <i class="bi bi-search"></i>
-                                </span>
-                                <input type="text" wire:model.live="busqueda" class="form-control" placeholder="Buscar por empleado, monto o fecha...">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>ID</th>
-                            <th>Empleado</th>
-                            <th>Fecha Emisión</th>
-                            <th>Monto Bruto</th>
-                            <th>Descuentos</th>
-                            <th>Monto Neto</th>
-                            <th>Observaciones</th>
-                            <th>Estado</th>
-                            <th class="text-center">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($recibos as $recibo)
-                            <tr>
-                                <td><span class="badge bg-secondary">{{ $recibo->id_recibo }}</span></td>
-                                <td class="fw-semibold">{{ $recibo->empleado?->apellido ?? 'N/A' }}, {{ $recibo->empleado?->nombre ?? '' }}</td>
-                                <td>{{ $recibo->fecha_emision ? \Carbon\Carbon::parse($recibo->fecha_emision)->format('d/m/Y') : 'N/A' }}</td>
-                                <td>${{ number_format($recibo->monto_bruto, 2, ',', '.') }}</td>
-                                <td class="text-danger">${{ number_format($recibo->descuentos, 2, ',', '.') }}</td>
-                                <td class="text-success fw-semibold">${{ number_format($recibo->monto, 2, ',', '.') }}</td>
-                                <td>{{ $recibo->observaciones ?? '-' }}</td>
-                                <td>
-                                    @if($recibo->activo)
-                                        <span class="badge bg-success">Activo</span>
-                                    @else
-                                        <span class="badge bg-danger">Inactivo</span>
-                                    @endif
-                                </td>
-                                <td class="text-center">
-                                    <div class="btn-group btn-group-sm" role="group">
-                                        @can('editar-recibos')
-                                        <button class="btn btn-outline-primary" wire:click="editar({{ $recibo->id_recibo }})" onclick="cambiarAPestanaFormulario()" title="Editar">
-                                            <i class="bi bi-pencil"></i>
-                                        </button>
-                                        @endcan
-                                        @can('eliminar-recibos')
-                                        <button class="btn btn-outline-danger" wire:click="eliminar({{ $recibo->id_recibo }})" onclick="return confirm('¿Está seguro de eliminar este recibo?')" title="Eliminar">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                        @endcan
-                                    </div>
-                                </td>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200">
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">ID</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Empleado</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Fecha</th>
+                                <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Bruto</th>
+                                <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Descuentos</th>
+                                <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Neto</th>
+                                <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Acciones</th>
                             </tr>
-                        @empty
-                            <tr>
-                                <td colspan="9" class="text-center py-5 text-muted">
-                                    <i class="bi bi-inbox" style="font-size: 3rem;"></i>
-                                    <p class="mb-0 mt-2">No hay comprobantes registrados.</p>
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-                    </div>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            @forelse ($recibos as $recibo)
+                                <tr wire:key="row-{{ $recibo->id_recibo }}" class="hover:bg-slate-50 transition-colors">
+                                    <td class="px-4 py-2.5"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">{{ $recibo->id_recibo }}</span></td>
+                                    <td class="px-4 py-2.5 font-medium text-slate-800">{{ $recibo->empleado?->apellido }}, {{ $recibo->empleado?->nombre }}</td>
+                                    <td class="px-4 py-2.5 text-slate-600">{{ \Carbon\Carbon::parse($recibo->fecha_emision)->format('d/m/Y') }}</td>
+                                    <td class="px-4 py-2.5 text-right text-slate-600">${{ number_format($recibo->monto_bruto, 2, ',', '.') }}</td>
+                                    <td class="px-4 py-2.5 text-right text-slate-600">${{ number_format($recibo->descuentos ?? 0, 2, ',', '.') }}</td>
+                                    <td class="px-4 py-2.5 text-right font-semibold text-slate-800">${{ number_format($recibo->monto, 2, ',', '.') }}</td>
+                                    <td class="px-4 py-2.5 text-right">
+                                        <x-action-buttons
+                                            editWireClick="editar({{ $recibo->id_recibo }})"
+                                            deleteWireClick="eliminar({{ $recibo->id_recibo }})"
+                                            deleteMessage="¿Está seguro de eliminar este recibo?"
+                                            :canEdit="auth()->user()->can('editar-recibos')"
+                                            :canDelete="auth()->user()->can('eliminar-recibos')" />
+                                    </td>
+                                </tr>
+                            @empty
+                                <x-empty-state :colspan="7" message="No hay recibos registrados." />
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
-    </div>
+    @endif
 </div>
-
-<!-- JavaScript para cambiar de pestaña al editar/guardar -->
-<script>
-    function cambiarAPestanaFormulario() {
-        const nuevoTab = document.getElementById('nuevo-tab');
-        const nuevoTabInstance = new bootstrap.Tab(nuevoTab);
-        nuevoTabInstance.show();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    document.addEventListener('livewire:init', () => {
-        Livewire.on('reciboGuardado', () => {
-            const listadoTab = document.getElementById('listado-tab');
-            const listadoTabInstance = new bootstrap.Tab(listadoTab);
-            listadoTabInstance.show();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        });
-    });
-</script>

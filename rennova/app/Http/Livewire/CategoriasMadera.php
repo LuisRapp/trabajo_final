@@ -8,6 +8,7 @@ use App\Models\CategoriaMadera;
 class CategoriasMadera extends Component
 {
     public $categorias, $categoria_id, $nombre, $descripcion, $busqueda = '';
+    public $tab_activo = 'listado';
 
     protected $rules = [
         'nombre' => 'required|min:3|unique:categoria_maderas,nombre',
@@ -59,12 +60,14 @@ class CategoriasMadera extends Component
         );
 
         session()->flash('message', $this->categoria_id ? 'Categoría actualizada correctamente.' : 'Categoría creada correctamente.');
+        $this->tab_activo = 'listado';
         $this->resetCampos();
         $this->dispatch('categoriaGuardada');
     }
 
     public function editar($id)
     {
+        $this->tab_activo = 'nuevo';
         $categoria = CategoriaMadera::findOrFail($id);
         $this->categoria_id = $categoria->id_categoria_madera;
         $this->nombre = $categoria->nombre;

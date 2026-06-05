@@ -1,17 +1,17 @@
 <div class="mx-auto max-w-7xl px-4 py-8">
     <div class="mb-8 flex items-center justify-between">
         <h1 class="flex items-center gap-2 text-3xl font-bold text-slate-800">
-            <i class="bi bi-receipt"></i> Ventas
+            🧾 Ventas
         </h1>
     </div>
 
     <?php if(session()->has('message')): ?>
         <div x-data="{ open: true }" x-show="open" x-transition
             class="mb-6 flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-4 text-green-700 shadow-sm" role="alert">
-            <i class="bi bi-check-circle-fill"></i>
+            ✓
             <span class="flex-1 font-medium"><?php echo e(session('message')); ?></span>
             <button type="button" class="text-green-600 hover:text-green-800" @click="open = false">
-                <i class="bi bi-x-lg"></i>
+                ✕
             </button>
         </div>
     <?php endif; ?>
@@ -19,28 +19,40 @@
     <?php if(session()->has('error')): ?>
         <div x-data="{ open: true }" x-show="open" x-transition
             class="mb-6 flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700 shadow-sm" role="alert">
-            <i class="bi bi-exclamation-triangle-fill"></i>
+            ⚠️
             <span class="flex-1 font-medium"><?php echo e(session('error')); ?></span>
             <button type="button" class="text-red-600 hover:text-red-800" @click="open = false">
-                <i class="bi bi-x-lg"></i>
+                ✕
             </button>
         </div>
     <?php endif; ?>
 
-    <div class="mb-6 flex gap-0">
-        <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('crear-ventas')): ?>
-        <button type="button" wire:click="$set('tab_activo','nuevo')"
-            class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border border-r-0 rounded-l-lg transition-all <?php echo e($tab_activo === 'nuevo' ? 'text-white' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'); ?>"
-            style="<?php echo e($tab_activo === 'nuevo' ? 'background-color: #2d7a4f; border-color: #2d7a4f' : ''); ?>">
-            <i class="bi bi-plus-circle"></i> Nueva Venta
-        </button>
-        <?php endif; ?>
-        <button type="button" wire:click="$set('tab_activo','historial')"
-            class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border rounded-r-lg transition-all <?php echo e($tab_activo === 'historial' ? 'text-white' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'); ?>"
-            style="<?php echo e($tab_activo === 'historial' ? 'background-color: #2d7a4f; border-color: #2d7a4f' : ''); ?>">
-            <i class="bi bi-list-ul"></i> Historial de Ventas
-        </button>
-    </div>
+    <?php if (isset($component)) { $__componentOriginal671874bf23aa9b9423bd98fb633269fa = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal671874bf23aa9b9423bd98fb633269fa = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.tab-nav','data' => ['tabs' => [
+        ['value' => 'nuevo', 'label' => 'Nueva Venta', 'icon' => 'plus-circle', 'can' => auth()->user()->can('crear-ventas')],
+        ['value' => 'historial', 'label' => 'Historial de Ventas', 'icon' => 'list-ul'],
+    ],'activeTab' => ''.e($tab_activo).'','tabProperty' => 'tab_activo']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('tab-nav'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['tabs' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute([
+        ['value' => 'nuevo', 'label' => 'Nueva Venta', 'icon' => 'plus-circle', 'can' => auth()->user()->can('crear-ventas')],
+        ['value' => 'historial', 'label' => 'Historial de Ventas', 'icon' => 'list-ul'],
+    ]),'activeTab' => ''.e($tab_activo).'','tabProperty' => 'tab_activo']); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal671874bf23aa9b9423bd98fb633269fa)): ?>
+<?php $attributes = $__attributesOriginal671874bf23aa9b9423bd98fb633269fa; ?>
+<?php unset($__attributesOriginal671874bf23aa9b9423bd98fb633269fa); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal671874bf23aa9b9423bd98fb633269fa)): ?>
+<?php $component = $__componentOriginal671874bf23aa9b9423bd98fb633269fa; ?>
+<?php unset($__componentOriginal671874bf23aa9b9423bd98fb633269fa); ?>
+<?php endif; ?>
 
     <?php if($tab_activo === 'nuevo'): ?>
     <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('crear-ventas')): ?>
@@ -56,7 +68,7 @@
                         <select wire:model="id_cliente" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors">
                             <option value="">Seleccione cliente</option>
                             <?php $__currentLoopData = $clientes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $cliente): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                <option value="<?php echo e($cliente->id_cliente); ?>"><?php echo e($cliente->razon_social); ?></option>
+                                <option value="<?php echo e($cliente->id_cliente); ?>" wire:key="option-<?php echo e($cliente->id_cliente); ?>"><?php echo e($cliente->razon_social); ?></option>
                             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </select>
                     </div>
@@ -69,8 +81,8 @@
                         <input type="date" wire:model="fecha_hasta" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors">
                     </div>
                     <div class="md:col-span-2 flex gap-2">
-                        <button type="submit" class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 text-white rounded-lg transition-colors font-medium text-sm" style="background-color: #2d7a4f;" onmouseover="this.style.backgroundColor='#245c3d'" onmouseout="this.style.backgroundColor='#2d7a4f'">
-                            <i class="bi bi-search"></i> Buscar
+                        <button type="submit" class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 text-white rounded-lg transition-colors font-medium text-sm bg-brand hover:bg-brand-hover">
+                            🔍 Buscar
                         </button>
                     </div>
                 </form>
@@ -97,7 +109,7 @@
                             </thead>
                             <tbody class="divide-y divide-slate-200">
                                 <?php $__currentLoopData = $detalle_cargas; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $c): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                    <tr class="hover:bg-slate-50 transition-colors">
+                                    <tr class="hover:bg-slate-50 transition-colors" wire:key="row-<?php echo e($loop->index); ?>">
                                         <td class="px-3 py-3 text-slate-600"><?php echo e(\Carbon\Carbon::parse($c['fecha_carga'])->format('d/m/Y')); ?></td>
                                         <td class="px-3 py-3 text-slate-600"><?php echo e($c['ticket']); ?></td>
                                         <td class="px-3 py-3 text-slate-600"><?php echo e($c['categoria']); ?></td>
@@ -124,10 +136,10 @@
                         </div>
                         <div class="flex gap-2 justify-between">
                             <button type="button" wire:click="limpiar" class="inline-flex items-center gap-2 px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors font-medium text-sm">
-                                <i class="bi bi-x-circle"></i> Limpiar
+                                ✕ Limpiar
                             </button>
-                            <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-colors font-medium text-sm" style="background-color: #2d7a4f;" onmouseover="this.style.backgroundColor='#245c3d'" onmouseout="this.style.backgroundColor='#2d7a4f'">
-                                <i class="bi bi-save"></i> Guardar Venta
+                            <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-colors font-medium text-sm bg-brand hover:bg-brand-hover">
+                                💾 Guardar Venta
                             </button>
                         </div>
                     </form>
@@ -141,11 +153,11 @@
         <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
             <div class="bg-slate-100 border-b border-slate-200 px-6 py-4 flex justify-between items-center">
                 <h5 class="text-lg font-semibold text-slate-800 mb-0">Historial de Ventas</h5>
-                <div class="flex items-center gap-2 px-4 py-2 border border-slate-300 rounded-lg bg-white" style="max-width: 300px;">
-                    <i class="bi bi-search text-slate-500"></i>
+                <div class="flex items-center gap-2 px-4 py-2 border border-slate-300 rounded-lg bg-white max-w-[300px]">
+                    🔍
                     <input type="text" wire:model.live="busqueda" placeholder="Buscar..." class="flex-1 border-0 focus:ring-0 focus:outline-none text-slate-700 placeholder-slate-400 bg-white">
                     <button class="text-slate-500 hover:text-slate-700" wire:click="$set('busqueda', '')">
-                        <i class="bi bi-x"></i>
+                        ✕
                     </button>
                 </div>
             </div>
@@ -165,7 +177,7 @@
                         </thead>
                         <tbody class="divide-y divide-slate-200">
                             <?php $__empty_1 = true; $__currentLoopData = $ventas; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $venta): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
-                                <tr class="hover:bg-slate-50 transition-colors">
+                                <tr class="hover:bg-slate-50 transition-colors" wire:key="row-<?php echo e($venta->id_recibo); ?>">
                                     <td class="px-3 py-3 text-slate-600"><?php echo e($venta->id_recibo); ?></td>
                                     <td class="px-3 py-3 text-slate-600"><?php echo e(\Carbon\Carbon::parse($venta->fecha_emision)->format('d/m/Y')); ?></td>
                                     <td class="px-3 py-3 text-slate-600"><?php echo e($venta->cliente->razon_social ?? 'N/A'); ?></td>
@@ -182,18 +194,32 @@
                                     </td>
                                     <td class="px-3 py-3 text-center">
                                         <button type="button" class="inline-flex items-center px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded transition-colors border border-blue-200 text-sm font-medium" wire:click="verDetalle(<?php echo e($venta->id_recibo); ?>)">
-                                            <i class="bi bi-eye"></i> Ver
+                                            👁️ Ver
                                         </button>
                                     </td>
                                 </tr>
-                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
-                                <tr>
-                                    <td colspan="7" class="px-3 py-8 text-center">
-                                        <i class="bi bi-inbox text-slate-300 block mb-2" style="font-size: 2rem;"></i>
-                                        <p class="text-slate-500 font-medium">No hay ventas registradas</p>
-                                    </td>
-                                </tr>
-                            <?php endif; ?>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
+                                    <?php if (isset($component)) { $__componentOriginal074a021b9d42f490272b5eefda63257c = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal074a021b9d42f490272b5eefda63257c = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.empty-state','data' => ['colspan' => 7,'message' => 'No hay ventas registradas.']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('empty-state'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['colspan' => 7,'message' => 'No hay ventas registradas.']); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal074a021b9d42f490272b5eefda63257c)): ?>
+<?php $attributes = $__attributesOriginal074a021b9d42f490272b5eefda63257c; ?>
+<?php unset($__attributesOriginal074a021b9d42f490272b5eefda63257c); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal074a021b9d42f490272b5eefda63257c)): ?>
+<?php $component = $__componentOriginal074a021b9d42f490272b5eefda63257c; ?>
+<?php unset($__componentOriginal074a021b9d42f490272b5eefda63257c); ?>
+<?php endif; ?>
+                                <?php endif; ?>
                         </tbody>
                     </table>
                 </div>
@@ -204,15 +230,15 @@
 
     
     <?php if($mostrar_modal && $venta_seleccionada): ?>
-        <div class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4" style="background-color: rgba(0,0,0,0.5);">
+        <div class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4 bg-black/50">
             <div class="w-full max-w-4xl bg-white rounded-lg shadow-xl">
-                <div class="text-white px-6 py-4 flex items-center justify-between rounded-t-lg" style="background-color: #2d7a4f;">
+                <div class="text-white px-6 py-4 flex items-center justify-between rounded-t-lg bg-brand">
                     <h5 class="flex items-center gap-2 text-lg font-semibold mb-0">
-                        <i class="bi bi-receipt"></i> Detalle de Venta #<?php echo e($venta_seleccionada->id_recibo); ?>
+                        🧾 Detalle de Venta #<?php echo e($venta_seleccionada->id_recibo); ?>
 
                     </h5>
                     <button type="button" class="text-white hover:text-gray-200 transition-colors" wire:click="cerrarModal">
-                        <i class="bi bi-x-lg text-xl"></i>
+                        ✕
                     </button>
                 </div>
                 <div class="p-6">
@@ -270,7 +296,7 @@
                                 </thead>
                                 <tbody class="divide-y divide-slate-200">
                                     <?php $__currentLoopData = $detalle_venta; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $det): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                        <tr class="hover:bg-slate-50">
+                                        <tr class="hover:bg-slate-50" wire:key="row-<?php echo e($loop->index); ?>">
                                             <td class="px-3 py-2 text-slate-600"><?php echo e($det['ticket']); ?></td>
                                             <td class="px-3 py-2 text-slate-600"><?php echo e(\Carbon\Carbon::parse($det['fecha_carga'])->format('d/m/Y')); ?></td>
                                             <td class="px-3 py-2 text-slate-600"><?php echo e($det['categoria']); ?></td>
@@ -288,26 +314,26 @@
                 <div class="border-t border-slate-200 px-6 py-4 bg-slate-50 flex gap-2 justify-end">
                     <?php if($modo_edicion): ?>
                         <button type="button" class="inline-flex items-center gap-2 px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors font-medium text-sm" wire:click="cancelarEdicion">
-                            <i class="bi bi-x-circle"></i> Cancelar
+                            ✕ Cancelar
                         </button>
                         <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('editar-ventas')): ?>
-                        <button type="button" class="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-colors font-medium text-sm" style="background-color: #2d7a4f;" onmouseover="this.style.backgroundColor='#245c3d'" onmouseout="this.style.backgroundColor='#2d7a4f'" wire:click="guardarEdicion">
-                            <i class="bi bi-check-circle"></i> Guardar Cambios
+                        <button type="button" class="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-colors font-medium text-sm bg-brand hover:bg-brand-hover" wire:click="guardarEdicion">
+                            ✓ Guardar Cambios
                         </button>
                         <?php endif; ?>
                     <?php else: ?>
                         <button type="button" class="inline-flex items-center gap-2 px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors font-medium text-sm" wire:click="cerrarModal">
-                            <i class="bi bi-x-circle"></i> Cerrar
+                            ✕ Cerrar
                         </button>
                         <?php if($venta_seleccionada->activo): ?>
                             <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('editar-ventas')): ?>
                             <button type="button" class="inline-flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium text-sm" wire:click="activarEdicion">
-                                <i class="bi bi-pencil"></i> Editar
+                                ✏️ Editar
                             </button>
                             <?php endif; ?>
                             <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('eliminar-ventas')): ?>
-                            <button type="button" class="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium text-sm" wire:click="darDeBaja(<?php echo e($venta_seleccionada->id_recibo); ?>)" onclick="return confirm('¿Está seguro de dar de baja esta venta?')">
-                                <i class="bi bi-trash"></i> Dar de Baja
+                            <button type="button" class="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium text-sm" wire:click="darDeBaja(<?php echo e($venta_seleccionada->id_recibo); ?>)" wire:confirm="¿Está seguro de dar de baja esta venta?">
+                                🗑️ Dar de Baja
                             </button>
                             <?php endif; ?>
                         <?php endif; ?>

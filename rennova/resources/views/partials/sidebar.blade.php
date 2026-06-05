@@ -54,8 +54,8 @@
                 class="sidebar-menu-btn"
                 aria-controls="menuPrincipal"
             >
-                <span><i class="bi bi-star-fill"></i> Principal</span>
-                <i class="bi bi-chevron-down" :class="{ 'rotate': open.principal }"></i>
+                <span>★ Principal</span>
+                <span class="sidebar-chevron inline-block transition-transform duration-300" :class="{ 'rotate': open.principal }">▼</span>
             </button>
             <div 
                 id="menuPrincipal"
@@ -64,22 +64,22 @@
                 class="sidebar-submenu"
             >
                 @can('ver-lotes')
-                <a href="{{ route('lotes.index') }}" class="sidebar-link"><i class="bi bi-geo-alt"></i> Lotes</a>
+                <a href="{{ route('lotes.index') }}" class="sidebar-link">📍 Lotes</a>
                 @endcan
                 @can('ver-clientes')
-                <a href="{{ route('clientes.index') }}" class="sidebar-link"><i class="bi bi-people"></i> Clientes</a>
+                <a href="{{ route('clientes.index') }}" class="sidebar-link">👥 Clientes</a>
                 @endcan
                 @can('ver-proveedores')
-                <a href="{{ route('proveedores.index') }}" class="sidebar-link"><i class="bi bi-truck"></i> Proveedores</a>
+                <a href="{{ route('proveedores.index') }}" class="sidebar-link">🚛 Proveedores</a>
                 @endcan
                 @can('ver-ventas')
-                <a href="{{ route('ventas.index') }}" class="sidebar-link"><i class="bi bi-receipt"></i> Ventas</a>
+                <a href="{{ route('ventas.index') }}" class="sidebar-link">🧾 Ventas</a>
                 @endcan
                 @can('ver-cargas')
-                <a href="{{ route('cargas.index') }}" class="sidebar-link"><i class="bi bi-box-seam"></i> Cargas</a>
+                <a href="{{ route('cargas.index') }}" class="sidebar-link">📦 Cargas</a>
                 @endcan
                 @can('ver-choferes')
-                <a href="{{ route('choferes.index') }}" class="sidebar-link"><i class="bi bi-person-vcard"></i> Choferes</a>
+                <a href="{{ route('choferes.index') }}" class="sidebar-link">🪪 Choferes</a>
                 @endcan
             </div>
         </div>
@@ -95,8 +95,8 @@
                 class="sidebar-menu-btn"
                 aria-controls="menuRecursos"
             >
-                <span><i class="bi bi-tools"></i> Recursos</span>
-                <i class="bi bi-chevron-down" :class="{ 'rotate': open.recursos }"></i>
+                <span>🔧 Recursos</span>
+                <span class="sidebar-chevron inline-block transition-transform duration-300" :class="{ 'rotate': open.recursos }">▼</span>
             </button>
             <div 
                 id="menuRecursos"
@@ -105,16 +105,16 @@
                 class="sidebar-submenu"
             >
                 @can('ver-insumos')
-                <a href="{{ route('insumos.index') }}" class="sidebar-link"><i class="bi bi-box-seam"></i> Insumos</a>
+                <a href="{{ route('insumos.index') }}" class="sidebar-link">📦 Insumos</a>
                 @endcan
                 @can('ver-maquinarias')
-                <a href="{{ route('maquinarias.index') }}" class="sidebar-link"><i class="bi bi-truck"></i> Maquinarias</a>
+                <a href="{{ route('maquinarias.index') }}" class="sidebar-link">🚛 Maquinarias</a>
                 @endcan
                 @can('ver-mantenimientos')
-                <a href="{{ route('mantenimientos.index') }}" class="sidebar-link"><i class="bi bi-tools"></i> Mantenimientos</a>
+                <a href="{{ route('mantenimientos.index') }}" class="sidebar-link">🔧 Mantenimientos</a>
                 @endcan
                 @can('ver-kits-mantenimiento')
-                <a href="{{ route('kits-mantenimiento.index') }}" class="sidebar-link"><i class="bi bi-gear-fill"></i> Kits de Mantenimiento</a>
+                <a href="{{ route('kits-mantenimiento.index') }}" class="sidebar-link">⚙️ Kits de Mantenimiento</a>
                 @endcan
             </div>
         </div>
@@ -130,8 +130,8 @@
                 class="sidebar-menu-btn"
                 aria-controls="menuPersonal"
             >
-                <span><i class="bi bi-people-fill"></i> Personal</span>
-                <i class="bi bi-chevron-down" :class="{ 'rotate': open.personal }"></i>
+                <span>👥 Personal</span>
+                <span class="sidebar-chevron inline-block transition-transform duration-300" :class="{ 'rotate': open.personal }">▼</span>
             </button>
             <div 
                 id="menuPersonal"
@@ -140,22 +140,22 @@
                 class="sidebar-submenu"
             >
                 @can('ver-empleados')
-                <a href="{{ route('empleados.index') }}" class="sidebar-link"><i class="bi bi-person-workspace"></i> Empleados</a>
+                <a href="{{ route('empleados.index') }}" class="sidebar-link">👷 Empleados</a>
                 @endcan
                 @can('ver-adelantos')
-                <a href="{{ route('adelantos.index') }}" class="sidebar-link"><i class="bi bi-cash-coin"></i> Adelantos</a>
+                <a href="{{ route('adelantos.index') }}" class="sidebar-link">💵 Adelantos</a>
                 @endcan
                 @can('ver-recibos')
-                <a href="{{ route('recibos.index') }}" class="sidebar-link"><i class="bi bi-file-earmark-text"></i> Recibos</a>
+                <a href="{{ route('recibos.index') }}" class="sidebar-link">📄 Recibos</a>
                 @endcan
                 @can('ver-liquidacion-pagos')
-                <a href="{{ route('liquidacion-pagos.index') }}" class="sidebar-link"><i class="bi bi-calculator"></i> Liquidación de Pagos</a>
+                <a href="{{ route('liquidacion-pagos.index') }}" class="sidebar-link">🧮 Liquidación de Pagos</a>
                 @endcan
                 @can('ver-asignaciones-lote')
-                <a href="{{ route('asignaciones-lote.index') }}" class="sidebar-link"><i class="bi bi-link-45deg"></i> Asignaciones por Lote</a>
+                <a href="{{ route('asignaciones-lote.index') }}" class="sidebar-link">🔗 Asignaciones por Lote</a>
                 @endcan
                 @can('ver-propuestas-asignacion')
-                <a href="{{ route('allocation-proposals.index') }}" class="sidebar-link"><i class="bi bi-magic"></i> Propuestas Automáticas</a>
+                <a href="{{ route('allocation-proposals.index') }}" class="sidebar-link">✨ Propuestas Automáticas</a>
                 @endcan
             </div>
         </div>
@@ -171,8 +171,8 @@
                 class="sidebar-menu-btn"
                 aria-controls="menuOperaciones"
             >
-                <span><i class="bi bi-clipboard-check"></i> Operaciones</span>
-                <i class="bi bi-chevron-down" :class="{ 'rotate': open.operaciones }"></i>
+                <span>📋 Operaciones</span>
+                <span class="sidebar-chevron inline-block transition-transform duration-300" :class="{ 'rotate': open.operaciones }">▼</span>
             </button>
             <div 
                 id="menuOperaciones"
@@ -181,7 +181,7 @@
                 class="sidebar-submenu"
             >
                 @can('ver-partes-diarios')
-                <a href="{{ route('partes-diarios.index') }}" class="sidebar-link"><i class="bi bi-clipboard-check"></i> Partes Diarios</a>
+                <a href="{{ route('partes-diarios.index') }}" class="sidebar-link">📋 Partes Diarios</a>
                 @endcan
             </div>
         </div>
@@ -197,8 +197,8 @@
                 class="sidebar-menu-btn"
                 aria-controls="menuHistoricos"
             >
-                <span><i class="bi bi-clock-history"></i> Históricos</span>
-                <i class="bi bi-chevron-down" :class="{ 'rotate': open.historicos }"></i>
+                <span>🕐 Históricos</span>
+                <span class="sidebar-chevron inline-block transition-transform duration-300" :class="{ 'rotate': open.historicos }">▼</span>
             </button>
             <div 
                 id="menuHistoricos"
@@ -207,16 +207,16 @@
                 class="sidebar-submenu"
             >
                 @can('ver-historico-costos-maquinarias')
-                <a href="{{ route('historico-costos-maquinarias.index') }}" class="sidebar-link"><i class="bi bi-graph-up"></i> Costos Maquinarias</a>
+                <a href="{{ route('historico-costos-maquinarias.index') }}" class="sidebar-link">📈 Costos Maquinarias</a>
                 @endcan
                 @can('ver-roles-laborales')
-                <a href="{{ route('historico-roles-laborales.index') }}" class="sidebar-link"><i class="bi bi-person-badge"></i> Roles Laborales</a>
+                <a href="{{ route('historico-roles-laborales.index') }}" class="sidebar-link">🪪 Roles Laborales</a>
                 @endcan
                 @can('ver-auditoria')
-                <a href="{{ route('auditorias.index') }}" class="sidebar-link"><i class="bi bi-file-earmark-text"></i> Auditorías</a>
+                <a href="{{ route('auditorias.index') }}" class="sidebar-link">📄 Auditorías</a>
                 @endcan
                 @can('ver-reportes')
-                <a href="{{ route('reportes.estadisticas-forestales') }}" class="sidebar-link"><i class="bi bi-bar-chart"></i> Estadísticas Forestales</a>
+                <a href="{{ route('reportes.estadisticas-forestales') }}" class="sidebar-link">📊 Estadísticas Forestales</a>
                 @endcan
             </div>
         </div>
@@ -232,8 +232,8 @@
                 class="sidebar-menu-btn"
                 aria-controls="menuConfiguracion"
             >
-                <span><i class="bi bi-gear-fill"></i> Configuración</span>
-                <i class="bi bi-chevron-down" :class="{ 'rotate': open.configuracion }"></i>
+                <span>⚙️ Configuración</span>
+                <span class="sidebar-chevron inline-block transition-transform duration-300" :class="{ 'rotate': open.configuracion }">▼</span>
             </button>
             <div 
                 id="menuConfiguracion"
@@ -242,25 +242,25 @@
                 class="sidebar-submenu"
             >
                 @can('ver-categorias-madera')
-                <a href="{{ route('categorias-madera.index') }}" class="sidebar-link"><i class="bi bi-tree"></i> Categorías Madera</a>
+                <a href="{{ route('categorias-madera.index') }}" class="sidebar-link">🌲 Categorías Madera</a>
                 @endcan
                 @can('ver-lista-precios')
-                <a href="{{ route('lista-precios.index') }}" class="sidebar-link"><i class="bi bi-tags"></i> Lista de Precios</a>
+                <a href="{{ route('lista-precios.index') }}" class="sidebar-link">🏷️ Lista de Precios</a>
                 @endcan
                 @can('ver-unidades-medida')
-                <a href="{{ route('unidades-medida.index') }}" class="sidebar-link"><i class="bi bi-rulers"></i> Unidades de Medida</a>
+                <a href="{{ route('unidades-medida.index') }}" class="sidebar-link">📏 Unidades de Medida</a>
                 @endcan
                 @can('ver-tipos-maquinaria')
-                <a href="{{ route('tipos-maquinaria.index') }}" class="sidebar-link"><i class="bi bi-gear-wide-connected"></i> Tipos Maquinaria</a>
+                <a href="{{ route('tipos-maquinaria.index') }}" class="sidebar-link">⚙️ Tipos Maquinaria</a>
                 @endcan
                 @can('ver-roles-laborales')
-                <a href="{{ route('roles-laborales.index') }}" class="sidebar-link"><i class="bi bi-person-badge"></i> Roles Laborales</a>
+                <a href="{{ route('roles-laborales.index') }}" class="sidebar-link">🪪 Roles Laborales</a>
                 @endcan
                 @can('gestionar-usuarios')
-                <a href="{{ route('usuarios.index') }}" class="sidebar-link"><i class="bi bi-person-circle"></i> Usuarios</a>
+                <a href="{{ route('usuarios.index') }}" class="sidebar-link">👤 Usuarios</a>
                 @endcan
                 @can('gestionar-permisos')
-                    <a href="{{ route('roles-permisos.index') }}" class="sidebar-link"><i class="bi bi-shield-lock"></i> Roles y Permisos</a>
+                    <a href="{{ route('roles-permisos.index') }}" class="sidebar-link">🔒 Roles y Permisos</a>
                 @endcan
             </div>
         </div>
@@ -340,21 +340,11 @@
         padding-left: 0.9rem;
     }
 
-    .sidebar-menu-btn i:first-child {
-        margin-right: 0.5rem;
-        width: 16px;
-        font-size: 0.9rem;
-        text-align: center;
-    }
-
-    .sidebar-menu-btn i:last-child {
-        transition: transform 0.3s ease;
+    .sidebar-chevron {
         font-size: 0.75rem;
-        width: auto;
-        margin-right: 0;
     }
 
-    .sidebar-menu-btn i:last-child.rotate {
+    .sidebar-chevron.rotate {
         transform: rotate(180deg);
     }
 
@@ -382,13 +372,5 @@
         color: #0f172a;
         border-left-color: #94a3b8;
         padding-left: 0.9rem;
-    }
-
-    .sidebar-link i {
-        margin-right: 0.5rem;
-        width: 16px;
-        font-size: 0.9rem;
-        text-align: center;
-        color: #64748b;
     }
 </style>

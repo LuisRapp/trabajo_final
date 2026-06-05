@@ -2,15 +2,16 @@
 
 namespace App\Http\Livewire;
 
+use App\Models\Insumo;
 use App\Models\Mantenimiento;
 use App\Models\Maquinaria;
+use App\Models\MovimientoStock;
 use App\Models\NotificacionSistema;
 use App\Models\TipoMantenimiento;
-use App\Services\InventarioService;
+use App\Services\MantenimientoService;
 use App\Services\NotificacionService;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
 class Mantenimientos extends Component
@@ -54,6 +55,8 @@ class Mantenimientos extends Component
 
     public $insumos_usados = [];
 
+    public $insumosDisponibles = [];
+
     protected function rules()
     {
         return [
@@ -85,9 +88,25 @@ class Mantenimientos extends Component
     {
         $this->maquinarias = Maquinaria::where('estado', '!=', 'dado_de_baja')->orderBy('modelo')->get();
         $this->tipos = TipoMantenimiento::orderBy('nombre')->get();
+        $this->insumosDisponibles = $this->cargarInsumosDisponibles();
         $this->fecha_inicio = date('Y-m-d');
         $this->estado = 'programado';
         $this->tab_activo = 'listado';
+    }
+
+    /**
+     * Carga todos los insumos con su stock y precio actual.
+     *
+     * @return \Illuminate\Support\Collection
+     */
+    public function cargarInsumosDisponibles()
+    {
+        return Insumo::orderBy('nombre')->get()->map(function ($insumo) {
+            $insumo->stock_disponible = MovimientoStock::stockDisponible($insumo->id_insumo);
+            $insumo->precio_promedio = MovimientoStock::precioPromedio($insumo->id_insumo);
+
+            return $insumo;
+        });
     }
 
     public function updatedIdMaquinaria()
@@ -172,9 +191,9 @@ class Mantenimientos extends Component
 
         $this->validate();
 
-        // La fecha de inicio debe ser igual a la programada si existe
+        $servicio = app(MantenimientoService::class);
         $fechaInicio = $this->fecha_programada ?: $this->fecha_inicio;
-        $mantenimiento = Mantenimiento::create([
+        $mantenimiento = $servicio->crearMantenimiento([
             'id_maquinaria' => $this->id_maquinaria,
             'id_tipo_mantenimiento' => $this->id_tipo_mantenimiento,
             'fecha_inicio' => $fechaInicio,
@@ -347,96 +366,29 @@ class Mantenimientos extends Component
 
             \Log::info('Validación pasada');
 
-            // Calcular costo total base (mano de obra u otros costos adicionales)
             $costoBase = floatval($this->costo_total_completar ?? 0);
-
-            // Calcular costo de insumos usando FIFO (sin procesar aún, solo calcular)
-            $costoInsumos = 0;
-            $insumosValidados = [];
-
-            foreach ($this->insumos_usados as $insumo) {
-                if (! empty($insumo['id_insumo']) && ! empty($insumo['cantidad'])) {
-                    $cantidad = floatval($insumo['cantidad']);
-
-                    // Verificar stock disponible antes de procesar
-                    $stockDisponible = InventarioService::stockDisponible($insumo['id_insumo']);
-                    if ($stockDisponible < $cantidad) {
-                        $nombreInsumo = \App\Models\Insumo::find($insumo['id_insumo'])->nombre ?? 'ID '.$insumo['id_insumo'];
-                        throw new \Exception("Stock insuficiente para {$nombreInsumo}. Disponible: {$stockDisponible}, Requerido: {$cantidad}");
-                    }
-
-                    // Calcular costo FIFO simulado para obtener el total
-                    $resultadoSimulado = DB::selectOne(
-                        'SELECT * FROM calcular_costo_fifo(?, ?)',
-                        [$insumo['id_insumo'], $cantidad]
-                    );
-
-                    $costoInsumos += $resultadoSimulado->v_costo_total;
-                    $insumosValidados[] = $insumo;
-                }
-            }
-
-            $costoTotal = $costoBase + $costoInsumos;
-
-            \Log::info('Costo total calculado', ['base' => $costoBase, 'insumos' => $costoInsumos, 'total' => $costoTotal]);
-
-            DB::beginTransaction();
-
-            // Actualizar orden
-            $orden->fecha_fin = $this->fecha_fin_completar;
-            $orden->costo_total = $costoTotal;
-            $orden->estado = 'completado';
-            $orden->save();
-
-            \Log::info('Orden actualizada');
-
-            // Registrar todos los insumos usados (preventivo o correctivo)
             $tipoMantenimiento = $this->orden_es_correctivo ? 'Correctivo' : 'Preventivo';
 
-            foreach ($insumosValidados as $insumo) {
-                $cantidad = floatval($insumo['cantidad']);
-                $motivo = "Mantenimiento {$tipoMantenimiento} - Orden #".$orden->id_mantenimiento;
+            $servicio = app(MantenimientoService::class);
+            $resultado = $servicio->completarMantenimientoConFifo(
+                $this->orden_completar_id,
+                $this->fecha_fin_completar,
+                $costoBase,
+                $this->insumos_usados,
+                $tipoMantenimiento
+            );
 
-                // Usar el sistema FIFO para registrar la salida
-                $resultadoSalida = InventarioService::registrarSalida(
-                    $insumo['id_insumo'],
-                    $cantidad,
-                    $motivo,
-                    $this->fecha_fin_completar
-                );
+            \Log::info('Proceso completado exitosamente');
 
-                // El costo real viene de los lotes FIFO consumidos
-                $costoRealInsumo = $resultadoSalida['costo_total'];
-
-                // Registrar en mantenimiento_insumos con el costo FIFO real
-                DB::table('mantenimiento_insumos')->insert([
-                    'id_mantenimiento' => $orden->id_mantenimiento,
-                    'id_insumo' => $insumo['id_insumo'],
-                    'cantidad_utilizada' => $cantidad,
-                    'costo_unitario' => $costoRealInsumo / $cantidad, // Promedio ponderado de los lotes
-                    'subtotal' => $costoRealInsumo,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            }
-            \Log::info('Insumos registrados');
-
-            DB::commit();
-
-            \Log::info('Transacción confirmada');
-
-            session()->flash('message', 'Orden completada exitosamente. Costo total: $'.number_format($costoTotal, 2));
+            session()->flash('message', 'Orden completada exitosamente. Costo total: $'.number_format($resultado['costo_total'], 2));
 
             $this->cerrarModalCompletar();
             $this->cargarMantenimientos();
-
-            \Log::info('Proceso completado exitosamente');
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             \Log::error('Error de validación', ['errors' => $e->errors()]);
             $this->addError('general', 'Error de validación: '.implode(', ', array_map(fn ($err) => implode(', ', $err), $e->errors())));
         } catch (\Exception $e) {
-            DB::rollBack();
             \Log::error('Error completando orden', [
                 'message' => $e->getMessage(),
                 'file' => $e->getFile(),

@@ -2,10 +2,12 @@
 
 namespace App\Services;
 
+use App\Models\Adelanto;
 use App\Models\Carga;
 use App\Models\Empleado;
 use App\Models\HistoricoRolLaboral;
 use App\Models\ParteDiario;
+use App\Models\Recibo;
 use Illuminate\Support\Facades\DB;
 
 class EmpleadoPagoService
@@ -177,5 +179,141 @@ class EmpleadoPagoService
             'total_pagar_produccion' => round($total_pagar_produccion, 2),
             'total_pagar_final' => round($total_pagar_final, 2),
         ];
+    }
+
+    /**
+     * Generate a payment receipt for an employee and mark associated advances as paid.
+     *
+     * Executes within a database transaction. The caller is responsible for
+     * any post-commit side effects (e.g. PDF generation, email).
+     *
+     * @param  int  $idEmpleado  The employee ID for the receipt
+     * @param  float  $montoBruto  Gross payment amount
+     * @param  float  $descuentos  Deductions from advances
+     * @param  float  $montoNeto  Net payment after deductions
+     * @param  string  $observaciones  Observations for the receipt
+     * @param  \Illuminate\Support\Collection  $adelantosPendientes  Advances to mark as paid
+     * @return \App\Models\Recibo The created receipt
+     *
+     * @throws \Exception If a database error occurs (transaction rolled back)
+     */
+    public static function generarRecibo(int $idEmpleado, float $montoBruto, float $descuentos, float $montoNeto, string $observaciones, $adelantosPendientes): Recibo
+    {
+        DB::beginTransaction();
+
+        try {
+            $recibo = Recibo::create([
+                'id_empleado' => $idEmpleado,
+                'fecha_emision' => now(),
+                'monto_bruto' => $montoBruto,
+                'descuentos' => $descuentos,
+                'monto' => $montoNeto,
+                'observaciones' => $observaciones,
+            ]);
+
+            if ($adelantosPendientes && count($adelantosPendientes) > 0) {
+                foreach ($adelantosPendientes as $adelanto) {
+                    $adelanto->estado = 'pagado';
+                    $adelanto->save();
+                }
+            }
+
+            DB::commit();
+
+            return $recibo;
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * Generate payment receipts for all active employees in a date range.
+     *
+     * For each active employee: calculates payment via calcularPagoRango(),
+     * applies pending advance deductions, creates a receipt, and marks
+     * advances as paid. Executes within a database transaction.
+     *
+     * The caller is responsible for PDF generation, email, and UI feedback.
+     *
+     * @param  string  $fechaInicio  Start date (Y-m-d)
+     * @param  string  $fechaFin  End date (Y-m-d)
+     * @return array{recibos: array<int, array{recibo: Recibo, empleado: Empleado, adelantos_descontados: int}>}
+     *
+     * @throws \Exception If a database error occurs
+     */
+    public static function liquidarTodos(string $fechaInicio, string $fechaFin): array
+    {
+        $empleados = Empleado::with('rolLaboral')
+            ->whereNull('fecha_fin_actividades')
+            ->orderBy('apellido')
+            ->get();
+
+        if ($empleados->isEmpty()) {
+            return ['recibos' => []];
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $recibos = [];
+
+            foreach ($empleados as $empleado) {
+                $calculo = self::calcularPagoRango($empleado, $fechaInicio, $fechaFin);
+
+                $adelantosPendientes = Adelanto::where('id_empleado', $empleado->id_empleado)
+                    ->where('estado', 'pendiente')
+                    ->whereBetween('fecha_emision', [$fechaInicio, $fechaFin])
+                    ->get();
+
+                $totalAdelantos = $adelantosPendientes->sum('monto');
+                $montoBruto = $calculo['total_pagar_final'];
+                $descuentos = $totalAdelantos;
+                $montoNeto = max(0, $montoBruto - $descuentos);
+
+                $obsBase = sprintf(
+                    'Liquidación período %s a %s - %d días caídos + %.2f ton',
+                    \Carbon\Carbon::parse($fechaInicio)->format('d/m/Y'),
+                    \Carbon\Carbon::parse($fechaFin)->format('d/m/Y'),
+                    $calculo['cantidad_dias_caidos'],
+                    $calculo['total_peso_toneladas'] ?? 0
+                );
+
+                if ($totalAdelantos > 0) {
+                    $obsBase .= sprintf(' | Adelantos: $%.2f', $totalAdelantos);
+                }
+
+                $recibo = Recibo::create([
+                    'id_empleado' => $empleado->id_empleado,
+                    'fecha_emision' => now(),
+                    'monto_bruto' => $montoBruto,
+                    'descuentos' => $descuentos,
+                    'monto' => $montoNeto,
+                    'observaciones' => $obsBase,
+                ]);
+
+                if ($adelantosPendientes->isNotEmpty()) {
+                    foreach ($adelantosPendientes as $adelanto) {
+                        $adelanto->estado = 'pagado';
+                        $adelanto->save();
+                    }
+                }
+
+                $recibos[] = [
+                    'recibo' => $recibo,
+                    'empleado' => $empleado,
+                    'adelantos_descontados' => $adelantosPendientes->count(),
+                ];
+            }
+
+            DB::commit();
+
+            return ['recibos' => $recibos];
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
     }
 }

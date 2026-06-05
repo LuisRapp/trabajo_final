@@ -1,305 +1,301 @@
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="mb-0"><i class="bi bi-clock-history"></i> Histórico de Roles Laborales</h1>
+<div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-slate-900">📈 Histórico de Roles Laborales</h1>
     </div>
 
     <?php if(session()->has('message')): ?>
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="bi bi-check-circle-fill"></i> <?php echo e(session('message')); ?>
-
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <div x-data="{ open: true }" x-show="open" x-transition
+            class="mb-6 flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-emerald-800 shadow-sm" role="alert">
+            <span class="text-emerald-600">✓</span>
+            <span class="flex-1 text-sm font-medium"><?php echo e(session('message')); ?></span>
+            <button type="button" class="text-emerald-600 hover:text-emerald-800" @click="open = false">✕</button>
         </div>
     <?php endif; ?>
 
-    <!-- Pestañas (Tabs) -->
-    <ul class="nav nav-tabs mb-4" id="historicoTabs" role="tablist">
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="nuevo-tab" data-bs-toggle="tab" data-bs-target="#nuevo-historico" type="button" role="tab" aria-controls="nuevo-historico" aria-selected="false">
-                <i class="bi bi-plus-circle"></i> Nuevo Histórico
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="listado-tab" data-bs-toggle="tab" data-bs-target="#listado-historicos" type="button" role="tab" aria-controls="listado-historicos" aria-selected="true">
-                <i class="bi bi-list-ul"></i> Listado de Históricos
-            </button>
-        </li>
-    </ul>
+    <?php if (isset($component)) { $__componentOriginal671874bf23aa9b9423bd98fb633269fa = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal671874bf23aa9b9423bd98fb633269fa = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.tab-nav','data' => ['tabs' => [
+        ['value' => 'nuevo', 'label' => 'Nuevo Histórico', 'icon' => 'plus-circle', 'can' => auth()->user()->canAny(['crear-historico-roles', 'editar-historico-roles'])],
+        ['value' => 'listado', 'label' => 'Listado de Históricos', 'icon' => 'list-ul'],
+    ],'activeTab' => ''.e($tab_activo).'','tabProperty' => 'tab_activo']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('tab-nav'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['tabs' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute([
+        ['value' => 'nuevo', 'label' => 'Nuevo Histórico', 'icon' => 'plus-circle', 'can' => auth()->user()->canAny(['crear-historico-roles', 'editar-historico-roles'])],
+        ['value' => 'listado', 'label' => 'Listado de Históricos', 'icon' => 'list-ul'],
+    ]),'activeTab' => ''.e($tab_activo).'','tabProperty' => 'tab_activo']); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal671874bf23aa9b9423bd98fb633269fa)): ?>
+<?php $attributes = $__attributesOriginal671874bf23aa9b9423bd98fb633269fa; ?>
+<?php unset($__attributesOriginal671874bf23aa9b9423bd98fb633269fa); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal671874bf23aa9b9423bd98fb633269fa)): ?>
+<?php $component = $__componentOriginal671874bf23aa9b9423bd98fb633269fa; ?>
+<?php unset($__componentOriginal671874bf23aa9b9423bd98fb633269fa); ?>
+<?php endif; ?>
 
-    <!-- Contenido de las Pestañas -->
-    <div class="tab-content" id="historicoTabContent">
-        <!-- Pestaña 1: Nuevo Histórico (Formulario) -->
-        <div class="tab-pane fade" id="nuevo-historico" role="tabpanel" aria-labelledby="nuevo-tab">
-            <div class="card shadow">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0">
-                        <i class="bi bi-<?php echo e($historico_id ? 'pencil-square' : 'plus-circle'); ?>"></i> 
-                        <?php echo e($historico_id ? 'Modificar Histórico' : 'Nuevo Histórico'); ?>
+    <?php if($tab_activo === 'nuevo'): ?>
+        <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->any(['crear-historico-roles', 'editar-historico-roles'])): ?>
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6">
+            <div class="bg-slate-50 border-b border-slate-200 px-6 py-4">
+                <h5 class="text-lg font-semibold text-slate-800">
+                    <?php echo e($historico_id ? '✏️ Editar Histórico' : '➕ Nuevo Histórico'); ?>
 
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <form wire:submit.prevent="guardar">
-                        <div class="row g-3 mb-4">
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">Rol Laboral <span class="text-danger">*</span></label>
-                                <select wire:model="rol_laboral_id" class="form-select <?php $__errorArgs = ['rol_laboral_id'];
+                </h5>
+            </div>
+            <div class="p-6">
+                <form wire:submit.prevent="guardar">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div>
+                            <label for="rol_laboral_id" class="block text-sm font-semibold text-slate-700 mb-1.5">Rol Laboral <span class="text-red-500">*</span></label>
+                            <select id="rol_laboral_id" wire:model="rol_laboral_id"
+                                class="w-full px-4 py-2.5 border rounded-lg text-sm transition-colors <?php $__errorArgs = ['rol_laboral_id'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+$message = $__bag->first($__errorArgs[0]); ?> border-red-400 bg-red-50 <?php else: ?> border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>">
-                                    <option value="">Seleccione un rol...</option>
-                                    <?php $__currentLoopData = $roles; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $rol): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                        <option value="<?php echo e($rol->id_rol_laboral); ?>"><?php echo e($rol->nombre); ?></option>
-                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                                </select>
-                                <?php $__errorArgs = ['rol_laboral_id'];
+                                <option value="">Seleccione...</option>
+                                <?php $__currentLoopData = $rolesLaborales; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $rol): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <option value="<?php echo e($rol->id_rol_laboral); ?>" wire:key="option-<?php echo e($rol->id_rol_laboral); ?>"><?php echo e($rol->nombre); ?></option>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                            </select>
+                            <?php $__errorArgs = ['rol_laboral_id'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> <div class="invalid-feedback"><?php echo e($message); ?></div> <?php unset($message);
+$message = $__bag->first($__errorArgs[0]); ?> <p class="text-red-600 text-xs mt-1"><?php echo e($message); ?></p> <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">Fecha Inicio <span class="text-danger">*</span></label>
-                                <input type="date" wire:model="fecha_inicio" class="form-control <?php $__errorArgs = ['fecha_inicio'];
+                        </div>
+                        <div>
+                            <label for="precio_tonelada" class="block text-sm font-semibold text-slate-700 mb-1.5">Precio/Ton <span class="text-red-500">*</span></label>
+                            <input type="number" id="precio_tonelada" wire:model="precio_tonelada" step="0.01"
+                                class="w-full px-4 py-2.5 border rounded-lg text-sm transition-colors <?php $__errorArgs = ['precio_tonelada'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+$message = $__bag->first($__errorArgs[0]); ?> border-red-400 bg-red-50 <?php else: ?> border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>"
+                                placeholder="0.00">
+                            <?php $__errorArgs = ['precio_tonelada'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> <p class="text-red-600 text-xs mt-1"><?php echo e($message); ?></p> <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+                        </div>
+                        <div>
+                            <label for="jornal_diario" class="block text-sm font-semibold text-slate-700 mb-1.5">Jornal Diario <span class="text-red-500">*</span></label>
+                            <input type="number" id="jornal_diario" wire:model="jornal_diario" step="0.01"
+                                class="w-full px-4 py-2.5 border rounded-lg text-sm transition-colors <?php $__errorArgs = ['jornal_diario'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> border-red-400 bg-red-50 <?php else: ?> border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>"
+                                placeholder="0.00">
+                            <?php $__errorArgs = ['jornal_diario'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> <p class="text-red-600 text-xs mt-1"><?php echo e($message); ?></p> <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div>
+                            <label for="fecha_inicio" class="block text-sm font-semibold text-slate-700 mb-1.5">Fecha Inicio <span class="text-red-500">*</span></label>
+                            <input type="date" id="fecha_inicio" wire:model="fecha_inicio"
+                                class="w-full px-4 py-2.5 border rounded-lg text-sm transition-colors <?php $__errorArgs = ['fecha_inicio'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> border-red-400 bg-red-50 <?php else: ?> border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>">
-                                <?php $__errorArgs = ['fecha_inicio'];
+                            <?php $__errorArgs = ['fecha_inicio'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> <div class="invalid-feedback"><?php echo e($message); ?></div> <?php unset($message);
+$message = $__bag->first($__errorArgs[0]); ?> <p class="text-red-600 text-xs mt-1"><?php echo e($message); ?></p> <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>
-                            </div>
                         </div>
-                        <div class="row g-3 mb-4">
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">Precio por Tonelada</label>
-                                <input type="number" wire:model="precio_tonelada" step="0.1" min="0" class="form-control <?php $__errorArgs = ['precio_tonelada'];
+                        <div>
+                            <label for="fecha_fin" class="block text-sm font-semibold text-slate-700 mb-1.5">Fecha Fin</label>
+                            <input type="date" id="fecha_fin" wire:model="fecha_fin"
+                                class="w-full px-4 py-2.5 border rounded-lg text-sm transition-colors <?php $__errorArgs = ['fecha_fin'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?>" placeholder="0.00">
-                                <?php $__errorArgs = ['precio_tonelada'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> <div class="invalid-feedback"><?php echo e($message); ?></div> <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">Jornal Diario</label>
-                                <input type="number" wire:model="jornal_diario" step="0.1" min="0" class="form-control <?php $__errorArgs = ['jornal_diario'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?>" placeholder="0.00">
-                                <?php $__errorArgs = ['jornal_diario'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> <div class="invalid-feedback"><?php echo e($message); ?></div> <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?>
-                            </div>
-                        </div>
-                        <div class="row g-3 mb-4">
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">Fecha Fin</label>
-                                <input type="date" wire:model="fecha_fin" class="form-control <?php $__errorArgs = ['fecha_fin'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+$message = $__bag->first($__errorArgs[0]); ?> border-red-400 bg-red-50 <?php else: ?> border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>">
-                                <?php $__errorArgs = ['fecha_fin'];
+                            <?php $__errorArgs = ['fecha_fin'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> <div class="invalid-feedback"><?php echo e($message); ?></div> <?php unset($message);
+$message = $__bag->first($__errorArgs[0]); ?> <p class="text-red-600 text-xs mt-1"><?php echo e($message); ?></p> <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>
-                                <small class="text-muted">Dejar vacío si el registro está vigente</small>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">Motivo del Cambio</label>
-                                <textarea wire:model="motivo_cambio" class="form-control <?php $__errorArgs = ['motivo_cambio'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?>" placeholder="Motivo del cambio de precio" rows="3"></textarea>
-                                <?php $__errorArgs = ['motivo_cambio'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> <div class="invalid-feedback"><?php echo e($message); ?></div> <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?>
-                            </div>
                         </div>
-                        <div class="d-flex gap-2 justify-content-end">
-                            <?php if($historico_id): ?>
-                                <button type="button" wire:click="resetCampos" class="btn btn-secondary">
-                                    <i class="bi bi-x-circle"></i> Cancelar
-                                </button>
-                            <?php endif; ?>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-check-circle"></i> <?php echo e($historico_id ? 'Actualizar' : 'Guardar'); ?>
-
+                        <div>
+                            <label for="motivo_cambio" class="block text-sm font-semibold text-slate-700 mb-1.5">Motivo del Cambio</label>
+                            <input type="text" id="motivo_cambio" wire:model="motivo_cambio"
+                                class="w-full px-4 py-2.5 border rounded-lg text-sm transition-colors <?php $__errorArgs = ['motivo_cambio'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> border-red-400 bg-red-50 <?php else: ?> border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>"
+                                placeholder="Motivo">
+                            <?php $__errorArgs = ['motivo_cambio'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> <p class="text-red-600 text-xs mt-1"><?php echo e($message); ?></p> <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+                        </div>
+                    </div>
+                    <div class="flex gap-2 justify-end">
+                        <?php if($historico_id): ?>
+                            <button type="button" wire:click="resetCampos"
+                                class="inline-flex items-center gap-1.5 px-4 py-2.5 border border-slate-300 bg-white text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors">
+                                ✕ Cancelar
                             </button>
-                        </div>
-                    </form>
-                </div>
+                        <?php endif; ?>
+                        <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->any(['crear-historico-roles', 'editar-historico-roles'])): ?>
+                        <button type="submit"
+                            class="inline-flex items-center gap-1.5 px-5 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-lg text-sm font-medium shadow-sm transition-colors">
+                            ✓ <?php echo e($historico_id ? 'Actualizar' : 'Guardar'); ?>
+
+                        </button>
+                        <?php endif; ?>
+                    </div>
+                </form>
             </div>
         </div>
+        <?php endif; ?>
+    <?php else: ?>
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="p-6">
+                <?php if (isset($component)) { $__componentOriginal1c4b45f62348de9b6fa41ee823d3fa96 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal1c4b45f62348de9b6fa41ee823d3fa96 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.search-input','data' => ['placeholder' => 'Buscar por rol...']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('search-input'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['placeholder' => 'Buscar por rol...']); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal1c4b45f62348de9b6fa41ee823d3fa96)): ?>
+<?php $attributes = $__attributesOriginal1c4b45f62348de9b6fa41ee823d3fa96; ?>
+<?php unset($__attributesOriginal1c4b45f62348de9b6fa41ee823d3fa96); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal1c4b45f62348de9b6fa41ee823d3fa96)): ?>
+<?php $component = $__componentOriginal1c4b45f62348de9b6fa41ee823d3fa96; ?>
+<?php unset($__componentOriginal1c4b45f62348de9b6fa41ee823d3fa96); ?>
+<?php endif; ?>
 
-        <!-- Pestaña 2: Listado de Históricos (Tabla) -->
-        <div class="tab-pane fade show active" id="listado-historicos" role="tabpanel" aria-labelledby="listado-tab">
-            <div class="card shadow">
-                <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Listado de Históricos</h5>
-                </div>
-                <div class="card-body">
-                    <!-- Buscador -->
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <div class="input-group">
-                                <span class="input-group-text bg-light">
-                                    <i class="bi bi-search"></i>
-                                </span>
-                                <input type="text" wire:model.live="busqueda" class="form-control" placeholder="Buscar por rol, precio, jornal, motivo o fecha...">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Rol Laboral</th>
-                                    <th>Precio/Ton</th>
-                                    <th>Jornal Diario</th>
-                                    <th>Fecha Inicio</th>
-                                    <th>Fecha Fin</th>
-                                    <th>Motivo</th>
-                                    <th class="text-end">Acciones</th>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200">
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">ID</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Rol</th>
+                                <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Precio/Ton</th>
+                                <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Jornal</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Inicio</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Fin</th>
+                                <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            <?php $__empty_1 = true; $__currentLoopData = $historicos; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $historico): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                                <tr wire:key="row-<?php echo e($historico->id); ?>" class="hover:bg-slate-50 transition-colors">
+                                    <td class="px-4 py-2.5"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600"><?php echo e($historico->id); ?></span></td>
+                                    <td class="px-4 py-2.5 font-medium text-slate-800"><?php echo e($historico->rolLaboral->nombre ?? 'N/A'); ?></td>
+                                    <td class="px-4 py-2.5 text-right text-slate-600">$<?php echo e(number_format($historico->precio_tonelada, 2, ',', '.')); ?></td>
+                                    <td class="px-4 py-2.5 text-right text-slate-600">$<?php echo e(number_format($historico->jornal_diario, 2, ',', '.')); ?></td>
+                                    <td class="px-4 py-2.5 text-slate-600"><?php echo e($historico->fecha_inicio ? \Carbon\Carbon::parse($historico->fecha_inicio)->format('d/m/Y') : '-'); ?></td>
+                                    <td class="px-4 py-2.5 text-slate-600"><?php echo e($historico->fecha_fin ? \Carbon\Carbon::parse($historico->fecha_fin)->format('d/m/Y') : 'Vigente'); ?></td>
+                                    <td class="px-4 py-2.5 text-right">
+                                        <?php if (isset($component)) { $__componentOriginalf9332b595ad3d3a806f9da4dda8769dd = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalf9332b595ad3d3a806f9da4dda8769dd = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.action-buttons','data' => ['editWireClick' => 'editar('.e($historico->id).')','deleteWireClick' => 'eliminar('.e($historico->id).')','deleteMessage' => '¿Está seguro de eliminar este histórico?','canEdit' => auth()->user()->can('editar-historico-roles'),'canDelete' => auth()->user()->can('eliminar-historico-roles')]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('action-buttons'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['editWireClick' => 'editar('.e($historico->id).')','deleteWireClick' => 'eliminar('.e($historico->id).')','deleteMessage' => '¿Está seguro de eliminar este histórico?','canEdit' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(auth()->user()->can('editar-historico-roles')),'canDelete' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute(auth()->user()->can('eliminar-historico-roles'))]); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalf9332b595ad3d3a806f9da4dda8769dd)): ?>
+<?php $attributes = $__attributesOriginalf9332b595ad3d3a806f9da4dda8769dd; ?>
+<?php unset($__attributesOriginalf9332b595ad3d3a806f9da4dda8769dd); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalf9332b595ad3d3a806f9da4dda8769dd)): ?>
+<?php $component = $__componentOriginalf9332b595ad3d3a806f9da4dda8769dd; ?>
+<?php unset($__componentOriginalf9332b595ad3d3a806f9da4dda8769dd); ?>
+<?php endif; ?>
+                                    </td>
                                 </tr>
-                            </thead>
-                            <tbody>
-                                <?php $__empty_1 = true; $__currentLoopData = $historicos; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $historico): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
-                                    <tr>
-                                        <td><span class="badge bg-secondary"><?php echo e($historico->id); ?></span></td>
-                                        <td><?php echo e($historico->rolLaboral->nombre ?? 'N/A'); ?></td>
-                                        <td class="text-end">$<?php echo e(number_format($historico->precio_tonelada ?? 0, 2)); ?></td>
-                                        <td class="text-end">$<?php echo e(number_format($historico->jornal_diario ?? 0, 2)); ?></td>
-                                        <td><?php echo e(\Carbon\Carbon::parse($historico->fecha_inicio)->format('d/m/Y')); ?></td>
-                                        <td>
-                                            <?php if($historico->fecha_fin): ?>
-                                                <?php echo e(\Carbon\Carbon::parse($historico->fecha_fin)->format('d/m/Y')); ?>
-
-                                            <?php else: ?>
-                                                <span class="badge bg-success">Vigente</span>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td><?php echo e($historico->motivo_cambio ? \Illuminate\Support\Str::limit($historico->motivo_cambio, 30) : 'N/A'); ?></td>
-                                        <td class="text-end">
-                                            <div class="btn-group btn-group-sm" role="group">
-                                                <button class="btn btn-outline-primary" wire:click="editar(<?php echo e($historico->id); ?>)" onclick="cambiarAPestanaFormulario()" title="Editar">
-                                                    <i class="bi bi-pencil"></i>
-                                                </button>
-                                                <button class="btn btn-outline-danger" wire:click="eliminar(<?php echo e($historico->id); ?>)" onclick="return confirm('¿Está seguro de eliminar este histórico?')" title="Eliminar">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
-                                    <tr>
-                                        <td colspan="8" class="text-center py-5 text-muted">
-                                            <i class="bi bi-inbox" style="font-size: 3rem;"></i>
-                                            <p class="mb-0 mt-2">No hay históricos registrados.</p>
-                                        </td>
-                                    </tr>
-                                <?php endif; ?>
-                            </tbody>
-                        </table>
-                    </div>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
+                                <?php if (isset($component)) { $__componentOriginal074a021b9d42f490272b5eefda63257c = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal074a021b9d42f490272b5eefda63257c = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.empty-state','data' => ['colspan' => 7,'message' => 'No hay históricos registrados.']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('empty-state'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['colspan' => 7,'message' => 'No hay históricos registrados.']); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal074a021b9d42f490272b5eefda63257c)): ?>
+<?php $attributes = $__attributesOriginal074a021b9d42f490272b5eefda63257c; ?>
+<?php unset($__attributesOriginal074a021b9d42f490272b5eefda63257c); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal074a021b9d42f490272b5eefda63257c)): ?>
+<?php $component = $__componentOriginal074a021b9d42f490272b5eefda63257c; ?>
+<?php unset($__componentOriginal074a021b9d42f490272b5eefda63257c); ?>
+<?php endif; ?>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
-    </div>
-</div>
-
-<!-- JavaScript para cambiar de pestaña al editar -->
-<script>
-    function cambiarAPestanaFormulario() {
-        // Activar la pestaña del formulario
-        const nuevoTab = document.getElementById('nuevo-tab');
-        const nuevoTabInstance = new bootstrap.Tab(nuevoTab);
-        nuevoTabInstance.show();
-        
-        // Scroll suave al inicio de la página
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    // Listener para volver a la pestaña de listado después de guardar
-    document.addEventListener('livewire:init', () => {
-        Livewire.on('historicoGuardado', () => {
-            // Cambiar a la pestaña de listado después de guardar
-            const listadoTab = document.getElementById('listado-tab');
-            const listadoTabInstance = new bootstrap.Tab(listadoTab);
-            listadoTabInstance.show();
-            
-            // Scroll al inicio
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        });
-    });
-
-    // Cambiar título del tab cuando se está editando
-    document.addEventListener('livewire:initialized', () => {
-        Livewire.hook('message.processed', (message, component) => {
-            const nuevoTabButton = document.getElementById('nuevo-tab');
-            
-            // Detectar si hay un historico_id cargado (modo edición)
-            if (component.fingerprint.name === 'historico-roles-laborales') {
-                const isEditing = document.querySelector('form input[wire\\:model="historico_id"]')?.value;
-                
-                if (isEditing) {
-                    nuevoTabButton.innerHTML = '<i class="bi bi-pencil-square"></i> Modificar Histórico';
-                } else {
-                    nuevoTabButton.innerHTML = '<i class="bi bi-plus-circle"></i> Nuevo Histórico';
-                }
-            }
-        });
-    });
-</script><?php /**PATH /home/rluis/Escritorio/trabajo_final/rennova/resources/views/livewire/historico-roles-laborales.blade.php ENDPATH**/ ?>
+    <?php endif; ?>
+</div><?php /**PATH /home/rluis/Escritorio/trabajo_final/rennova/resources/views/livewire/historico-roles-laborales.blade.php ENDPATH**/ ?>

@@ -8,6 +8,7 @@ use App\Models\Cliente;
 class Clientes extends Component
 {
     public $clientes, $cliente_id, $razon_social, $cuit, $direccion, $contacto, $busqueda = '';
+    public $tab_activo = 'listado';
 
     protected $rules = [
         'razon_social' => 'required|min:3',
@@ -66,12 +67,14 @@ class Clientes extends Component
         );
 
         session()->flash('message', $this->cliente_id ? 'Cliente actualizado correctamente.' : 'Cliente creado correctamente.');
+        $this->tab_activo = 'listado';
         $this->resetCampos();
             $this->dispatch('clienteGuardado');
     }
 
     public function editar($id)
     {
+        $this->tab_activo = 'nuevo';
         $cliente = Cliente::findOrFail($id);
         $this->cliente_id = $cliente->id_cliente;
         $this->razon_social = $cliente->razon_social;

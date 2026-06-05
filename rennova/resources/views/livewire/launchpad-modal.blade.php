@@ -19,7 +19,7 @@
                     </div>
                     <div class="space-y-3">
                         @forelse(($employees ?? collect())->take(5) as $row)
-                            <label class="flex items-center justify-between gap-3 rounded-lg border px-3 py-2">
+                            <label class="flex items-center justify-between gap-3 rounded-lg border px-3 py-2" wire:key="item-{{ $row->id_allocation_proposal_employee }}">
                                 <div class="flex items-center gap-3">
                                     <input type="checkbox" class="h-4 w-4" wire:model.live="employeeSelected.{{ $row->id_allocation_proposal_employee }}">
                                     <div>
@@ -42,7 +42,7 @@
                             @php
                                 $ocupada = (bool) ($row->maquinaria->ocupada ?? false);
                             @endphp
-                            <div class="flex items-center justify-between rounded-lg border px-3 py-2">
+                            <div class="flex items-center justify-between rounded-lg border px-3 py-2" wire:key="item-{{ $row->id_allocation_proposal_maquinaria }}">
                                 <div>
                                     <div class="text-sm font-medium">{{ $row->maquinaria->nombre ?? 'Maquinaria' }}</div>
                                     <div class="text-xs text-slate-500">{{ $row->maquinaria->tipoMaquinaria->nombre ?? 'Tipo' }}</div>
@@ -66,7 +66,7 @@
                     </div>
                     <div class="space-y-3">
                         @forelse($supplies ?? collect() as $row)
-                            <div class="flex items-center justify-between rounded-lg border px-3 py-2">
+                            <div class="flex items-center justify-between rounded-lg border px-3 py-2" wire:key="item-{{ $row->id_allocation_proposal_insumo }}">
                                 <div>
                                     <div class="text-sm font-medium">{{ $row->insumo->nombre ?? 'Insumo' }}</div>
                                     <div class="text-xs text-slate-500">{{ $row->insumo->unidadMedida->abreviatura ?? '' }}</div>

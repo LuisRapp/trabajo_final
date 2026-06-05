@@ -8,6 +8,7 @@ use App\Models\UnidadMedida;
 class UnidadesMedida extends Component
 {
     public $unidades, $unidad_id, $nombre, $abreviatura, $busqueda = '';
+    public $tab_activo = 'listado';
 
     protected $rules = [
         'nombre' => 'required|min:2|unique:unidad_medidas,nombre',
@@ -61,12 +62,14 @@ class UnidadesMedida extends Component
         );
 
         session()->flash('message', $this->unidad_id ? 'Unidad actualizada correctamente.' : 'Unidad creada correctamente.');
+        $this->tab_activo = 'listado';
         $this->resetCampos();
         $this->dispatch('unidadGuardada');
     }
 
     public function editar($id)
     {
+        $this->tab_activo = 'nuevo';
         $unidad = UnidadMedida::findOrFail($id);
         $this->unidad_id = $unidad->id_unidad_medida;
         $this->nombre = $unidad->nombre;

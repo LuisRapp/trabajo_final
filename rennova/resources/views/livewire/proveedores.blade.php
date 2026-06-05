@@ -1,168 +1,132 @@
-<div class="mx-auto max-w-7xl px-4 py-8" x-data="{ tab: 'listado' }">
-    <div class="mb-8 flex items-center justify-between">
-        <h1 class="flex items-center gap-2 text-3xl font-bold text-slate-800">
-            <i class="bi bi-truck"></i> Proveedores
-        </h1>
+<div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-slate-900">🚚 Proveedores</h1>
     </div>
 
     @if (session()->has('message'))
         <div x-data="{ open: true }" x-show="open" x-transition
-            class="mb-6 flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-4 text-green-700 shadow-sm" role="alert">
-            <i class="bi bi-check-circle-fill"></i>
-            <span class="flex-1 font-medium">{{ session('message') }}</span>
-            <button type="button" class="text-green-600 hover:text-green-800" @click="open = false">
-                <i class="bi bi-x-lg"></i>
-            </button>
+            class="mb-6 flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-emerald-800 shadow-sm" role="alert">
+            <span class="text-emerald-600">✓</span>
+            <span class="flex-1 text-sm font-medium">{{ session('message') }}</span>
+            <button type="button" class="text-emerald-600 hover:text-emerald-800" @click="open = false">✕</button>
         </div>
     @endif
 
-    <div class="mb-6 flex gap-0">
-        @canany(['crear-proveedores', 'editar-proveedores'])
-        <button type="button" @click="tab = 'nuevo'; $wire.$refresh()"
-            class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border border-r-0 rounded-l-lg transition-all"
-            :class="tab === 'nuevo' ? 'text-white' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'"
-            :style="tab === 'nuevo' ? 'background-color: #2d7a4f; border-color: #2d7a4f' : ''">
-            <i class="bi bi-plus-circle"></i> Nuevo Proveedor
-        </button>
-        @endcanany
-        <button type="button" @click="tab = 'listado'; $wire.$refresh()"
-            class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border rounded-r-lg transition-all"
-            :class="tab === 'listado' ? 'text-white' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'"
-            :style="tab === 'listado' ? 'background-color: #2d7a4f; border-color: #2d7a4f' : ''">
-            <i class="bi bi-list-ul"></i> Listado de Proveedores
-        </button>
-    </div>
+    <x-tab-nav :tabs="[
+        ['value' => 'nuevo', 'label' => 'Nuevo Proveedor', 'icon' => 'plus-circle', 'can' => auth()->user()->canAny(['crear-proveedores', 'editar-proveedores'])],
+        ['value' => 'listado', 'label' => 'Listado de Proveedores', 'icon' => 'list-ul'],
+    ]" activeTab="{{ $tab_activo }}" tabProperty="tab_activo" />
 
-    <div>
+    @if($tab_activo === 'nuevo')
         @canany(['crear-proveedores', 'editar-proveedores'])
-        <div x-show="tab === 'nuevo'" x-transition>
-            <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
-                <div class="bg-slate-100 border-b border-slate-200 px-6 py-4">
-                    <h5 class="flex items-center gap-2 text-lg font-semibold text-slate-800 mb-0">
-                        <i class="bi bi-{{ $proveedor_id ? 'pencil-square' : 'plus-circle' }}"></i> 
-                        {{ $proveedor_id ? 'Editar Proveedor' : 'Nuevo Proveedor' }}
-                    </h5>
-                </div>
-                <div class="p-6">
-                    <form wire:submit.prevent="guardar">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                            <div>
-                                <label class="block text-sm font-semibold text-slate-700 mb-2">Razón Social <span class="text-red-500">*</span></label>
-                                <input type="text" wire:model="razon_social" placeholder="Nombre del proveedor" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('razon_social') ring-2 ring-red-500 @enderror">
-                                @error('razon_social') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
-                            </div>
-                            <div>
-                                <label class="block text-sm font-semibold text-slate-700 mb-2">CUIT <span class="text-red-500">*</span></label>
-                                <input type="text" wire:model="cuit" placeholder="XX-XXXXXXXX-X" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('cuit') ring-2 ring-red-500 @enderror">
-                                @error('cuit') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
-                            </div>
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6">
+            <div class="bg-slate-50 border-b border-slate-200 px-6 py-4">
+                <h5 class="text-lg font-semibold text-slate-800">
+                    {{ $proveedor_id ? '✏️ Editar Proveedor' : '➕ Nuevo Proveedor' }}
+                </h5>
+            </div>
+            <div class="p-6">
+                <form wire:submit.prevent="guardar">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <label for="razon_social" class="block text-sm font-semibold text-slate-700 mb-1.5">Razón Social <span class="text-red-500">*</span></label>
+                            <input type="text" id="razon_social" wire:model="razon_social"
+                                class="w-full px-4 py-2.5 border rounded-lg text-sm transition-colors @error('razon_social') border-red-400 bg-red-50 @else border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 @enderror"
+                                placeholder="Nombre del proveedor">
+                            @error('razon_social') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                            <div>
-                                <label class="block text-sm font-semibold text-slate-700 mb-2">Dirección</label>
-                                <input type="text" wire:model="direccion" placeholder="Dirección completa" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('direccion') ring-2 ring-red-500 @enderror">
-                                @error('direccion') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
-                            </div>
-                            <div>
-                                <label class="block text-sm font-semibold text-slate-700 mb-2">Teléfono</label>
-                                <input type="text" wire:model="telefono" placeholder="+54 9 11 1234-5678" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('telefono') ring-2 ring-red-500 @enderror">
-                                @error('telefono') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
-                            </div>
-                            <div>
-                                <label class="block text-sm font-semibold text-slate-700 mb-2">Email</label>
-                                <input type="email" wire:model="email" placeholder="correo@ejemplo.com" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('email') ring-2 ring-red-500 @enderror">
-                                @error('email') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
-                            </div>
+                        <div>
+                            <label for="cuit" class="block text-sm font-semibold text-slate-700 mb-1.5">CUIT <span class="text-red-500">*</span></label>
+                            <input type="text" id="cuit" wire:model="cuit"
+                                class="w-full px-4 py-2.5 border rounded-lg text-sm transition-colors @error('cuit') border-red-400 bg-red-50 @else border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 @enderror"
+                                placeholder="XX-XXXXXXXX-X">
+                            @error('cuit') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
-                        <div class="flex gap-2 justify-end">
-                            @if ($proveedor_id)
-                                <button type="button" wire:click="resetCampos" class="inline-flex items-center gap-2 px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors font-medium text-sm">
-                                    <i class="bi bi-x-circle"></i> Cancelar
-                                </button>
-                            @endif
-                            @canany(['crear-proveedores', 'editar-proveedores'])
-                            <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-colors font-medium text-sm" style="background-color: #2d7a4f;" onmouseover="this.style.backgroundColor='#245c3d'" onmouseout="this.style.backgroundColor='#2d7a4f'">
-                                <i class="bi bi-check-circle"></i> {{ $proveedor_id ? 'Actualizar' : 'Guardar' }}
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div>
+                            <label for="direccion" class="block text-sm font-semibold text-slate-700 mb-1.5">Dirección</label>
+                            <input type="text" id="direccion" wire:model="direccion"
+                                class="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20"
+                                placeholder="Dirección completa">
+                            @error('direccion') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label for="telefono" class="block text-sm font-semibold text-slate-700 mb-1.5">Teléfono</label>
+                            <input type="text" id="telefono" wire:model="telefono"
+                                class="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20"
+                                placeholder="+54 9 11 1234-5678">
+                            @error('telefono') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label for="email" class="block text-sm font-semibold text-slate-700 mb-1.5">Email</label>
+                            <input type="email" id="email" wire:model="email"
+                                class="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20"
+                                placeholder="correo@ejemplo.com">
+                            @error('email') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
+                    <div class="flex gap-2 justify-end">
+                        @if ($proveedor_id)
+                            <button type="button" wire:click="resetCampos"
+                                class="inline-flex items-center gap-1.5 px-4 py-2.5 border border-slate-300 bg-white text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors">
+                                ✕ Cancelar
                             </button>
-                            @endcanany
-                        </div>
-                    </form>
-                </div>
+                        @endif
+                        @canany(['crear-proveedores', 'editar-proveedores'])
+                        <button type="submit"
+                            class="inline-flex items-center gap-1.5 px-5 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-lg text-sm font-medium shadow-sm transition-colors">
+                            ✓ {{ $proveedor_id ? 'Actualizar' : 'Guardar' }}
+                        </button>
+                        @endcanany
+                    </div>
+                </form>
             </div>
         </div>
         @endcanany
+    @else
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="p-6">
+                <x-search-input placeholder="Buscar por razón social, CUIT o email..." />
 
-        <div x-show="tab === 'listado'" x-transition>
-            <div class="bg-white rounded-lg shadow-sm border border-slate-200">
-                <div class="p-6">
-                    <!-- Buscador -->
-                    <div class="mb-6">
-                        <div class="flex items-center gap-2 px-4 py-3 border border-slate-300 rounded-lg bg-slate-50">
-                            <i class="bi bi-search text-slate-500"></i>
-                            <input type="text" wire:model.live="busqueda" placeholder="Buscar por razón social, CUIT o email..." class="flex-1 bg-slate-50 border-0 focus:ring-0 focus:outline-none text-slate-700 placeholder-slate-400">
-                        </div>
-                    </div>
-                    
-                    <!-- Tabla -->
-                    <div class="overflow-x-auto">
-                        <table class="w-full">
-                            <thead>
-                                <tr class="border-b border-slate-200">
-                                    <th class="px-3 py-3 text-left text-xs font-semibold uppercase text-slate-600">ID</th>
-                                    <th class="px-3 py-3 text-left text-xs font-semibold uppercase text-slate-600">Razón Social</th>
-                                    <th class="px-3 py-3 text-left text-xs font-semibold uppercase text-slate-600">CUIT</th>
-                                    <th class="px-3 py-3 text-left text-xs font-semibold uppercase text-slate-600">Dirección</th>
-                                    <th class="px-3 py-3 text-left text-xs font-semibold uppercase text-slate-600">Teléfono</th>
-                                    <th class="px-3 py-3 text-left text-xs font-semibold uppercase text-slate-600">Email</th>
-                                    <th class="px-3 py-3 text-center text-xs font-semibold uppercase text-slate-600">Acciones</th>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200">
+                                <th class="px-3 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">ID</th>
+                                <th class="px-3 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Razón Social</th>
+                                <th class="px-3 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">CUIT</th>
+                                <th class="px-3 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Dirección</th>
+                                <th class="px-3 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Teléfono</th>
+                                <th class="px-3 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Email</th>
+                                <th class="px-3 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            @forelse ($proveedores as $proveedor)
+                                <tr wire:key="row-{{ $proveedor->id_proveedor }}" class="hover:bg-slate-50 transition-colors">
+                                    <td class="px-3 py-2.5"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">{{ $proveedor->id_proveedor }}</span></td>
+                                    <td class="px-3 py-2.5 font-medium text-slate-800">{{ $proveedor->razon_social }}</td>
+                                    <td class="px-3 py-2.5 text-slate-600">{{ $proveedor->cuit }}</td>
+                                    <td class="px-3 py-2.5 text-slate-600">{{ $proveedor->direccion ?? '-' }}</td>
+                                    <td class="px-3 py-2.5 text-slate-600">{{ $proveedor->telefono ?? '-' }}</td>
+                                    <td class="px-3 py-2.5 text-slate-600">{{ $proveedor->email ?? '-' }}</td>
+                                    <td class="px-3 py-2.5 text-right">
+                                        <x-action-buttons
+                                            editWireClick="editar({{ $proveedor->id_proveedor }})"
+                                            deleteWireClick="eliminar({{ $proveedor->id_proveedor }})"
+                                            deleteMessage="¿Está seguro de eliminar este proveedor?"
+                                            :canEdit="auth()->user()->can('editar-proveedores')"
+                                            :canDelete="auth()->user()->can('eliminar-proveedores')" />
+                                    </td>
                                 </tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-200">
-                                @forelse ($proveedores as $proveedor)
-                                    <tr class="hover:bg-slate-50 transition-colors">
-                                        <td class="px-3 py-3"><span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">{{ $proveedor->id_proveedor }}</span></td>
-                                        <td class="px-3 py-3"><span class="font-semibold text-slate-900">{{ $proveedor->razon_social }}</span></td>
-                                        <td class="px-3 py-3 text-slate-600">{{ $proveedor->cuit }}</td>
-                                        <td class="px-3 py-3 text-slate-600">{{ $proveedor->direccion ?? '-' }}</td>
-                                        <td class="px-3 py-3 text-slate-600">{{ $proveedor->telefono ?? '-' }}</td>
-                                        <td class="px-3 py-3 text-slate-600">{{ $proveedor->email ?? '-' }}</td>
-                                        <td class="px-3 py-3 text-center">
-                                            <div class="flex gap-1 justify-center">
-                                                @can('editar-proveedores')
-                                                <button wire:click="editar({{ $proveedor->id_proveedor }})" @click="tab = 'nuevo'" title="Editar" class="inline-flex items-center px-2 py-1 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded transition-colors border border-blue-200">
-                                                    <i class="bi bi-pencil text-sm"></i>
-                                                </button>
-                                                @endcan
-                                                @can('eliminar-proveedores')
-                                                <button wire:click="eliminar({{ $proveedor->id_proveedor }})" onclick="return confirm('¿Está seguro de eliminar este proveedor?')" title="Eliminar" class="inline-flex items-center px-2 py-1 bg-red-50 text-red-700 hover:bg-red-100 rounded transition-colors border border-red-200">
-                                                    <i class="bi bi-trash text-sm"></i>
-                                                </button>
-                                                @endcan
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="7" class="px-3 py-8 text-center">
-                                            <i class="bi bi-inbox text-slate-300 block mb-2" style="font-size: 2rem;"></i>
-                                            <p class="text-slate-500 font-medium">No hay proveedores registrados.</p>
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
+                            @empty
+                                <x-empty-state :colspan="7" message="No hay proveedores registrados." />
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
-    </div>
+    @endif
 </div>
-
-<!-- JavaScript para cambiar entre pestañas -->
-<script>
-    document.addEventListener('livewire:init', () => {
-        Livewire.on('proveedorGuardado', () => {
-            // Alpine.js actualizará automáticamente la vista
-        });
-    });
-</script>

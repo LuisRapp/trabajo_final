@@ -1,151 +1,103 @@
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="mb-0"><i class="bi bi-tools"></i> Kits de Mantenimiento Preventivo</h1>
+<div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold text-slate-900">🔧 Kits de Mantenimiento Preventivo</h1>
     </div>
 
     @if (session()->has('message'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="bi bi-check-circle-fill"></i> {{ session('message') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <div x-data="{ open: true }" x-show="open" x-transition
+            class="mb-6 flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-emerald-800 shadow-sm" role="alert">
+            <span class="text-emerald-600">✓</span>
+            <span class="flex-1 text-sm font-medium">{{ session('message') }}</span>
+            <button type="button" class="text-emerald-600 hover:text-emerald-800" @click="open = false">✕</button>
         </div>
     @endif
 
-    <!-- Pestañas (Tabs) -->
-    <ul class="nav nav-tabs mb-4" id="kitsTabs" role="tablist">
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="nuevo-tab" data-bs-toggle="tab" data-bs-target="#nuevo-kit" type="button" role="tab">
-                <i class="bi bi-plus-circle"></i> Nuevo Kit
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="listado-tab" data-bs-toggle="tab" data-bs-target="#listado-kits" type="button" role="tab">
-                <i class="bi bi-list-ul"></i> Listado de Kits
-            </button>
-        </li>
-    </ul>
+    <x-tab-nav :tabs="[
+        ['value' => 'nuevo', 'label' => 'Nuevo Kit', 'icon' => 'plus-circle', 'can' => auth()->user()->canAny(['crear-kits-preventivos', 'editar-kits-preventivos'])],
+        ['value' => 'listado', 'label' => 'Listado de Kits', 'icon' => 'list-ul'],
+    ]" activeTab="{{ $tab_activo }}" tabProperty="tab_activo" />
 
-    <div class="tab-content" id="kitsTabContent">
-        <!-- Tab 1: Formulario Nuevo Kit -->
-        <div class="tab-pane fade" id="nuevo-kit" role="tabpanel">
-            <div class="card shadow mb-4">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0"><i class="bi bi-{{ $kit_id ? 'pencil-square' : 'plus-circle' }}"></i> {{ $kit_id ? 'Editar Kit' : 'Nuevo Kit' }}</h5>
-                </div>
-                <div class="card-body">
-                    <form wire:submit.prevent="guardar">
-                        <div class="row g-3 mb-4">
-                            <div class="col-md-8">
-                                <label class="form-label fw-semibold">Nombre del Kit <span class="text-danger">*</span></label>
-                                <input type="text" wire:model="nombre_kit" class="form-control @error('nombre_kit') is-invalid @enderror" placeholder="Ej: Mantenimiento 500t - Pauny 230A">
-                                @error('nombre_kit') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold">Tipo de Maquinaria <span class="text-danger">*</span></label>
-                                <select wire:model="id_tipo_maquinaria" class="form-select @error('id_tipo_maquinaria') is-invalid @enderror">
-                                    <option value="">Seleccione un tipo</option>
-                                    @foreach($tiposMaquinaria as $tipo)
-                                        <option value="{{ $tipo->id_tipo_maquinaria }}">{{ $tipo->nombre }}</option>
-                                    @endforeach
-                                </select>
-                                @error('id_tipo_maquinaria') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                            </div>
+    @if($tab_activo === 'nuevo')
+        @canany(['crear-kits-preventivos', 'editar-kits-preventivos'])
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6">
+            <div class="bg-slate-50 border-b border-slate-200 px-6 py-4">
+                <h5 class="text-lg font-semibold text-slate-800">
+                    {{ $kit_id ? '✏️ Editar Kit' : '➕ Nuevo Kit' }}
+                </h5>
+            </div>
+            <div class="p-6">
+                <form wire:submit.prevent="guardar">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-1.5">Nombre del Kit <span class="text-red-500">*</span></label>
+                            <input type="text" wire:model="nombre"
+                                class="w-full px-4 py-2.5 border rounded-lg text-sm transition-colors @error('nombre') border-red-400 bg-red-50 @else border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 @enderror"
+                                placeholder="Nombre del kit">
+                            @error('nombre') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
-                        <div class="d-flex gap-2 justify-content-end">
-                            @if ($kit_id)
-                                <button type="button" wire:click="resetCampos" class="btn btn-secondary">
-                                    <i class="bi bi-x-circle"></i> Cancelar
-                                </button>
-                            @endif
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-check-circle"></i> {{ $kit_id ? 'Actualizar Kit' : 'Guardar Kit' }}
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-1.5">Descripción</label>
+                            <textarea wire:model="descripcion"
+                                class="w-full px-4 py-2.5 border rounded-lg text-sm transition-colors @error('descripcion') border-red-400 bg-red-50 @else border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 @enderror"
+                                placeholder="Descripción del kit" rows="1"></textarea>
+                            @error('descripcion') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
+                    <div class="flex gap-2 justify-end">
+                        @if ($kit_id)
+                            <button type="button" wire:click="resetCampos"
+                                class="inline-flex items-center gap-1.5 px-4 py-2.5 border border-slate-300 bg-white text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors">
+                                ✕ Cancelar
                             </button>
-                        </div>
-                    </form>
-                </div>
+                        @endif
+                        @canany(['crear-kits-preventivos', 'editar-kits-preventivos'])
+                        <button type="submit"
+                            class="inline-flex items-center gap-1.5 px-5 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-lg text-sm font-medium shadow-sm transition-colors">
+                            ✓ {{ $kit_id ? 'Actualizar' : 'Guardar' }}
+                        </button>
+                        @endcanany
+                    </div>
+                </form>
             </div>
         </div>
+        @endcanany
+    @else
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="p-6">
+                <x-search-input placeholder="Buscar por nombre..." />
 
-        <!-- Tab 2: Listado de Kits -->
-        <div class="tab-pane fade show active" id="listado-kits" role="tabpanel">
-            <div class="card shadow">
-                <div class="card-body">
-                    <!-- Buscador -->
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <div class="input-group">
-                                <span class="input-group-text bg-light">
-                                    <i class="bi bi-search"></i>
-                                </span>
-                                <input type="text" wire:model.live="busqueda" class="form-control" placeholder="Buscar por nombre o tipo de maquinaria...">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Nombre del Kit</th>
-                                    <th>Tipo de Maquinaria</th>
-                                    <th class="text-end">Acciones</th>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200">
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">ID</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Nombre</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Descripción</th>
+                                <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            @forelse ($kits as $kit)
+                                <tr wire:key="row-{{ $kit->id_kit_preventivo }}" class="hover:bg-slate-50 transition-colors">
+                                    <td class="px-4 py-2.5"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">{{ $kit->id_kit_preventivo }}</span></td>
+                                    <td class="px-4 py-2.5 font-medium text-slate-800">{{ $kit->nombre }}</td>
+                                    <td class="px-4 py-2.5 text-slate-600">{{ $kit->descripcion ?? '-' }}</td>
+                                    <td class="px-4 py-2.5 text-center">
+                                        <x-action-buttons
+                                            editWireClick="editar({{ $kit->id_kit_preventivo }})"
+                                            deleteWireClick="eliminar({{ $kit->id_kit_preventivo }})"
+                                            deleteMessage="¿Está seguro de eliminar este kit?"
+                                            :canEdit="auth()->user()->can('editar-kits-preventivos')"
+                                            :canDelete="auth()->user()->can('eliminar-kits-preventivos')" />
+                                    </td>
                                 </tr>
-                            </thead>
-                            <tbody>
-                                @forelse ($kits as $kit)
-                                    <tr>
-                                        <td><span class="badge bg-secondary">{{ $kit->id_kit_preventivo }}</span></td>
-                                        <td><span class="fw-semibold">{{ $kit->nombre_kit }}</span></td>
-                                        <td>
-                                            <span class="badge bg-info">
-                                                <i class="bi bi-gear-wide-connected"></i> {{ $kit->tipoMaquinaria->nombre }}
-                                            </span>
-                                        </td>
-                                        <td class="text-end">
-                                            <div class="btn-group btn-group-sm" role="group">
-                                                <button class="btn btn-outline-primary" wire:click="editar({{ $kit->id_kit_preventivo }})" onclick="cambiarAPestanaFormulario()" title="Editar">
-                                                    <i class="bi bi-pencil"></i>
-                                                </button>
-                                                <button class="btn btn-outline-danger" wire:click="eliminar({{ $kit->id_kit_preventivo }})" onclick="return confirm('¿Está seguro de eliminar este kit?')" title="Baja Lógica">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                                <a href="{{ route('kits.insumos', $kit->id_kit_preventivo) }}" class="btn btn-outline-success" title="Configurar Insumos">
-                                                    <i class="bi bi-box-seam"></i> Insumos
-                                                </a>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="4" class="text-center py-4">
-                                            <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
-                                            <p class="text-muted mt-2">No hay kits registrados.</p>
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
+                            @empty
+                                <x-empty-state :colspan="4" message="No hay kits registrados." />
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
-    </div>
+    @endif
 </div>
-
-<!-- JavaScript para cambiar entre pestañas -->
-<script>
-    function cambiarAPestanaFormulario() {
-        const nuevoTab = document.getElementById('nuevo-tab');
-        const nuevoTabInstance = new bootstrap.Tab(nuevoTab);
-        nuevoTabInstance.show();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    document.addEventListener('livewire:init', () => {
-        Livewire.on('kitGuardado', () => {
-            const listadoTab = document.getElementById('listado-tab');
-            const listadoTabInstance = new bootstrap.Tab(listadoTab);
-            listadoTabInstance.show();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        });
-    });
-</script>
