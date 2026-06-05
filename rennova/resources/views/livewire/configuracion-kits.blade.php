@@ -64,7 +64,7 @@
                         <select wire:model.live="maquinaria_seleccionada" id="maquinaria_select" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('maquinaria_seleccionada') ring-2 ring-red-500 @enderror" @if($editando_kit) disabled @endif>
                             <option value="">Seleccione una maquinaria</option>
                             @foreach ($maquinarias as $maq)
-                                <option value="{{ $maq->id_maquinaria }}">{{ $maq->modelo }} ({{ $maq->tipoMaquinaria ? $maq->tipoMaquinaria->nombre : 'Sin tipo' }})</option>
+                                <option value="{{ $maq->id_maquinaria }}" wire:key="option-{{ $maq->id_maquinaria }}">{{ $maq->modelo }} ({{ $maq->tipoMaquinaria ? $maq->tipoMaquinaria->nombre : 'Sin tipo' }})</option>
                             @endforeach
                         </select>
                         @error('maquinaria_seleccionada') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
@@ -132,7 +132,7 @@
                                                     $ins = optional($item->insumo);
                                                     $stock = is_numeric($ins->stock ?? null) ? $ins->stock : 0;
                                                 @endphp
-                                                <tr class="hover:bg-slate-50 transition-colors">
+                                                <tr class="hover:bg-slate-50 transition-colors" wire:key="row-{{ $item->id_kit ?? $item->id }}">
                                                     <td class="px-3 py-3"><span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">{{ $item->id_kit ?? $item->id }}</span></td>
                                                     <td class="px-3 py-3 font-semibold text-slate-800">{{ $ins->nombre ?? '—' }}</td>
                                                     <td class="px-3 py-3 text-slate-600">{{ number_format($item->cantidad_requerida, 2) }}</td>
@@ -216,7 +216,7 @@
                                         </thead>
                                         <tbody class="divide-y divide-slate-200">
                                             @foreach($historial as $item)
-                                                <tr class="bg-amber-50 hover:bg-amber-100 transition-colors">
+                                                <tr class="bg-amber-50 hover:bg-amber-100 transition-colors" wire:key="row-{{ $item->id_kit ?? $item->id }}">
                                                     <td class="px-3 py-3"><span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">{{ $item->id_kit ?? $item->id }}</span></td>
                                                     <td class="px-3 py-3">
                                                         <strong class="text-slate-800">{{ optional($item->insumo)->nombre ?? '—' }}</strong>
@@ -263,7 +263,7 @@
                     @if(count($kits_registrados) > 0)
                         <div class="space-y-4">
                             @foreach($kits_registrados as $maqId => $kit)
-                                <div class="rounded-lg border border-slate-200 overflow-hidden">
+                                <div class="rounded-lg border border-slate-200 overflow-hidden" wire:key="card-{{ $maqId }}">
                                     <div class="flex items-center justify-between bg-slate-50 border-b border-slate-200 px-6 py-4">
                                         <div>
                                             <h6 class="mb-1 font-semibold text-slate-800 flex items-center gap-2">
@@ -304,7 +304,7 @@
                                                             $ins = optional($item->insumo);
                                                             $stock = is_numeric($ins->stock ?? null) ? $ins->stock : 0;
                                                         @endphp
-                                                        <tr class="hover:bg-slate-50">
+                                                        <tr class="hover:bg-slate-50" wire:key="row-{{ $item->id_kit ?? $item->id }}">
                                                             <td class="px-3 py-2 font-semibold text-slate-700">{{ $ins->nombre }}</td>
                                                             <td class="px-3 py-2 text-slate-600">{{ number_format($item->cantidad_requerida, 2) }}</td>
                                                             <td class="px-3 py-2">
@@ -359,7 +359,7 @@
                         <select wire:model="insumo_id" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('insumo_id') ring-2 ring-red-500 @enderror">
                             <option value="">Seleccionar insumo...</option>
                             @foreach($insumos as $insumo)
-                                <option value="{{ $insumo->id_insumo }}">
+                                <option value="{{ $insumo->id_insumo }}" wire:key="option-{{ $insumo->id_insumo }}">
                                     {{ $insumo->nombre }} (Stock: {{ number_format($insumo->stock ?? 0, 2) }})
                                 </option>
                             @endforeach

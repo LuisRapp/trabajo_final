@@ -34,7 +34,7 @@
         <!-- Lista de notificaciones -->
         @if($notificaciones->count() > 0)
             @foreach($notificaciones as $notificacion)
-                <li>
+                <li wire:key="notif-{{ $notificacion->id }}">
                     <div 
                         wire:click="irANotificacion({{ $notificacion->id }})"
                         onclick="event.stopPropagation()"
@@ -56,7 +56,7 @@
                             </div>
 
                             <!-- Contenido -->
-                            <div class="flex-grow-1">
+                            <div class="grow">
                                 <div class="fw-semibold" style="font-size: 0.9rem;">{{ $notificacion->titulo }}</div>
                                 <div class="text-muted small mt-1" style="font-size: 0.82rem;">
                                     {{ Str::limit($notificacion->mensaje, 100) }}

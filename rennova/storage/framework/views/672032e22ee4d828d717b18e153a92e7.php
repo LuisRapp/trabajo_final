@@ -72,7 +72,7 @@
                             </thead>
                             <tbody>
                                 <?php $__empty_1 = true; $__currentLoopData = $historial; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $lote): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
-                                    <tr>
+                                    <tr wire:key="row-<?php echo e($lote->id_lote); ?>">
                                         <td>
                                             <strong>Lote #<?php echo e($lote->id_lote); ?></strong><br>
                                             <small class="text-muted"><?php echo e($lote->ubicacion); ?></small>
@@ -87,7 +87,7 @@
                                             <?php if($lote->empleados->count() > 0): ?>
                                                 <small>
                                                     <?php $__currentLoopData = $lote->empleados; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $emp): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                                        <span class="badge bg-info me-1"><?php echo e($emp->apellido); ?></span>
+                                                        <span class="badge bg-info me-1" wire:key="emp-<?php echo e($emp->id_empleado); ?>"><?php echo e($emp->apellido); ?></span>
                                                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                                 </small>
                                                 <br><small class="text-muted">Total: <?php echo e($lote->empleados->count()); ?></small>
@@ -99,7 +99,7 @@
                                             <?php if($lote->maquinarias->count() > 0): ?>
                                                 <small>
                                                     <?php $__currentLoopData = $lote->maquinarias; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $maq): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                                        <span class="badge bg-primary me-1"><?php echo e($maq->modelo); ?></span>
+                                                        <span class="badge bg-primary me-1" wire:key="maq-<?php echo e($maq->id_maquinaria); ?>"><?php echo e($maq->modelo); ?></span>
                                                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                                 </small>
                                                 <br><small class="text-muted">Total: <?php echo e($lote->maquinarias->count()); ?></small>
@@ -194,7 +194,7 @@ endif;
 unset($__errorArgs, $__bag); ?>" wire:model.live="id_lote">
                                 <option value="">Seleccione un lote</option>
                                 <?php $__currentLoopData = $lotes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $l): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                    <option value="<?php echo e($l->id_lote); ?>">Lote #<?php echo e($l->id_lote); ?> - <?php echo e($l->ubicacion); ?> (<?php echo e($l->estado); ?>)</option>
+                                    <option value="<?php echo e($l->id_lote); ?>" wire:key="option-<?php echo e($l->id_lote); ?>">Lote #<?php echo e($l->id_lote); ?> - <?php echo e($l->ubicacion); ?> (<?php echo e($l->estado); ?>)</option>
                                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </select>
                             <?php $__errorArgs = ['id_lote'];
@@ -228,7 +228,7 @@ unset($__errorArgs, $__bag); ?>
                                         </div>
                                         <div style="max-height: 300px; overflow-y: auto;" class="border rounded p-2">
                                             <?php $__empty_1 = true; $__currentLoopData = $this->empleadosFiltrados; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $emp): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
-                                                <div class="form-check">
+                                                <div class="form-check" wire:key="item-<?php echo e($emp->id_empleado); ?>">
                                                     <input class="form-check-input" 
                                                            type="checkbox" 
                                                            value="<?php echo e($emp->id_empleado); ?>" 
@@ -274,7 +274,7 @@ unset($__errorArgs, $__bag); ?>
                                         </div>
                                         <div style="max-height: 300px; overflow-y: auto;" class="border rounded p-2">
                                             <?php $__empty_1 = true; $__currentLoopData = $this->maquinariasFiltrada; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $maq): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
-                                                <div class="form-check">
+                                                <div class="form-check" wire:key="item-<?php echo e($maq->id_maquinaria); ?>">
                                                     <input class="form-check-input" 
                                                            type="checkbox" 
                                                            value="<?php echo e($maq->id_maquinaria); ?>" 

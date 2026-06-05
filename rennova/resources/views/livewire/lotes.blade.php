@@ -102,7 +102,7 @@
                                 class="w-full rounded-lg border border-default py-3 px-4 shadow-sm focus:border-green-700 focus:ring-green-600 transition-colors {{ $errors->has('main_task_type') ? 'ring-2 ring-red-500' : '' }}">
                                 <option value="">Seleccione...</option>
                                 @foreach($this->taskTypes as $tt)
-                                    <option value="{{ $tt->value }}">{{ $tt->label() }}</option>
+                                    <option value="{{ $tt->value }}" wire:key="option-{{ $tt->value }}">{{ $tt->label() }}</option>
                                 @endforeach
                             </select>
                             @error('main_task_type') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
@@ -186,7 +186,7 @@
                         </thead>
                         <tbody class="divide-y divide-slate-200">
                             @forelse ($lotes as $lote)
-                                <tr class="transition-colors hover:bg-slate-50">
+                                <tr class="transition-colors hover:bg-slate-50" wire:key="row-{{ $lote->id_lote }}">
                                     <td class="px-3 py-4 text-center">
                                         <span class="inline-block rounded bg-slate-100 px-2 py-1 font-mono text-xs text-slate-600">{{ $lote->id_lote }}</span>
                                     </td>

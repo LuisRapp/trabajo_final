@@ -85,7 +85,7 @@ unset($__errorArgs, $__bag); ?>
                                 <?php $__currentLoopData = $roles; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $role): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                     <div class="list-group-item d-flex justify-content-between align-items-center <?php echo e($selectedRole == $role->id ? 'active' : ''); ?>" 
                                          style="cursor: pointer;" 
-                                         wire:click="selectRole(<?php echo e($role->id); ?>)">
+                                         wire:click="selectRole(<?php echo e($role->id); ?>)" wire:key="item-<?php echo e($role->id); ?>">
                                         <div>
                                             <strong><?php echo e($role->name); ?></strong>
                                             <br>
@@ -119,14 +119,14 @@ unset($__errorArgs, $__bag); ?>
                                 <form wire:submit.prevent="updateRolePermissions">
                                     <div class="row">
                                         <?php $__currentLoopData = $permissions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $module => $modulePermissions): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                            <div class="col-md-6 mb-4">
+                                            <div class="col-md-6 mb-4" wire:key="module-<?php echo e($module); ?>">
                                                 <div class="card">
                                                     <div class="card-header bg-secondary text-white py-2">
                                                         <strong class="text-capitalize"><?php echo e(str_replace('-', ' ', $module)); ?></strong>
                                                     </div>
                                                     <div class="card-body">
                                                         <?php $__currentLoopData = $modulePermissions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $permission): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                                            <div class="form-check">
+                                                            <div class="form-check" wire:key="perm-<?php echo e($permission->id); ?>">
                                                                 <input class="form-check-input" 
                                                                        type="checkbox" 
                                                                        wire:model="rolePermissions" 
@@ -181,7 +181,7 @@ unset($__errorArgs, $__bag); ?>
                                 <?php $__currentLoopData = $users; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $user): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                     <div class="list-group-item <?php echo e($selectedUser == $user->id ? 'active' : ''); ?>" 
                                          style="cursor: pointer;" 
-                                         wire:click="selectUser(<?php echo e($user->id); ?>)">
+                                         wire:click="selectUser(<?php echo e($user->id); ?>)" wire:key="item-<?php echo e($user->id); ?>">
                                         <div class="d-flex justify-content-between align-items-center">
                                             <div>
                                                 <strong><?php echo e($this->displayUserName($user)); ?></strong>
@@ -219,7 +219,7 @@ unset($__errorArgs, $__bag); ?>
                                             Seleccione los roles que desea asignar al usuario:
                                         </p>
                                         <?php $__currentLoopData = $roles; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $role): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                            <div class="form-check mb-2">
+                                            <div class="form-check mb-2" wire:key="role-<?php echo e($role->id); ?>">
                                                 <input class="form-check-input" 
                                                        type="checkbox" 
                                                        wire:model="userRoles" 

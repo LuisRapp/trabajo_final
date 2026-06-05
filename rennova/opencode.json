@@ -9,6 +9,24 @@
                 "artisan",
                 "boost:mcp"
             ]
+        },
+        "tailwindcss": {
+            "type": "local",
+            "enabled": true,
+            "command": [
+                "npx",
+                "-y",
+                "tailwindcss-mcp-server"
+            ]
+        },
+        "daisyui-blueprint": {
+            "type": "local",
+            "enabled": true,
+            "command": [
+                "npx",
+                "-y",
+                "daisyui-blueprint@latest"
+            ]
         }
     }
 }

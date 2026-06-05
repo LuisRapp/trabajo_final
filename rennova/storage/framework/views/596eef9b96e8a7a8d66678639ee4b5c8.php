@@ -123,7 +123,7 @@ unset($__errorArgs, $__bag); ?>
                     </thead>
                     <tbody>
                         <?php $__empty_1 = true; $__currentLoopData = $categorias; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $categoria): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
-                            <tr>
+                            <tr wire:key="row-<?php echo e($categoria->id_categoria_madera); ?>">
                                 <td><span class="badge bg-secondary"><?php echo e($categoria->id_categoria_madera); ?></span></td>
                                 <td><span class="fw-semibold"><?php echo e($categoria->nombre); ?></span></td>
                                 <td><?php echo e($categoria->descripcion ?? '-'); ?></td>

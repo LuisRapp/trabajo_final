@@ -69,7 +69,7 @@
                             </thead>
                             <tbody>
                                 @forelse ($historial as $lote)
-                                    <tr>
+                                    <tr wire:key="row-{{ $lote->id_lote }}">
                                         <td>
                                             <strong>Lote #{{ $lote->id_lote }}</strong><br>
                                             <small class="text-muted">{{ $lote->ubicacion }}</small>
@@ -83,7 +83,7 @@
                                             @if($lote->empleados->count() > 0)
                                                 <small>
                                                     @foreach($lote->empleados as $emp)
-                                                        <span class="badge bg-info me-1">{{ $emp->apellido }}</span>
+                                                        <span class="badge bg-info me-1" wire:key="emp-{{ $emp->id_empleado }}">{{ $emp->apellido }}</span>
                                                     @endforeach
                                                 </small>
                                                 <br><small class="text-muted">Total: {{ $lote->empleados->count() }}</small>
@@ -95,7 +95,7 @@
                                             @if($lote->maquinarias->count() > 0)
                                                 <small>
                                                     @foreach($lote->maquinarias as $maq)
-                                                        <span class="badge bg-primary me-1">{{ $maq->modelo }}</span>
+                                                        <span class="badge bg-primary me-1" wire:key="maq-{{ $maq->id_maquinaria }}">{{ $maq->modelo }}</span>
                                                     @endforeach
                                                 </small>
                                                 <br><small class="text-muted">Total: {{ $lote->maquinarias->count() }}</small>
@@ -180,7 +180,7 @@
                             <select class="form-select @error('id_lote') is-invalid @enderror" wire:model.live="id_lote">
                                 <option value="">Seleccione un lote</option>
                                 @foreach($lotes as $l)
-                                    <option value="{{ $l->id_lote }}">Lote #{{ $l->id_lote }} - {{ $l->ubicacion }} ({{ $l->estado }})</option>
+                                    <option value="{{ $l->id_lote }}" wire:key="option-{{ $l->id_lote }}">Lote #{{ $l->id_lote }} - {{ $l->ubicacion }} ({{ $l->estado }})</option>
                                 @endforeach
                             </select>
                             @error('id_lote') <div class="invalid-feedback">{{ $message }}</div> @enderror
@@ -207,7 +207,7 @@
                                         </div>
                                         <div style="max-height: 300px; overflow-y: auto;" class="border rounded p-2">
                                             @forelse($this->empleadosFiltrados as $emp)
-                                                <div class="form-check">
+                                                <div class="form-check" wire:key="item-{{ $emp->id_empleado }}">
                                                     <input class="form-check-input" 
                                                            type="checkbox" 
                                                            value="{{ $emp->id_empleado }}" 
@@ -252,7 +252,7 @@
                                         </div>
                                         <div style="max-height: 300px; overflow-y: auto;" class="border rounded p-2">
                                             @forelse($this->maquinariasFiltrada as $maq)
-                                                <div class="form-check">
+                                                <div class="form-check" wire:key="item-{{ $maq->id_maquinaria }}">
                                                     <input class="form-check-input" 
                                                            type="checkbox" 
                                                            value="{{ $maq->id_maquinaria }}" 

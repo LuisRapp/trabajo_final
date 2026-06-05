@@ -89,7 +89,7 @@
                     <table class="table table-hover mb-0">
                         <tbody>
                             @foreach($notificaciones as $notificacion)
-                                <tr style="background: {{ $notificacion->leida ? '#fff' : '#f8f9fa' }};">
+                                <tr style="background: {{ $notificacion->leida ? '#fff' : '#f8f9fa' }};" wire:key="row-{{ $notificacion->id }}">
                                     <td class="px-4 py-3" style="width: 60px;">
                                         <!-- Icono según tipo -->
                                         @if($notificacion->tipo === 'umbral_alcanzado')
@@ -107,7 +107,7 @@
                                     
                                     <td class="px-3 py-3">
                                         <div class="d-flex justify-content-between align-items-start">
-                                            <div class="flex-grow-1">
+                                            <div class="grow">
                                                 <h6 class="mb-1 {{ !$notificacion->leida ? 'fw-bold' : 'fw-semibold' }}">
                                                     {{ $notificacion->titulo }}
                                                 </h6>

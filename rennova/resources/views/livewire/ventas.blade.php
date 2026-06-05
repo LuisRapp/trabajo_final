@@ -56,7 +56,7 @@
                         <select wire:model="id_cliente" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors">
                             <option value="">Seleccione cliente</option>
                             @foreach($clientes as $cliente)
-                                <option value="{{ $cliente->id_cliente }}">{{ $cliente->razon_social }}</option>
+                                <option value="{{ $cliente->id_cliente }}" wire:key="option-{{ $cliente->id_cliente }}">{{ $cliente->razon_social }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -97,7 +97,7 @@
                             </thead>
                             <tbody class="divide-y divide-slate-200">
                                 @foreach($detalle_cargas as $c)
-                                    <tr class="hover:bg-slate-50 transition-colors">
+                                    <tr class="hover:bg-slate-50 transition-colors" wire:key="row-{{ $loop->index }}">
                                         <td class="px-3 py-3 text-slate-600">{{ \Carbon\Carbon::parse($c['fecha_carga'])->format('d/m/Y') }}</td>
                                         <td class="px-3 py-3 text-slate-600">{{ $c['ticket'] }}</td>
                                         <td class="px-3 py-3 text-slate-600">{{ $c['categoria'] }}</td>
@@ -165,7 +165,7 @@
                         </thead>
                         <tbody class="divide-y divide-slate-200">
                             @forelse($ventas as $venta)
-                                <tr class="hover:bg-slate-50 transition-colors">
+                                <tr class="hover:bg-slate-50 transition-colors" wire:key="row-{{ $venta->id_recibo }}">
                                     <td class="px-3 py-3 text-slate-600">{{ $venta->id_recibo }}</td>
                                     <td class="px-3 py-3 text-slate-600">{{ \Carbon\Carbon::parse($venta->fecha_emision)->format('d/m/Y') }}</td>
                                     <td class="px-3 py-3 text-slate-600">{{ $venta->cliente->razon_social ?? 'N/A' }}</td>
@@ -269,7 +269,7 @@
                                 </thead>
                                 <tbody class="divide-y divide-slate-200">
                                     @foreach($detalle_venta as $det)
-                                        <tr class="hover:bg-slate-50">
+                                        <tr class="hover:bg-slate-50" wire:key="row-{{ $loop->index }}">
                                             <td class="px-3 py-2 text-slate-600">{{ $det['ticket'] }}</td>
                                             <td class="px-3 py-2 text-slate-600">{{ \Carbon\Carbon::parse($det['fecha_carga'])->format('d/m/Y') }}</td>
                                             <td class="px-3 py-2 text-slate-600">{{ $det['categoria'] }}</td>

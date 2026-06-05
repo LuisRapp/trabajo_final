@@ -72,11 +72,11 @@ unset($__errorArgs, $__bag); ?>
                     </thead>
                     <tbody>
                         <?php $__currentLoopData = $tareas; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $i => $row): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                            <tr>
+                            <tr wire:key="row-<?php echo e($i); ?>">
                                 <td>
                                     <select class="form-select" wire:model.live="tareas.<?php echo e($i); ?>.tipo_tarea" <?php if($guardando): ?> disabled <?php endif; ?>>
                                         <?php $__currentLoopData = $taskTypes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $tt): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                            <option value="<?php echo e($tt->value); ?>"><?php echo e($tt->label()); ?></option>
+                                            <option value="<?php echo e($tt->value); ?>" wire:key="option-<?php echo e($tt->value); ?>"><?php echo e($tt->label()); ?></option>
                                         <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                     </select>
                                     <?php $__errorArgs = ['tareas.' . $i . '.tipo_tarea'];

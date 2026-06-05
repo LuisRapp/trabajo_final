@@ -49,7 +49,7 @@
                                 <select wire:model="id_tipo_maquinaria" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('id_tipo_maquinaria') ring-2 ring-red-500 @enderror">
                                     <option value="">Seleccione...</option>
                                     @foreach($tipos as $tipo)
-                                        <option value="{{ $tipo->id_tipo_maquinaria }}">{{ $tipo->nombre }}</option>
+                                        <option value="{{ $tipo->id_tipo_maquinaria }}" wire:key="option-{{ $tipo->id_tipo_maquinaria }}">{{ $tipo->nombre }}</option>
                                     @endforeach
                                 </select>
                                 @error('id_tipo_maquinaria') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
@@ -140,7 +140,7 @@
                             </thead>
                             <tbody class="divide-y divide-slate-200">
                                 @forelse ($maquinarias as $maquinaria)
-                                    <tr class="hover:bg-slate-50 transition-colors">
+                                    <tr class="hover:bg-slate-50 transition-colors" wire:key="row-{{ $maquinaria->id_maquinaria }}">
                                         <td class="px-3 py-3"><span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">{{ $maquinaria->id_maquinaria }}</span></td>
                                         <td class="px-3 py-3 font-semibold text-slate-800">{{ $maquinaria->tipoMaquinaria?->nombre ?? 'N/A' }}</td>
                                         <td class="px-3 py-3 text-slate-600">{{ $maquinaria->modelo }}</td>

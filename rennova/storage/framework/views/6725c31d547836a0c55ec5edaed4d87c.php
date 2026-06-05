@@ -47,7 +47,7 @@
                     <select wire:model="filtro_maquinaria" class="form-select">
                         <option value="">Todas</option>
                         <?php $__currentLoopData = $maquinarias; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $maq): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                            <option value="<?php echo e($maq->id); ?>">
+                            <option value="<?php echo e($maq->id); ?>" wire:key="option-<?php echo e($maq->id); ?>">
                                 <?php echo e($maq->modelo); ?> (<?php echo e($maq->tipoMaquinaria->nombre); ?>)
                             </option>
                         <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
@@ -111,7 +111,7 @@
                     </thead>
                     <tbody>
                         <?php $__empty_1 = true; $__currentLoopData = $ordenes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $orden): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
-                        <tr>
+                        <tr wire:key="row-<?php echo e($orden->id); ?>">
                             <td><?php echo e($orden->id); ?></td>
                             <td>
                                 <strong><?php echo e($orden->maquinaria->modelo); ?></strong><br>
@@ -231,7 +231,7 @@
                             </thead>
                             <tbody>
                                 <?php $__currentLoopData = $verificacion_stock['kit']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                <tr class="<?php echo e(in_array($item['insumo_id'], array_column($verificacion_stock['insuficientes'], 'insumo_id')) ? 'table-danger' : 'table-success'); ?>">
+                                <tr class="<?php echo e(in_array($item['insumo_id'], array_column($verificacion_stock['insuficientes'], 'insumo_id')) ? 'table-danger' : 'table-success'); ?>" wire:key="row-<?php echo e($item['insumo_id']); ?>">
                                     <td><?php echo e($item['nombre']); ?></td>
                                     <td><?php echo e($item['cantidad_requerida']); ?></td>
                                     <td><?php echo e($item['stock_disponible']); ?></td>
@@ -303,7 +303,7 @@
                             </thead>
                             <tbody>
                                 <?php $__currentLoopData = $insumos_usados; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $insumo): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                <tr>
+                                <tr wire:key="row-<?php echo e($index); ?>">
                                     <td>
                                         <select wire:model="insumos_usados.<?php echo e($index); ?>.insumo_id" 
                                                 wire:change="actualizarInsumo(<?php echo e($index); ?>, $event.target.value)"
@@ -311,7 +311,7 @@
                                                 <?php if($insumo['es_obligatorio']): ?> disabled <?php endif; ?>>
                                             <option value="">Seleccionar...</option>
                                             <?php $__currentLoopData = $insumos_disponibles; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ins): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                                <option value="<?php echo e($ins->id_insumo); ?>"><?php echo e($ins->nombre); ?></option>
+                                                <option value="<?php echo e($ins->id_insumo); ?>" wire:key="option-<?php echo e($ins->id_insumo); ?>"><?php echo e($ins->nombre); ?></option>
                                             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                         </select>
                                         <?php $__errorArgs = ["insumos_usados.{$index}.insumo_id"];
@@ -464,7 +464,7 @@ unset($__errorArgs, $__bag); ?>
                             </thead>
                             <tbody>
                                 <?php $__currentLoopData = $detalle_orden->mantenimientoInsumos; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                <tr>
+                                <tr wire:key="row-<?php echo e($item->id); ?>">
                                     <td><?php echo e($item->insumo->nombre); ?></td>
                                     <td><?php echo e($item->cantidad); ?></td>
                                     <td>$<?php echo e(number_format($item->costo_unitario, 2)); ?></td>

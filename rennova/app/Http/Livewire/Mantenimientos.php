@@ -2,8 +2,10 @@
 
 namespace App\Http\Livewire;
 
+use App\Models\Insumo;
 use App\Models\Mantenimiento;
 use App\Models\Maquinaria;
+use App\Models\MovimientoStock;
 use App\Models\NotificacionSistema;
 use App\Models\TipoMantenimiento;
 use App\Services\InventarioService;
@@ -54,6 +56,8 @@ class Mantenimientos extends Component
 
     public $insumos_usados = [];
 
+    public $insumosDisponibles = [];
+
     protected function rules()
     {
         return [
@@ -85,9 +89,25 @@ class Mantenimientos extends Component
     {
         $this->maquinarias = Maquinaria::where('estado', '!=', 'dado_de_baja')->orderBy('modelo')->get();
         $this->tipos = TipoMantenimiento::orderBy('nombre')->get();
+        $this->insumosDisponibles = $this->cargarInsumosDisponibles();
         $this->fecha_inicio = date('Y-m-d');
         $this->estado = 'programado';
         $this->tab_activo = 'listado';
+    }
+
+    /**
+     * Carga todos los insumos con su stock y precio actual.
+     *
+     * @return \Illuminate\Support\Collection
+     */
+    public function cargarInsumosDisponibles()
+    {
+        return Insumo::orderBy('nombre')->get()->map(function ($insumo) {
+            $insumo->stock_disponible = MovimientoStock::stockDisponible($insumo->id_insumo);
+            $insumo->precio_promedio = MovimientoStock::precioPromedio($insumo->id_insumo);
+
+            return $insumo;
+        });
     }
 
     public function updatedIdMaquinaria()

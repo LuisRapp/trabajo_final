@@ -84,7 +84,7 @@
                             <select class="form-select" wire:model.live="filter_lote_id">
                                 <option value="">Todos</option>
                                 @foreach($lotes as $l)
-                                    <option value="{{ $l->id_lote }}">Lote #{{ $l->id_lote }} - {{ $l->ubicacion }} ({{ $l->estado }})</option>
+                                    <option value="{{ $l->id_lote }}" wire:key="option-{{ $l->id_lote }}">Lote #{{ $l->id_lote }} - {{ $l->ubicacion }} ({{ $l->estado }})</option>
                                 @endforeach
                             </select>
                         </div>
@@ -120,7 +120,7 @@
                             </thead>
                             <tbody>
                                 @forelse($proposals as $p)
-                                    <tr>
+                                    <tr wire:key="row-{{ $p->id_allocation_proposal }}">
                                         <td><strong>#{{ $p->id_allocation_proposal }}</strong></td>
                                         <td>
                                             <div><strong>Lote #{{ $p->id_lote }}</strong></div>
@@ -253,7 +253,7 @@
                                         @else
                                             <div style="max-height: 320px; overflow-y: auto;" class="border rounded p-2">
                                                 @foreach($selectedProposal->proposedEmployees as $row)
-                                                    <div class="form-check">
+                                                    <div class="form-check" wire:key="emp-{{ $row->id_allocation_proposal_employee }}">
                                                         <input
                                                             class="form-check-input"
                                                             type="checkbox"
@@ -286,7 +286,7 @@
                                         @else
                                             <div style="max-height: 320px; overflow-y: auto;" class="border rounded p-2">
                                                 @foreach($selectedProposal->proposedMaquinarias as $row)
-                                                    <div class="form-check">
+                                                    <div class="form-check" wire:key="maq-{{ $row->id_allocation_proposal_maquinaria }}">
                                                         <input
                                                             class="form-check-input"
                                                             type="checkbox"
@@ -319,7 +319,7 @@
                                         @else
                                             <div style="max-height: 320px; overflow-y: auto;" class="border rounded p-2">
                                                 @foreach($selectedProposal->proposedInsumos as $row)
-                                                    <div class="d-flex align-items-start gap-2 py-1">
+                                                    <div class="d-flex align-items-start gap-2 py-1" wire:key="insumo-{{ $row->id_allocation_proposal_insumo }}">
                                                         <div class="form-check">
                                                             <input
                                                                 class="form-check-input"

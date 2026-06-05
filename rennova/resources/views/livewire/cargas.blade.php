@@ -49,7 +49,7 @@
                                 <select wire:model="id_lote" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('id_lote') ring-2 ring-red-500 @enderror">
                                     <option value="">Seleccione...</option>
                                     @foreach($lotes as $lote)
-                                        <option value="{{ $lote->id_lote }}">{{ $lote->id_lote }}</option>
+                                        <option value="{{ $lote->id_lote }}" wire:key="option-{{ $lote->id_lote }}">{{ $lote->id_lote }}</option>
                                     @endforeach
                                 </select>
                                 @error('id_lote') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
@@ -59,7 +59,7 @@
                                 <select wire:model="id_categoria_madera" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('id_categoria_madera') ring-2 ring-red-500 @enderror">
                                     <option value="">Seleccione...</option>
                                     @foreach($categorias as $cat)
-                                        <option value="{{ $cat->id_categoria_madera }}">{{ $cat->nombre }}</option>
+                                        <option value="{{ $cat->id_categoria_madera }}" wire:key="option-{{ $cat->id_categoria_madera }}">{{ $cat->nombre }}</option>
                                     @endforeach
                                 </select>
                                 @error('id_categoria_madera') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
@@ -74,7 +74,7 @@
                                 <select wire:model="id_parte_diario" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('id_parte_diario') ring-2 ring-red-500 @enderror">
                                     <option value="">Seleccione...</option>
                                     @foreach($partes as $parte)
-                                        <option value="{{ $parte->id_parte_diario }}">{{ $parte->id_parte_diario }}</option>
+                                        <option value="{{ $parte->id_parte_diario }}" wire:key="option-{{ $parte->id_parte_diario }}">{{ $parte->id_parte_diario }}</option>
                                     @endforeach
                                 </select>
                                 @error('id_parte_diario') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
@@ -228,9 +228,9 @@
                                 {{-- Pagination Elements --}}
                                 @foreach ($cargas->getUrlRange(1, $cargas->lastPage()) as $page => $url)
                                     @if ($page == $cargas->currentPage())
-                                        <span class="px-3 py-2 text-white rounded-lg" style="background-color: #2d7a4f;">{{ $page }}</span>
+                                        <span class="px-3 py-2 text-white rounded-lg" style="background-color: #2d7a4f;" wire:key="page-{{ $page }}">{{ $page }}</span>
                                     @else
-                                        <button wire:click="gotoPage({{ $page }})" class="px-3 py-2 text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-lg transition-colors">{{ $page }}</button>
+                                        <button wire:click="gotoPage({{ $page }})" class="px-3 py-2 text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-lg transition-colors" wire:key="page-{{ $page }}">{{ $page }}</button>
                                     @endif
                                 @endforeach
 

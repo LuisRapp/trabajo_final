@@ -55,7 +55,7 @@
                                 <select wire:model="id_unidad_medida" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('id_unidad_medida') ring-2 ring-red-500 @enderror">
                                     <option value="">Seleccione...</option>
                                     @foreach($unidades as $unidad)
-                                        <option value="{{ $unidad->id_unidad_medida }}">{{ $unidad->nombre }} ({{ $unidad->abreviatura }})</option>
+                                        <option value="{{ $unidad->id_unidad_medida }}" wire:key="option-{{ $unidad->id_unidad_medida }}">{{ $unidad->nombre }} ({{ $unidad->abreviatura }})</option>
                                     @endforeach
                                 </select>
                                 @error('id_unidad_medida') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
@@ -65,7 +65,7 @@
                                 <select wire:model="id_proveedor" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('id_proveedor') ring-2 ring-red-500 @enderror">
                                     <option value="">Seleccione...</option>
                                     @foreach($proveedores as $proveedor)
-                                        <option value="{{ $proveedor->id_proveedor }}">{{ $proveedor->razon_social }}</option>
+                                        <option value="{{ $proveedor->id_proveedor }}" wire:key="option-{{ $proveedor->id_proveedor }}">{{ $proveedor->razon_social }}</option>
                                     @endforeach
                                 </select>
                                 @error('id_proveedor') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
@@ -78,7 +78,7 @@
                         </div>
 
                         <div class="mb-6 flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-700">
-                            <i class="bi bi-info-circle mt-0.5 flex-shrink-0"></i>
+                            <i class="bi bi-info-circle mt-0.5 shrink-0"></i>
                             <span>Precio calculado automáticamente mediante sistema FIFO</span>
                         </div>
 
@@ -128,7 +128,7 @@
                             </thead>
                             <tbody class="divide-y divide-slate-200">
                                 @forelse ($insumos as $insumo)
-                                    <tr class="hover:bg-slate-50 transition-colors">
+                                    <tr class="hover:bg-slate-50 transition-colors" wire:key="row-{{ $insumo->id_insumo }}">
                                         <td class="px-3 py-3"><span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">{{ $insumo->id_insumo }}</span></td>
                                         <td class="px-3 py-3 font-semibold text-slate-800">{{ $insumo->nombre }}</td>
                                         <td class="px-3 py-3 text-slate-600">{{ $insumo->descripcion ?? 'N/A' }}</td>

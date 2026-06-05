@@ -59,7 +59,7 @@
                             <small>Se utilizarán los siguientes insumos del kit configurado:</small>
                             <ul class="mb-0 mt-2 list-inside space-y-1 text-sm">
                                 <?php $__currentLoopData = $kitPreventivo; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                    <li><?php echo e($item['nombre'] ?? 'N/A'); ?>: <?php echo e(number_format($item['cantidad_requerida'], 2)); ?> unidades</li>
+                                    <li wire:key="kit-<?php echo e($loop->index); ?>"><?php echo e($item['nombre'] ?? 'N/A'); ?>: <?php echo e(number_format($item['cantidad_requerida'], 2)); ?> unidades</li>
                                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </ul>
                         </div>
@@ -91,7 +91,7 @@ endif;
 unset($__errorArgs, $__bag); ?>">
                                     <option value="">Seleccione...</option>
                                     <?php $__currentLoopData = $maquinarias; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $maquinaria): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                        <option value="<?php echo e($maquinaria->id_maquinaria); ?>">
+                                        <option value="<?php echo e($maquinaria->id_maquinaria); ?>" wire:key="option-<?php echo e($maquinaria->id_maquinaria); ?>">
                                             <?php echo e($maquinaria->modelo); ?> - <?php echo e($maquinaria->tipoMaquinaria?->nombre ?? 'N/A'); ?>
 
                                             <?php if($maquinaria->umbral_toneladas): ?>
@@ -121,7 +121,7 @@ endif;
 unset($__errorArgs, $__bag); ?>">
                                     <option value="">Seleccione...</option>
                                     <?php $__currentLoopData = $tipos; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $tipo): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                        <option value="<?php echo e($tipo->id_tipo_mantenimiento); ?>"><?php echo e($tipo->nombre); ?></option>
+                                        <option value="<?php echo e($tipo->id_tipo_mantenimiento); ?>" wire:key="option-<?php echo e($tipo->id_tipo_mantenimiento); ?>"><?php echo e($tipo->nombre); ?></option>
                                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </select>
                                 <?php $__errorArgs = ['id_tipo_mantenimiento'];
@@ -261,7 +261,7 @@ unset($__errorArgs, $__bag); ?>
                             </thead>
                             <tbody class="divide-y divide-slate-200">
                                 <?php $__empty_1 = true; $__currentLoopData = $mantenimientos; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $mantenimiento): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
-                                    <tr class="hover:bg-slate-50 transition-colors">
+                                    <tr class="hover:bg-slate-50 transition-colors" wire:key="row-<?php echo e($mantenimiento->id_mantenimiento); ?>">
                                         <td class="px-3 py-3"><span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700"><?php echo e($mantenimiento->id_mantenimiento); ?></span></td>
                                         <td class="px-3 py-3 font-semibold text-slate-800"><?php echo e($mantenimiento->maquinaria?->modelo ?? 'N/A'); ?></td>
                                         <td class="px-3 py-3 text-slate-600"><?php echo e($mantenimiento->tipoMantenimiento?->nombre ?? 'N/A'); ?></td>
@@ -345,7 +345,7 @@ unset($__errorArgs, $__bag); ?>
     <?php endif; ?>
 
     <!-- CSS y Modal - preservados del original -->
-    <?php if (! $__env->hasRenderedOnce('b077ff47-8bd6-4c14-b167-08ca7b65fa3a')): $__env->markAsRenderedOnce('b077ff47-8bd6-4c14-b167-08ca7b65fa3a'); ?>
+    <?php if (! $__env->hasRenderedOnce('beb24870-6ca5-4c6a-8b6b-3c5143b0b38d')): $__env->markAsRenderedOnce('beb24870-6ca5-4c6a-8b6b-3c5143b0b38d'); ?>
         <style>
             .lw-modal-overlay {
                 position: fixed;
@@ -489,18 +489,14 @@ unset($__errorArgs, $__bag); ?>
                     </h6>
 
                     <?php $__currentLoopData = $insumos_usados; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $insumo): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                        <div class="grid grid-cols-1 md:grid-cols-5 gap-3 mb-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                        <div class="grid grid-cols-1 md:grid-cols-5 gap-3 mb-4 p-4 bg-slate-50 rounded-lg border border-slate-200" wire:key="insumo-<?php echo e($index); ?>">
                             <div class="md:col-span-2">
                                 <label class="block text-xs font-semibold text-slate-600 mb-2">Insumo</label>
                                 <select wire:model.live="insumos_usados.<?php echo e($index); ?>.id_insumo" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors text-sm">
                                     <option value="">Seleccione...</option>
-                                    <?php $__currentLoopData = \App\Models\Insumo::orderBy('nombre')->get(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ins): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                        <?php
-                                            $stockDisp = \App\Models\MovimientoStock::stockDisponible($ins->id_insumo);
-                                            $precioProm = \App\Models\MovimientoStock::precioPromedio($ins->id_insumo);
-                                        ?>
-                                        <option value="<?php echo e($ins->id_insumo); ?>">
-                                            <?php echo e($ins->nombre); ?> (Stock: <?php echo e(number_format($stockDisp, 2)); ?> - $<?php echo e(number_format($precioProm, 2)); ?>/u)
+                                    <?php $__currentLoopData = $insumosDisponibles; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ins): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                        <option value="<?php echo e($ins->id_insumo); ?>" wire:key="option-<?php echo e($ins->id_insumo); ?>">
+                                            <?php echo e($ins->nombre); ?> (Stock: <?php echo e(number_format($ins->stock_disponible, 2)); ?> - $<?php echo e(number_format($ins->precio_promedio, 2)); ?>/u)
                                         </option>
                                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </select>
@@ -510,7 +506,7 @@ unset($__errorArgs, $__bag); ?>
                                 <input type="number" wire:model="insumos_usados.<?php echo e($index); ?>.cantidad" step="0.1" min="0" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors" placeholder="0">
                                 <?php if(!empty($insumo['id_insumo'])): ?>
                                     <?php
-                                        $stockDisponible = \App\Models\MovimientoStock::stockDisponible($insumo['id_insumo']);
+                                        $stockDisponible = optional($insumosDisponibles->firstWhere('id_insumo', $insumo['id_insumo']))->stock_disponible ?? 0;
                                     ?>
                                     <small class="text-slate-500 text-xs mt-1 block">Disponible: <?php echo e(number_format($stockDisponible, 2)); ?></small>
                                 <?php endif; ?>

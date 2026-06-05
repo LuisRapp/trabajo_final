@@ -31,7 +31,7 @@
                         </thead>
                         <tbody>
                             @foreach($partes as $parte)
-                                <tr class="border-b border-slate-200 hover:bg-slate-50">
+                                <tr class="border-b border-slate-200 hover:bg-slate-50" wire:key="row-{{ $parte->id_parte_diario }}">
                                     <td class="px-4 py-2"><span class="inline-block px-3 py-1 bg-slate-200 text-slate-800 text-xs font-medium rounded">#{{ $parte->id_parte_diario }}</span></td>
                                     <td class="px-4 py-2">{{ $parte->lote?->propietario ?? '-' }}</td>
                                     <td class="px-4 py-2">{{ $parte->fecha ? \Carbon\Carbon::parse($parte->fecha)->format('d/m/Y') : '-' }}</td>

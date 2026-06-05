@@ -7,7 +7,7 @@
                 <select wire:model.live="loteSeleccionado" class="form-select form-select-sm" style="max-width: 320px;">
                     <option value="">-- Seleccionar --</option>
                     @foreach($lotes as $op)
-                        <option value="{{ $op['id_lote'] }}">
+                        <option value="{{ $op['id_lote'] }}" wire:key="option-{{ $op['id_lote'] }}">
                             {{ $op['propietario'] ?? ('Lote #' . $op['id_lote']) }}
                         </option>
                     @endforeach

@@ -7,7 +7,7 @@
                 <select wire:model.live="loteSeleccionado" class="form-select form-select-sm" style="max-width: 320px;">
                     <option value="">-- Seleccionar --</option>
                     <?php $__currentLoopData = $lotes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $op): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                        <option value="<?php echo e($op['id_lote']); ?>">
+                        <option value="<?php echo e($op['id_lote']); ?>" wire:key="option-<?php echo e($op['id_lote']); ?>">
                             <?php echo e($op['propietario'] ?? ('Lote #' . $op['id_lote'])); ?>
 
                         </option>

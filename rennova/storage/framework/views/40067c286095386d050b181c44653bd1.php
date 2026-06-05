@@ -64,7 +64,7 @@
                     <select class="form-select" wire:model.live="filtro_insumo">
                         <option value="">Todos los insumos</option>
                         <?php $__currentLoopData = $insumos; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $insumo): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                            <option value="<?php echo e($insumo->id_insumo); ?>"><?php echo e($insumo->nombre); ?></option>
+                            <option value="<?php echo e($insumo->id_insumo); ?>" wire:key="option-<?php echo e($insumo->id_insumo); ?>"><?php echo e($insumo->nombre); ?></option>
                         <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </select>
                 </div>
@@ -73,7 +73,7 @@
                     <select class="form-select" wire:model.live="filtro_proveedor">
                         <option value="">Todos los proveedores</option>
                         <?php $__currentLoopData = $proveedores; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $proveedor): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                            <option value="<?php echo e($proveedor->id_proveedor); ?>"><?php echo e($proveedor->razon_social); ?></option>
+                            <option value="<?php echo e($proveedor->id_proveedor); ?>" wire:key="option-<?php echo e($proveedor->id_proveedor); ?>"><?php echo e($proveedor->razon_social); ?></option>
                         <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </select>
                 </div>
@@ -139,7 +139,7 @@
                     </thead>
                     <tbody>
                         <?php $__empty_1 = true; $__currentLoopData = $lotes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $lote): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
-                            <tr class="<?php echo e($lote->agotado ? 'table-secondary' : ''); ?>">
+                            <tr class="<?php echo e($lote->agotado ? 'table-secondary' : ''); ?>" wire:key="row-<?php echo e($lote->id_lote_inventario); ?>">
                                 <td><strong><?php echo e($lote->id_lote_inventario); ?></strong></td>
                                 <td><?php echo e($lote->insumo->nombre ?? 'N/A'); ?></td>
                                 <td><?php echo e($lote->proveedor->razon_social ?? 'N/A'); ?></td>
@@ -217,7 +217,7 @@ endif;
 unset($__errorArgs, $__bag); ?>" wire:model="id_insumo">
                                         <option value="">Seleccione un insumo</option>
                                         <?php $__currentLoopData = $insumos; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $insumo): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                            <option value="<?php echo e($insumo->id_insumo); ?>">
+                                            <option value="<?php echo e($insumo->id_insumo); ?>" wire:key="option-<?php echo e($insumo->id_insumo); ?>">
                                                 <?php echo e($insumo->nombre); ?> (Stock: <?php echo e(number_format($insumo->stock ?? 0, 2)); ?>)
                                             </option>
                                         <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
@@ -244,7 +244,7 @@ endif;
 unset($__errorArgs, $__bag); ?>" wire:model="id_proveedor">
                                         <option value="">Seleccione un proveedor</option>
                                         <?php $__currentLoopData = $proveedores; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $proveedor): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                            <option value="<?php echo e($proveedor->id_proveedor); ?>"><?php echo e($proveedor->razon_social); ?></option>
+                                            <option value="<?php echo e($proveedor->id_proveedor); ?>" wire:key="option-<?php echo e($proveedor->id_proveedor); ?>"><?php echo e($proveedor->razon_social); ?></option>
                                         <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                     </select>
                                     <?php $__errorArgs = ['id_proveedor'];
@@ -510,7 +510,7 @@ unset($__errorArgs, $__bag); ?>
                                         </thead>
                                         <tbody>
                                             <?php $__empty_1 = true; $__currentLoopData = ($loteSeleccionado?->movimientos ?? []); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $mov): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
-                                                <tr>
+                                                <tr wire:key="row-<?php echo e($mov->id); ?>">
                                                     <td><?php echo e(optional(\Carbon\Carbon::parse($mov->fecha))->format('d/m/Y H:i')); ?></td>
                                                     <td>
                                                         <span class="badge bg-<?php echo e($mov->tipo === 'entrada' ? 'success' : 'danger'); ?>">

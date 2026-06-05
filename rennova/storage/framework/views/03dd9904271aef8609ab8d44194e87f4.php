@@ -56,7 +56,7 @@
                         <select wire:model="id_cliente" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors">
                             <option value="">Seleccione cliente</option>
                             <?php $__currentLoopData = $clientes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $cliente): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                <option value="<?php echo e($cliente->id_cliente); ?>"><?php echo e($cliente->razon_social); ?></option>
+                                <option value="<?php echo e($cliente->id_cliente); ?>" wire:key="option-<?php echo e($cliente->id_cliente); ?>"><?php echo e($cliente->razon_social); ?></option>
                             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </select>
                     </div>
@@ -97,7 +97,7 @@
                             </thead>
                             <tbody class="divide-y divide-slate-200">
                                 <?php $__currentLoopData = $detalle_cargas; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $c): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                    <tr class="hover:bg-slate-50 transition-colors">
+                                    <tr class="hover:bg-slate-50 transition-colors" wire:key="row-<?php echo e($loop->index); ?>">
                                         <td class="px-3 py-3 text-slate-600"><?php echo e(\Carbon\Carbon::parse($c['fecha_carga'])->format('d/m/Y')); ?></td>
                                         <td class="px-3 py-3 text-slate-600"><?php echo e($c['ticket']); ?></td>
                                         <td class="px-3 py-3 text-slate-600"><?php echo e($c['categoria']); ?></td>
@@ -165,7 +165,7 @@
                         </thead>
                         <tbody class="divide-y divide-slate-200">
                             <?php $__empty_1 = true; $__currentLoopData = $ventas; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $venta): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
-                                <tr class="hover:bg-slate-50 transition-colors">
+                                <tr class="hover:bg-slate-50 transition-colors" wire:key="row-<?php echo e($venta->id_recibo); ?>">
                                     <td class="px-3 py-3 text-slate-600"><?php echo e($venta->id_recibo); ?></td>
                                     <td class="px-3 py-3 text-slate-600"><?php echo e(\Carbon\Carbon::parse($venta->fecha_emision)->format('d/m/Y')); ?></td>
                                     <td class="px-3 py-3 text-slate-600"><?php echo e($venta->cliente->razon_social ?? 'N/A'); ?></td>
@@ -270,7 +270,7 @@
                                 </thead>
                                 <tbody class="divide-y divide-slate-200">
                                     <?php $__currentLoopData = $detalle_venta; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $det): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                        <tr class="hover:bg-slate-50">
+                                        <tr class="hover:bg-slate-50" wire:key="row-<?php echo e($loop->index); ?>">
                                             <td class="px-3 py-2 text-slate-600"><?php echo e($det['ticket']); ?></td>
                                             <td class="px-3 py-2 text-slate-600"><?php echo e(\Carbon\Carbon::parse($det['fecha_carga'])->format('d/m/Y')); ?></td>
                                             <td class="px-3 py-2 text-slate-600"><?php echo e($det['categoria']); ?></td>

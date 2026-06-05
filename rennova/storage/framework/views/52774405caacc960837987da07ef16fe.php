@@ -64,7 +64,7 @@ endif;
 unset($__errorArgs, $__bag); ?>">
                                     <option value="">Seleccione un cliente...</option>
                                     <?php $__currentLoopData = $clientes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $cliente): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                        <option value="<?php echo e($cliente->id_cliente); ?>"><?php echo e($cliente->razon_social); ?></option>
+                                        <option value="<?php echo e($cliente->id_cliente); ?>" wire:key="option-<?php echo e($cliente->id_cliente); ?>"><?php echo e($cliente->razon_social); ?></option>
                                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </select>
                                 <?php $__errorArgs = ['cliente_id'];
@@ -88,7 +88,7 @@ endif;
 unset($__errorArgs, $__bag); ?>">
                                     <option value="">Seleccione una categoría...</option>
                                     <?php $__currentLoopData = $categorias; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $categoria): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                        <option value="<?php echo e($categoria->id_categoria_madera); ?>"><?php echo e($categoria->nombre); ?></option>
+                                        <option value="<?php echo e($categoria->id_categoria_madera); ?>" wire:key="option-<?php echo e($categoria->id_categoria_madera); ?>"><?php echo e($categoria->nombre); ?></option>
                                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </select>
                                 <?php $__errorArgs = ['categoria_id'];
@@ -224,7 +224,7 @@ unset($__errorArgs, $__bag); ?>
                                 </thead>
                                 <tbody>
                                     <?php $__currentLoopData = $precios; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $precioItem): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                        <tr class="<?php echo e($precioItem->fecha_hasta ? 'table-secondary' : ''); ?>">
+                                        <tr class="<?php echo e($precioItem->fecha_hasta ? 'table-secondary' : ''); ?>" wire:key="row-<?php echo e($precioItem->id); ?>">
                                             <td><span class="badge bg-secondary"><?php echo e($index + 1); ?></span></td>
                                             <td><strong><?php echo e($precioItem->cliente->razon_social); ?></strong></td>
                                             <td><span class="badge bg-info"><?php echo e($precioItem->categoria->nombre); ?></span></td>

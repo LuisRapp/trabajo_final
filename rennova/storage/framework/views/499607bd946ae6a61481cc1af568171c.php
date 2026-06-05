@@ -30,7 +30,7 @@
                         <select wire:model.live="filtroModelo" class="form-select">
                             <option value="">Todos los modelos</option>
                             <?php $__currentLoopData = $modelos; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $modelo): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                <option value="<?php echo e($modelo['value']); ?>"><?php echo e($modelo['label']); ?></option>
+                                <option value="<?php echo e($modelo['value']); ?>" wire:key="option-<?php echo e($modelo['value']); ?>"><?php echo e($modelo['label']); ?></option>
                             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </select>
                     </div>
@@ -48,7 +48,7 @@
                         <select wire:model.live="filtroUsuario" class="form-select">
                             <option value="">Todos los usuarios</option>
                             <?php $__currentLoopData = $usuarios; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $usuario): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                <option value="<?php echo e($usuario['id']); ?>"><?php echo e($usuario['nombre']); ?></option>
+                                <option value="<?php echo e($usuario['id']); ?>" wire:key="option-<?php echo e($usuario['id']); ?>"><?php echo e($usuario['nombre']); ?></option>
                             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </select>
                     </div>
@@ -86,7 +86,7 @@
                     </thead>
                     <tbody>
                         <?php $__empty_1 = true; $__currentLoopData = $auditorias; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $auditoria): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
-                            <tr>
+                            <tr wire:key="row-<?php echo e($auditoria->id); ?>">
                                 <td><span class="badge bg-secondary">#<?php echo e($auditoria->id); ?></span></td>
                                 <td>
                                     <strong><?php echo e(class_basename($auditoria->auditable_type)); ?></strong><br>
@@ -142,7 +142,7 @@
 
     <!-- Modales de Detalles -->
     <?php $__currentLoopData = $auditorias; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $auditoria): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-        <div class="modal fade" id="modalDetalle<?php echo e($auditoria->id); ?>" tabindex="-1" aria-hidden="true">
+        <div class="modal fade" id="modalDetalle<?php echo e($auditoria->id); ?>" tabindex="-1" aria-hidden="true" wire:key="modal-<?php echo e($auditoria->id); ?>">
             <div class="modal-dialog modal-lg modal-dialog-scrollable">
                 <div class="modal-content">
                     <div class="modal-header bg-light">
@@ -194,7 +194,7 @@
                                     <tbody>
                                         <?php $__currentLoopData = $auditoria->new_values; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $campo => $valorNuevo): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                             <?php if(isset($auditoria->old_values[$campo]) && $auditoria->old_values[$campo] != $valorNuevo): ?>
-                                                <tr>
+                                                <tr wire:key="field-<?php echo e($campo); ?>">
                                                     <td><strong><?php echo e($campo); ?></strong></td>
                                                     <td>
                                                         <div class="text-break">

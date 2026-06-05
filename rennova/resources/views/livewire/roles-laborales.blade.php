@@ -88,7 +88,7 @@
                     </thead>
                     <tbody>
                         @forelse ($roles as $rol)
-                            <tr>
+                            <tr wire:key="row-{{ $rol->id_rol_laboral }}">
                                 <td><span class="badge bg-secondary">{{ $rol->id_rol_laboral }}</span></td>
                                 <td><span class="fw-semibold">{{ $rol->nombre }}</span></td>
                                 <td>

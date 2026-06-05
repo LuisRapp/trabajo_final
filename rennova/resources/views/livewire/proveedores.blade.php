@@ -119,7 +119,7 @@
                             </thead>
                             <tbody class="divide-y divide-slate-200">
                                 @forelse ($proveedores as $proveedor)
-                                    <tr class="hover:bg-slate-50 transition-colors">
+                                    <tr class="hover:bg-slate-50 transition-colors" wire:key="row-{{ $proveedor->id_proveedor }}">
                                         <td class="px-3 py-3"><span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">{{ $proveedor->id_proveedor }}</span></td>
                                         <td class="px-3 py-3"><span class="font-semibold text-slate-900">{{ $proveedor->razon_social }}</span></td>
                                         <td class="px-3 py-3 text-slate-600">{{ $proveedor->cuit }}</td>

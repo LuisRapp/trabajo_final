@@ -123,7 +123,7 @@ unset($__errorArgs, $__bag); ?>
                     </thead>
                     <tbody>
                         <?php $__empty_1 = true; $__currentLoopData = $unidades; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $unidad): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
-                            <tr>
+                            <tr wire:key="row-<?php echo e($unidad->id_unidad_medida); ?>">
                                 <td><span class="badge bg-secondary"><?php echo e($unidad->id_unidad_medida); ?></span></td>
                                 <td><span class="fw-semibold"><?php echo e($unidad->nombre); ?></span></td>
                                 <td><span class="badge bg-info"><?php echo e($unidad->abreviatura); ?></span></td>

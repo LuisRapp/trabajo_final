@@ -41,7 +41,7 @@
                             class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('id_empleado') ring-2 ring-red-500 @enderror" @disabled($liquidar_todos)>
                             <option value="">Seleccione un empleado</option>
                             @foreach ($empleados as $emp)
-                                <option value="{{ $emp->id_empleado }}">
+                                <option value="{{ $emp->id_empleado }}" wire:key="option-{{ $emp->id_empleado }}">
                                     {{ $emp->apellido }}, {{ $emp->nombre }} - {{ $emp->rolLaboral->nombre ?? 'Sin rol' }}
                                 </option>
                             @endforeach
@@ -152,7 +152,7 @@
                                                 </thead>
                                                 <tbody class="divide-y divide-amber-200 bg-white">
                                                     @foreach($adelantos_pendientes as $adelanto)
-                                                        <tr>
+                                                        <tr wire:key="row-{{ $adelanto->id }}">
                                                             <td class="px-3 py-2">{{ \Carbon\Carbon::parse($adelanto->fecha_emision)->format('d/m/Y') }}</td>
                                                             <td class="px-3 py-2 text-right">${{ number_format($adelanto->monto, 2) }}</td>
                                                         </tr>

@@ -42,7 +42,7 @@
                         <select wire:model="id_empleado" class="form-select @error('id_empleado') is-invalid @enderror">
                             <option value="">Seleccione...</option>
                             @foreach($empleados as $empleado)
-                                <option value="{{ $empleado->id_empleado }}">{{ $empleado->apellido }}, {{ $empleado->nombre }}</option>
+                                <option value="{{ $empleado->id_empleado }}" wire:key="option-{{ $empleado->id_empleado }}">{{ $empleado->apellido }}, {{ $empleado->nombre }}</option>
                             @endforeach
                         </select>
                         @error('id_empleado') <div class="invalid-feedback">{{ $message }}</div> @enderror
@@ -137,7 +137,7 @@
                     </thead>
                     <tbody>
                         @forelse ($recibos as $recibo)
-                            <tr>
+                            <tr wire:key="row-{{ $recibo->id_recibo }}">
                                 <td><span class="badge bg-secondary">{{ $recibo->id_recibo }}</span></td>
                                 <td class="fw-semibold">{{ $recibo->empleado?->apellido ?? 'N/A' }}, {{ $recibo->empleado?->nombre ?? '' }}</td>
                                 <td>{{ $recibo->fecha_emision ? \Carbon\Carbon::parse($recibo->fecha_emision)->format('d/m/Y') : 'N/A' }}</td>

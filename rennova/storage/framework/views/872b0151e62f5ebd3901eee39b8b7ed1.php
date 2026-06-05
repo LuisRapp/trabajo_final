@@ -35,7 +35,7 @@
         <!-- Lista de notificaciones -->
         <?php if($notificaciones->count() > 0): ?>
             <?php $__currentLoopData = $notificaciones; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $notificacion): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                <li>
+                <li wire:key="notif-<?php echo e($notificacion->id); ?>">
                     <div 
                         wire:click="irANotificacion(<?php echo e($notificacion->id); ?>)"
                         onclick="event.stopPropagation()"
@@ -57,7 +57,7 @@
                             </div>
 
                             <!-- Contenido -->
-                            <div class="flex-grow-1">
+                            <div class="grow">
                                 <div class="fw-semibold" style="font-size: 0.9rem;"><?php echo e($notificacion->titulo); ?></div>
                                 <div class="text-muted small mt-1" style="font-size: 0.82rem;">
                                     <?php echo e(Str::limit($notificacion->mensaje, 100)); ?>

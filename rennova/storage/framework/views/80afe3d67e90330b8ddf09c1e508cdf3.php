@@ -66,7 +66,7 @@ endif;
 unset($__errorArgs, $__bag); ?>">
                                     <option value="">Seleccione un tipo</option>
                                     <?php $__currentLoopData = $tiposMaquinaria; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $tipo): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                        <option value="<?php echo e($tipo->id_tipo_maquinaria); ?>"><?php echo e($tipo->nombre); ?></option>
+                                        <option value="<?php echo e($tipo->id_tipo_maquinaria); ?>" wire:key="option-<?php echo e($tipo->id_tipo_maquinaria); ?>"><?php echo e($tipo->nombre); ?></option>
                                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </select>
                                 <?php $__errorArgs = ['id_tipo_maquinaria'];
@@ -122,7 +122,7 @@ unset($__errorArgs, $__bag); ?>
                             </thead>
                             <tbody>
                                 <?php $__empty_1 = true; $__currentLoopData = $kits; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $kit): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
-                                    <tr>
+                                    <tr wire:key="row-<?php echo e($kit->id_kit_preventivo); ?>">
                                         <td><span class="badge bg-secondary"><?php echo e($kit->id_kit_preventivo); ?></span></td>
                                         <td><span class="fw-semibold"><?php echo e($kit->nombre_kit); ?></span></td>
                                         <td>

@@ -31,7 +31,7 @@
                         </thead>
                         <tbody>
                             <?php $__currentLoopData = $partes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $parte): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                <tr class="border-b border-slate-200 hover:bg-slate-50">
+                                <tr class="border-b border-slate-200 hover:bg-slate-50" wire:key="row-<?php echo e($parte->id_parte_diario); ?>">
                                     <td class="px-4 py-2"><span class="inline-block px-3 py-1 bg-slate-200 text-slate-800 text-xs font-medium rounded">#<?php echo e($parte->id_parte_diario); ?></span></td>
                                     <td class="px-4 py-2"><?php echo e($parte->lote?->propietario ?? '-'); ?></td>
                                     <td class="px-4 py-2"><?php echo e($parte->fecha ? \Carbon\Carbon::parse($parte->fecha)->format('d/m/Y') : '-'); ?></td>

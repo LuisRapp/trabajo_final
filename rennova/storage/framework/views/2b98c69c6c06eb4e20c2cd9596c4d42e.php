@@ -213,7 +213,7 @@ unset($__errorArgs, $__bag); ?>
                     </thead>
                     <tbody>
                         <?php $__empty_1 = true; $__currentLoopData = $usuarios; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $usuario): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
-                            <tr>
+                            <tr wire:key="row-<?php echo e($usuario->id); ?>">
                                 <td><span class="badge bg-secondary"><?php echo e($usuario->id); ?></span></td>
                                 <td class="fw-semibold"><?php echo e($usuario->apellido); ?>, <?php echo e($usuario->nombre); ?></td>
                                 <td><i class="bi bi-envelope"></i> <?php echo e($usuario->email); ?></td>

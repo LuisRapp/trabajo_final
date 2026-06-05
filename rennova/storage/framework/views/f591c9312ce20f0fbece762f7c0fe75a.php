@@ -52,7 +52,7 @@ endif;
 unset($__errorArgs, $__bag); ?>">
                                     <option value="">Seleccione un rol...</option>
                                     <?php $__currentLoopData = $roles; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $rol): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                        <option value="<?php echo e($rol->id_rol_laboral); ?>"><?php echo e($rol->nombre); ?></option>
+                                        <option value="<?php echo e($rol->id_rol_laboral); ?>" wire:key="option-<?php echo e($rol->id_rol_laboral); ?>"><?php echo e($rol->nombre); ?></option>
                                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </select>
                                 <?php $__errorArgs = ['rol_laboral_id'];
@@ -217,7 +217,7 @@ unset($__errorArgs, $__bag); ?>
                             </thead>
                             <tbody>
                                 <?php $__empty_1 = true; $__currentLoopData = $historicos; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $historico): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
-                                    <tr>
+                                    <tr wire:key="row-<?php echo e($historico->id); ?>">
                                         <td><span class="badge bg-secondary"><?php echo e($historico->id); ?></span></td>
                                         <td><?php echo e($historico->rolLaboral->nombre ?? 'N/A'); ?></td>
                                         <td class="text-end">$<?php echo e(number_format($historico->precio_tonelada ?? 0, 2)); ?></td>

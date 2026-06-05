@@ -76,7 +76,7 @@
                                 @foreach($roles as $role)
                                     <div class="list-group-item d-flex justify-content-between align-items-center {{ $selectedRole == $role->id ? 'active' : '' }}" 
                                          style="cursor: pointer;" 
-                                         wire:click="selectRole({{ $role->id }})">
+                                         wire:click="selectRole({{ $role->id }})" wire:key="item-{{ $role->id }}">
                                         <div>
                                             <strong>{{ $role->name }}</strong>
                                             <br>
@@ -110,14 +110,14 @@
                                 <form wire:submit.prevent="updateRolePermissions">
                                     <div class="row">
                                         @foreach($permissions as $module => $modulePermissions)
-                                            <div class="col-md-6 mb-4">
+                                            <div class="col-md-6 mb-4" wire:key="module-{{ $module }}">
                                                 <div class="card">
                                                     <div class="card-header bg-secondary text-white py-2">
                                                         <strong class="text-capitalize">{{ str_replace('-', ' ', $module) }}</strong>
                                                     </div>
                                                     <div class="card-body">
                                                         @foreach($modulePermissions as $permission)
-                                                            <div class="form-check">
+                                                            <div class="form-check" wire:key="perm-{{ $permission->id }}">
                                                                 <input class="form-check-input" 
                                                                        type="checkbox" 
                                                                        wire:model="rolePermissions" 
@@ -171,7 +171,7 @@
                                 @foreach($users as $user)
                                     <div class="list-group-item {{ $selectedUser == $user->id ? 'active' : '' }}" 
                                          style="cursor: pointer;" 
-                                         wire:click="selectUser({{ $user->id }})">
+                                         wire:click="selectUser({{ $user->id }})" wire:key="item-{{ $user->id }}">
                                         <div class="d-flex justify-content-between align-items-center">
                                             <div>
                                                 <strong>{{ $this->displayUserName($user) }}</strong>
@@ -207,7 +207,7 @@
                                             Seleccione los roles que desea asignar al usuario:
                                         </p>
                                         @foreach($roles as $role)
-                                            <div class="form-check mb-2">
+                                            <div class="form-check mb-2" wire:key="role-{{ $role->id }}">
                                                 <input class="form-check-input" 
                                                        type="checkbox" 
                                                        wire:model="userRoles" 

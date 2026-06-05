@@ -104,7 +104,7 @@ unset($__errorArgs, $__bag); ?>
                     </thead>
                     <tbody>
                         <?php $__empty_1 = true; $__currentLoopData = $roles; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $rol): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
-                            <tr>
+                            <tr wire:key="row-<?php echo e($rol->id_rol_laboral); ?>">
                                 <td><span class="badge bg-secondary"><?php echo e($rol->id_rol_laboral); ?></span></td>
                                 <td><span class="fw-semibold"><?php echo e($rol->nombre); ?></span></td>
                                 <td>

@@ -191,7 +191,7 @@ unset($__errorArgs, $__bag); ?>
                             </thead>
                             <tbody class="divide-y divide-slate-200">
                                 <?php $__empty_1 = true; $__currentLoopData = $proveedores; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $proveedor): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
-                                    <tr class="hover:bg-slate-50 transition-colors">
+                                    <tr class="hover:bg-slate-50 transition-colors" wire:key="row-<?php echo e($proveedor->id_proveedor); ?>">
                                         <td class="px-3 py-3"><span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700"><?php echo e($proveedor->id_proveedor); ?></span></td>
                                         <td class="px-3 py-3"><span class="font-semibold text-slate-900"><?php echo e($proveedor->razon_social); ?></span></td>
                                         <td class="px-3 py-3 text-slate-600"><?php echo e($proveedor->cuit); ?></td>

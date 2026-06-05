@@ -30,7 +30,7 @@
                         <select wire:model.live="filtroModelo" class="form-select">
                             <option value="">Todos los modelos</option>
                             @foreach($modelos as $modelo)
-                                <option value="{{ $modelo['value'] }}">{{ $modelo['label'] }}</option>
+                                <option value="{{ $modelo['value'] }}" wire:key="option-{{ $modelo['value'] }}">{{ $modelo['label'] }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -48,7 +48,7 @@
                         <select wire:model.live="filtroUsuario" class="form-select">
                             <option value="">Todos los usuarios</option>
                             @foreach($usuarios as $usuario)
-                                <option value="{{ $usuario['id'] }}">{{ $usuario['nombre'] }}</option>
+                                <option value="{{ $usuario['id'] }}" wire:key="option-{{ $usuario['id'] }}">{{ $usuario['nombre'] }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -86,7 +86,7 @@
                     </thead>
                     <tbody>
                         @forelse($auditorias as $auditoria)
-                            <tr>
+                            <tr wire:key="row-{{ $auditoria->id }}">
                                 <td><span class="badge bg-secondary">#{{ $auditoria->id }}</span></td>
                                 <td>
                                     <strong>{{ class_basename($auditoria->auditable_type) }}</strong><br>
@@ -141,7 +141,7 @@
 
     <!-- Modales de Detalles -->
     @foreach($auditorias as $auditoria)
-        <div class="modal fade" id="modalDetalle{{ $auditoria->id }}" tabindex="-1" aria-hidden="true">
+        <div class="modal fade" id="modalDetalle{{ $auditoria->id }}" tabindex="-1" aria-hidden="true" wire:key="modal-{{ $auditoria->id }}">
             <div class="modal-dialog modal-lg modal-dialog-scrollable">
                 <div class="modal-content">
                     <div class="modal-header bg-light">
@@ -192,7 +192,7 @@
                                     <tbody>
                                         @foreach($auditoria->new_values as $campo => $valorNuevo)
                                             @if(isset($auditoria->old_values[$campo]) && $auditoria->old_values[$campo] != $valorNuevo)
-                                                <tr>
+                                                <tr wire:key="field-{{ $campo }}">
                                                     <td><strong>{{ $campo }}</strong></td>
                                                     <td>
                                                         <div class="text-break">

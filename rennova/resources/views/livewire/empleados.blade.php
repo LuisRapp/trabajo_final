@@ -69,7 +69,7 @@
                             <select wire:model="id_rol_laboral" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('id_rol_laboral') ring-2 ring-red-500 @enderror">
                                 <option value="">Seleccione...</option>
                                 @foreach($roles as $rol)
-                                    <option value="{{ $rol->id_rol_laboral }}">{{ $rol->nombre }}</option>
+                                    <option value="{{ $rol->id_rol_laboral }}" wire:key="option-{{ $rol->id_rol_laboral }}">{{ $rol->nombre }}</option>
                                 @endforeach
                             </select>
                             @error('id_rol_laboral') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
@@ -141,7 +141,7 @@
                         </thead>
                         <tbody class="divide-y divide-slate-200">
                             @forelse ($empleados as $empleado)
-                                <tr class="hover:bg-slate-50 transition-colors">
+                                <tr class="hover:bg-slate-50 transition-colors" wire:key="row-{{ $empleado->id_empleado }}">
                                     <td class="px-3 py-3"><span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">{{ $empleado->id_empleado }}</span></td>
                                     <td class="px-3 py-3 text-slate-600">{{ number_format($empleado->dni, 0, ',', '.') }}</td>
                                     <td class="px-3 py-3 font-semibold text-slate-800">{{ $empleado->apellido }}, {{ $empleado->nombre }}</td>

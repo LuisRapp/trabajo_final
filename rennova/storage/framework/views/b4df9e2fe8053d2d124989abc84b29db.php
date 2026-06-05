@@ -79,7 +79,7 @@ endif;
 unset($__errorArgs, $__bag); ?>">
                                 <option value="">Seleccione un lote...</option>
                                 <?php $__currentLoopData = $this->lotes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $lote): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                    <option value="<?php echo e($lote->id_lote); ?>"><?php echo e($lote->propietario); ?> - <?php echo e($lote->ubicacion); ?></option>
+                                    <option value="<?php echo e($lote->id_lote); ?>" wire:key="option-<?php echo e($lote->id_lote); ?>"><?php echo e($lote->propietario); ?> - <?php echo e($lote->ubicacion); ?></option>
                                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </select>
                             <?php $__errorArgs = ['id_lote'];
@@ -107,7 +107,7 @@ endif;
 unset($__errorArgs, $__bag); ?>">
                                 <option value="">Seleccione una tarea...</option>
                                 <?php $__currentLoopData = $this->loteTareas; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $tarea): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                    <option value="<?php echo e($tarea->id_lote_tarea); ?>">
+                                    <option value="<?php echo e($tarea->id_lote_tarea); ?>" wire:key="option-<?php echo e($tarea->id_lote_tarea); ?>">
                                         #<?php echo e($tarea->id_lote_tarea); ?> - <?php echo e($tarea->tipo_tarea_label); ?> (<?php echo e($tarea->estado); ?>)
                                     </option>
                                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
@@ -135,7 +135,7 @@ unset($__errorArgs, $__bag); ?>
                                             <select wire:model.live="nueva_tarea_tipo_tarea" class="w-full px-3 py-2 border border-slate-300 rounded text-sm focus:border-green-700 focus:ring-1 focus:ring-green-600 focus:outline-none">
                                                 <option value="">Seleccione...</option>
                                                 <?php $__currentLoopData = $this->taskTypes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $taskType): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                                    <option value="<?php echo e($taskType->value); ?>"><?php echo e($taskType->label()); ?></option>
+                                                    <option value="<?php echo e($taskType->value); ?>" wire:key="option-<?php echo e($taskType->value); ?>"><?php echo e($taskType->label()); ?></option>
                                                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                             </select>
                                         </div>
@@ -350,7 +350,7 @@ endif;
 unset($__errorArgs, $__bag); ?>">
                                         <option value="">Seleccione...</option>
                                         <?php $__currentLoopData = $this->categoriasMadera; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $cat): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                            <option value="<?php echo e($cat->id_categoria_madera); ?>"><?php echo e($cat->nombre); ?></option>
+                                            <option value="<?php echo e($cat->id_categoria_madera); ?>" wire:key="option-<?php echo e($cat->id_categoria_madera); ?>"><?php echo e($cat->nombre); ?></option>
                                         <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                     </select>
                                     <?php $__errorArgs = ['carga_id_categoria_madera'];
@@ -377,7 +377,7 @@ if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>">
                                             <?php $__empty_1 = true; $__currentLoopData = $this->maquinariasFiltrada; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $maq): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
-                                                <div class="flex items-center mb-2">
+                                                <div class="flex items-center mb-2" wire:key="item-<?php echo e($maq->id_maquinaria); ?>">
                                                     <input type="checkbox" value="<?php echo e($maq->id_maquinaria); ?>" id="maq-<?php echo e($maq->id_maquinaria); ?>" wire:model="carga_maquinarias" class="w-4 h-4 rounded border-slate-300 text-green-600">
                                                     <label for="maq-<?php echo e($maq->id_maquinaria); ?>" class="ml-2 text-sm text-slate-700">
                                                         <?php echo e($maq->modelo); ?> - <small class="text-slate-500"><?php echo e($maq->tipoMaquinaria->nombre ?? 'Sin tipo'); ?></small>
@@ -415,7 +415,7 @@ endif;
 unset($__errorArgs, $__bag); ?>" placeholder="Buscar chofer...">
                                     <select wire:model="carga_id_chofer" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 focus:outline-none" size="3">
                                         <?php $__empty_1 = true; $__currentLoopData = $this->choferesFiltrados; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $chofer): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
-                                            <option value="<?php echo e($chofer->id_chofer); ?>"><?php echo e($chofer->apellido); ?>, <?php echo e($chofer->nombre); ?></option>
+                                            <option value="<?php echo e($chofer->id_chofer); ?>" wire:key="option-<?php echo e($chofer->id_chofer); ?>"><?php echo e($chofer->apellido); ?>, <?php echo e($chofer->nombre); ?></option>
                                         <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                                             <option value="" disabled>No hay resultados</option>
                                         <?php endif; ?>
@@ -441,7 +441,7 @@ endif;
 unset($__errorArgs, $__bag); ?>" placeholder="Buscar cliente...">
                                     <select wire:model="carga_destino" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 focus:outline-none" size="3">
                                         <?php $__empty_1 = true; $__currentLoopData = $this->clientesFiltrados; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $cliente): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
-                                            <option value="<?php echo e($cliente->id_cliente); ?>"><?php echo e($cliente->razon_social); ?></option>
+                                            <option value="<?php echo e($cliente->id_cliente); ?>" wire:key="option-<?php echo e($cliente->id_cliente); ?>"><?php echo e($cliente->razon_social); ?></option>
                                         <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                                             <option value="" disabled>No hay resultados</option>
                                         <?php endif; ?>
@@ -547,7 +547,7 @@ if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>">
                                             <?php $__empty_1 = true; $__currentLoopData = $this->empleadosFiltrados; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $emp): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
-                                                <div class="flex items-center mb-2">
+                                                <div class="flex items-center mb-2" wire:key="item-<?php echo e($emp->id_empleado); ?>">
                                                     <input type="checkbox" value="<?php echo e($emp->id_empleado); ?>" id="emp-<?php echo e($emp->id_empleado); ?>" wire:model="carga_empleados" class="w-4 h-4 rounded border-slate-300 text-green-600">
                                                     <label for="emp-<?php echo e($emp->id_empleado); ?>" class="ml-2 text-sm text-slate-700">
                                                         <?php echo e($emp->apellido); ?>, <?php echo e($emp->nombre); ?> - <small class="text-slate-500"><?php echo e($emp->rolLaboral->nombre ?? 'Sin rol'); ?></small>
@@ -597,7 +597,7 @@ unset($__errorArgs, $__bag); ?>
                                     </thead>
                                     <tbody>
                                         <?php $__currentLoopData = $cargas; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $carga): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                            <tr class="border-b border-slate-200 hover:bg-slate-50">
+                                            <tr class="border-b border-slate-200 hover:bg-slate-50" wire:key="row-<?php echo e($index); ?>">
                                                 <td class="px-4 py-2"><span class="inline-block px-3 py-1 bg-slate-200 text-slate-800 text-xs font-medium rounded"><?php echo e($carga['ticket']); ?></span></td>
                                                 <td class="px-4 py-2">
                                                     <?php
@@ -664,7 +664,7 @@ endif;
 unset($__errorArgs, $__bag); ?>">
                                         <option value="">Seleccione...</option>
                                         <?php $__currentLoopData = $this->empleadosFiltrados; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $emp): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                            <option value="<?php echo e($emp->id_empleado); ?>">
+                                            <option value="<?php echo e($emp->id_empleado); ?>" wire:key="option-<?php echo e($emp->id_empleado); ?>">
                                                 <?php echo e($emp->apellido); ?>, <?php echo e($emp->nombre); ?> - <?php echo e($emp->rolLaboral->nombre ?? 'Sin rol'); ?>
 
                                                 <?php if(isset($jornal_por_empleado[$emp->id_empleado])): ?>
@@ -704,7 +704,7 @@ unset($__errorArgs, $__bag); ?>
                                     </thead>
                                     <tbody>
                                         <?php $__currentLoopData = $jornales; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $jornal): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                            <tr class="border-b border-slate-200 hover:bg-slate-50">
+                                            <tr class="border-b border-slate-200 hover:bg-slate-50" wire:key="row-<?php echo e($index); ?>">
                                                 <td class="px-4 py-2"><?php echo e($jornal['nombre_completo'] ?? '-'); ?></td>
                                                 <td class="px-4 py-2"><span class="inline-block px-3 py-1 bg-slate-200 text-slate-800 text-xs font-medium rounded"><?php echo e($jornal['rol'] ?? '-'); ?></span></td>
                                                 <td class="px-4 py-2 text-green-600 font-bold">$<?php echo e(number_format($jornal['jornal_diario'] ?? 0, 2)); ?></td>
@@ -794,7 +794,7 @@ endif;
 unset($__errorArgs, $__bag); ?>">
                                     <option value="">Seleccione...</option>
                                     <?php $__currentLoopData = $this->insumos; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $insumo): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                        <option value="<?php echo e($insumo->id_insumo); ?>"><?php echo e($insumo->nombre); ?></option>
+                                        <option value="<?php echo e($insumo->id_insumo); ?>" wire:key="option-<?php echo e($insumo->id_insumo); ?>"><?php echo e($insumo->nombre); ?></option>
                                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </select>
                                 <?php if($stock_disponible_insumo !== null): ?>
@@ -878,7 +878,7 @@ unset($__errorArgs, $__bag); ?>
                                 </thead>
                                 <tbody>
                                     <?php $__currentLoopData = $movimientos; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $mov): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                        <tr class="border-b border-slate-200 hover:bg-slate-50">
+                                        <tr class="border-b border-slate-200 hover:bg-slate-50" wire:key="row-<?php echo e($index); ?>">
                                             <td class="px-4 py-2"><strong><?php echo e($mov['nombre_insumo']); ?></strong></td>
                                             <td class="px-4 py-2"><?php echo e(number_format($mov['cantidad'], 2)); ?> <?php echo e($mov['unidad'] ?? ''); ?></td>
                                             <td class="px-4 py-2"><span class="inline-block px-3 py-1 bg-slate-200 text-slate-800 text-xs font-medium rounded"><?php echo e($mov['motivo']); ?></span></td>

@@ -63,7 +63,7 @@ endif;
 unset($__errorArgs, $__bag); ?>">
                                 <option value="">Seleccione...</option>
                                 <?php $__currentLoopData = ($empleados ?? []); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $empleado): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                    <option value="<?php echo e($empleado->id_empleado); ?>"><?php echo e($empleado->apellido); ?>, <?php echo e($empleado->nombre); ?></option>
+                                    <option value="<?php echo e($empleado->id_empleado); ?>" wire:key="option-<?php echo e($empleado->id_empleado); ?>"><?php echo e($empleado->apellido); ?>, <?php echo e($empleado->nombre); ?></option>
                                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </select>
                             <?php $__errorArgs = ['id_empleado'];
@@ -176,7 +176,7 @@ unset($__errorArgs, $__bag); ?>
                         </thead>
                         <tbody class="divide-y divide-slate-200">
                             <?php $__empty_1 = true; $__currentLoopData = ($adelantos ?? []); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $adelanto): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
-                                <tr class="hover:bg-slate-50 transition-colors">
+                                <tr class="hover:bg-slate-50 transition-colors" wire:key="row-<?php echo e($adelanto->id_adelanto); ?>">
                                     <td class="px-3 py-3"><span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700"><?php echo e($adelanto->id_adelanto); ?></span></td>
                                     <td class="px-3 py-3 font-semibold text-slate-800"><?php echo e($adelanto->empleado?->apellido ?? 'N/A'); ?>, <?php echo e($adelanto->empleado?->nombre ?? ''); ?></td>
                                     <td class="px-3 py-3 text-slate-600">$<?php echo e(number_format($adelanto->monto, 2, ',', '.')); ?></td>

@@ -58,7 +58,7 @@
                             <small>Se utilizarán los siguientes insumos del kit configurado:</small>
                             <ul class="mb-0 mt-2 list-inside space-y-1 text-sm">
                                 @foreach($kitPreventivo as $item)
-                                    <li>{{ $item['nombre'] ?? 'N/A' }}: {{ number_format($item['cantidad_requerida'], 2) }} unidades</li>
+                                    <li wire:key="kit-{{ $loop->index }}">{{ $item['nombre'] ?? 'N/A' }}: {{ number_format($item['cantidad_requerida'], 2) }} unidades</li>
                                 @endforeach
                             </ul>
                         </div>
@@ -83,7 +83,7 @@
                                 <select wire:model.live="id_maquinaria" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('id_maquinaria') ring-2 ring-red-500 @enderror">
                                     <option value="">Seleccione...</option>
                                     @foreach($maquinarias as $maquinaria)
-                                        <option value="{{ $maquinaria->id_maquinaria }}">
+                                        <option value="{{ $maquinaria->id_maquinaria }}" wire:key="option-{{ $maquinaria->id_maquinaria }}">
                                             {{ $maquinaria->modelo }} - {{ $maquinaria->tipoMaquinaria?->nombre ?? 'N/A' }}
                                             @if($maquinaria->umbral_toneladas)
                                                 ({{ number_format($maquinaria->toneladas_acumuladas ?? 0, 0) }}/{{ number_format($maquinaria->umbral_toneladas, 0) }} ton)
@@ -98,7 +98,7 @@
                                 <select wire:model.live="id_tipo_mantenimiento" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('id_tipo_mantenimiento') ring-2 ring-red-500 @enderror">
                                     <option value="">Seleccione...</option>
                                     @foreach($tipos as $tipo)
-                                        <option value="{{ $tipo->id_tipo_mantenimiento }}">{{ $tipo->nombre }}</option>
+                                        <option value="{{ $tipo->id_tipo_mantenimiento }}" wire:key="option-{{ $tipo->id_tipo_mantenimiento }}">{{ $tipo->nombre }}</option>
                                     @endforeach
                                 </select>
                                 @error('id_tipo_mantenimiento') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
@@ -188,7 +188,7 @@
                             </thead>
                             <tbody class="divide-y divide-slate-200">
                                 @forelse ($mantenimientos as $mantenimiento)
-                                    <tr class="hover:bg-slate-50 transition-colors">
+                                    <tr class="hover:bg-slate-50 transition-colors" wire:key="row-{{ $mantenimiento->id_mantenimiento }}">
                                         <td class="px-3 py-3"><span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">{{ $mantenimiento->id_mantenimiento }}</span></td>
                                         <td class="px-3 py-3 font-semibold text-slate-800">{{ $mantenimiento->maquinaria?->modelo ?? 'N/A' }}</td>
                                         <td class="px-3 py-3 text-slate-600">{{ $mantenimiento->tipoMantenimiento?->nombre ?? 'N/A' }}</td>
@@ -378,18 +378,14 @@
                     </h6>
 
                     @foreach($insumos_usados as $index => $insumo)
-                        <div class="grid grid-cols-1 md:grid-cols-5 gap-3 mb-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                        <div class="grid grid-cols-1 md:grid-cols-5 gap-3 mb-4 p-4 bg-slate-50 rounded-lg border border-slate-200" wire:key="insumo-{{ $index }}">
                             <div class="md:col-span-2">
                                 <label class="block text-xs font-semibold text-slate-600 mb-2">Insumo</label>
                                 <select wire:model.live="insumos_usados.{{ $index }}.id_insumo" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors text-sm">
                                     <option value="">Seleccione...</option>
-                                    @foreach(\App\Models\Insumo::orderBy('nombre')->get() as $ins)
-                                        @php
-                                            $stockDisp = \App\Models\MovimientoStock::stockDisponible($ins->id_insumo);
-                                            $precioProm = \App\Models\MovimientoStock::precioPromedio($ins->id_insumo);
-                                        @endphp
-                                        <option value="{{ $ins->id_insumo }}">
-                                            {{ $ins->nombre }} (Stock: {{ number_format($stockDisp, 2) }} - ${{ number_format($precioProm, 2) }}/u)
+                                    @foreach($insumosDisponibles as $ins)
+                                        <option value="{{ $ins->id_insumo }}" wire:key="option-{{ $ins->id_insumo }}">
+                                            {{ $ins->nombre }} (Stock: {{ number_format($ins->stock_disponible, 2) }} - ${{ number_format($ins->precio_promedio, 2) }}/u)
                                         </option>
                                     @endforeach
                                 </select>
@@ -399,7 +395,7 @@
                                 <input type="number" wire:model="insumos_usados.{{ $index }}.cantidad" step="0.1" min="0" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors" placeholder="0">
                                 @if(!empty($insumo['id_insumo']))
                                     @php
-                                        $stockDisponible = \App\Models\MovimientoStock::stockDisponible($insumo['id_insumo']);
+                                        $stockDisponible = optional($insumosDisponibles->firstWhere('id_insumo', $insumo['id_insumo']))->stock_disponible ?? 0;
                                     @endphp
                                     <small class="text-slate-500 text-xs mt-1 block">Disponible: {{ number_format($stockDisponible, 2) }}</small>
                                 @endif

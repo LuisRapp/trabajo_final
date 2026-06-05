@@ -50,7 +50,7 @@ endif;
 unset($__errorArgs, $__bag); ?>">
                             <option value="">Seleccione...</option>
                             <?php $__currentLoopData = $empleados; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $empleado): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                <option value="<?php echo e($empleado->id_empleado); ?>"><?php echo e($empleado->apellido); ?>, <?php echo e($empleado->nombre); ?></option>
+                                <option value="<?php echo e($empleado->id_empleado); ?>" wire:key="option-<?php echo e($empleado->id_empleado); ?>"><?php echo e($empleado->apellido); ?>, <?php echo e($empleado->nombre); ?></option>
                             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </select>
                         <?php $__errorArgs = ['id_empleado'];
@@ -209,7 +209,7 @@ unset($__errorArgs, $__bag); ?>
                     </thead>
                     <tbody>
                         <?php $__empty_1 = true; $__currentLoopData = $recibos; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $recibo): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
-                            <tr>
+                            <tr wire:key="row-<?php echo e($recibo->id_recibo); ?>">
                                 <td><span class="badge bg-secondary"><?php echo e($recibo->id_recibo); ?></span></td>
                                 <td class="fw-semibold"><?php echo e($recibo->empleado?->apellido ?? 'N/A'); ?>, <?php echo e($recibo->empleado?->nombre ?? ''); ?></td>
                                 <td><?php echo e($recibo->fecha_emision ? \Carbon\Carbon::parse($recibo->fecha_emision)->format('d/m/Y') : 'N/A'); ?></td>

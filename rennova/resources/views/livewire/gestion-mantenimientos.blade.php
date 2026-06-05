@@ -45,7 +45,7 @@
                     <select wire:model="filtro_maquinaria" class="form-select">
                         <option value="">Todas</option>
                         @foreach($maquinarias as $maq)
-                            <option value="{{ $maq->id }}">
+                            <option value="{{ $maq->id }}" wire:key="option-{{ $maq->id }}">
                                 {{ $maq->modelo }} ({{ $maq->tipoMaquinaria->nombre }})
                             </option>
                         @endforeach
@@ -109,7 +109,7 @@
                     </thead>
                     <tbody>
                         @forelse($ordenes as $orden)
-                        <tr>
+                        <tr wire:key="row-{{ $orden->id }}">
                             <td>{{ $orden->id }}</td>
                             <td>
                                 <strong>{{ $orden->maquinaria->modelo }}</strong><br>
@@ -225,7 +225,7 @@
                             </thead>
                             <tbody>
                                 @foreach($verificacion_stock['kit'] as $item)
-                                <tr class="{{ in_array($item['insumo_id'], array_column($verificacion_stock['insuficientes'], 'insumo_id')) ? 'table-danger' : 'table-success' }}">
+                                <tr class="{{ in_array($item['insumo_id'], array_column($verificacion_stock['insuficientes'], 'insumo_id')) ? 'table-danger' : 'table-success' }}" wire:key="row-{{ $item['insumo_id'] }}">
                                     <td>{{ $item['nombre'] }}</td>
                                     <td>{{ $item['cantidad_requerida'] }}</td>
                                     <td>{{ $item['stock_disponible'] }}</td>
@@ -293,7 +293,7 @@
                             </thead>
                             <tbody>
                                 @foreach($insumos_usados as $index => $insumo)
-                                <tr>
+                                <tr wire:key="row-{{ $index }}">
                                     <td>
                                         <select wire:model="insumos_usados.{{ $index }}.insumo_id" 
                                                 wire:change="actualizarInsumo({{ $index }}, $event.target.value)"
@@ -301,7 +301,7 @@
                                                 @if($insumo['es_obligatorio']) disabled @endif>
                                             <option value="">Seleccionar...</option>
                                             @foreach($insumos_disponibles as $ins)
-                                                <option value="{{ $ins->id_insumo }}">{{ $ins->nombre }}</option>
+                                                <option value="{{ $ins->id_insumo }}" wire:key="option-{{ $ins->id_insumo }}">{{ $ins->nombre }}</option>
                                             @endforeach
                                         </select>
                                         @error("insumos_usados.{$index}.insumo_id")
@@ -428,7 +428,7 @@
                             </thead>
                             <tbody>
                                 @foreach($detalle_orden->mantenimientoInsumos as $item)
-                                <tr>
+                                <tr wire:key="row-{{ $item->id }}">
                                     <td>{{ $item->insumo->nombre }}</td>
                                     <td>{{ $item->cantidad }}</td>
                                     <td>${{ number_format($item->costo_unitario, 2) }}</td>

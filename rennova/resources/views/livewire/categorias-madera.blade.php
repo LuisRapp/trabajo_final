@@ -93,7 +93,7 @@
                     </thead>
                     <tbody>
                         @forelse ($categorias as $categoria)
-                            <tr>
+                            <tr wire:key="row-{{ $categoria->id_categoria_madera }}">
                                 <td><span class="badge bg-secondary">{{ $categoria->id_categoria_madera }}</span></td>
                                 <td><span class="fw-semibold">{{ $categoria->nombre }}</span></td>
                                 <td>{{ $categoria->descripcion ?? '-' }}</td>

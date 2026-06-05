@@ -119,7 +119,7 @@ endif;
 unset($__errorArgs, $__bag); ?>">
                                 <option value="">Seleccione...</option>
                                 <?php $__currentLoopData = $roles; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $rol): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                    <option value="<?php echo e($rol->id_rol_laboral); ?>"><?php echo e($rol->nombre); ?></option>
+                                    <option value="<?php echo e($rol->id_rol_laboral); ?>" wire:key="option-<?php echo e($rol->id_rol_laboral); ?>"><?php echo e($rol->nombre); ?></option>
                                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </select>
                             <?php $__errorArgs = ['id_rol_laboral'];
@@ -241,7 +241,7 @@ unset($__errorArgs, $__bag); ?>
                         </thead>
                         <tbody class="divide-y divide-slate-200">
                             <?php $__empty_1 = true; $__currentLoopData = $empleados; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $empleado): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
-                                <tr class="hover:bg-slate-50 transition-colors">
+                                <tr class="hover:bg-slate-50 transition-colors" wire:key="row-<?php echo e($empleado->id_empleado); ?>">
                                     <td class="px-3 py-3"><span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700"><?php echo e($empleado->id_empleado); ?></span></td>
                                     <td class="px-3 py-3 text-slate-600"><?php echo e(number_format($empleado->dni, 0, ',', '.')); ?></td>
                                     <td class="px-3 py-3 font-semibold text-slate-800"><?php echo e($empleado->apellido); ?>, <?php echo e($empleado->nombre); ?></td>

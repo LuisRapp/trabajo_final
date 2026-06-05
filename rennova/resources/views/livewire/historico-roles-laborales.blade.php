@@ -43,7 +43,7 @@
                                 <select wire:model="rol_laboral_id" class="form-select @error('rol_laboral_id') is-invalid @enderror">
                                     <option value="">Seleccione un rol...</option>
                                     @foreach($roles as $rol)
-                                        <option value="{{ $rol->id_rol_laboral }}">{{ $rol->nombre }}</option>
+                                        <option value="{{ $rol->id_rol_laboral }}" wire:key="option-{{ $rol->id_rol_laboral }}">{{ $rol->nombre }}</option>
                                     @endforeach
                                 </select>
                                 @error('rol_laboral_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
@@ -130,7 +130,7 @@
                             </thead>
                             <tbody>
                                 @forelse ($historicos as $historico)
-                                    <tr>
+                                    <tr wire:key="row-{{ $historico->id }}">
                                         <td><span class="badge bg-secondary">{{ $historico->id }}</span></td>
                                         <td>{{ $historico->rolLaboral->nombre ?? 'N/A' }}</td>
                                         <td class="text-end">${{ number_format($historico->precio_tonelada ?? 0, 2) }}</td>

@@ -57,7 +57,7 @@ endif;
 unset($__errorArgs, $__bag); ?>">
                                     <option value="">Seleccione un cliente...</option>
                                     <?php $__currentLoopData = $clientes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $cliente): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                        <option value="<?php echo e($cliente->id_cliente); ?>"><?php echo e($cliente->razon_social ?? $cliente->nombre); ?></option>
+                                        <option value="<?php echo e($cliente->id_cliente); ?>" wire:key="option-<?php echo e($cliente->id_cliente); ?>"><?php echo e($cliente->razon_social ?? $cliente->nombre); ?></option>
                                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </select>
                                 <?php $__errorArgs = ['id_cliente'];
@@ -234,7 +234,7 @@ unset($__errorArgs, $__bag); ?>
                             </thead>
                             <tbody class="divide-y divide-slate-200">
                                 <?php $__empty_1 = true; $__currentLoopData = $choferes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $c): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
-                                    <tr class="hover:bg-slate-50 transition-colors">
+                                    <tr class="hover:bg-slate-50 transition-colors" wire:key="row-<?php echo e($c->id_chofer); ?>">
                                         <td class="px-3 py-3"><span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700"><?php echo e($c->id_chofer); ?></span></td>
                                         <td class="px-3 py-3 text-slate-600"><?php echo e($c->cliente?->razon_social ?? $c->cliente?->nombre ?? 'Sin cliente'); ?></td>
                                         <td class="px-3 py-3 text-slate-600"><?php echo e($c->apellido); ?>, <?php echo e($c->nombre); ?></td>

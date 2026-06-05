@@ -44,7 +44,7 @@
                                 <select wire:model="id_tipo_maquinaria" class="form-select @error('id_tipo_maquinaria') is-invalid @enderror">
                                     <option value="">Seleccione un tipo</option>
                                     @foreach($tiposMaquinaria as $tipo)
-                                        <option value="{{ $tipo->id_tipo_maquinaria }}">{{ $tipo->nombre }}</option>
+                                        <option value="{{ $tipo->id_tipo_maquinaria }}" wire:key="option-{{ $tipo->id_tipo_maquinaria }}">{{ $tipo->nombre }}</option>
                                     @endforeach
                                 </select>
                                 @error('id_tipo_maquinaria') <div class="invalid-feedback">{{ $message }}</div> @enderror
@@ -92,7 +92,7 @@
                             </thead>
                             <tbody>
                                 @forelse ($kits as $kit)
-                                    <tr>
+                                    <tr wire:key="row-{{ $kit->id_kit_preventivo }}">
                                         <td><span class="badge bg-secondary">{{ $kit->id_kit_preventivo }}</span></td>
                                         <td><span class="fw-semibold">{{ $kit->nombre_kit }}</span></td>
                                         <td>

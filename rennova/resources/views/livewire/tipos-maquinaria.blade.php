@@ -87,7 +87,7 @@
                     </thead>
                     <tbody>
                         @forelse ($tipos as $tipo)
-                            <tr>
+                            <tr wire:key="row-{{ $tipo->id_tipo_maquinaria }}">
                                 <td><span class="badge bg-secondary">{{ $tipo->id_tipo_maquinaria }}</span></td>
                                 <td><span class="fw-semibold">{{ $tipo->nombre }}</span></td>
                                 <td class="text-center">

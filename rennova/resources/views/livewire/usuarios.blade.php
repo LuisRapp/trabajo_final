@@ -127,7 +127,7 @@
                     </thead>
                     <tbody>
                         @forelse ($usuarios as $usuario)
-                            <tr>
+                            <tr wire:key="row-{{ $usuario->id }}">
                                 <td><span class="badge bg-secondary">{{ $usuario->id }}</span></td>
                                 <td class="fw-semibold">{{ $usuario->apellido }}, {{ $usuario->nombre }}</td>
                                 <td><i class="bi bi-envelope"></i> {{ $usuario->email }}</td>

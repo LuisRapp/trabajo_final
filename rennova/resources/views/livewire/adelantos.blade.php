@@ -55,7 +55,7 @@
                             <select wire:model="id_empleado" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 bg-white transition-colors @error('id_empleado') ring-2 ring-red-500 @enderror">
                                 <option value="">Seleccione...</option>
                                 @foreach(($empleados ?? []) as $empleado)
-                                    <option value="{{ $empleado->id_empleado }}">{{ $empleado->apellido }}, {{ $empleado->nombre }}</option>
+                                    <option value="{{ $empleado->id_empleado }}" wire:key="option-{{ $empleado->id_empleado }}">{{ $empleado->apellido }}, {{ $empleado->nombre }}</option>
                                 @endforeach
                             </select>
                             @error('id_empleado') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
@@ -132,7 +132,7 @@
                         </thead>
                         <tbody class="divide-y divide-slate-200">
                             @forelse (($adelantos ?? []) as $adelanto)
-                                <tr class="hover:bg-slate-50 transition-colors">
+                                <tr class="hover:bg-slate-50 transition-colors" wire:key="row-{{ $adelanto->id_adelanto }}">
                                     <td class="px-3 py-3"><span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">{{ $adelanto->id_adelanto }}</span></td>
                                     <td class="px-3 py-3 font-semibold text-slate-800">{{ $adelanto->empleado?->apellido ?? 'N/A' }}, {{ $adelanto->empleado?->nombre ?? '' }}</td>
                                     <td class="px-3 py-3 text-slate-600">${{ number_format($adelanto->monto, 2, ',', '.') }}</td>

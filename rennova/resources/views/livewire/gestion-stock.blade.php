@@ -63,7 +63,7 @@
                     <select class="form-select" wire:model.live="filtro_insumo">
                         <option value="">Todos los insumos</option>
                         @foreach($insumos as $insumo)
-                            <option value="{{ $insumo->id_insumo }}">{{ $insumo->nombre }}</option>
+                            <option value="{{ $insumo->id_insumo }}" wire:key="option-{{ $insumo->id_insumo }}">{{ $insumo->nombre }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -72,7 +72,7 @@
                     <select class="form-select" wire:model.live="filtro_proveedor">
                         <option value="">Todos los proveedores</option>
                         @foreach($proveedores as $proveedor)
-                            <option value="{{ $proveedor->id_proveedor }}">{{ $proveedor->razon_social }}</option>
+                            <option value="{{ $proveedor->id_proveedor }}" wire:key="option-{{ $proveedor->id_proveedor }}">{{ $proveedor->razon_social }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -138,7 +138,7 @@
                     </thead>
                     <tbody>
                         @forelse($lotes as $lote)
-                            <tr class="{{ $lote->agotado ? 'table-secondary' : '' }}">
+                            <tr class="{{ $lote->agotado ? 'table-secondary' : '' }}" wire:key="row-{{ $lote->id_lote_inventario }}">
                                 <td><strong>{{ $lote->id_lote_inventario }}</strong></td>
                                 <td>{{ $lote->insumo->nombre ?? 'N/A' }}</td>
                                 <td>{{ $lote->proveedor->razon_social ?? 'N/A' }}</td>
@@ -206,7 +206,7 @@
                                     <select class="form-select @error('id_insumo') is-invalid @enderror" wire:model="id_insumo">
                                         <option value="">Seleccione un insumo</option>
                                         @foreach($insumos as $insumo)
-                                            <option value="{{ $insumo->id_insumo }}">
+                                            <option value="{{ $insumo->id_insumo }}" wire:key="option-{{ $insumo->id_insumo }}">
                                                 {{ $insumo->nombre }} (Stock: {{ number_format($insumo->stock ?? 0, 2) }})
                                             </option>
                                         @endforeach
@@ -219,7 +219,7 @@
                                     <select class="form-select @error('id_proveedor') is-invalid @enderror" wire:model="id_proveedor">
                                         <option value="">Seleccione un proveedor</option>
                                         @foreach($proveedores as $proveedor)
-                                            <option value="{{ $proveedor->id_proveedor }}">{{ $proveedor->razon_social }}</option>
+                                            <option value="{{ $proveedor->id_proveedor }}" wire:key="option-{{ $proveedor->id_proveedor }}">{{ $proveedor->razon_social }}</option>
                                         @endforeach
                                     </select>
                                     @error('id_proveedor') <div class="invalid-feedback">{{ $message }}</div> @enderror
@@ -392,7 +392,7 @@
                                         </thead>
                                         <tbody>
                                             @forelse(($loteSeleccionado?->movimientos ?? []) as $mov)
-                                                <tr>
+                                                <tr wire:key="row-{{ $mov->id }}">
                                                     <td>{{ optional(\Carbon\Carbon::parse($mov->fecha))->format('d/m/Y H:i') }}</td>
                                                     <td>
                                                         <span class="badge bg-{{ $mov->tipo === 'entrada' ? 'success' : 'danger' }}">

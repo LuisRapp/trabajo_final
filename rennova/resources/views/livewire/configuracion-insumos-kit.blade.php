@@ -44,7 +44,7 @@
                         <select wire:model="insumo_id" class="form-select @error('insumo_id') is-invalid @enderror">
                             <option value="">Seleccione un insumo</option>
                             @foreach($insumos as $insumo)
-                                <option value="{{ $insumo->id_insumo }}">
+                                <option value="{{ $insumo->id_insumo }}" wire:key="option-{{ $insumo->id_insumo }}">
                                     {{ $insumo->nombre }} ({{ $insumo->unidad_medida }})
                                 </option>
                             @endforeach
@@ -85,7 +85,7 @@
                     </thead>
                     <tbody>
                         @forelse ($insumosKit as $insumo)
-                            <tr>
+                            <tr wire:key="row-{{ $insumo['id_insumo'] }}">
                                 <td><span class="badge bg-secondary">{{ $insumo['id_insumo'] }}</span></td>
                                 <td><span class="fw-semibold">{{ $insumo['nombre'] }}</span></td>
                                 <td>{{ $insumo['unidad_medida'] }}</td>

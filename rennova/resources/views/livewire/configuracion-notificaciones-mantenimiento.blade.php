@@ -38,7 +38,7 @@
                             <div class="form-group">
                                 <label class="form-label fw-bold">Usuarios a notificar:</label>
                                 @foreach($usuarios as $usuario)
-                                    <div class="form-check">
+                                    <div class="form-check" wire:key="user-{{ $usuario->id }}">
                                         <input class="form-check-input" type="checkbox" 
                                                wire:model="usuariosUmbral" 
                                                value="{{ $usuario->id }}"
@@ -66,7 +66,7 @@
                             <div class="form-group">
                                 <label class="form-label fw-bold">Usuarios a notificar:</label>
                                 @foreach($usuarios as $usuario)
-                                    <div class="form-check">
+                                    <div class="form-check" wire:key="user-{{ $usuario->id }}">
                                         <input class="form-check-input" type="checkbox" 
                                                wire:model="usuariosStock" 
                                                value="{{ $usuario->id }}"
@@ -94,7 +94,7 @@
                             <div class="form-group">
                                 <label class="form-label fw-bold">Usuarios a notificar:</label>
                                 @foreach($usuarios as $usuario)
-                                    <div class="form-check">
+                                    <div class="form-check" wire:key="user-{{ $usuario->id }}">
                                         <input class="form-check-input" type="checkbox" 
                                                wire:model="usuariosRecordatorio" 
                                                value="{{ $usuario->id }}"

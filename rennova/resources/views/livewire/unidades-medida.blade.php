@@ -93,7 +93,7 @@
                     </thead>
                     <tbody>
                         @forelse ($unidades as $unidad)
-                            <tr>
+                            <tr wire:key="row-{{ $unidad->id_unidad_medida }}">
                                 <td><span class="badge bg-secondary">{{ $unidad->id_unidad_medida }}</span></td>
                                 <td><span class="fw-semibold">{{ $unidad->nombre }}</span></td>
                                 <td><span class="badge bg-info">{{ $unidad->abreviatura }}</span></td>

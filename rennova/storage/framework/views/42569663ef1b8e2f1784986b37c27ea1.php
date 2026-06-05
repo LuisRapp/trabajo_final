@@ -50,7 +50,7 @@ endif;
 unset($__errorArgs, $__bag); ?>">
                                     <option value="">Seleccione...</option>
                                     <?php $__currentLoopData = $maquinarias; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $maquinaria): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                        <option value="<?php echo e($maquinaria->id_maquinaria); ?>"><?php echo e($maquinaria->modelo); ?> (<?php echo e($maquinaria->tipoMaquinaria->nombre ?? 'N/A'); ?>)</option>
+                                        <option value="<?php echo e($maquinaria->id_maquinaria); ?>" wire:key="option-<?php echo e($maquinaria->id_maquinaria); ?>"><?php echo e($maquinaria->modelo); ?> (<?php echo e($maquinaria->tipoMaquinaria->nombre ?? 'N/A'); ?>)</option>
                                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </select>
                                 <?php $__errorArgs = ['id_maquinaria'];
@@ -171,7 +171,7 @@ unset($__errorArgs, $__bag); ?>
                             </thead>
                             <tbody>
                                 <?php $__empty_1 = true; $__currentLoopData = $historicos; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $historico): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
-                                    <tr>
+                                    <tr wire:key="row-<?php echo e($historico->id_costo); ?>">
                                         <td><span class="badge bg-secondary"><?php echo e($historico->id_costo); ?></span></td>
                                         <td><?php echo e($historico->maquinaria->modelo ?? 'N/A'); ?></td>
                                         <td>$<?php echo e(number_format($historico->costo_por_tonelada, 2)); ?></td>

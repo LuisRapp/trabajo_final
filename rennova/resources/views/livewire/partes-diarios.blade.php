@@ -52,7 +52,7 @@
                             <select wire:model.live="id_lote" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 focus:outline-none @error('id_lote') ring-2 ring-red-500 @enderror">
                                 <option value="">Seleccione un lote...</option>
                                 @foreach($this->lotes as $lote)
-                                    <option value="{{ $lote->id_lote }}">{{ $lote->propietario }} - {{ $lote->ubicacion }}</option>
+                                    <option value="{{ $lote->id_lote }}" wire:key="option-{{ $lote->id_lote }}">{{ $lote->propietario }} - {{ $lote->ubicacion }}</option>
                                 @endforeach
                             </select>
                             @error('id_lote') <div class="text-red-600 text-sm mt-1">{{ $message }}</div> @enderror
@@ -66,7 +66,7 @@
                             <select wire:model.live="id_lote_tarea" wire:key="lote-tareas-{{ $id_lote }}" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 focus:outline-none @error('id_lote_tarea') ring-2 ring-red-500 @enderror">
                                 <option value="">Seleccione una tarea...</option>
                                 @foreach($this->loteTareas as $tarea)
-                                    <option value="{{ $tarea->id_lote_tarea }}">
+                                    <option value="{{ $tarea->id_lote_tarea }}" wire:key="option-{{ $tarea->id_lote_tarea }}">
                                         #{{ $tarea->id_lote_tarea }} - {{ $tarea->tipo_tarea_label }} ({{ $tarea->estado }})
                                     </option>
                                 @endforeach
@@ -87,7 +87,7 @@
                                             <select wire:model.live="nueva_tarea_tipo_tarea" class="w-full px-3 py-2 border border-slate-300 rounded text-sm focus:border-green-700 focus:ring-1 focus:ring-green-600 focus:outline-none">
                                                 <option value="">Seleccione...</option>
                                                 @foreach($this->taskTypes as $taskType)
-                                                    <option value="{{ $taskType->value }}">{{ $taskType->label() }}</option>
+                                                    <option value="{{ $taskType->value }}" wire:key="option-{{ $taskType->value }}">{{ $taskType->label() }}</option>
                                                 @endforeach
                                             </select>
                                         </div>
@@ -216,7 +216,7 @@
                                     <select wire:model="carga_id_categoria_madera" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 focus:outline-none @error('carga_id_categoria_madera') ring-2 ring-red-500 @enderror">
                                         <option value="">Seleccione...</option>
                                         @foreach($this->categoriasMadera as $cat)
-                                            <option value="{{ $cat->id_categoria_madera }}">{{ $cat->nombre }}</option>
+                                            <option value="{{ $cat->id_categoria_madera }}" wire:key="option-{{ $cat->id_categoria_madera }}">{{ $cat->nombre }}</option>
                                         @endforeach
                                     </select>
                                     @error('carga_id_categoria_madera') <div class="text-red-600 text-sm mt-1">{{ $message }}</div> @enderror
@@ -229,7 +229,7 @@
                                     <div wire:loading.remove wire:target="id_lote">
                                         <div class="border border-default rounded-lg p-3 max-h-32 overflow-y-auto bg-white @error('carga_maquinarias') ring-2 ring-red-500 @enderror">
                                             @forelse($this->maquinariasFiltrada as $maq)
-                                                <div class="flex items-center mb-2">
+                                                <div class="flex items-center mb-2" wire:key="item-{{ $maq->id_maquinaria }}">
                                                     <input type="checkbox" value="{{ $maq->id_maquinaria }}" id="maq-{{ $maq->id_maquinaria }}" wire:model="carga_maquinarias" class="w-4 h-4 rounded border-slate-300 text-green-600">
                                                     <label for="maq-{{ $maq->id_maquinaria }}" class="ml-2 text-sm text-slate-700">
                                                         {{ $maq->modelo }} - <small class="text-slate-500">{{ $maq->tipoMaquinaria->nombre ?? 'Sin tipo' }}</small>
@@ -253,7 +253,7 @@
                                     <input type="text" wire:model.live.debounce.500ms="busqueda_chofer" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 focus:outline-none mb-2 @error('carga_id_chofer') ring-2 ring-red-500 @enderror" placeholder="Buscar chofer...">
                                     <select wire:model="carga_id_chofer" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 focus:outline-none" size="3">
                                         @forelse($this->choferesFiltrados as $chofer)
-                                            <option value="{{ $chofer->id_chofer }}">{{ $chofer->apellido }}, {{ $chofer->nombre }}</option>
+                                            <option value="{{ $chofer->id_chofer }}" wire:key="option-{{ $chofer->id_chofer }}">{{ $chofer->apellido }}, {{ $chofer->nombre }}</option>
                                         @empty
                                             <option value="" disabled>No hay resultados</option>
                                         @endforelse
@@ -265,7 +265,7 @@
                                     <input type="text" wire:model.live.debounce.500ms="busqueda_cliente" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 focus:outline-none mb-2 @error('carga_destino') ring-2 ring-red-500 @enderror" placeholder="Buscar cliente...">
                                     <select wire:model="carga_destino" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 focus:outline-none" size="3">
                                         @forelse($this->clientesFiltrados as $cliente)
-                                            <option value="{{ $cliente->id_cliente }}">{{ $cliente->razon_social }}</option>
+                                            <option value="{{ $cliente->id_cliente }}" wire:key="option-{{ $cliente->id_cliente }}">{{ $cliente->razon_social }}</option>
                                         @empty
                                             <option value="" disabled>No hay resultados</option>
                                         @endforelse
@@ -308,7 +308,7 @@
                                     <div wire:loading.remove wire:target="id_lote">
                                         <div class="border border-default rounded-lg p-3 max-h-40 overflow-y-auto bg-white @error('carga_empleados') ring-2 ring-red-500 @enderror">
                                             @forelse($this->empleadosFiltrados as $emp)
-                                                <div class="flex items-center mb-2">
+                                                <div class="flex items-center mb-2" wire:key="item-{{ $emp->id_empleado }}">
                                                     <input type="checkbox" value="{{ $emp->id_empleado }}" id="emp-{{ $emp->id_empleado }}" wire:model="carga_empleados" class="w-4 h-4 rounded border-slate-300 text-green-600">
                                                     <label for="emp-{{ $emp->id_empleado }}" class="ml-2 text-sm text-slate-700">
                                                         {{ $emp->apellido }}, {{ $emp->nombre }} - <small class="text-slate-500">{{ $emp->rolLaboral->nombre ?? 'Sin rol' }}</small>
@@ -351,7 +351,7 @@
                                     </thead>
                                     <tbody>
                                         @foreach($cargas as $index => $carga)
-                                            <tr class="border-b border-slate-200 hover:bg-slate-50">
+                                            <tr class="border-b border-slate-200 hover:bg-slate-50" wire:key="row-{{ $index }}">
                                                 <td class="px-4 py-2"><span class="inline-block px-3 py-1 bg-slate-200 text-slate-800 text-xs font-medium rounded">{{ $carga['ticket'] }}</span></td>
                                                 <td class="px-4 py-2">
                                                     @php
@@ -409,7 +409,7 @@
                                     <select wire:model="jornal_id_empleado" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 focus:outline-none @error('jornal_id_empleado') ring-2 ring-red-500 @enderror">
                                         <option value="">Seleccione...</option>
                                         @foreach($this->empleadosFiltrados as $emp)
-                                            <option value="{{ $emp->id_empleado }}">
+                                            <option value="{{ $emp->id_empleado }}" wire:key="option-{{ $emp->id_empleado }}">
                                                 {{ $emp->apellido }}, {{ $emp->nombre }} - {{ $emp->rolLaboral->nombre ?? 'Sin rol' }}
                                                 @if(isset($jornal_por_empleado[$emp->id_empleado]))
                                                     (Jornal: ${{ number_format($jornal_por_empleado[$emp->id_empleado], 2) }})
@@ -441,7 +441,7 @@
                                     </thead>
                                     <tbody>
                                         @foreach($jornales as $index => $jornal)
-                                            <tr class="border-b border-slate-200 hover:bg-slate-50">
+                                            <tr class="border-b border-slate-200 hover:bg-slate-50" wire:key="row-{{ $index }}">
                                                 <td class="px-4 py-2">{{ $jornal['nombre_completo'] ?? '-' }}</td>
                                                 <td class="px-4 py-2"><span class="inline-block px-3 py-1 bg-slate-200 text-slate-800 text-xs font-medium rounded">{{ $jornal['rol'] ?? '-' }}</span></td>
                                                 <td class="px-4 py-2 text-green-600 font-bold">${{ number_format($jornal['jornal_diario'] ?? 0, 2) }}</td>
@@ -503,7 +503,7 @@
                                 <select wire:model.live="movimiento_id_insumo" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 focus:outline-none @error('movimiento_id_insumo') ring-2 ring-red-500 @enderror">
                                     <option value="">Seleccione...</option>
                                     @foreach($this->insumos as $insumo)
-                                        <option value="{{ $insumo->id_insumo }}">{{ $insumo->nombre }}</option>
+                                        <option value="{{ $insumo->id_insumo }}" wire:key="option-{{ $insumo->id_insumo }}">{{ $insumo->nombre }}</option>
                                     @endforeach
                                 </select>
                                 @if($stock_disponible_insumo !== null)
@@ -552,7 +552,7 @@
                                 </thead>
                                 <tbody>
                                     @foreach($movimientos as $index => $mov)
-                                        <tr class="border-b border-slate-200 hover:bg-slate-50">
+                                        <tr class="border-b border-slate-200 hover:bg-slate-50" wire:key="row-{{ $index }}">
                                             <td class="px-4 py-2"><strong>{{ $mov['nombre_insumo'] }}</strong></td>
                                             <td class="px-4 py-2">{{ number_format($mov['cantidad'], 2) }} {{ $mov['unidad'] ?? '' }}</td>
                                             <td class="px-4 py-2"><span class="inline-block px-3 py-1 bg-slate-200 text-slate-800 text-xs font-medium rounded">{{ $mov['motivo'] }}</span></td>

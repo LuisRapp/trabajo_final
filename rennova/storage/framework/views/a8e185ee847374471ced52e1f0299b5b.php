@@ -19,7 +19,7 @@
                     </div>
                     <div class="space-y-3">
                         <?php $__empty_1 = true; $__currentLoopData = ($employees ?? collect())->take(5); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $row): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
-                            <label class="flex items-center justify-between gap-3 rounded-lg border px-3 py-2">
+                            <label class="flex items-center justify-between gap-3 rounded-lg border px-3 py-2" wire:key="item-<?php echo e($row->id_allocation_proposal_employee); ?>">
                                 <div class="flex items-center gap-3">
                                     <input type="checkbox" class="h-4 w-4" wire:model.live="employeeSelected.<?php echo e($row->id_allocation_proposal_employee); ?>">
                                     <div>
@@ -42,7 +42,7 @@
                             <?php
                                 $ocupada = (bool) ($row->maquinaria->ocupada ?? false);
                             ?>
-                            <div class="flex items-center justify-between rounded-lg border px-3 py-2">
+                            <div class="flex items-center justify-between rounded-lg border px-3 py-2" wire:key="item-<?php echo e($row->id_allocation_proposal_maquinaria); ?>">
                                 <div>
                                     <div class="text-sm font-medium"><?php echo e($row->maquinaria->nombre ?? 'Maquinaria'); ?></div>
                                     <div class="text-xs text-slate-500"><?php echo e($row->maquinaria->tipoMaquinaria->nombre ?? 'Tipo'); ?></div>
@@ -67,7 +67,7 @@
                     </div>
                     <div class="space-y-3">
                         <?php $__empty_1 = true; $__currentLoopData = $supplies ?? collect(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $row): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
-                            <div class="flex items-center justify-between rounded-lg border px-3 py-2">
+                            <div class="flex items-center justify-between rounded-lg border px-3 py-2" wire:key="item-<?php echo e($row->id_allocation_proposal_insumo); ?>">
                                 <div>
                                     <div class="text-sm font-medium"><?php echo e($row->insumo->nombre ?? 'Insumo'); ?></div>
                                     <div class="text-xs text-slate-500"><?php echo e($row->insumo->unidadMedida->abreviatura ?? ''); ?></div>

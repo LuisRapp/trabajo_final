@@ -54,7 +54,7 @@
                                 <select wire:model="cliente_id" class="form-select @error('cliente_id') is-invalid @enderror">
                                     <option value="">Seleccione un cliente...</option>
                                     @foreach($clientes as $cliente)
-                                        <option value="{{ $cliente->id_cliente }}">{{ $cliente->razon_social }}</option>
+                                        <option value="{{ $cliente->id_cliente }}" wire:key="option-{{ $cliente->id_cliente }}">{{ $cliente->razon_social }}</option>
                                     @endforeach
                                 </select>
                                 @error('cliente_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
@@ -64,7 +64,7 @@
                                 <select wire:model="categoria_id" class="form-select @error('categoria_id') is-invalid @enderror">
                                     <option value="">Seleccione una categoría...</option>
                                     @foreach($categorias as $categoria)
-                                        <option value="{{ $categoria->id_categoria_madera }}">{{ $categoria->nombre }}</option>
+                                        <option value="{{ $categoria->id_categoria_madera }}" wire:key="option-{{ $categoria->id_categoria_madera }}">{{ $categoria->nombre }}</option>
                                     @endforeach
                                 </select>
                                 @error('categoria_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
@@ -150,7 +150,7 @@
                                 </thead>
                                 <tbody>
                                     @foreach($precios as $index => $precioItem)
-                                        <tr class="{{ $precioItem->fecha_hasta ? 'table-secondary' : '' }}">
+                                        <tr class="{{ $precioItem->fecha_hasta ? 'table-secondary' : '' }}" wire:key="row-{{ $precioItem->id }}">
                                             <td><span class="badge bg-secondary">{{ $index + 1 }}</span></td>
                                             <td><strong>{{ $precioItem->cliente->razon_social }}</strong></td>
                                             <td><span class="badge bg-info">{{ $precioItem->categoria->nombre }}</span></td>

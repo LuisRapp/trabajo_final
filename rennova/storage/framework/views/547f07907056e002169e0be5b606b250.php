@@ -53,7 +53,7 @@ endif;
 unset($__errorArgs, $__bag); ?>">
                             <option value="">Seleccione un insumo</option>
                             <?php $__currentLoopData = $insumos; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $insumo): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                <option value="<?php echo e($insumo->id_insumo); ?>">
+                                <option value="<?php echo e($insumo->id_insumo); ?>" wire:key="option-<?php echo e($insumo->id_insumo); ?>">
                                     <?php echo e($insumo->nombre); ?> (<?php echo e($insumo->unidad_medida); ?>)
                                 </option>
                             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
@@ -115,7 +115,7 @@ unset($__errorArgs, $__bag); ?>
                     </thead>
                     <tbody>
                         <?php $__empty_1 = true; $__currentLoopData = $insumosKit; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $insumo): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
-                            <tr>
+                            <tr wire:key="row-<?php echo e($insumo['id_insumo']); ?>">
                                 <td><span class="badge bg-secondary"><?php echo e($insumo['id_insumo']); ?></span></td>
                                 <td><span class="fw-semibold"><?php echo e($insumo['nombre']); ?></span></td>
                                 <td><?php echo e($insumo['unidad_medida']); ?></td>

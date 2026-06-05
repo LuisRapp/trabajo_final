@@ -77,7 +77,7 @@ endif;
 unset($__errorArgs, $__bag); ?>">
                                     <option value="">Seleccione...</option>
                                     <?php $__currentLoopData = $unidades; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $unidad): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                        <option value="<?php echo e($unidad->id_unidad_medida); ?>"><?php echo e($unidad->nombre); ?> (<?php echo e($unidad->abreviatura); ?>)</option>
+                                        <option value="<?php echo e($unidad->id_unidad_medida); ?>" wire:key="option-<?php echo e($unidad->id_unidad_medida); ?>"><?php echo e($unidad->nombre); ?> (<?php echo e($unidad->abreviatura); ?>)</option>
                                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </select>
                                 <?php $__errorArgs = ['id_unidad_medida'];
@@ -101,7 +101,7 @@ endif;
 unset($__errorArgs, $__bag); ?>">
                                     <option value="">Seleccione...</option>
                                     <?php $__currentLoopData = $proveedores; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $proveedor): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                        <option value="<?php echo e($proveedor->id_proveedor); ?>"><?php echo e($proveedor->razon_social); ?></option>
+                                        <option value="<?php echo e($proveedor->id_proveedor); ?>" wire:key="option-<?php echo e($proveedor->id_proveedor); ?>"><?php echo e($proveedor->razon_social); ?></option>
                                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </select>
                                 <?php $__errorArgs = ['id_proveedor'];
@@ -135,7 +135,7 @@ unset($__errorArgs, $__bag); ?>
                         </div>
 
                         <div class="mb-6 flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-700">
-                            <i class="bi bi-info-circle mt-0.5 flex-shrink-0"></i>
+                            <i class="bi bi-info-circle mt-0.5 shrink-0"></i>
                             <span>Precio calculado automáticamente mediante sistema FIFO</span>
                         </div>
 
@@ -186,7 +186,7 @@ unset($__errorArgs, $__bag); ?>
                             </thead>
                             <tbody class="divide-y divide-slate-200">
                                 <?php $__empty_1 = true; $__currentLoopData = $insumos; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $insumo): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
-                                    <tr class="hover:bg-slate-50 transition-colors">
+                                    <tr class="hover:bg-slate-50 transition-colors" wire:key="row-<?php echo e($insumo->id_insumo); ?>">
                                         <td class="px-3 py-3"><span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700"><?php echo e($insumo->id_insumo); ?></span></td>
                                         <td class="px-3 py-3 font-semibold text-slate-800"><?php echo e($insumo->nombre); ?></td>
                                         <td class="px-3 py-3 text-slate-600"><?php echo e($insumo->descripcion ?? 'N/A'); ?></td>

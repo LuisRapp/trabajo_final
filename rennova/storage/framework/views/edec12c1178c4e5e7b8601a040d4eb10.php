@@ -48,7 +48,7 @@ endif;
 unset($__errorArgs, $__bag); ?>" <?php if($liquidar_todos): echo 'disabled'; endif; ?>>
                             <option value="">Seleccione un empleado</option>
                             <?php $__currentLoopData = $empleados; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $emp): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                <option value="<?php echo e($emp->id_empleado); ?>">
+                                <option value="<?php echo e($emp->id_empleado); ?>" wire:key="option-<?php echo e($emp->id_empleado); ?>">
                                     <?php echo e($emp->apellido); ?>, <?php echo e($emp->nombre); ?> - <?php echo e($emp->rolLaboral->nombre ?? 'Sin rol'); ?>
 
                                 </option>
@@ -197,7 +197,7 @@ unset($__errorArgs, $__bag); ?>
                                                 </thead>
                                                 <tbody class="divide-y divide-amber-200 bg-white">
                                                     <?php $__currentLoopData = $adelantos_pendientes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $adelanto): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                                        <tr>
+                                                        <tr wire:key="row-<?php echo e($adelanto->id); ?>">
                                                             <td class="px-3 py-2"><?php echo e(\Carbon\Carbon::parse($adelanto->fecha_emision)->format('d/m/Y')); ?></td>
                                                             <td class="px-3 py-2 text-right">$<?php echo e(number_format($adelanto->monto, 2)); ?></td>
                                                         </tr>

@@ -112,7 +112,7 @@
                             </thead>
                             <tbody class="divide-y divide-slate-200">
                                 @forelse ($clientes as $cliente)
-                                    <tr class="hover:bg-slate-50 transition-colors">
+                                    <tr class="hover:bg-slate-50 transition-colors" wire:key="row-{{ $cliente->id_cliente }}">
                                         <td class="px-4 py-3"><span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">{{ $cliente->id_cliente }}</span></td>
                                         <td class="px-4 py-3"><span class="font-semibold text-slate-900">{{ $cliente->razon_social ?? $cliente->nombre }}</span></td>
                                         <td class="px-4 py-3 text-slate-600">{{ $cliente->cuit }}</td>

@@ -86,7 +86,7 @@
                             <select class="form-select" wire:model.live="filter_lote_id">
                                 <option value="">Todos</option>
                                 <?php $__currentLoopData = $lotes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $l): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                    <option value="<?php echo e($l->id_lote); ?>">Lote #<?php echo e($l->id_lote); ?> - <?php echo e($l->ubicacion); ?> (<?php echo e($l->estado); ?>)</option>
+                                    <option value="<?php echo e($l->id_lote); ?>" wire:key="option-<?php echo e($l->id_lote); ?>">Lote #<?php echo e($l->id_lote); ?> - <?php echo e($l->ubicacion); ?> (<?php echo e($l->estado); ?>)</option>
                                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </select>
                         </div>
@@ -122,7 +122,7 @@
                             </thead>
                             <tbody>
                                 <?php $__empty_1 = true; $__currentLoopData = $proposals; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $p): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
-                                    <tr>
+                                    <tr wire:key="row-<?php echo e($p->id_allocation_proposal); ?>">
                                         <td><strong>#<?php echo e($p->id_allocation_proposal); ?></strong></td>
                                         <td>
                                             <div><strong>Lote #<?php echo e($p->id_lote); ?></strong></div>
@@ -256,7 +256,7 @@
                                         <?php else: ?>
                                             <div style="max-height: 320px; overflow-y: auto;" class="border rounded p-2">
                                                 <?php $__currentLoopData = $selectedProposal->proposedEmployees; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $row): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                                    <div class="form-check">
+                                                    <div class="form-check" wire:key="emp-<?php echo e($row->id_allocation_proposal_employee); ?>">
                                                         <input
                                                             class="form-check-input"
                                                             type="checkbox"
@@ -290,7 +290,7 @@
                                         <?php else: ?>
                                             <div style="max-height: 320px; overflow-y: auto;" class="border rounded p-2">
                                                 <?php $__currentLoopData = $selectedProposal->proposedMaquinarias; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $row): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                                    <div class="form-check">
+                                                    <div class="form-check" wire:key="maq-<?php echo e($row->id_allocation_proposal_maquinaria); ?>">
                                                         <input
                                                             class="form-check-input"
                                                             type="checkbox"
@@ -324,7 +324,7 @@
                                         <?php else: ?>
                                             <div style="max-height: 320px; overflow-y: auto;" class="border rounded p-2">
                                                 <?php $__currentLoopData = $selectedProposal->proposedInsumos; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $row): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                                    <div class="d-flex align-items-start gap-2 py-1">
+                                                    <div class="d-flex align-items-start gap-2 py-1" wire:key="insumo-<?php echo e($row->id_allocation_proposal_insumo); ?>">
                                                         <div class="form-check">
                                                             <input
                                                                 class="form-check-input"

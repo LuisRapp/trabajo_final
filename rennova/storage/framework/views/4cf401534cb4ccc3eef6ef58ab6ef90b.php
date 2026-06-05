@@ -73,7 +73,7 @@ endif;
 unset($__errorArgs, $__bag); ?>" <?php if($editando_kit): ?> disabled <?php endif; ?>>
                             <option value="">Seleccione una maquinaria</option>
                             <?php $__currentLoopData = $maquinarias; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $maq): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                <option value="<?php echo e($maq->id_maquinaria); ?>"><?php echo e($maq->modelo); ?> (<?php echo e($maq->tipoMaquinaria ? $maq->tipoMaquinaria->nombre : 'Sin tipo'); ?>)</option>
+                                <option value="<?php echo e($maq->id_maquinaria); ?>" wire:key="option-<?php echo e($maq->id_maquinaria); ?>"><?php echo e($maq->modelo); ?> (<?php echo e($maq->tipoMaquinaria ? $maq->tipoMaquinaria->nombre : 'Sin tipo'); ?>)</option>
                             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </select>
                         <?php $__errorArgs = ['maquinaria_seleccionada'];
@@ -148,7 +148,7 @@ unset($__errorArgs, $__bag); ?>
                                                     $ins = optional($item->insumo);
                                                     $stock = is_numeric($ins->stock ?? null) ? $ins->stock : 0;
                                                 ?>
-                                                <tr class="hover:bg-slate-50 transition-colors">
+                                                <tr class="hover:bg-slate-50 transition-colors" wire:key="row-<?php echo e($item->id_kit ?? $item->id); ?>">
                                                     <td class="px-3 py-3"><span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700"><?php echo e($item->id_kit ?? $item->id); ?></span></td>
                                                     <td class="px-3 py-3 font-semibold text-slate-800"><?php echo e($ins->nombre ?? '—'); ?></td>
                                                     <td class="px-3 py-3 text-slate-600"><?php echo e(number_format($item->cantidad_requerida, 2)); ?></td>
@@ -233,7 +233,7 @@ unset($__errorArgs, $__bag); ?>
                                         </thead>
                                         <tbody class="divide-y divide-slate-200">
                                             <?php $__currentLoopData = $historial; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                                <tr class="bg-amber-50 hover:bg-amber-100 transition-colors">
+                                                <tr class="bg-amber-50 hover:bg-amber-100 transition-colors" wire:key="row-<?php echo e($item->id_kit ?? $item->id); ?>">
                                                     <td class="px-3 py-3"><span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700"><?php echo e($item->id_kit ?? $item->id); ?></span></td>
                                                     <td class="px-3 py-3">
                                                         <strong class="text-slate-800"><?php echo e(optional($item->insumo)->nombre ?? '—'); ?></strong>
@@ -280,7 +280,7 @@ unset($__errorArgs, $__bag); ?>
                     <?php if(count($kits_registrados) > 0): ?>
                         <div class="space-y-4">
                             <?php $__currentLoopData = $kits_registrados; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $maqId => $kit): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                <div class="rounded-lg border border-slate-200 overflow-hidden">
+                                <div class="rounded-lg border border-slate-200 overflow-hidden" wire:key="card-<?php echo e($maqId); ?>">
                                     <div class="flex items-center justify-between bg-slate-50 border-b border-slate-200 px-6 py-4">
                                         <div>
                                             <h6 class="mb-1 font-semibold text-slate-800 flex items-center gap-2">
@@ -321,7 +321,7 @@ unset($__errorArgs, $__bag); ?>
                                                             $ins = optional($item->insumo);
                                                             $stock = is_numeric($ins->stock ?? null) ? $ins->stock : 0;
                                                         ?>
-                                                        <tr class="hover:bg-slate-50">
+                                                        <tr class="hover:bg-slate-50" wire:key="row-<?php echo e($item->id_kit ?? $item->id); ?>">
                                                             <td class="px-3 py-2 font-semibold text-slate-700"><?php echo e($ins->nombre); ?></td>
                                                             <td class="px-3 py-2 text-slate-600"><?php echo e(number_format($item->cantidad_requerida, 2)); ?></td>
                                                             <td class="px-3 py-2">
@@ -385,7 +385,7 @@ endif;
 unset($__errorArgs, $__bag); ?>">
                             <option value="">Seleccionar insumo...</option>
                             <?php $__currentLoopData = $insumos; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $insumo): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                <option value="<?php echo e($insumo->id_insumo); ?>">
+                                <option value="<?php echo e($insumo->id_insumo); ?>" wire:key="option-<?php echo e($insumo->id_insumo); ?>">
                                     <?php echo e($insumo->nombre); ?> (Stock: <?php echo e(number_format($insumo->stock ?? 0, 2)); ?>)
                                 </option>
                             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>

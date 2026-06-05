@@ -104,7 +104,7 @@ unset($__errorArgs, $__bag); ?>
                             </thead>
                             <tbody>
                                 <?php $__empty_1 = true; $__currentLoopData = $tipos; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $tipo): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
-                                    <tr>
+                                    <tr wire:key="row-<?php echo e($tipo->id_tipo_mantenimiento); ?>">
                                         <td><span class="badge bg-secondary"><?php echo e($tipo->id_tipo_mantenimiento); ?></span></td>
                                         <td><span class="fw-semibold"><?php echo e($tipo->nombre); ?></span></td>
                                         <td>

@@ -40,7 +40,7 @@
                             <div class="form-group">
                                 <label class="form-label fw-bold">Usuarios a notificar:</label>
                                 <?php $__currentLoopData = $usuarios; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $usuario): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                    <div class="form-check">
+                                    <div class="form-check" wire:key="user-<?php echo e($usuario->id); ?>">
                                         <input class="form-check-input" type="checkbox" 
                                                wire:model="usuariosUmbral" 
                                                value="<?php echo e($usuario->id); ?>"
@@ -68,7 +68,7 @@
                             <div class="form-group">
                                 <label class="form-label fw-bold">Usuarios a notificar:</label>
                                 <?php $__currentLoopData = $usuarios; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $usuario): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                    <div class="form-check">
+                                    <div class="form-check" wire:key="user-<?php echo e($usuario->id); ?>">
                                         <input class="form-check-input" type="checkbox" 
                                                wire:model="usuariosStock" 
                                                value="<?php echo e($usuario->id); ?>"
@@ -96,7 +96,7 @@
                             <div class="form-group">
                                 <label class="form-label fw-bold">Usuarios a notificar:</label>
                                 <?php $__currentLoopData = $usuarios; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $usuario): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                    <div class="form-check">
+                                    <div class="form-check" wire:key="user-<?php echo e($usuario->id); ?>">
                                         <input class="form-check-input" type="checkbox" 
                                                wire:model="usuariosRecordatorio" 
                                                value="<?php echo e($usuario->id); ?>"

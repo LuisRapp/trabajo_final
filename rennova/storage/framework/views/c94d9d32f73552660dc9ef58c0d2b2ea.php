@@ -57,7 +57,7 @@ endif;
 unset($__errorArgs, $__bag); ?>">
                                     <option value="">Seleccione...</option>
                                     <?php $__currentLoopData = $lotes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $lote): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                        <option value="<?php echo e($lote->id_lote); ?>"><?php echo e($lote->id_lote); ?></option>
+                                        <option value="<?php echo e($lote->id_lote); ?>" wire:key="option-<?php echo e($lote->id_lote); ?>"><?php echo e($lote->id_lote); ?></option>
                                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </select>
                                 <?php $__errorArgs = ['id_lote'];
@@ -81,7 +81,7 @@ endif;
 unset($__errorArgs, $__bag); ?>">
                                     <option value="">Seleccione...</option>
                                     <?php $__currentLoopData = $categorias; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $cat): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                        <option value="<?php echo e($cat->id_categoria_madera); ?>"><?php echo e($cat->nombre); ?></option>
+                                        <option value="<?php echo e($cat->id_categoria_madera); ?>" wire:key="option-<?php echo e($cat->id_categoria_madera); ?>"><?php echo e($cat->nombre); ?></option>
                                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </select>
                                 <?php $__errorArgs = ['id_categoria_madera'];
@@ -124,7 +124,7 @@ endif;
 unset($__errorArgs, $__bag); ?>">
                                     <option value="">Seleccione...</option>
                                     <?php $__currentLoopData = $partes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $parte): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                        <option value="<?php echo e($parte->id_parte_diario); ?>"><?php echo e($parte->id_parte_diario); ?></option>
+                                        <option value="<?php echo e($parte->id_parte_diario); ?>" wire:key="option-<?php echo e($parte->id_parte_diario); ?>"><?php echo e($parte->id_parte_diario); ?></option>
                                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </select>
                                 <?php $__errorArgs = ['id_parte_diario'];
@@ -371,9 +371,9 @@ unset($__errorArgs, $__bag); ?>
                                 
                                 <?php $__currentLoopData = $cargas->getUrlRange(1, $cargas->lastPage()); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $page => $url): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                     <?php if($page == $cargas->currentPage()): ?>
-                                        <span class="px-3 py-2 text-white rounded-lg" style="background-color: #2d7a4f;"><?php echo e($page); ?></span>
+                                        <span class="px-3 py-2 text-white rounded-lg" style="background-color: #2d7a4f;" wire:key="page-<?php echo e($page); ?>"><?php echo e($page); ?></span>
                                     <?php else: ?>
-                                        <button wire:click="gotoPage(<?php echo e($page); ?>)" class="px-3 py-2 text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-lg transition-colors"><?php echo e($page); ?></button>
+                                        <button wire:click="gotoPage(<?php echo e($page); ?>)" class="px-3 py-2 text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-lg transition-colors" wire:key="page-<?php echo e($page); ?>"><?php echo e($page); ?></button>
                                     <?php endif; ?>
                                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
 

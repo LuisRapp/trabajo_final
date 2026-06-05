@@ -164,7 +164,7 @@ unset($__errorArgs, $__bag); ?>
                                 class="w-full rounded-lg border border-default py-3 px-4 shadow-sm focus:border-green-700 focus:ring-green-600 transition-colors <?php echo e($errors->has('main_task_type') ? 'ring-2 ring-red-500' : ''); ?>">
                                 <option value="">Seleccione...</option>
                                 <?php $__currentLoopData = $this->taskTypes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $tt): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                    <option value="<?php echo e($tt->value); ?>"><?php echo e($tt->label()); ?></option>
+                                    <option value="<?php echo e($tt->value); ?>" wire:key="option-<?php echo e($tt->value); ?>"><?php echo e($tt->label()); ?></option>
                                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </select>
                             <?php $__errorArgs = ['main_task_type'];
@@ -270,7 +270,7 @@ unset($__errorArgs, $__bag); ?>
                         </thead>
                         <tbody class="divide-y divide-slate-200">
                             <?php $__empty_1 = true; $__currentLoopData = $lotes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $lote): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
-                                <tr class="transition-colors hover:bg-slate-50">
+                                <tr class="transition-colors hover:bg-slate-50" wire:key="row-<?php echo e($lote->id_lote); ?>">
                                     <td class="px-3 py-4 text-center">
                                         <span class="inline-block rounded bg-slate-100 px-2 py-1 font-mono text-xs text-slate-600"><?php echo e($lote->id_lote); ?></span>
                                     </td>

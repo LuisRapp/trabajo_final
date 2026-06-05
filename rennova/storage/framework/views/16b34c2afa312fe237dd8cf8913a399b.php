@@ -170,7 +170,7 @@ unset($__errorArgs, $__bag); ?>
                             </thead>
                             <tbody class="divide-y divide-slate-200">
                                 <?php $__empty_1 = true; $__currentLoopData = $clientes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $cliente): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
-                                    <tr class="hover:bg-slate-50 transition-colors">
+                                    <tr class="hover:bg-slate-50 transition-colors" wire:key="row-<?php echo e($cliente->id_cliente); ?>">
                                         <td class="px-4 py-3"><span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700"><?php echo e($cliente->id_cliente); ?></span></td>
                                         <td class="px-4 py-3"><span class="font-semibold text-slate-900"><?php echo e($cliente->razon_social ?? $cliente->nombre); ?></span></td>
                                         <td class="px-4 py-3 text-slate-600"><?php echo e($cliente->cuit); ?></td>

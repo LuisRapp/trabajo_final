@@ -64,11 +64,11 @@
                     </thead>
                     <tbody>
                         @foreach($tareas as $i => $row)
-                            <tr>
+                            <tr wire:key="row-{{ $i }}">
                                 <td>
                                     <select class="form-select" wire:model.live="tareas.{{ $i }}.tipo_tarea" @if($guardando) disabled @endif>
                                         @foreach($taskTypes as $tt)
-                                            <option value="{{ $tt->value }}">{{ $tt->label() }}</option>
+                                            <option value="{{ $tt->value }}" wire:key="option-{{ $tt->value }}">{{ $tt->label() }}</option>
                                         @endforeach
                                     </select>
                                     @error('tareas.' . $i . '.tipo_tarea')

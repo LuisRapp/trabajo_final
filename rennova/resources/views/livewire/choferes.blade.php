@@ -49,7 +49,7 @@
                                 <select wire:model="id_cliente" class="w-full px-4 py-3 border border-default rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('id_cliente') ring-2 ring-red-500 @enderror">
                                     <option value="">Seleccione un cliente...</option>
                                     @foreach($clientes as $cliente)
-                                        <option value="{{ $cliente->id_cliente }}">{{ $cliente->razon_social ?? $cliente->nombre }}</option>
+                                        <option value="{{ $cliente->id_cliente }}" wire:key="option-{{ $cliente->id_cliente }}">{{ $cliente->razon_social ?? $cliente->nombre }}</option>
                                     @endforeach
                                 </select>
                                 @error('id_cliente') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
@@ -147,7 +147,7 @@
                             </thead>
                             <tbody class="divide-y divide-slate-200">
                                 @forelse($choferes as $c)
-                                    <tr class="hover:bg-slate-50 transition-colors">
+                                    <tr class="hover:bg-slate-50 transition-colors" wire:key="row-{{ $c->id_chofer }}">
                                         <td class="px-3 py-3"><span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">{{ $c->id_chofer }}</span></td>
                                         <td class="px-3 py-3 text-slate-600">{{ $c->cliente?->razon_social ?? $c->cliente?->nombre ?? 'Sin cliente' }}</td>
                                         <td class="px-3 py-3 text-slate-600">{{ $c->apellido }}, {{ $c->nombre }}</td>
