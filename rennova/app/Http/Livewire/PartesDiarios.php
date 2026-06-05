@@ -17,8 +17,8 @@ use App\Models\ParteDiario;
 use App\Services\ClimaOperativoService;
 use App\Services\InventarioService;
 use App\Services\ParteDiarioCostoService;
+use App\Services\PartesDiariosService;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -767,8 +767,10 @@ class PartesDiarios extends Component
             return;
         }
 
+        // Validación de clima
         $climaInfo = $this->resolverClimaOperacion();
         $this->clima_requiere_override = (bool) ($climaInfo['requiere_override'] ?? false);
+
         if (! $this->es_dia_caido && $this->clima_requiere_override) {
             if (! $this->clima_override_confirmado) {
                 session()->flash('error', 'El dia seleccionado esta marcado como no operativo. Debe confirmar la operacion para continuar.');
@@ -781,13 +783,14 @@ class PartesDiarios extends Component
                 return;
             }
         }
+
         // Validaciones adicionales
         if (! $this->es_dia_caido && empty($this->cargas)) {
             session()->flash('error', 'Debe registrar al menos una carga para modo producción.');
 
             return;
         }
-        // Validar que cada carga tenga al menos una maquinaria asociada
+
         if (! $this->es_dia_caido) {
             foreach ($this->cargas as $idx => $c) {
                 $maqs = $c['maquinarias'] ?? [];
@@ -806,168 +809,25 @@ class PartesDiarios extends Component
         }
 
         try {
-            \DB::beginTransaction();
-            $eventosCarga = [];
+            $resultado = PartesDiariosService::guardar([
+                'parte_id' => $this->parte_id,
+                'id_lote' => $this->id_lote,
+                'id_lote_tarea' => $this->id_lote_tarea,
+                'fecha' => $this->fecha,
+                'es_dia_caido' => $this->es_dia_caido,
+                'clima_override_confirmado' => $this->clima_override_confirmado,
+                'clima_override_motivo' => $this->clima_override_motivo,
+                'observaciones' => $this->observaciones,
+                'cargas' => $this->cargas,
+                'jornales' => $this->jornales,
+                'movimientos' => $this->movimientos,
+            ]);
 
-            // Enforce lógico: 1 Parte Diario por (lote, fecha).
-            // Si el usuario intenta crear uno nuevo y ya existe, reutilizamos el existente.
-            if (! $this->parte_id) {
-                $existente = ParteDiario::where('id_lote', $this->id_lote)
-                    ->whereDate('fecha', $this->fecha)
-                    ->orderByDesc('id_parte_diario')
-                    ->first();
+            $parteDiario = $resultado['parte_diario'];
+            $this->parte_id = $parteDiario->id_parte_diario;
 
-                if ($existente) {
-                    $this->parte_id = $existente->id_parte_diario;
-                    session()->flash('message', 'Ya existe un Parte Diario para ese lote y fecha. Se actualizará el registro existente.');
-                }
-            }
-
-            // 1. Guardar el Parte Diario (Maestro)
-            $tarea = LoteTarea::find($this->id_lote_tarea);
-            if (! $tarea || (int) $tarea->id_lote !== (int) $this->id_lote) {
-                throw new \InvalidArgumentException('La tarea seleccionada no corresponde al lote.');
-            }
-
-            $parteExistente = $this->parte_id ? ParteDiario::find($this->parte_id) : null;
-            $overrideAplicado = ! $this->es_dia_caido && (bool) $this->clima_override_confirmado;
-            $overrideMotivo = $overrideAplicado ? trim((string) $this->clima_override_motivo) : null;
-            $overrideConfirmadoPor = $overrideAplicado
-                ? ($parteExistente?->clima_override_confirmado_por ?? auth()->id())
-                : null;
-            $overrideConfirmadoAt = $overrideAplicado
-                ? ($parteExistente?->clima_override_confirmado_at ?? now())
-                : null;
-
-            $parteDiario = ParteDiario::updateOrCreate(
-                ['id_parte_diario' => $this->parte_id],
-                [
-                    'id_lote' => $this->id_lote,
-                    'id_lote_tarea' => $tarea->id_lote_tarea,
-                    'fecha' => $this->fecha,
-                    // Se mantiene tipo_tarea por compatibilidad y para queries legacy
-                    'tipo_tarea' => (string) $tarea->tipo_tarea,
-                    'es_dia_caido' => $this->es_dia_caido,
-                    'clima_override' => $overrideAplicado,
-                    'clima_override_motivo' => $overrideMotivo,
-                    'clima_override_confirmado_por' => $overrideConfirmadoPor,
-                    'clima_override_confirmado_at' => $overrideConfirmadoAt,
-                    'observaciones' => $this->observaciones,
-                ]
-            );
-
-            $parteDiarioId = $parteDiario->id_parte_diario;
-
-            // 2. Guardar Detalles según el tipo de día
-            if (! $this->es_dia_caido) {
-                // Si estamos en modo edición, eliminar cargas anteriores del parte para evitar duplicados
-                if ($this->parte_id) {
-                    $cargasAnteriores = Carga::where('id_parte_diario', $parteDiarioId)->get();
-                    foreach ($cargasAnteriores as $cAnterior) {
-                        $cAnterior->delete(); // cascada elimina pivote carga_empleado
-                    }
-                }
-                // MODO PRODUCCIÓN: Guardar Cargas con empleados por destajo
-                foreach ($this->cargas as $cargaData) {
-                    // Obtener el nombre del cliente a partir del ID
-                    $cliente = Cliente::find($cargaData['destino']);
-                    $nombreDestino = $cliente ? $cliente->razon_social : 'Cliente no encontrado';
-
-                    $carga = Carga::create([
-                        'id_parte_diario' => $parteDiarioId,
-                        'id_lote' => $this->id_lote,
-                        'id_categoria_madera' => $cargaData['id_categoria_madera'],
-                        'id_chofer' => $cargaData['id_chofer'],
-                        'ticket' => $cargaData['ticket'],
-                        'peso_bruto' => $cargaData['peso_bruto'],
-                        'tara' => $cargaData['tara'],
-                        'peso_neto' => $cargaData['peso_neto'],
-                        'destino' => $nombreDestino, // Nombre del cliente
-                        'fecha_carga' => $this->fecha,
-                    ]);
-
-                    // Guardar empleados asignados a esta carga (para cálculo de pago posterior)
-                    // Ya NO creamos recibos aquí - los recibos se crean manualmente usando calcularPagoRango()
-                    $carga->empleados()->sync($cargaData['empleados']);
-                    // Guardar maquinarias utilizadas en esta carga (múltiples)
-                    $carga->maquinarias()->sync($cargaData['maquinarias'] ?? []);
-
-                    // Programar evento para actualizar odómetro de las maquinarias (post-commit)
-                    $maqs = $cargaData['maquinarias'] ?? [];
-                    if (! empty($maqs)) {
-                        // Normalizar unidades: si el usuario ingresó en kg o en toneladas
-                        $valorIngresado = (float) ($cargaData['peso_neto'] ?? 0);
-                        // Heurística: si es mayor a 1000 asumimos kg; si no, asumimos toneladas
-                        $toneladasTotales = $valorIngresado > 1000 ? ($valorIngresado / 1000.0) : $valorIngresado;
-                        $porMaquinaria = count($maqs) > 0 ? $toneladasTotales / count($maqs) : 0;
-
-                        foreach ($maqs as $maqId) {
-                            $eventosCarga[] = [$carga, $maqId, $porMaquinaria];
-                        }
-
-                        \Log::info('Eventos CargaRegistrada acumulados (post-commit) desde ParteDiario', [
-                            'parte_diario_id' => $parteDiarioId,
-                            'carga_id' => $carga->id_carga,
-                            'maquinarias' => $maqs,
-                            'valor_ingresado' => $valorIngresado,
-                            'toneladas_totales' => $toneladasTotales,
-                            'toneladas_por_maquinaria' => $porMaquinaria,
-                        ]);
-                    }
-                }
-            } else {
-                // MODO DÍA CAÍDO: Guardar empleados que trabajaron ese día
-                // Ya NO creamos recibos automáticamente - se crearán después con calcularPagoRango()
-                $empleadosIds = array_column($this->jornales, 'id_empleado');
-                $parteDiario->empleados()->sync($empleadosIds);
-            }
-
-            // 3. Guardar Movimientos de Insumos (siempre se guardan)
-            // Si estamos en edición, eliminar movimientos previos de este parte para no duplicar
-            if ($this->parte_id) {
-                MovimientoStock::delParteDiario($parteDiarioId)->delete();
-            }
-
-            // Registrar movimientos con cálculo FIFO automático para salidas
-            foreach ($this->movimientos as $movData) {
-                $motivo = 'Parte Diario #'.$parteDiarioId.' - '.$movData['motivo'].
-                         ($movData['observaciones'] ? ' - '.$movData['observaciones'] : '');
-
-                if ($movData['tipo'] == 'salida') {
-                    // Usar FIFO para salidas (consumos de producción)
-                    try {
-                        $resultado = InventarioService::registrarSalida(
-                            $movData['id_insumo'],
-                            $movData['cantidad'],
-                            $motivo,
-                            $this->fecha,
-                            $parteDiarioId
-                        );
-
-                        // Opcional: guardar detalle del costo FIFO en log para auditoría
-                        \Log::info('Consumo FIFO en Parte Diario', [
-                            'parte_diario_id' => $parteDiarioId,
-                            'insumo_id' => $movData['id_insumo'],
-                            'cantidad' => $movData['cantidad'],
-                            'costo_total' => $resultado['costo_total'],
-                            'lotes_consumidos' => count($resultado['lotes_consumidos']),
-                        ]);
-
-                    } catch (\Exception $e) {
-                        // Si hay stock insuficiente, lanzar excepción para rollback
-                        throw new \Exception("Stock insuficiente para insumo ID {$movData['id_insumo']}: ".$e->getMessage());
-                    }
-
-                } else {
-                    // Este caso ya no debería ocurrir, pero por seguridad:
-                    throw new \Exception('Solo se permiten salidas de insumos en Parte Diario. Use Gestión de Stock para entradas.');
-                }
-            }
-
-            \DB::commit();
-
-            // Despachar eventos después del commit para garantizar consistencia
-            foreach ($eventosCarga as [$carga, $maqId, $ton]) {
+            // Despachar eventos post-commit
+            foreach ($resultado['eventos_carga'] as [$carga, $maqId, $ton]) {
                 event(new CargaRegistrada($carga, $maqId, $ton));
             }
 
@@ -979,25 +839,21 @@ class PartesDiarios extends Component
                     'parte_id' => $parteDiario->id_parte_diario,
                     'error' => $e->getMessage(),
                 ]);
-                // No lanzar excepción para no bloquear el guardado del parte
             }
 
-            // $this->cargarPartes(); // Método eliminado por no existir
-            $mensaje = $this->parte_id ? 'Parte diario actualizado correctamente con todos sus detalles.' : 'Parte diario creado correctamente con todos sus detalles.';
+            $mensaje = $resultado['es_nuevo']
+                ? 'Parte diario creado correctamente con todos sus detalles.'
+                : 'Parte diario actualizado correctamente con todos sus detalles.';
+
             $this->resetCampos();
             session()->flash('message', $mensaje);
-            // No despachar evento para evitar cambio de pestaña automático
-            // $this->dispatch('parteDiarioGuardado');
 
         } catch (\Exception $e) {
-            \DB::rollBack();
             session()->flash('error', 'Error al guardar el parte diario: '.$e->getMessage());
             \Log::error('Error en PartesDiarios::guardar()', [
                 'exception' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
-
-            return; // Evita que la página quede en blanco
         }
     }
 

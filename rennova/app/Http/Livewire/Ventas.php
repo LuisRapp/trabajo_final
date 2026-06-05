@@ -5,6 +5,7 @@ namespace App\Http\Livewire;
 use App\Models\Carga;
 use App\Models\Cliente;
 use App\Models\Venta;
+use App\Services\VentaService;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
@@ -142,39 +143,24 @@ class Ventas extends Component
             return;
         }
 
-        DB::beginTransaction();
         try {
-            $venta = Venta::create([
-                'id_cliente' => $this->id_cliente,
-                'fecha_emision' => now()->toDateString(),
-                'monto' => $this->total_venta,
-                'observaciones' => $this->observaciones,
-            ]);
-
-            foreach ($this->detalle_cargas as $detalle) {
-                $venta->cargas()->attach($detalle['id_carga'], [
-                    'precio_unitario' => $detalle['precio_unitario'],
-                    'peso_toneladas' => $detalle['peso_toneladas'],
-                    'subtotal' => $detalle['subtotal'],
-                ]);
-
-                Carga::where('id_carga', $detalle['id_carga'])
-                    ->update(['estado' => 'facturada']);
-            }
-
-            DB::commit();
+            $venta = VentaService::registrarVenta(
+                $this->id_cliente,
+                $this->detalle_cargas,
+                $this->total_venta,
+                $this->observaciones
+            );
 
             $this->detalle_cargas = [];
             $this->total_venta = 0;
             $this->observaciones = '';
             $this->id_cliente = null;
 
-            $this->cargarVentas(); // Refrescar historial
+            $this->cargarVentas();
 
             session()->flash('message', 'Venta registrada exitosamente. ID: '.$venta->id_recibo);
 
         } catch (\Exception $e) {
-            DB::rollBack();
             session()->flash('error', 'Error al guardar la venta: '.$e->getMessage());
         }
     }
@@ -268,26 +254,14 @@ class Ventas extends Component
 
     public function darDeBaja($id_recibo)
     {
-        DB::beginTransaction();
         try {
-            $venta = Venta::with('cargas')->findOrFail($id_recibo);
-
-            // Marcar la venta como inactiva
-            $venta->delete();
-
-            // Retornar las cargas al estado "pendiente"
-            foreach ($venta->cargas as $carga) {
-                $carga->update(['estado' => 'pendiente']);
-            }
-
-            DB::commit();
+            VentaService::darDeBaja($id_recibo);
 
             $this->cargarVentas();
             $this->cerrarModal();
             session()->flash('message', 'Venta dada de baja exitosamente. Las cargas están disponibles nuevamente.');
 
         } catch (\Exception $e) {
-            DB::rollBack();
             session()->flash('error', 'Error al dar de baja: '.$e->getMessage());
         }
     }
