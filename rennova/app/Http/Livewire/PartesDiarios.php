@@ -933,7 +933,7 @@ class PartesDiarios extends Component
                     $query->where('id_parte_diario', $parteDiarioId)
                         ->orWhere(function ($fallback) use ($parteDiarioId) {
                             $fallback->whereNull('id_parte_diario')
-                                ->where('motivo', 'ILIKE', 'Parte Diario #'.$parteDiarioId.' - %');
+                                ->where('motivo', 'LIKE', 'Parte Diario #'.$parteDiarioId.' - %');
                         });
                 })->delete();
             }
@@ -1074,7 +1074,7 @@ class PartesDiarios extends Component
                 ->orWhere(function ($fallback) use ($parte) {
                     $fallback->whereNull('id_parte_diario')
                         ->whereDate('fecha', $this->fecha)
-                        ->where('motivo', 'ILIKE', 'Parte Diario #'.$parte->id_parte_diario.' - %');
+                        ->where('motivo', 'LIKE', 'Parte Diario #'.$parte->id_parte_diario.' - %');
                 });
         })
             ->get();

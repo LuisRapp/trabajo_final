@@ -27,6 +27,14 @@ class InventarioService
             } else {
                 $lotesConsumidos = self::calcularCostoFifoManual($idInsumo, $cantidad);
                 $costoTotal = collect($lotesConsumidos)->sum('costo_parcial');
+
+                // Actualizar lotes en SQLite (la función PostgreSQL lo hace automáticamente)
+                foreach ($lotesConsumidos as $loteConsumido) {
+                    $lote = LoteInventario::find($loteConsumido['id_lote_inventario']);
+                    if ($lote) {
+                        self::consumirLote($lote, $loteConsumido['cantidad_consumida']);
+                    }
+                }
             }
 
             $movimientos = [];
