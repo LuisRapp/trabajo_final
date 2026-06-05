@@ -7,11 +7,12 @@
 
     <title><?php echo e(config('app.name', 'Laravel')); ?></title>
 
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.bunny.net">
+    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet">
+
+    <!-- Scripts & Styles (Tailwind CSS via Vite) -->
+    <?php echo app('Illuminate\Foundation\Vite')(['resources/css/app.css', 'resources/js/app.js']); ?>
     <style>
         :root {
             --navbar-height: 38px;
@@ -292,24 +293,8 @@
     <!-- Sidebar Toggle Script -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Bootstrap ya está cargado sincrónicamente
             initializeSidebar();
         });
-
-        function reinitializeBootstrapCollapses() {
-            // Reinitialize ALL collapse elements if Bootstrap is available
-            if (!window.bootstrap || !window.bootstrap.Collapse) return;
-            
-            const collapseElements = document.querySelectorAll('[data-bs-toggle="collapse"]');
-            collapseElements.forEach(el => {
-                // Destroy old instance if exists
-                const instance = window.bootstrap.Collapse.getInstance(el);
-                if (instance) instance.dispose();
-                
-                // Create new instance
-                new window.bootstrap.Collapse(el.getAttribute('data-bs-target'), { toggle: false });
-            });
-        }
 
         function initializeSidebar() {
             const sidebarToggle = document.getElementById('sidebarToggle');
@@ -319,9 +304,6 @@
             
             if (!sidebar || !sidebarToggle) return;
             
-            // Re-initialize Bootstrap collapses
-            reinitializeBootstrapCollapses();
-
             // Cargar estado del sidebar (expandido/colapsado) desde localStorage
             const sidebarState = localStorage.getItem('sidebarCollapsed');
             if (sidebarState === 'true') {
@@ -379,18 +361,14 @@
             });
             
             // Detector de cambios en el sidebar (Livewire puede reemplazar el DOM)
-            const sidebarElement = document.getElementById('sidebar');
             if (sidebarElement) {
                 const observer = new MutationObserver(() => {
-                    reinitializeBootstrapCollapses();
+                    initializeSidebar();
                 });
                 observer.observe(sidebarElement, { childList: true, subtree: true });
             }
         }
     </script>
-
-    <!-- Bootstrap Bundle JS (con Popper) - Carga sincrónica -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
     <!-- Livewire Scripts (incluye Alpine.js automáticamente en v3) -->
     <?php echo \Livewire\Mechanisms\FrontendAssets\FrontendAssets::scripts(); ?>

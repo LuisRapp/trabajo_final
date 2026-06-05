@@ -33,6 +33,6 @@ unset($__defined_vars, $__key, $__value); ?>
     wire:confirm="<?php echo e($message); ?>"
     title="<?php echo e($title); ?>"
     <?php echo e($attributes->merge(['class' => 'inline-flex items-center px-2 py-1 bg-red-50 text-red-700 hover:bg-red-100 rounded transition-colors border border-red-200'])); ?>>
-    <i class="bi bi-trash text-sm"></i>
+    🗑️
 </button>
 <?php /**PATH /home/rluis/Escritorio/trabajo_final/rennova/resources/views/components/confirm-delete.blade.php ENDPATH**/ ?>

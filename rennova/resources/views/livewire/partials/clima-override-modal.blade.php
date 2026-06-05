@@ -19,7 +19,7 @@
         <div class="px-6 py-2 border-b border-amber-200 bg-amber-50 flex items-center justify-between gap-3">
             <div class="flex items-center gap-3">
                 <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-amber-100 text-amber-700">
-                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    ⚠️
                 </span>
                 <h3 class="text-base font-semibold text-slate-900 leading-tight">Justificacion por dia no operativo</h3>
             </div>
@@ -29,7 +29,7 @@
                 @click="openOverrideModal = false"
                 aria-label="Cerrar"
             >
-                <i class="bi bi-x text-lg"></i>
+                ✕
             </button>
         </div>
         <div class="p-6">

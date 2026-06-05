@@ -37,9 +37,9 @@
                                     <td class="px-4 py-2"><?php echo e($parte->fecha ? \Carbon\Carbon::parse($parte->fecha)->format('d/m/Y') : '-'); ?></td>
                                     <td class="px-4 py-2">
                                         <?php if($parte->es_dia_caido): ?>
-                                            <span class="inline-block px-3 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded"><i class="bi bi-calendar-x mr-1"></i>Día Caído</span>
+                                            <span class="inline-block px-3 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded">📅 Día Caído</span>
                                         <?php else: ?>
-                                            <span class="inline-block px-3 py-1 bg-green-100 text-green-800 text-xs font-medium rounded"><i class="bi bi-truck mr-1"></i>Producción</span>
+                                            <span class="inline-block px-3 py-1 bg-green-100 text-green-800 text-xs font-medium rounded">🚛 Producción</span>
                                         <?php endif; ?>
                                     </td>
                                     <td class="px-4 py-2"><small><?php echo e($parte->observaciones ? \Illuminate\Support\Str::limit($parte->observaciones, 40) : '-'); ?></small></td>
@@ -47,12 +47,12 @@
                                         <div class="inline-flex gap-2">
                                             <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('editar-partes-diarios')): ?>
                                             <button type="button" class="px-3 py-1 border border-blue-500 text-blue-600 rounded text-sm hover:bg-blue-50 transition-colors" wire:click.prevent="editar(<?php echo e($parte->id_parte_diario); ?>)" title="Editar">
-                                                <i class="bi bi-pencil"></i>
+                                                ✏️
                                             </button>
                                             <?php endif; ?>
                                             <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('eliminar-partes-diarios')): ?>
                                             <button type="button" class="px-3 py-1 border border-red-500 text-red-600 rounded text-sm hover:bg-red-50 transition-colors" wire:click.prevent="eliminar(<?php echo e($parte->id_parte_diario); ?>)" wire:confirm="¿Está seguro de eliminar este parte diario?" title="Eliminar">
-                                                <i class="bi bi-trash"></i>
+                                                🗑️
                                             </button>
                                             <?php endif; ?>
                                         </div>
@@ -70,7 +70,7 @@
                 <?php endif; ?>
             <?php else: ?>
                 <div class="text-center py-12">
-                    <i class="bi bi-inbox text-6xl text-slate-300 block mb-4"></i>
+                    <span class="text-6xl text-slate-300 block mb-4">📭</span>
                     <p class="text-slate-600">No hay partes diarios registrados.</p>
                 </div>
             <?php endif; ?>

@@ -11,14 +11,14 @@
     @if($canEdit)
         @if($editRoute)
             <a href="{{ $editRoute }}" title="Editar" class="inline-flex items-center px-2 py-1 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded transition-colors border border-blue-200">
-                <i class="bi bi-pencil text-sm"></i>
+                ✏️
             </a>
         @else
             <button type="button"
                 wire:click="{{ $editWireClick }}"
                 title="Editar"
                 class="inline-flex items-center px-2 py-1 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded transition-colors border border-blue-200">
-                <i class="bi bi-pencil text-sm"></i>
+                ✏️
             </button>
         @endif
     @endif
@@ -29,7 +29,7 @@
             wire:confirm="{{ $deleteMessage }}"
             title="Eliminar"
             class="inline-flex items-center px-2 py-1 bg-red-50 text-red-700 hover:bg-red-100 rounded transition-colors border border-red-200">
-            <i class="bi bi-trash text-sm"></i>
+            🗑️
         </button>
     @endif
 </div>

@@ -348,7 +348,7 @@ unset($__errorArgs, $__bag); ?>
                                                 <button type="button" 
                                                     wire:click="openLaunchpad(<?php echo e($lote->id_lote); ?>)"
                                                     class="<?php echo e($accionClass); ?>">
-                                                    <i class="bi bi-<?php echo e($accionIcon); ?> text-base"></i>
+                                                    <?php if($accionIcon === 'play-fill'): ?>▶️ <?php elseif($accionIcon === 'eye-fill'): ?>👁️ <?php else: ?> ▶️ <?php endif; ?>
                                                     <span><?php echo e($accionLabel); ?></span>
                                                 </button>
                                                 

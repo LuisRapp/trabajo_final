@@ -261,7 +261,7 @@
                                                 <button type="button" 
                                                     wire:click="openLaunchpad({{ $lote->id_lote }})"
                                                     class="{{ $accionClass }}">
-                                                    <i class="bi bi-{{ $accionIcon }} text-base"></i>
+                                                    @if($accionIcon === 'play-fill')▶️ @elseif($accionIcon === 'eye-fill')👁️ @else ▶️ @endif
                                                     <span>{{ $accionLabel }}</span>
                                                 </button>
                                                 

@@ -28,9 +28,21 @@ foreach ($attributes->all() as $__key => $__value) {
 
 unset($__defined_vars, $__key, $__value); ?>
 
+<?php
+$iconMap = [
+    'inbox' => '📭',
+    'archive' => '📦',
+    'list-ul' => '📋',
+    'person' => '👤',
+    'truck' => '🚛',
+    'exclamation-triangle' => '⚠️',
+];
+$emoji = $iconMap[$icon] ?? '📭';
+?>
+
 <tr>
     <td colspan="<?php echo e($colspan); ?>" class="px-4 py-8 text-center">
-        <i class="bi bi-<?php echo e($icon); ?> text-slate-300 block mb-2" style="font-size: 2rem;"></i>
+        <span class="text-3xl text-slate-300 block mb-2"><?php echo e($emoji); ?></span>
         <p class="text-slate-500 font-medium"><?php echo e($message); ?></p>
     </td>
 </tr>

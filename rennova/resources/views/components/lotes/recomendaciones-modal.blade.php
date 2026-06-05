@@ -25,22 +25,22 @@
                 <div class="flex flex-wrap items-center gap-2">
                     <button type="button" wire:click="generarRecomendaciones"
                         class="lotes-modal-btn lotes-modal-btn--primary min-w-[140px]">
-                        <i class="bi bi-gear"></i> Generar ahora
+                        ⚙️ Generar ahora
                     </button>
                     <button type="button" wire:click="refrescarRecomendaciones"
                         class="lotes-modal-btn lotes-modal-btn--secondary min-w-[120px]">
-                        <i class="bi bi-arrow-clockwise"></i> Refrescar
+                        🔄 Refrescar
                     </button>
                     @if(!empty($recomendaciones) && collect($recomendaciones)->where('status', 'draft')->count() > 0)
                         <button type="button" wire:click="eliminarBorradores"
                             wire:confirm="¿Eliminar todas las recomendaciones en borrador?"
                             class="lotes-modal-btn lotes-modal-btn--danger min-w-[140px]">
-                            <i class="bi bi-trash"></i> Eliminar borradores
+                            🗑️ Eliminar borradores
                         </button>
                     @endif
                     <button type="button" wire:click="$dispatch('cerrarModalRecomendaciones')"
                         class="lotes-modal-btn lotes-modal-btn--ghost px-3">
-                        <i class="bi bi-x-lg"></i> Cerrar
+                        ✕ Cerrar
                     </button>
                 </div>
             </div>
@@ -59,7 +59,7 @@
 
                 @if(empty($recomendaciones))
                     <div class="flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 px-6 py-10 text-center">
-                        <i class="bi bi-stars text-4xl text-slate-300"></i>
+                        ✨
                         <div class="text-sm font-semibold text-slate-600">Sin recomendaciones todavía</div>
                         <p class="max-w-md text-sm text-slate-500">
                             Estamos procesando datos climáticos y de suelo. Podés refrescar en unos minutos o generar manualmente.
@@ -154,13 +154,13 @@
                                                     <button type="button"
                                                         wire:click.stop="saveEdit({{ $rec->id_allocation_proposal }})"
                                                         class="inline-flex items-center justify-center rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-blue-700">
-                                                        <i class="bi bi-save"></i>
+                                                        💾
                                                         <span class="ml-2">Guardar</span>
                                                     </button>
                                                     <button type="button"
                                                         wire:click.stop="cancelEdit"
                                                         class="inline-flex items-center justify-center rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">
-                                                        <i class="bi bi-x-circle"></i>
+                                                        ✕
                                                         <span class="ml-2">Cancelar</span>
                                                     </button>
                                                 </div>
@@ -170,7 +170,7 @@
                                                         wire:click.stop="startEdit({{ $rec->id_allocation_proposal }})"
                                                         class="inline-flex items-center justify-center rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                                                         @if($rec->status === 'applied') disabled title="No se pueden editar recomendaciones aplicadas" @endif>
-                                                        <i class="bi bi-pencil"></i>
+                                                        ✏️
                                                         <span class="ml-2">Editar</span>
                                                     </button>
                                                     @if($rec->status === 'draft')
@@ -178,7 +178,7 @@
                                                             wire:click.stop="eliminarRecomendacion({{ $rec->id_allocation_proposal }})"
                                                             wire:confirm="¿Eliminar esta recomendación?"
                                                             class="inline-flex items-center justify-center rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-100">
-                                                            <i class="bi bi-trash"></i>
+                                                            🗑️
                                                             <span class="ml-2">Eliminar</span>
                                                         </button>
                                                     @endif
@@ -186,7 +186,7 @@
                                                         wire:click.stop="confirmarRecomendacion({{ $rec->id_allocation_proposal }})"
                                                         class="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-emerald-700"
                                                         @if($rec->status === 'applied') disabled @endif>
-                                                        <i class="bi bi-check2-circle"></i>
+                                                        ✓
                                                         <span class="ml-2">Confirmar</span>
                                                     </button>
                                                 </div>

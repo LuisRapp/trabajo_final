@@ -54,8 +54,8 @@
                 class="sidebar-menu-btn"
                 aria-controls="menuPrincipal"
             >
-                <span><i class="bi bi-star-fill"></i> Principal</span>
-                <i class="bi bi-chevron-down" :class="{ 'rotate': open.principal }"></i>
+                <span>★ Principal</span>
+                <span class="sidebar-chevron inline-block transition-transform duration-300" :class="{ 'rotate': open.principal }">▼</span>
             </button>
             <div 
                 id="menuPrincipal"
@@ -64,22 +64,22 @@
                 class="sidebar-submenu"
             >
                 <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('ver-lotes')): ?>
-                <a href="<?php echo e(route('lotes.index')); ?>" class="sidebar-link"><i class="bi bi-geo-alt"></i> Lotes</a>
+                <a href="<?php echo e(route('lotes.index')); ?>" class="sidebar-link">📍 Lotes</a>
                 <?php endif; ?>
                 <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('ver-clientes')): ?>
-                <a href="<?php echo e(route('clientes.index')); ?>" class="sidebar-link"><i class="bi bi-people"></i> Clientes</a>
+                <a href="<?php echo e(route('clientes.index')); ?>" class="sidebar-link">👥 Clientes</a>
                 <?php endif; ?>
                 <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('ver-proveedores')): ?>
-                <a href="<?php echo e(route('proveedores.index')); ?>" class="sidebar-link"><i class="bi bi-truck"></i> Proveedores</a>
+                <a href="<?php echo e(route('proveedores.index')); ?>" class="sidebar-link">🚛 Proveedores</a>
                 <?php endif; ?>
                 <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('ver-ventas')): ?>
-                <a href="<?php echo e(route('ventas.index')); ?>" class="sidebar-link"><i class="bi bi-receipt"></i> Ventas</a>
+                <a href="<?php echo e(route('ventas.index')); ?>" class="sidebar-link">🧾 Ventas</a>
                 <?php endif; ?>
                 <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('ver-cargas')): ?>
-                <a href="<?php echo e(route('cargas.index')); ?>" class="sidebar-link"><i class="bi bi-box-seam"></i> Cargas</a>
+                <a href="<?php echo e(route('cargas.index')); ?>" class="sidebar-link">📦 Cargas</a>
                 <?php endif; ?>
                 <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('ver-choferes')): ?>
-                <a href="<?php echo e(route('choferes.index')); ?>" class="sidebar-link"><i class="bi bi-person-vcard"></i> Choferes</a>
+                <a href="<?php echo e(route('choferes.index')); ?>" class="sidebar-link">🪪 Choferes</a>
                 <?php endif; ?>
             </div>
         </div>
@@ -95,8 +95,8 @@
                 class="sidebar-menu-btn"
                 aria-controls="menuRecursos"
             >
-                <span><i class="bi bi-tools"></i> Recursos</span>
-                <i class="bi bi-chevron-down" :class="{ 'rotate': open.recursos }"></i>
+                <span>🔧 Recursos</span>
+                <span class="sidebar-chevron inline-block transition-transform duration-300" :class="{ 'rotate': open.recursos }">▼</span>
             </button>
             <div 
                 id="menuRecursos"
@@ -105,16 +105,16 @@
                 class="sidebar-submenu"
             >
                 <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('ver-insumos')): ?>
-                <a href="<?php echo e(route('insumos.index')); ?>" class="sidebar-link"><i class="bi bi-box-seam"></i> Insumos</a>
+                <a href="<?php echo e(route('insumos.index')); ?>" class="sidebar-link">📦 Insumos</a>
                 <?php endif; ?>
                 <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('ver-maquinarias')): ?>
-                <a href="<?php echo e(route('maquinarias.index')); ?>" class="sidebar-link"><i class="bi bi-truck"></i> Maquinarias</a>
+                <a href="<?php echo e(route('maquinarias.index')); ?>" class="sidebar-link">🚛 Maquinarias</a>
                 <?php endif; ?>
                 <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('ver-mantenimientos')): ?>
-                <a href="<?php echo e(route('mantenimientos.index')); ?>" class="sidebar-link"><i class="bi bi-tools"></i> Mantenimientos</a>
+                <a href="<?php echo e(route('mantenimientos.index')); ?>" class="sidebar-link">🔧 Mantenimientos</a>
                 <?php endif; ?>
                 <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('ver-kits-mantenimiento')): ?>
-                <a href="<?php echo e(route('kits-mantenimiento.index')); ?>" class="sidebar-link"><i class="bi bi-gear-fill"></i> Kits de Mantenimiento</a>
+                <a href="<?php echo e(route('kits-mantenimiento.index')); ?>" class="sidebar-link">⚙️ Kits de Mantenimiento</a>
                 <?php endif; ?>
             </div>
         </div>
@@ -130,8 +130,8 @@
                 class="sidebar-menu-btn"
                 aria-controls="menuPersonal"
             >
-                <span><i class="bi bi-people-fill"></i> Personal</span>
-                <i class="bi bi-chevron-down" :class="{ 'rotate': open.personal }"></i>
+                <span>👥 Personal</span>
+                <span class="sidebar-chevron inline-block transition-transform duration-300" :class="{ 'rotate': open.personal }">▼</span>
             </button>
             <div 
                 id="menuPersonal"
@@ -140,22 +140,22 @@
                 class="sidebar-submenu"
             >
                 <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('ver-empleados')): ?>
-                <a href="<?php echo e(route('empleados.index')); ?>" class="sidebar-link"><i class="bi bi-person-workspace"></i> Empleados</a>
+                <a href="<?php echo e(route('empleados.index')); ?>" class="sidebar-link">👷 Empleados</a>
                 <?php endif; ?>
                 <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('ver-adelantos')): ?>
-                <a href="<?php echo e(route('adelantos.index')); ?>" class="sidebar-link"><i class="bi bi-cash-coin"></i> Adelantos</a>
+                <a href="<?php echo e(route('adelantos.index')); ?>" class="sidebar-link">💵 Adelantos</a>
                 <?php endif; ?>
                 <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('ver-recibos')): ?>
-                <a href="<?php echo e(route('recibos.index')); ?>" class="sidebar-link"><i class="bi bi-file-earmark-text"></i> Recibos</a>
+                <a href="<?php echo e(route('recibos.index')); ?>" class="sidebar-link">📄 Recibos</a>
                 <?php endif; ?>
                 <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('ver-liquidacion-pagos')): ?>
-                <a href="<?php echo e(route('liquidacion-pagos.index')); ?>" class="sidebar-link"><i class="bi bi-calculator"></i> Liquidación de Pagos</a>
+                <a href="<?php echo e(route('liquidacion-pagos.index')); ?>" class="sidebar-link">🧮 Liquidación de Pagos</a>
                 <?php endif; ?>
                 <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('ver-asignaciones-lote')): ?>
-                <a href="<?php echo e(route('asignaciones-lote.index')); ?>" class="sidebar-link"><i class="bi bi-link-45deg"></i> Asignaciones por Lote</a>
+                <a href="<?php echo e(route('asignaciones-lote.index')); ?>" class="sidebar-link">🔗 Asignaciones por Lote</a>
                 <?php endif; ?>
                 <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('ver-propuestas-asignacion')): ?>
-                <a href="<?php echo e(route('allocation-proposals.index')); ?>" class="sidebar-link"><i class="bi bi-magic"></i> Propuestas Automáticas</a>
+                <a href="<?php echo e(route('allocation-proposals.index')); ?>" class="sidebar-link">✨ Propuestas Automáticas</a>
                 <?php endif; ?>
             </div>
         </div>
@@ -171,8 +171,8 @@
                 class="sidebar-menu-btn"
                 aria-controls="menuOperaciones"
             >
-                <span><i class="bi bi-clipboard-check"></i> Operaciones</span>
-                <i class="bi bi-chevron-down" :class="{ 'rotate': open.operaciones }"></i>
+                <span>📋 Operaciones</span>
+                <span class="sidebar-chevron inline-block transition-transform duration-300" :class="{ 'rotate': open.operaciones }">▼</span>
             </button>
             <div 
                 id="menuOperaciones"
@@ -181,7 +181,7 @@
                 class="sidebar-submenu"
             >
                 <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('ver-partes-diarios')): ?>
-                <a href="<?php echo e(route('partes-diarios.index')); ?>" class="sidebar-link"><i class="bi bi-clipboard-check"></i> Partes Diarios</a>
+                <a href="<?php echo e(route('partes-diarios.index')); ?>" class="sidebar-link">📋 Partes Diarios</a>
                 <?php endif; ?>
             </div>
         </div>
@@ -197,8 +197,8 @@
                 class="sidebar-menu-btn"
                 aria-controls="menuHistoricos"
             >
-                <span><i class="bi bi-clock-history"></i> Históricos</span>
-                <i class="bi bi-chevron-down" :class="{ 'rotate': open.historicos }"></i>
+                <span>🕐 Históricos</span>
+                <span class="sidebar-chevron inline-block transition-transform duration-300" :class="{ 'rotate': open.historicos }">▼</span>
             </button>
             <div 
                 id="menuHistoricos"
@@ -207,16 +207,16 @@
                 class="sidebar-submenu"
             >
                 <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('ver-historico-costos-maquinarias')): ?>
-                <a href="<?php echo e(route('historico-costos-maquinarias.index')); ?>" class="sidebar-link"><i class="bi bi-graph-up"></i> Costos Maquinarias</a>
+                <a href="<?php echo e(route('historico-costos-maquinarias.index')); ?>" class="sidebar-link">📈 Costos Maquinarias</a>
                 <?php endif; ?>
                 <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('ver-roles-laborales')): ?>
-                <a href="<?php echo e(route('historico-roles-laborales.index')); ?>" class="sidebar-link"><i class="bi bi-person-badge"></i> Roles Laborales</a>
+                <a href="<?php echo e(route('historico-roles-laborales.index')); ?>" class="sidebar-link">🪪 Roles Laborales</a>
                 <?php endif; ?>
                 <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('ver-auditoria')): ?>
-                <a href="<?php echo e(route('auditorias.index')); ?>" class="sidebar-link"><i class="bi bi-file-earmark-text"></i> Auditorías</a>
+                <a href="<?php echo e(route('auditorias.index')); ?>" class="sidebar-link">📄 Auditorías</a>
                 <?php endif; ?>
                 <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('ver-reportes')): ?>
-                <a href="<?php echo e(route('reportes.estadisticas-forestales')); ?>" class="sidebar-link"><i class="bi bi-bar-chart"></i> Estadísticas Forestales</a>
+                <a href="<?php echo e(route('reportes.estadisticas-forestales')); ?>" class="sidebar-link">📊 Estadísticas Forestales</a>
                 <?php endif; ?>
             </div>
         </div>
@@ -232,8 +232,8 @@
                 class="sidebar-menu-btn"
                 aria-controls="menuConfiguracion"
             >
-                <span><i class="bi bi-gear-fill"></i> Configuración</span>
-                <i class="bi bi-chevron-down" :class="{ 'rotate': open.configuracion }"></i>
+                <span>⚙️ Configuración</span>
+                <span class="sidebar-chevron inline-block transition-transform duration-300" :class="{ 'rotate': open.configuracion }">▼</span>
             </button>
             <div 
                 id="menuConfiguracion"
@@ -242,25 +242,25 @@
                 class="sidebar-submenu"
             >
                 <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('ver-categorias-madera')): ?>
-                <a href="<?php echo e(route('categorias-madera.index')); ?>" class="sidebar-link"><i class="bi bi-tree"></i> Categorías Madera</a>
+                <a href="<?php echo e(route('categorias-madera.index')); ?>" class="sidebar-link">🌲 Categorías Madera</a>
                 <?php endif; ?>
                 <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('ver-lista-precios')): ?>
-                <a href="<?php echo e(route('lista-precios.index')); ?>" class="sidebar-link"><i class="bi bi-tags"></i> Lista de Precios</a>
+                <a href="<?php echo e(route('lista-precios.index')); ?>" class="sidebar-link">🏷️ Lista de Precios</a>
                 <?php endif; ?>
                 <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('ver-unidades-medida')): ?>
-                <a href="<?php echo e(route('unidades-medida.index')); ?>" class="sidebar-link"><i class="bi bi-rulers"></i> Unidades de Medida</a>
+                <a href="<?php echo e(route('unidades-medida.index')); ?>" class="sidebar-link">📏 Unidades de Medida</a>
                 <?php endif; ?>
                 <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('ver-tipos-maquinaria')): ?>
-                <a href="<?php echo e(route('tipos-maquinaria.index')); ?>" class="sidebar-link"><i class="bi bi-gear-wide-connected"></i> Tipos Maquinaria</a>
+                <a href="<?php echo e(route('tipos-maquinaria.index')); ?>" class="sidebar-link">⚙️ Tipos Maquinaria</a>
                 <?php endif; ?>
                 <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('ver-roles-laborales')): ?>
-                <a href="<?php echo e(route('roles-laborales.index')); ?>" class="sidebar-link"><i class="bi bi-person-badge"></i> Roles Laborales</a>
+                <a href="<?php echo e(route('roles-laborales.index')); ?>" class="sidebar-link">🪪 Roles Laborales</a>
                 <?php endif; ?>
                 <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('gestionar-usuarios')): ?>
-                <a href="<?php echo e(route('usuarios.index')); ?>" class="sidebar-link"><i class="bi bi-person-circle"></i> Usuarios</a>
+                <a href="<?php echo e(route('usuarios.index')); ?>" class="sidebar-link">👤 Usuarios</a>
                 <?php endif; ?>
                 <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('gestionar-permisos')): ?>
-                    <a href="<?php echo e(route('roles-permisos.index')); ?>" class="sidebar-link"><i class="bi bi-shield-lock"></i> Roles y Permisos</a>
+                    <a href="<?php echo e(route('roles-permisos.index')); ?>" class="sidebar-link">🔒 Roles y Permisos</a>
                 <?php endif; ?>
             </div>
         </div>
@@ -340,21 +340,11 @@
         padding-left: 0.9rem;
     }
 
-    .sidebar-menu-btn i:first-child {
-        margin-right: 0.5rem;
-        width: 16px;
-        font-size: 0.9rem;
-        text-align: center;
-    }
-
-    .sidebar-menu-btn i:last-child {
-        transition: transform 0.3s ease;
+    .sidebar-chevron {
         font-size: 0.75rem;
-        width: auto;
-        margin-right: 0;
     }
 
-    .sidebar-menu-btn i:last-child.rotate {
+    .sidebar-chevron.rotate {
         transform: rotate(180deg);
     }
 
@@ -382,14 +372,6 @@
         color: #0f172a;
         border-left-color: #94a3b8;
         padding-left: 0.9rem;
-    }
-
-    .sidebar-link i {
-        margin-right: 0.5rem;
-        width: 16px;
-        font-size: 0.9rem;
-        text-align: center;
-        color: #64748b;
     }
 </style>
 <?php /**PATH /home/rluis/Escritorio/trabajo_final/rennova/resources/views/partials/sidebar.blade.php ENDPATH**/ ?>
