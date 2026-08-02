@@ -1,34 +1,32 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use Laravel\Fortify\Features;
-use Livewire\Volt\Volt;
-use App\Http\Controllers\LoteController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\ClienteController;
-use App\Http\Controllers\ProveedorController;
-use App\Http\Controllers\CategoriaMaderaController;
-use App\Http\Controllers\UnidadMedidaController;
-use App\Http\Controllers\TipoMaquinariaController;
-use App\Http\Controllers\RolLaboralController;
-use App\Http\Controllers\InsumoController;
-use App\Http\Controllers\MaquinariaController;
-use App\Http\Controllers\EmpleadoController;
-use App\Http\Controllers\UsuarioController;
-use App\Http\Controllers\MantenimientoController;
-use App\Http\Controllers\ParteDiarioController;
-use App\Http\Controllers\VentaController;
 use App\Http\Controllers\AdelantoController;
-use App\Http\Controllers\ReciboController;
-use App\Http\Controllers\HistoricoCostosMaquinariaController;
 use App\Http\Controllers\AuditoriaController;
+use App\Http\Controllers\CargaController;
+use App\Http\Controllers\CategoriaMaderaController;
+use App\Http\Controllers\ChoferController;
+use App\Http\Controllers\ClienteController;
+use App\Http\Controllers\EmpleadoController;
+use App\Http\Controllers\HistoricoCostosMaquinariaController;
+use App\Http\Controllers\InsumoController;
+use App\Http\Controllers\LoteController;
+use App\Http\Controllers\MantenimientoController;
+use App\Http\Controllers\MaquinariaController;
+use App\Http\Controllers\PanelControlController;
+use App\Http\Controllers\ParteDiarioController;
+use App\Http\Controllers\ProveedorController;
+use App\Http\Controllers\ReciboController;
 use App\Http\Controllers\ReporteController;
+use App\Http\Controllers\RolLaboralController;
+use App\Http\Controllers\TipoMaquinariaController;
+use App\Http\Controllers\UnidadMedidaController;
+use App\Http\Controllers\UsuarioController;
+use App\Http\Controllers\VentaController;
+use Illuminate\Support\Facades\Route;
 // use App\Http\Controllers\KitInsumoController;
 // Livewire ABMs
-use App\Http\Livewire\HistoricoRolesLaborales;
-use App\Http\Livewire\GestionStock;
-use App\Http\Controllers\CargaController;
-use App\Http\Controllers\ChoferController;
+use Laravel\Fortify\Features;
+use Livewire\Volt\Volt;
 
 // --- RUTAS PÚBLICAS ---
 // Página de bienvenida / login
@@ -36,18 +34,18 @@ Route::get('/', function () {
     if (auth()->check()) {
         return redirect()->route('dashboard');
     }
+
     return view('welcome');
 })->name('welcome');
 
 // Las rutas de autenticación (login, register, etc.) deben estar PÚBLICAS
 require __DIR__.'/auth.php';
 
-
 // --- RUTAS PROTEGIDAS (Requieren Iniciar Sesión) ---
 Route::middleware(['auth'])->group(function () {
 
     // Dashboard (usa mismo controlador/flujo que inicio; protegido si se accede por esta ruta)
-    Route::get('dashboard', [DashboardController::class, 'index'])
+    Route::get('dashboard', [PanelControlController::class, 'index'])
         ->middleware(['verified'])
         ->name('dashboard');
 
@@ -79,9 +77,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/lotes/{loteId}/recomendaciones', function ($loteId) {
         return view('lotes.recomendaciones', ['loteId' => (int) $loteId]);
     })->name('lotes.recomendaciones');
-        Route::get('/lotes/{loteId}/tareas', function ($loteId) {
-            return view('lotes.planificar-tareas', ['loteId' => (int) $loteId]);
-        })->name('lotes.tareas');
+    Route::get('/lotes/{loteId}/tareas', function ($loteId) {
+        return view('lotes.planificar-tareas', ['loteId' => (int) $loteId]);
+    })->name('lotes.tareas');
     Route::get('/clientes', [ClienteController::class, 'index'])->name('clientes.index');
     Route::get('/proveedores', [ProveedorController::class, 'index'])->name('proveedores.index');
     Route::get('/categorias-madera', [CategoriaMaderaController::class, 'index'])->name('categorias-madera.index');
@@ -92,33 +90,33 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/maquinarias', [MaquinariaController::class, 'index'])->name('maquinarias.index');
     Route::get('/empleados', [EmpleadoController::class, 'index'])->name('empleados.index');
     Route::get('/usuarios', [UsuarioController::class, 'index'])->middleware(['permission:gestionar-usuarios'])->name('usuarios.index');
-    
+
     // Mantenimientos - Componente Livewire y endpoints de gestión
     Route::view('/mantenimientos', 'mantenimientos.index')->name('mantenimientos.index');
     Route::post('/mantenimientos/{id}/approve', [MantenimientoController::class, 'approve'])->name('mantenimientos.approve');
     Route::post('/mantenimientos/{id}/complete', [MantenimientoController::class, 'complete'])->name('mantenimientos.complete');
-    
+
     // Configuración de Notificaciones de Mantenimiento
     Route::view('/configuracion-notificaciones-mantenimiento', 'configuracion-notificaciones.index')
         ->middleware(['permission:configurar-notificaciones-mantenimiento'])
         ->name('configuracion-notificaciones.index');
-    
+
     // Configuración de Horarios de Mantenimiento
     Route::view('/configuracion-mantenimiento', 'configuracion-mantenimiento.index')
         ->middleware(['permission:configurar-mantenimiento'])
         ->name('configuracion-mantenimiento.index');
-    
+
     // Notificaciones del Sistema
     Route::view('/notificaciones', 'notificaciones.index')->name('notificaciones.index');
-    
+
     // Programar Mantenimiento desde Notificación
     Route::get('/programar-mantenimiento/{notificacionId}', function ($notificacionId) {
         return view('programar-mantenimiento.index', ['notificacionId' => $notificacionId]);
     })->name('programar-mantenimiento');
-    
+
     // Configuración de Kits de Mantenimiento Preventivo (UI original)
     Route::view('/kits-mantenimiento', 'kits-mantenimiento.index')->name('kits-mantenimiento.index');
-    
+
     Route::get('/partes-diarios', [ParteDiarioController::class, 'index'])->name('partes-diarios.index');
     Route::get('/ventas', [VentaController::class, 'index'])->name('ventas.index');
     Route::get('/adelantos', [AdelantoController::class, 'index'])->name('adelantos.index');
@@ -127,27 +125,27 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/historico-costos-maquinarias', [HistoricoCostosMaquinariaController::class, 'index'])->name('historico-costos-maquinarias.index');
     Route::view('/historico-roles-laborales', 'historico-roles-laborales.index')->name('historico-roles-laborales.index');
     Route::view('/lista-precios', 'lista-precios.index')->name('lista-precios.index');
-    
+
     // Auditorías
     Route::get('/auditorias', [AuditoriaController::class, 'index'])->name('auditorias.index');
-    
+
     // Reportes - Estadísticas Forestales
     Route::get('/reportes/estadisticas-forestales', [ReporteController::class, 'estadisticasForestales'])->name('reportes.estadisticas-forestales');
     Route::get('/reportes/estadisticas-forestales/pdf', [ReporteController::class, 'estadisticasForestalesPdf'])->name('reportes.estadisticas-forestales.pdf');
     Route::get('/reportes/clima-lluvias/pdf', [ReporteController::class, 'climaLluviasPdf'])->name('reportes.clima-lluvias.pdf');
-    
+
     // Liquidación de Pagos
     Route::view('/liquidacion-pagos', 'liquidacion-pagos.index')->name('liquidacion-pagos.index');
-    
+
     // Asignaciones por Lote (Empleados y Maquinaria)
     Route::view('/asignaciones-lote', 'asignaciones-lote.index')->name('asignaciones-lote.index');
 
     // Propuestas automáticas de asignación (basadas en histórico)
     Route::view('/propuestas-asignacion', 'allocation-proposals.index')->name('allocation-proposals.index');
-    
+
     // Gestión de Stock (FIFO) dentro del módulo Operaciones
     Route::view('/modulos/operaciones/gestionstock', 'modulos.operaciones.gestionstock')->name('modulos.operaciones.gestionstock');
-    
+
     // ABM Cargas
     Route::get('/cargas', [CargaController::class, 'index'])->name('cargas.index');
     Route::get('/cargas/create', [CargaController::class, 'create'])->name('cargas.create');
@@ -169,5 +167,3 @@ Route::middleware(['auth'])->group(function () {
     Route::view('/roles-permisos', 'roles-permisos.index')->middleware(['permission:gestionar-permisos'])->name('roles-permisos.index');
 
 });
-
-
