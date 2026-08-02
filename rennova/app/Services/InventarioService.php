@@ -363,7 +363,7 @@ class InventarioService
     {
         if (DB::connection()->getDriverName() === 'pgsql') {
             $resultado = DB::selectOne(
-                'SELECT COUNT(*) as total FROM insumo WHERE obtener_stock_disponible(insumo.id_insumo) < ?',
+                'SELECT COUNT(*) as total FROM insumos WHERE obtener_stock_disponible(insumos.id_insumo) < ?',
                 [$umbral]
             );
 
