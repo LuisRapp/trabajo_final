@@ -1,6 +1,6 @@
 <li class="relative" x-data="{ open: false }" @click.outside="open = false" id="notificaciones-dropdown">
-    <a class="relative cursor-pointer inline-flex items-center gap-1.5 px-3 py-2 text-slate-600 hover:text-slate-800 transition-colors" @click="open = !open" id="notificaciones-toggle">
-        <span class="text-xl">🔔</span>
+    <a class="relative cursor-pointer inline-flex items-center gap-1.5 px-3 py-2 text-white/80 hover:text-white transition-colors" @click="open = !open" id="notificaciones-toggle">
+        <flux:icon.bell class="size-5" />
         @if($cantidadNoLeidas > 0)
             <span class="absolute -top-0.5 -right-0.5 inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-[0.65rem] font-bold bg-red-500 text-white leading-none">
                 {{ $cantidadNoLeidas > 9 ? '9+' : $cantidadNoLeidas }}
