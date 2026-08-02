@@ -34,7 +34,7 @@
                         @if(session('status'))
                             <div class="max-w-7xl mx-auto px-4 py-2">
                                 <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl px-5 py-3 flex items-center justify-between" role="alert">
-                                    <span><i class="bi bi-check-circle-fill"></i> {{ session('status') }}</span>
+                                    <span class="flex items-center gap-1.5"><flux:icon.check-circle class="size-4" /> {{ session('status') }}</span>
                                     <button type="button" class="text-emerald-600 hover:text-emerald-800 ml-4" @click="$el.closest('[role=alert]').remove()">
                                         &times;
                                     </button>
@@ -44,7 +44,7 @@
                         @if(session('error'))
                             <div class="max-w-7xl mx-auto px-4 py-2">
                                 <div class="bg-red-50 border border-red-200 text-red-800 rounded-xl px-5 py-3 flex items-center justify-between" role="alert">
-                                    <span><i class="bi bi-exclamation-triangle-fill"></i> {{ session('error') }}</span>
+                                    <span class="flex items-center gap-1.5"><flux:icon.exclamation-triangle class="size-4" /> {{ session('error') }}</span>
                                     <button type="button" class="text-red-600 hover:text-red-800 ml-4" @click="$el.closest('[role=alert]').remove()">
                                         &times;
                                     </button>

@@ -1,88 +1,97 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container-fluid px-4 py-4">
-    <div class="text-center mb-5">
-        <h1 class="fw-bold text-secondary mb-2"><i class="bi bi-tree me-2"></i>Inventario Forestal</h1>
-        <p class="text-muted lead">Gestiona lotes, clientes, ventas y productos forestales</p>
+<div class="max-w-7xl mx-auto px-4 py-6">
+    <div class="text-center mb-8">
+        <h1 class="text-2xl font-bold text-slate-700 flex items-center justify-center gap-2 mb-2">
+            <flux:icon.map-pin class="size-6" />
+            Inventario Forestal
+        </h1>
+        <p class="text-slate-500">Gestiona lotes, clientes, ventas y productos forestales</p>
     </div>
 
-    <div class="row g-4 justify-content-center">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
         <!-- Lotes -->
         @can('ver-lotes')
-        <div class="col-12 col-md-6 col-lg-4 col-xl-3">
-            <div class="card h-100 border-0 shadow-sm hover-elevate">
-                <div class="card-body text-center p-4">
-                    <div class="mb-3" style="color: var(--primary-color);"><i class="bi bi-geo-alt display-4"></i></div>
-                    <h5 class="card-title fw-bold">Lotes</h5>
-                    <a href="{{ route('lotes.index') }}" class="btn btn-outline-success w-100 mt-3 stretched-link">Gestionar</a>
-                </div>
+        <div class="bg-white rounded-xl border border-slate-200 p-6 text-center shadow-sm hover:shadow-md transition-shadow">
+            <div class="text-brand mb-4">
+                <flux:icon.map-pin class="size-12" />
             </div>
+            <h3 class="text-base font-bold text-slate-800 mb-4">Lotes</h3>
+            <a href="{{ route('lotes.index') }}"
+                class="inline-flex items-center justify-center w-full rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-hover transition-colors">
+                Gestionar
+            </a>
         </div>
         @endcan
 
         <!-- Clientes -->
         @can('ver-clientes')
-        <div class="col-12 col-md-6 col-lg-4 col-xl-3">
-            <div class="card h-100 border-0 shadow-sm hover-elevate">
-                <div class="card-body text-center p-4">
-                    <div class="mb-3" style="color: var(--primary-color);"><i class="bi bi-people display-4"></i></div>
-                    <h5 class="card-title fw-bold">Clientes</h5>
-                    <a href="{{ route('clientes.index') }}" class="btn btn-outline-success w-100 mt-3 stretched-link">Gestionar</a>
-                </div>
+        <div class="bg-white rounded-xl border border-slate-200 p-6 text-center shadow-sm hover:shadow-md transition-shadow">
+            <div class="text-brand mb-4">
+                <flux:icon.users class="size-12" />
             </div>
+            <h3 class="text-base font-bold text-slate-800 mb-4">Clientes</h3>
+            <a href="{{ route('clientes.index') }}"
+                class="inline-flex items-center justify-center w-full rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-hover transition-colors">
+                Gestionar
+            </a>
         </div>
         @endcan
 
         <!-- Ventas -->
         @can('ver-ventas')
-        <div class="col-12 col-md-6 col-lg-4 col-xl-3">
-            <div class="card h-100 border-0 shadow-sm hover-elevate">
-                <div class="card-body text-center p-4">
-                    <div class="mb-3" style="color: var(--primary-color);"><i class="bi bi-receipt display-4"></i></div>
-                    <h5 class="card-title fw-bold">Ventas</h5>
-                    <a href="{{ route('ventas.index') }}" class="btn btn-outline-success w-100 mt-3 stretched-link">Gestionar</a>
-                </div>
+        <div class="bg-white rounded-xl border border-slate-200 p-6 text-center shadow-sm hover:shadow-md transition-shadow">
+            <div class="text-brand mb-4">
+                <flux:icon.document class="size-12" />
             </div>
+            <h3 class="text-base font-bold text-slate-800 mb-4">Ventas</h3>
+            <a href="{{ route('ventas.index') }}"
+                class="inline-flex items-center justify-center w-full rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-hover transition-colors">
+                Gestionar
+            </a>
         </div>
         @endcan
 
         <!-- Cargas -->
         @can('ver-cargas')
-        <div class="col-12 col-md-6 col-lg-4 col-xl-3">
-            <div class="card h-100 border-0 shadow-sm hover-elevate">
-                <div class="card-body text-center p-4">
-                    <div class="mb-3" style="color: var(--primary-color);"><i class="bi bi-box-seam display-4"></i></div>
-                    <h5 class="card-title fw-bold">Cargas</h5>
-                    <a href="{{ route('cargas.index') }}" class="btn btn-outline-success w-100 mt-3 stretched-link">Gestionar</a>
-                </div>
+        <div class="bg-white rounded-xl border border-slate-200 p-6 text-center shadow-sm hover:shadow-md transition-shadow">
+            <div class="text-brand mb-4">
+                <flux:icon.cube class="size-12" />
             </div>
+            <h3 class="text-base font-bold text-slate-800 mb-4">Cargas</h3>
+            <a href="{{ route('cargas.index') }}"
+                class="inline-flex items-center justify-center w-full rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-hover transition-colors">
+                Gestionar
+            </a>
         </div>
         @endcan
 
         <!-- Categorías -->
         @can('ver-categorias-madera')
-        <div class="col-12 col-md-6 col-lg-4 col-xl-3">
-            <div class="card h-100 border-0 shadow-sm hover-elevate">
-                <div class="card-body text-center p-4">
-                    <div class="mb-3" style="color: var(--primary-color);"><i class="bi bi-tree display-4"></i></div>
-                    <h5 class="card-title fw-bold">Categorías de Madera</h5>
-                    <a href="{{ route('categorias-madera.index') }}" class="btn btn-outline-success w-100 mt-3 stretched-link">Gestionar</a>
-                </div>
+        <div class="bg-white rounded-xl border border-slate-200 p-6 text-center shadow-sm hover:shadow-md transition-shadow">
+            <div class="text-brand mb-4">
+                <flux:icon.tag class="size-12" />
             </div>
+            <h3 class="text-base font-bold text-slate-800 mb-4">Categorías de Madera</h3>
+            <a href="{{ route('categorias-madera.index') }}"
+                class="inline-flex items-center justify-center w-full rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-hover transition-colors">
+                Gestionar
+            </a>
         </div>
         @endcan
 
         <!-- Lista de Precios -->
         @can('ver-lista-precios')
-        <div class="col-12 col-md-6 col-lg-4 col-xl-3">
-            <div class="card h-100 border-0 shadow-sm hover-elevate">
-                <div class="card-body text-center p-4">
-                    <div class="mb-3" style="color: var(--primary-color);"><i class="bi bi-tags display-4"></i></div>
-                    <h5 class="card-title fw-bold">Lista de Precios</h5>
-                    <a href="{{ route('lista-precios.index') }}" class="btn btn-outline-success w-100 mt-3 stretched-link">Gestionar</a>
-                </div>
+        <div class="bg-white rounded-xl border border-slate-200 p-6 text-center shadow-sm hover:shadow-md transition-shadow">
+            <div class="text-brand mb-4">
+                <flux:icon.tag class="size-12" />
             </div>
+            <h3 class="text-base font-bold text-slate-800 mb-4">Lista de Precios</h3>
+            <a href="{{ route('lista-precios.index') }}"
+                class="inline-flex items-center justify-center w-full rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-hover transition-colors">
+                Gestionar
+            </a>
         </div>
         @endcan
     </div>
