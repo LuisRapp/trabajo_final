@@ -2,7 +2,7 @@
     <div class="w-full flex items-center px-3 gap-3">
         <!-- Sidebar Toggle -->
         <button @click="toggleSidebar()" class="text-white hover:opacity-80 p-0 bg-transparent border-none cursor-pointer">
-            <span class="text-base" :class="{ 'inline-block rotate-90 transition-transform duration-300': collapsed }">☰</span>
+            <flux:icon.bars-3 class="size-5" />
         </button>
 
         <!-- Brand -->
@@ -25,7 +25,8 @@
                         ?: 'Usuario';
                 @endphp
                 <button @click="open = !open" class="text-white text-xs bg-transparent border-none cursor-pointer flex items-center gap-1 hover:opacity-80">
-                    👤 {{ $displayName }}
+                    <flux:icon.user class="size-3.5" />
+                    {{ $displayName }}
                     <span class="text-[10px]">▼</span>
                 </button>
                 <div x-show="open"
@@ -37,13 +38,14 @@
                      x-transition:leave-end="opacity-0 scale-95"
                      class="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-50"
                      style="display: none;">
-                    <a href="{{ route('dashboard') }}" class="block px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100 no-underline">⚡ Dashboard</a>
-                    <a href="{{ route('profile.edit') }}" class="block px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100 no-underline">👤 Perfil</a>
+                    <a href="{{ route('dashboard') }}" class="flex items-center gap-2 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100 no-underline"><flux:icon.bolt class="size-3.5" /> Dashboard</a>
+                    <a href="{{ route('profile.edit') }}" class="flex items-center gap-2 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100 no-underline"><flux:icon.user class="size-3.5" /> Perfil</a>
                     <hr class="border-slate-200 my-1">
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
-                        <button type="submit" class="w-full text-left block px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100 bg-transparent border-none cursor-pointer">
-                            🚪 Cerrar sesión
+                        <button type="submit" class="w-full text-left flex items-center gap-2 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100 bg-transparent border-none cursor-pointer">
+                            <flux:icon.arrow-right-start-on-rectangle class="size-3.5" />
+                            Cerrar sesión
                         </button>
                     </form>
                 </div>

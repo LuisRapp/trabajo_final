@@ -1,4 +1,4 @@
-<li class="relative" x-data="{ open: false }" @click.outside="open = false" id="notificaciones-dropdown">
+<div class="relative" x-data="{ open: false }" @click.outside="open = false" id="notificaciones-dropdown">
     <a class="relative cursor-pointer inline-flex items-center gap-1.5 px-3 py-2 text-white/80 hover:text-white transition-colors" @click="open = !open" id="notificaciones-toggle">
         <flux:icon.bell class="size-5" />
         @if($cantidadNoLeidas > 0)
@@ -8,10 +8,10 @@
         @endif
     </a>
 
-    <ul x-show="open" x-transition
+    <div x-show="open" x-transition
         class="absolute right-0 mt-2 w-[380px] max-h-[500px] overflow-y-auto bg-white rounded-xl shadow-lg border border-slate-200 z-50">
         <!-- Header -->
-        <li class="px-4 py-3 border-b border-slate-200">
+        <div class="px-4 py-3 border-b border-slate-200">
             <div class="flex justify-between items-center">
                 <h6 class="font-bold text-slate-800">Notificaciones</h6>
                 <div class="flex gap-2">
@@ -25,16 +25,16 @@
                         </button>
                     @endif
                     <a href="{{ route('notificaciones.index') }}" class="text-slate-500 text-sm hover:underline">
-                        📋 Historial
+                        Historial
                     </a>
                 </div>
             </div>
-        </li>
+        </div>
 
         <!-- Lista de notificaciones -->
         @if($notificaciones->count() > 0)
             @foreach($notificaciones as $notificacion)
-                <li wire:key="notif-{{ $notificacion->id }}">
+                <div wire:key="notif-{{ $notificacion->id }}">
                     <div
                         wire:click="irANotificacion({{ $notificacion->id }})"
                         onclick="event.stopPropagation()"
@@ -44,13 +44,13 @@
                             <!-- Icono según tipo -->
                             <div class="mr-2 mt-1 shrink-0">
                                 @if($notificacion->tipo === 'umbral_alcanzado')
-                                    <span class="text-lg text-amber-500">⚠</span>
+                                    <flux:icon.exclamation-triangle class="size-4 text-amber-500" />
                                 @elseif($notificacion->tipo === 'stock_insuficiente')
-                                    <span class="text-lg text-red-500">📦</span>
+                                    <flux:icon.cube class="size-4 text-red-500" />
                                 @elseif($notificacion->tipo === 'recordatorio_programado')
-                                    <span class="text-lg text-cyan-500">📅</span>
+                                    <flux:icon.calendar class="size-4 text-cyan-500" />
                                 @else
-                                    <span class="text-lg text-slate-400">🔔</span>
+                                    <flux:icon.bell class="size-4 text-slate-400" />
                                 @endif
                             </div>
 
@@ -70,11 +70,11 @@
                                         @if($diasRestantes !== null)
                                             @if($diasRestantes >= 0)
                                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[0.7rem] font-medium bg-amber-100 text-amber-700">
-                                                    🕐 {{ $diasRestantes }} dia(s) restante(s)
+                                                    <flux:icon.clock class="size-3 mr-1" /> {{ $diasRestantes }} día(s) restante(s)
                                                 </span>
                                             @else
                                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[0.7rem] font-medium bg-red-100 text-red-700">
-                                                    ✖ Vencida
+                                                    <flux:icon.x-mark class="size-3 mr-1" /> Vencida
                                                 </span>
                                             @endif
                                         @endif
@@ -87,38 +87,39 @@
                             </div>
                         </div>
                     </div>
-                </li>
+                </div>
             @endforeach
 
             <!-- Ver todas -->
-            <li class="text-center py-3">
+            <div class="text-center py-3">
                 <a href="{{ route('notificaciones.index') }}" class="text-brand text-sm hover:underline">
                     Ver todas las notificaciones
                 </a>
-            </li>
+            </div>
         @else
-            <li class="text-center py-8 text-slate-400">
-                <div class="text-3xl mb-2">📥</div>
+            <div class="text-center py-8 text-slate-400">
+                <flux:icon.inbox class="size-8 mx-auto mb-2" />
                 <p>No tienes notificaciones nuevas</p>
-            </li>
+            </div>
         @endif
-    </ul>
-</li>
+    </div>
+</div>
 
 <!-- Modal de Programación de Mantenimiento -->
 @if($mostrarModalProgramacion && $notificacionSeleccionada && $mantenimientoSeleccionado)
 <div class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center" wire:click.self="cerrarModalProgramacion">
-    <div class="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
+    <div class="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto relative">
         <div class="bg-brand text-white px-6 py-4 rounded-t-xl">
-            <h5 class="text-lg font-semibold">
-                📅 Programar Mantenimiento
+            <h5 class="text-lg font-semibold flex items-center gap-2">
+                <flux:icon.calendar class="size-5" />
+                Programar Mantenimiento
             </h5>
-            <button type="button" class="absolute top-4 right-4 text-white/80 hover:text-white" wire:click="cerrarModalProgramacion">✕</button>
+            <button type="button" class="absolute top-4 right-4 text-white/80 hover:text-white" wire:click="cerrarModalProgramacion">&times;</button>
         </div>
         <div class="p-6">
             <!-- Información de la notificación -->
             <div class="flex items-start gap-3 bg-cyan-50 border border-cyan-200 text-cyan-800 rounded-xl px-5 py-3 text-sm mb-4">
-                <span class="text-2xl">ℹ️</span>
+                <flux:icon.information-circle class="size-5 shrink-0 mt-0.5" />
                 <div>
                     <strong>{{ $notificacionSeleccionada->titulo }}</strong>
                     <p class="mt-1 text-xs">{{ $notificacionSeleccionada->mensaje }}</p>
@@ -128,8 +129,9 @@
             <!-- Información del mantenimiento -->
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-4">
                 <div class="p-6">
-                    <h6 class="text-brand font-semibold mb-3">
-                        🔧 Detalles del Mantenimiento
+                    <h6 class="text-brand font-semibold mb-3 flex items-center gap-2">
+                        <flux:icon.wrench class="size-4" />
+                        Detalles del Mantenimiento
                     </h6>
                     <div class="grid grid-cols-2 gap-2">
                         <div class="col-span-2">
@@ -162,7 +164,7 @@
             <form wire:submit.prevent="programarMantenimiento">
                 <div class="mb-4">
                     <label for="fechaProgramada" class="block text-sm font-semibold text-slate-700 mb-1.5">
-                        📅 Fecha Programada
+                        Fecha Programada
                     </label>
                     <input
                         type="date"
@@ -176,20 +178,20 @@
                         <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
                     @enderror
                     <small class="text-slate-500 text-xs mt-1 block">
-                        ℹ️
                         Debes programar el mantenimiento entre el
                         <strong>{{ \Carbon\Carbon::parse($fechaMinima)->format('d/m/Y') }}</strong> y el
                         <strong>{{ \Carbon\Carbon::parse($fechaMaxima)->format('d/m/Y') }}</strong>
-                        (maximo 7 dias desde la notificacion).
+                        (máximo 7 días desde la notificación).
                     </small>
                 </div>
 
                 <div class="flex justify-end gap-2 mt-6 pt-4 border-t border-slate-200">
                     <button type="button" class="inline-flex items-center gap-1.5 px-4 py-2.5 border border-slate-300 bg-white text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors" wire:click="cerrarModalProgramacion">
-                        ✕ Cancelar
+                        Cancelar
                     </button>
                     <button type="submit" class="inline-flex items-center gap-1.5 px-5 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-lg text-sm font-medium shadow-sm transition-colors">
-                        ✓ Confirmar Programación
+                        <flux:icon.check class="size-4" />
+                        Confirmar Programación
                     </button>
                 </div>
             </form>
