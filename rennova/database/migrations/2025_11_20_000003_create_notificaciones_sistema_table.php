@@ -22,7 +22,7 @@ return new class extends Migration
             $table->timestamp('leida_at')->nullable();
             $table->timestamp('accionada_at')->nullable();
             $table->timestamps();
-            
+
             $table->index(['user_id', 'leida']);
             $table->index(['user_id', 'accionada']);
             $table->index('fecha_limite');

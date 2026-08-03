@@ -7,7 +7,7 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
-     * 
+     *
      * Crea stored procedure para calcular costo FIFO y consumir lotes automáticamente
      */
     public function up(): void
@@ -106,7 +106,7 @@ return new class extends Migration
             END;
             $$;
         ');
-        
+
         // Crear función auxiliar para obtener stock disponible por insumo
         DB::unprepared('
             CREATE OR REPLACE FUNCTION obtener_stock_disponible(p_id_insumo BIGINT)
@@ -127,7 +127,7 @@ return new class extends Migration
             END;
             $$;
         ');
-        
+
         // Crear función auxiliar para obtener precio promedio ponderado actual
         DB::unprepared('
             CREATE OR REPLACE FUNCTION obtener_precio_promedio(p_id_insumo BIGINT)

@@ -4,7 +4,8 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-return new class extends Migration {
+return new class extends Migration
+{
     public function up(): void
     {
         // Clonar kits definidos por tipo hacia cada maquinaria concreta
@@ -23,7 +24,7 @@ return new class extends Migration {
                     ->where('id_insumo', $item->id_insumo)
                     ->exists();
 
-                if (!$exists) {
+                if (! $exists) {
                     DB::table('kit_mantenimiento_preventivo')->insert([
                         'id_tipo_maquinaria' => $item->id_tipo_maquinaria, // mantener referencia legado
                         'id_maquinaria' => $maq->id_maquinaria,
@@ -45,7 +46,7 @@ return new class extends Migration {
         // Revertir sólo clones (los que tienen id_maquinaria y coinciden con un legacy base sin id_maquinaria)
         $legacyBases = DB::table('kit_mantenimiento_preventivo')
             ->whereNull('id_maquinaria')
-            ->get(['id_tipo_maquinaria','id_insumo']);
+            ->get(['id_tipo_maquinaria', 'id_insumo']);
 
         foreach ($legacyBases as $base) {
             DB::table('kit_mantenimiento_preventivo')

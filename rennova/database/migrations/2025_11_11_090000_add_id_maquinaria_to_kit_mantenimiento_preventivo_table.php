@@ -4,11 +4,12 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     public function up(): void
     {
         Schema::table('kit_mantenimiento_preventivo', function (Blueprint $table) {
-            if (!Schema::hasColumn('kit_mantenimiento_preventivo', 'id_maquinaria')) {
+            if (! Schema::hasColumn('kit_mantenimiento_preventivo', 'id_maquinaria')) {
                 $table->unsignedBigInteger('id_maquinaria')->nullable()->after('id_tipo_maquinaria');
                 $table->foreign('id_maquinaria')->references('id_maquinaria')->on('maquinarias')->onDelete('cascade');
                 $table->index(['id_maquinaria']);

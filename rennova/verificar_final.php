@@ -15,15 +15,15 @@ $proposal = AllocationProposal::with([
 
 echo "PROPUESTA #26\n";
 echo "  Status: {$proposal->status}\n";
-echo "  Confirmada: " . ($proposal->confirmed_at ? 'SÍ (' . $proposal->confirmed_at->format('Y-m-d H:i:s') . ')' : 'NO') . "\n";
-echo "  Aplicada: " . ($proposal->applied_at ? 'SÍ (' . $proposal->applied_at->format('Y-m-d H:i:s') . ')' : 'NO') . "\n\n";
+echo '  Confirmada: '.($proposal->confirmed_at ? 'SÍ ('.$proposal->confirmed_at->format('Y-m-d H:i:s').')' : 'NO')."\n";
+echo '  Aplicada: '.($proposal->applied_at ? 'SÍ ('.$proposal->applied_at->format('Y-m-d H:i:s').')' : 'NO')."\n\n";
 
 $meta = $proposal->meta ?? [];
 
 echo "ORDEN DE COMPRA\n";
-if (!empty($meta['purchase_order'])) {
-    echo "  Enviada: " . $meta['purchase_order']['sent_at'] . "\n";
-    echo "  Destinatarios: " . json_encode($meta['purchase_order']['recipients']) . "\n";
+if (! empty($meta['purchase_order'])) {
+    echo '  Enviada: '.$meta['purchase_order']['sent_at']."\n";
+    echo '  Destinatarios: '.json_encode($meta['purchase_order']['recipients'])."\n";
 } else {
     echo "  ❌ No se envió\n";
 }

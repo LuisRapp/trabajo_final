@@ -31,7 +31,7 @@ return new class extends Migration
                 'costo_insumos',
                 'costo_maquinaria',
                 'costo_total_dia',
-                'costo_unitario_calculado'
+                'costo_unitario_calculado',
             ]);
         });
     }

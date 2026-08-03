@@ -1,4 +1,5 @@
 <?php
+
 require __DIR__.'/../vendor/autoload.php';
 $app = require __DIR__.'/../bootstrap/app.php';
 $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
@@ -11,4 +12,4 @@ $counts = [
     'ventas' => App\Models\Venta::count(),
 ];
 
-echo json_encode($counts, JSON_PRETTY_PRINT) . PHP_EOL;
+echo json_encode($counts, JSON_PRETTY_PRINT).PHP_EOL;

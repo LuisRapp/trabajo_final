@@ -12,6 +12,7 @@ class MantenimientoCreado extends Notification
     use Queueable;
 
     protected $mantenimiento;
+
     protected $faltantes;
 
     public function __construct(Mantenimiento $mantenimiento, array $faltantes = [])
@@ -39,7 +40,7 @@ class MantenimientoCreado extends Notification
             ->line("Estado: {$mantenimiento->estado}")
             ->line('Por favor, revise el stock de insumos necesarios.');
 
-        if (!empty($this->faltantes)) {
+        if (! empty($this->faltantes)) {
             $message->line('')
                 ->line('Insumos faltantes detectados:');
 

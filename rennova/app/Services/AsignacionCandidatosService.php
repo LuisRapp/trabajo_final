@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Servicio de Selección de Candidatos
- * 
+ *
  * Responsable de seleccionar empleados, maquinarias e insumos para propuestas
  */
 class AsignacionCandidatosService

@@ -2,7 +2,7 @@
 
 /**
  * Script de Diagnóstico - Interfaz de Mantenimiento Automático
- * 
+ *
  * Este script verifica:
  * 1. Que los datos existan en la base de datos
  * 2. Que los componentes Livewire estén registrados
@@ -15,8 +15,8 @@ $app = require __DIR__.'/../bootstrap/app.php';
 $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 $kernel->bootstrap();
 
-use App\Models\NotificacionSistema;
 use App\Models\Mantenimiento;
+use App\Models\NotificacionSistema;
 use App\Models\User;
 
 echo "\n";
@@ -27,7 +27,7 @@ echo "\n";
 
 // 1. Verificar Base de Datos
 echo "📊 1. VERIFICANDO BASE DE DATOS...\n";
-echo str_repeat("─", 66) . "\n";
+echo str_repeat('─', 66)."\n";
 
 $totalNotificaciones = NotificacionSistema::count();
 $notificacionesNoLeidas = NotificacionSistema::where('leida', false)->count();
@@ -46,7 +46,7 @@ if ($totalNotificaciones > 0) {
 
 // 2. Verificar usuarios con notificaciones
 echo "\n👤 2. VERIFICANDO USUARIOS CON NOTIFICACIONES...\n";
-echo str_repeat("─", 66) . "\n";
+echo str_repeat('─', 66)."\n";
 
 $usuariosConNotif = NotificacionSistema::select('user_id')
     ->selectRaw('COUNT(*) as total')
@@ -67,7 +67,7 @@ if ($usuariosConNotif->count() > 0) {
 
 // 3. Verificar últimas notificaciones
 echo "\n🔔 3. ÚLTIMAS 5 NOTIFICACIONES CREADAS...\n";
-echo str_repeat("─", 66) . "\n";
+echo str_repeat('─', 66)."\n";
 
 $ultimasNotif = NotificacionSistema::with('user:id,email')
     ->orderBy('created_at', 'desc')
@@ -76,8 +76,8 @@ $ultimasNotif = NotificacionSistema::with('user:id,email')
 
 if ($ultimasNotif->count() > 0) {
     foreach ($ultimasNotif as $notif) {
-        $email = $notif->user ? $notif->user->email : "Sin usuario";
-        $leida = $notif->leida ? "✓ Leída" : "○ No leída";
+        $email = $notif->user ? $notif->user->email : 'Sin usuario';
+        $leida = $notif->leida ? '✓ Leída' : '○ No leída';
         $fecha = $notif->created_at->format('d/m/Y H:i');
         echo "   [{$fecha}] {$notif->tipo} - {$email} - {$leida}\n";
         echo "     Título: {$notif->titulo}\n";
@@ -88,7 +88,7 @@ if ($ultimasNotif->count() > 0) {
 
 // 4. Verificar componentes Livewire
 echo "\n⚡ 4. VERIFICANDO COMPONENTES LIVEWIRE...\n";
-echo str_repeat("─", 66) . "\n";
+echo str_repeat('─', 66)."\n";
 
 $componentesRequeridos = [
     'NotificacionesCampana',
@@ -107,7 +107,7 @@ foreach ($componentesRequeridos as $componente) {
 
 // 5. Verificar archivos de vista
 echo "\n👁️  5. VERIFICANDO VISTAS...\n";
-echo str_repeat("─", 66) . "\n";
+echo str_repeat('─', 66)."\n";
 
 $vistas = [
     'resources/views/livewire/notificaciones-campana.blade.php',
@@ -118,7 +118,7 @@ $vistas = [
 ];
 
 foreach ($vistas as $vista) {
-    if (file_exists(__DIR__ . '/' . $vista)) {
+    if (file_exists(__DIR__.'/'.$vista)) {
         echo "   ✓ {$vista}\n";
     } else {
         echo "   ✗ {$vista} NO existe\n";
@@ -127,9 +127,9 @@ foreach ($vistas as $vista) {
 
 // 6. Verificar instalación en header
 echo "\n🎯 6. VERIFICANDO INTEGRACIÓN EN HEADER...\n";
-echo str_repeat("─", 66) . "\n";
+echo str_repeat('─', 66)."\n";
 
-$headerPath = __DIR__ . '/resources/views/partials/header.blade.php';
+$headerPath = __DIR__.'/resources/views/partials/header.blade.php';
 if (file_exists($headerPath)) {
     $headerContent = file_get_contents($headerPath);
     if (strpos($headerContent, '@livewire(\'notificaciones-campana\')') !== false) {
@@ -144,7 +144,7 @@ if (file_exists($headerPath)) {
 
 // 7. Verificar rutas
 echo "\n🛣️  7. VERIFICANDO RUTAS...\n";
-echo str_repeat("─", 66) . "\n";
+echo str_repeat('─', 66)."\n";
 
 try {
     $routes = Illuminate\Support\Facades\Route::getRoutes();
@@ -153,7 +153,7 @@ try {
         'mantenimientos.index',
         'programar-mantenimiento',
     ];
-    
+
     foreach ($rutasRequeridas as $nombreRuta) {
         if ($routes->hasNamedRoute($nombreRuta)) {
             $route = $routes->getByName($nombreRuta);

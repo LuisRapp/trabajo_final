@@ -15,11 +15,11 @@ class CheckPermission
      */
     public function handle(Request $request, Closure $next, string $permission): Response
     {
-        if (!auth()->check()) {
+        if (! auth()->check()) {
             abort(403, 'No autenticado');
         }
 
-        if (!auth()->user()->can($permission)) {
+        if (! auth()->user()->can($permission)) {
             abort(403, 'No tienes permiso para acceder a esta sección');
         }
 

@@ -11,6 +11,7 @@ class MantenimientoProgramadoRecordatorio extends Notification
     use Queueable;
 
     protected $mantenimientos;
+
     protected $pendientesProgramar;
 
     public function __construct($mantenimientos, $pendientesProgramar = null)
@@ -61,7 +62,7 @@ class MantenimientoProgramadoRecordatorio extends Notification
 
             foreach ($this->pendientesProgramar as $notif) {
                 $mant = $notif->mantenimiento;
-                if (!$mant) {
+                if (! $mant) {
                     continue;
                 }
                 $fechaLimite = $notif->fecha_limite ? $notif->fecha_limite->format('d/m/Y') : 'N/A';

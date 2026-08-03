@@ -3,8 +3,8 @@
 namespace App\Models;
 
 use App\Enums\TaskType;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class LoteTarea extends Model
@@ -12,6 +12,7 @@ class LoteTarea extends Model
     use HasFactory, SoftDeletes;
 
     protected $table = 'lote_tareas';
+
     protected $primaryKey = 'id_lote_tarea';
 
     protected $fillable = [
@@ -43,6 +44,7 @@ class LoteTarea extends Model
     public function getTipoTareaLabelAttribute(): string
     {
         $enum = TaskType::tryFrom((string) $this->tipo_tarea);
+
         return $enum ? $enum->label() : (string) $this->tipo_tarea;
     }
 }

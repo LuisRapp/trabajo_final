@@ -12,7 +12,7 @@ $propId = 20;
 echo "=== PROPUESTA #{$propId} ===\n\n";
 
 $prop = DB::table('allocation_proposals')->where('id_allocation_proposal', $propId)->first();
-if (!$prop) {
+if (! $prop) {
     echo "No se encontró la propuesta #{$propId}\n";
     exit(1);
 }
@@ -31,7 +31,7 @@ $emps = DB::table('allocation_proposal_employees')
     ->get();
 
 echo "Total propuestos: {$emps->count()}\n";
-foreach($emps as $e) {
+foreach ($emps as $e) {
     $selected = $e->selected ? 'SÍ' : 'NO';
     echo "  - {$e->apellido}, {$e->nombre} (Rol: {$e->rol_sugerido} / {$e->rol_nombre}) - Seleccionado: {$selected}\n";
 }
@@ -45,7 +45,7 @@ $maq = DB::table('allocation_proposal_maquinarias')
     ->get();
 
 echo "Total propuestas: {$maq->count()}\n";
-foreach($maq as $m) {
+foreach ($maq as $m) {
     $selected = $m->selected ? 'SÍ' : 'NO';
     echo "  - {$m->modelo} (Tipo: {$m->tipo_sugerido} / {$m->tipo_nombre}) - Seleccionada: {$selected}\n";
 }

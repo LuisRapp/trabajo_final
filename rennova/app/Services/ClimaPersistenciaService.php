@@ -8,12 +8,13 @@ use Carbon\Carbon;
 
 /**
  * Servicio de Persistencia Climática
- * 
+ *
  * Responsable de guardar datos climáticos en la base de datos
  */
 class ClimaPersistenciaService
 {
     const TIMEZONE = 'America/Argentina/Buenos_Aires';
+
     const DIAS_FORECAST = 7;
 
     /**
@@ -65,8 +66,9 @@ class ClimaPersistenciaService
             }
         }
 
-        if (!$diaObjetivo) {
+        if (! $diaObjetivo) {
             $this->persistirRealFallback($lote, $fechaObjetivo, 'No se encontro el dia en el historico.');
+
             return;
         }
 
@@ -92,6 +94,7 @@ class ClimaPersistenciaService
 
         if ($registro) {
             $registro->fill($data)->save();
+
             return;
         }
 
@@ -144,6 +147,7 @@ class ClimaPersistenciaService
 
         if ($registro) {
             $registro->fill($data)->save();
+
             return;
         }
 

@@ -20,7 +20,7 @@ class ClimaOperativoService
         $pronosticoActualizado = $registro?->pronostico_actualizado_at;
         $pronosticoVigente = $pronosticoActualizado && Carbon::parse($pronosticoActualizado)->isToday();
 
-        if ($registro && (!$esHoy || $pronosticoVigente)) {
+        if ($registro && (! $esHoy || $pronosticoVigente)) {
             return $registro;
         }
 
@@ -32,7 +32,7 @@ class ClimaOperativoService
                 ->first();
         }
 
-        if (!$registro) {
+        if (! $registro) {
             $registro = $this->crearFallbackDia($lote, $fechaStr, $sync['error'] ?? null);
         }
 

@@ -357,7 +357,7 @@ class InventarioService
      * En otros motores (SQLite/testing) itera sobre IDs con el servicio como fallback.
      *
      * @param  int  $umbral  Umbral de stock crítico (default 10)
-     * @return int  Cantidad de insumos críticos
+     * @return int Cantidad de insumos críticos
      */
     public static function contarInsumosCriticos(int $umbral = 10): int
     {

@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Usuario;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
 
@@ -31,7 +31,7 @@ class AdminUserSeeder extends Seeder
         );
 
         // Asignar rol de Administrador si no lo tiene
-        if (!$admin->hasRole($role->name)) {
+        if (! $admin->hasRole($role->name)) {
             $admin->assignRole($role);
         }
 

@@ -57,6 +57,3 @@ Schedule::command('clima:real')
 Schedule::command('mantenimiento:check-programados')
     ->everyFourHours()
     ->withoutOverlapping(5);
-
-
-

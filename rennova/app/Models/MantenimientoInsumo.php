@@ -8,16 +8,18 @@ use OwenIt\Auditing\Contracts\Auditable;
 class MantenimientoInsumo extends Model implements Auditable
 {
     use \OwenIt\Auditing\Auditable;
-    
+
     protected $table = 'mantenimiento_insumos';
+
     protected $primaryKey = 'id_mantenimiento_insumo';
+
     protected $fillable = [
         'id_mantenimiento',
         'id_insumo',
         'id_movimiento',
         'cantidad_utilizada',
         'costo_unitario',
-        'subtotal'
+        'subtotal',
     ];
 
     public function mantenimiento()

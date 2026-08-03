@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Artisan;
 class OptimizarSistema extends Command
 {
     protected $signature = 'sistema:optimizar {--force : Forzar optimización en cualquier entorno}';
+
     protected $description = 'Optimiza el rendimiento del sistema (cache de config, rutas, vistas, etc.)';
 
     public function handle()
@@ -61,7 +62,7 @@ class OptimizarSistema extends Command
         // 7. Limpiar logs antiguos (opcional)
         $this->line('📝 Limpiando logs antiguos (>30 días)...');
         $logsPath = storage_path('logs');
-        $files = glob($logsPath . '/laravel-*.log');
+        $files = glob($logsPath.'/laravel-*.log');
         $deleted = 0;
         foreach ($files as $file) {
             if (filemtime($file) < strtotime('-30 days')) {
@@ -88,7 +89,7 @@ class OptimizarSistema extends Command
         $this->newLine();
         $this->info('✅ Sistema optimizado correctamente');
         $this->line('💡 Tip: Ejecuta este comando después de cada deploy o cambio importante');
-        
+
         return Command::SUCCESS;
     }
 }

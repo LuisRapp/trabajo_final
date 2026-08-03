@@ -12,7 +12,9 @@ class CargaRegistrada
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public $carga;
+
     public $maquinariaId;
+
     public $toneladas;
 
     /**

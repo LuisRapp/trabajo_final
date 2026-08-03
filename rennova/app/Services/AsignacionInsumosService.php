@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Servicio de Estimación de Insumos Semana 1
- * 
+ *
  * Responsable de calcular cantidades y costos de insumos para la primera semana
  */
 class AsignacionInsumosService

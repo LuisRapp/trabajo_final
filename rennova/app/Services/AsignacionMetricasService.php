@@ -7,7 +7,7 @@ use Illuminate\Support\Collection;
 
 /**
  * Servicio de Métricas de Asignación
- * 
+ *
  * Responsable de cálculos estadísticos para propuestas de asignación
  */
 class AsignacionMetricasService

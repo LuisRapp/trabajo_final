@@ -59,7 +59,7 @@ class LotePlanificacionTareas extends Component
 
     public function removeTareaRow(int $index): void
     {
-        if (!isset($this->tareas[$index])) {
+        if (! isset($this->tareas[$index])) {
             return;
         }
 
@@ -78,6 +78,7 @@ class LotePlanificacionTareas extends Component
                 $sum += (float) $row['superficie_afectada_ha'];
             }
         }
+
         return round($sum, 2);
     }
 
@@ -88,7 +89,7 @@ class LotePlanificacionTareas extends Component
         try {
             $this->validate([
                 'tareas' => 'required|array|min:1',
-                'tareas.*.tipo_tarea' => 'required|in:' . implode(',', array_map(fn ($c) => $c->value, TaskType::cases())),
+                'tareas.*.tipo_tarea' => 'required|in:'.implode(',', array_map(fn ($c) => $c->value, TaskType::cases())),
                 'tareas.*.superficie_afectada_ha' => 'nullable|numeric|min:0.01',
                 'tareas.*.observaciones' => 'nullable|string|max:500',
             ]);
@@ -97,7 +98,8 @@ class LotePlanificacionTareas extends Component
             $total = $this->totalSuperficie;
 
             if ($superficieLote > 0 && $total > $superficieLote + 0.0001) {
-                $this->addError('tareas', 'La suma de superficies (' . $total . ' ha) supera la superficie del lote (' . $superficieLote . ' ha).');
+                $this->addError('tareas', 'La suma de superficies ('.$total.' ha) supera la superficie del lote ('.$superficieLote.' ha).');
+
                 return;
             }
 

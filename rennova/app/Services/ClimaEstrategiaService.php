@@ -6,7 +6,7 @@ use App\Models\Lote;
 
 /**
  * Servicio de Estrategia Climática
- * 
+ *
  * Responsable de generar recomendaciones operativas basadas en análisis climático
  */
 class ClimaEstrategiaService
@@ -60,12 +60,12 @@ class ClimaEstrategiaService
         if ($totalDiasOperativos > 0) {
             $aumentoNecesario = $volumenRiesgo / $totalDiasOperativos;
             $porcentajeAumento = ($aumentoNecesario / $metaDiaria) * 100;
-            
+
             // Subcaso 2A: Aumento viable (≤ 25%)
             if ($porcentajeAumento <= 25) {
                 $nuevaMetaDiaria = $metaDiaria + $aumentoNecesario;
                 $recomendacion = $this->generarRecomendacionAnticipacion($analisisDias, $porcentajeAumento, $nuevaMetaDiaria, 'VIABLE');
-                
+
                 return [
                     'success' => true,
                     'estrategia' => 'ANTICIPACION_PLANIFICADA',
@@ -83,14 +83,14 @@ class ClimaEstrategiaService
                     ],
                 ];
             }
-            
+
             // Subcaso 2B: Aumento excesivo (> 25%) → Máximo esfuerzo
             else {
                 $aumentoMaximo = $metaDiaria * 0.25;
                 $volumenRecuperable = $aumentoMaximo * $totalDiasOperativos;
                 $deficitResidual = $volumenRiesgo - $volumenRecuperable;
                 $recomendacion = $this->generarRecomendacionAnticipacion($analisisDias, 25, $metaDiaria * 1.25, 'MAXIMA', $volumenRecuperable, $deficitResidual);
-                
+
                 return [
                     'success' => true,
                     'estrategia' => 'ANTICIPACION_MAXIMA',
@@ -126,27 +126,27 @@ class ClimaEstrategiaService
         $totalOperativos = $analisisDias['total_dias_operativos'];
         $diasPerdidos = $analisisDias['total_dias_perdidos'];
         $volumenRiesgo = $analisisDias['volumen_riesgo'];
-        
-        $diaCero = $analisisDias['dia_cero_index'] !== null 
-            ? $analisisDias['dias_detalle'][$analisisDias['dia_cero_index']] 
+
+        $diaCero = $analisisDias['dia_cero_index'] !== null
+            ? $analisisDias['dias_detalle'][$analisisDias['dia_cero_index']]
             : null;
 
         if ($tipo === 'VIABLE') {
             $recomendacion = "📋 PLANIFICACIÓN ESTRATÉGICA - LLUVIA PRONOSTICADA\n\n";
-            
+
             if ($diaCero) {
                 $recomendacion .= "🌧️ Primera lluvia: {$diaCero['dia_semana']} {$diaCero['fecha_str']}\n";
             }
-            
+
             $recomendacion .= "📊 ANÁLISIS DE VENTANA (7 días):\n";
             $recomendacion .= "   • Días laborales disponibles: {$totalOperativos}\n";
             $recomendacion .= "   • Días perdidos por lluvia: {$diasPerdidos}\n";
-            $recomendacion .= "   • Déficit proyectado: " . round($volumenRiesgo, 2) . " toneladas\n\n";
-            
+            $recomendacion .= '   • Déficit proyectado: '.round($volumenRiesgo, 2)." toneladas\n\n";
+
             $recomendacion .= "✅ ESTRATEGIA DE COMPENSACIÓN:\n";
-            $recomendacion .= "   • Aumentar producción un " . round($porcentaje, 0) . "% en días operativos\n";
-            $recomendacion .= "   • Meta diaria ajustada: " . round($nuevaMeta, 2) . " toneladas\n";
-            
+            $recomendacion .= '   • Aumentar producción un '.round($porcentaje, 0)."% en días operativos\n";
+            $recomendacion .= '   • Meta diaria ajustada: '.round($nuevaMeta, 2)." toneladas\n";
+
             if ($diasPrevios > 0 && $diasPosterior > 0) {
                 $recomendacion .= "   • Distribuir entre {$diasPrevios} días ANTES y {$diasPosterior} días DESPUÉS de la lluvia\n";
             } elseif ($diasPrevios > 0) {
@@ -154,47 +154,47 @@ class ClimaEstrategiaService
             } else {
                 $recomendacion .= "   • Recuperar volumen en los {$diasPosterior} días DESPUÉS de la lluvia\n";
             }
-            
+
             $recomendacion .= "\n💡 ACCIÓN RECOMENDADA:\n";
             $recomendacion .= "   Coordinar con capataz para aumentar ritmo de trabajo.\n";
-            $recomendacion .= "   Esta planificación cubrirá el 100% del déficit proyectado.";
-            
+            $recomendacion .= '   Esta planificación cubrirá el 100% del déficit proyectado.';
+
         } else { // MAXIMA
             $porcentajeCobertura = round(($volRecuperable / $volumenRiesgo) * 100, 0);
-            
+
             $recomendacion = "🚨 ALERTA CLIMÁTICA - PLANIFICACIÓN DE MÁXIMA PRIORIDAD\n\n";
-            
+
             if ($diaCero) {
                 $recomendacion .= "🌧️ Primera lluvia: {$diaCero['dia_semana']} {$diaCero['fecha_str']}\n";
             }
-            
+
             $recomendacion .= "📊 ANÁLISIS DE VENTANA (7 días):\n";
             $recomendacion .= "   • Días laborales disponibles: {$totalOperativos}\n";
             $recomendacion .= "   • Días perdidos por lluvia: {$diasPerdidos}\n";
-            $recomendacion .= "   • Déficit proyectado: " . round($volumenRiesgo, 2) . " toneladas\n\n";
-            
+            $recomendacion .= '   • Déficit proyectado: '.round($volumenRiesgo, 2)." toneladas\n\n";
+
             $recomendacion .= "⚠️ ESTRATEGIA DE MÁXIMO ESFUERZO:\n";
             $recomendacion .= "   • Aumentar producción al MÁXIMO: 25%\n";
-            $recomendacion .= "   • Meta diaria ajustada: " . round($nuevaMeta, 2) . " toneladas\n";
-            $recomendacion .= "   • Volumen recuperable: " . round($volRecuperable, 2) . " toneladas ({$porcentajeCobertura}%)\n";
-            $recomendacion .= "   • Déficit residual: " . round($deficitResidual, 2) . " toneladas\n\n";
-            
+            $recomendacion .= '   • Meta diaria ajustada: '.round($nuevaMeta, 2)." toneladas\n";
+            $recomendacion .= '   • Volumen recuperable: '.round($volRecuperable, 2)." toneladas ({$porcentajeCobertura}%)\n";
+            $recomendacion .= '   • Déficit residual: '.round($deficitResidual, 2)." toneladas\n\n";
+
             $recomendacion .= "💡 ACCIONES INMEDIATAS:\n";
             $recomendacion .= "   1. Movilizar TODOS los recursos disponibles\n";
             $recomendacion .= "   2. Considerar horas extras o turnos extendidos\n";
             $recomendacion .= "   3. Priorizar cargas de mayor valor\n\n";
-            
+
             $recomendacion .= "⚠️ ADVERTENCIA:\n";
             $recomendacion .= "   No será posible cubrir el 100% del déficit.\n";
-            $recomendacion .= "   Se recomienda maximizar producción en días disponibles.";
+            $recomendacion .= '   Se recomienda maximizar producción en días disponibles.';
         }
-        
+
         return $recomendacion;
     }
 
     /**
      * PASO B: Estrategia de Anticipación (DEPRECATED - mantenido por compatibilidad)
-     * 
+     *
      * Intenta redistribuir el volumen de riesgo en días previos operativos
      * Máximo aumento permitido: 25%
      */
@@ -232,7 +232,7 @@ class ClimaEstrategiaService
             $recomendacion .= "   • Días perdidos proyectados: {$diasPerdidos}\n\n";
             $recomendacion .= "💡 ACCIÓN INMEDIATA:\n";
             $recomendacion .= "   Coordinar con capataz para aumentar ritmo de trabajo hoy y mañana.\n";
-            $recomendacion .= "   Esta anticipación permitirá cubrir el 100% del déficit proyectado.";
+            $recomendacion .= '   Esta anticipación permitirá cubrir el 100% del déficit proyectado.';
 
         } else {
             // ⚠️ AUMENTO EXCESIVO - Aumentar al máximo posible
@@ -245,14 +245,14 @@ class ClimaEstrategiaService
             $recomendacion = "🚨 LLUVIA INMINENTE EN {$diasHastaDiaCero} DÍAS ({$diaCero['fecha_str']})\n\n";
             $recomendacion .= "📊 ESTRATEGIA DE ANTICIPACIÓN (LÍMITE ALCANZADO):\n";
             $recomendacion .= "   • Aumentar producción al MÁXIMO: 25%\n";
-            $recomendacion .= "   • Meta diaria ajustada: " . round($metaDiaria * self::MAX_AUMENTO_PRODUCCION, 2) . " toneladas\n";
+            $recomendacion .= '   • Meta diaria ajustada: '.round($metaDiaria * self::MAX_AUMENTO_PRODUCCION, 2)." toneladas\n";
             $recomendacion .= "   • Volumen recuperable: {$volumenRecuperable} toneladas ({$porcentajeCobertura}%)\n";
             $recomendacion .= "   • Déficit residual: {$deficitResidual} toneladas\n\n";
             $recomendacion .= "⚠️ ADVERTENCIA:\n";
             $recomendacion .= "   No será posible cubrir el 100% del déficit proyectado.\n";
             $recomendacion .= "   Se recomienda priorizar cargas de mayor valor durante estos días.\n\n";
             $recomendacion .= "💡 ACCIÓN INMEDIATA:\n";
-            $recomendacion .= "   Movilizar todos los recursos disponibles. Considerar horas extras.";
+            $recomendacion .= '   Movilizar todos los recursos disponibles. Considerar horas extras.';
         }
 
         return [
@@ -278,7 +278,7 @@ class ClimaEstrategiaService
 
     /**
      * PASO C: Estrategia de Reacción
-     * 
+     *
      * Aplica cuando ya está lloviendo o no hay tiempo de anticipación
      * Opciones: Mantenimiento Preventivo o Suspensión de Jornada
      */
@@ -292,7 +292,7 @@ class ClimaEstrategiaService
         // Buscar maquinarias asignadas al lote con alto desgaste
         $maquinariasMantenimiento = $this->buscarMaquinariasParaMantenimiento($lote);
 
-        if (!empty($maquinariasMantenimiento)) {
+        if (! empty($maquinariasMantenimiento)) {
             // OPCIÓN 1: Mantenimiento Preventivo Adelantado
             $accion_recomendada = 'MANTENIMIENTO_PREVENTIVO';
             $cantidadMaquinas = count($maquinariasMantenimiento);
@@ -313,7 +313,7 @@ class ClimaEstrategiaService
             $recomendacion .= "   3. Reducir riesgo de fallas futuras y tiempos de inactividad\n\n";
             $recomendacion .= "💰 BENEFICIO:\n";
             $recomendacion .= "   Convertir tiempo de inactividad en mantenimiento productivo.\n";
-            $recomendacion .= "   Evitar fallas inesperadas durante días operativos.";
+            $recomendacion .= '   Evitar fallas inesperadas durante días operativos.';
 
         } else {
             // OPCIÓN 2: Suspensión de Jornada
@@ -326,9 +326,9 @@ class ClimaEstrategiaService
             $recomendacion .= "📊 ESTRATEGIA DE REACCIÓN:\n";
             $recomendacion .= "   Opción recomendada: SUSPENSIÓN DE JORNADA\n\n";
             $recomendacion .= "💰 ANÁLISIS DE COSTOS:\n";
-            $recomendacion .= "   • Costo estructural diario: $" . number_format($costoEstructuralDiario, 2) . "\n";
+            $recomendacion .= '   • Costo estructural diario: $'.number_format($costoEstructuralDiario, 2)."\n";
             $recomendacion .= "   • Días de lluvia proyectados: {$diasPerdidos}\n";
-            $recomendacion .= "   • Pérdida total estimada: $" . number_format($costoTotal, 2) . "\n\n";
+            $recomendacion .= '   • Pérdida total estimada: $'.number_format($costoTotal, 2)."\n\n";
             $recomendacion .= "🔍 MAQUINARIAS REVISADAS:\n";
             $recomendacion .= "   No se detectaron equipos que requieran mantenimiento urgente.\n\n";
             $recomendacion .= "💡 ACCIÓN INMEDIATA:\n";
@@ -336,7 +336,7 @@ class ClimaEstrategiaService
             $recomendacion .= "   2. Notificar a empleados sobre suspensión por clima\n";
             $recomendacion .= "   3. Asegurar equipos y cerrar el lote\n\n";
             $recomendacion .= "⏱️ MONITOREO:\n";
-            $recomendacion .= "   Revisar pronóstico cada 24hs para retomar operaciones.";
+            $recomendacion .= '   Revisar pronóstico cada 24hs para retomar operaciones.';
         }
 
         return [

@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Lote;
+use Illuminate\Database\Seeder;
 
 class LoteEscenarioSuspensionSeeder extends Seeder
 {

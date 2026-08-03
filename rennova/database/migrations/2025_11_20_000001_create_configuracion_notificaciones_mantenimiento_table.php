@@ -14,7 +14,7 @@ return new class extends Migration
             $table->enum('tipo_notificacion', ['umbral', 'recordatorio', 'stock'])
                 ->comment('Tipo de notificación: umbral=se alcanzó umbral, recordatorio=mantenimiento programado hoy, stock=falta stock');
             $table->timestamps();
-            
+
             $table->unique(['user_id', 'tipo_notificacion']);
         });
     }

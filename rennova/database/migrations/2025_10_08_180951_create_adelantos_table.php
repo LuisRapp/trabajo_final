@@ -21,9 +21,9 @@ return new class extends Migration
             $table->timestamps();
 
             $table->foreign('id_empleado')
-                  ->references('id_empleado')
-                  ->on('empleados')
-                  ->onDelete('cascade');
+                ->references('id_empleado')
+                ->on('empleados')
+                ->onDelete('cascade');
         });
     }
 

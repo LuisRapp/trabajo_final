@@ -2,19 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Reporte;
+use App\Models\Carga;
+use App\Models\ClimaDiaLote;
 use App\Models\Lote;
 use App\Models\ParteDiario;
-use App\Models\Carga;
 use App\Models\Recibo;
-use App\Models\ClimaDiaLote;
+use App\Models\Reporte;
 use App\Services\ForestalStatsService;
-use Illuminate\Http\Request;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
 use Dompdf\Dompdf;
 use Dompdf\Options;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\Rule;
 
 class ReporteController extends Controller
@@ -104,7 +104,7 @@ class ReporteController extends Controller
         $filtroDesde = $fechaDesde->toDateString();
         $filtroHasta = $fechaHasta->toDateString();
         $rangoLabel = $rangeCustom
-            ? ($fechaDesde->format('d/m/Y') . ' - ' . $fechaHasta->format('d/m/Y'))
+            ? ($fechaDesde->format('d/m/Y').' - '.$fechaHasta->format('d/m/Y'))
             : 'Últimos 30 días';
 
         // Obtener lotes activos del usuario
@@ -154,10 +154,10 @@ class ReporteController extends Controller
                 true,
                 false
             );
-            
+
             return [
                 'id' => $lote->id_lote,
-                'nombre' => $lote->ubicacion ?? $lote->propietario ?? 'Lote ' . $lote->id_lote,
+                'nombre' => $lote->ubicacion ?? $lote->propietario ?? 'Lote '.$lote->id_lote,
                 'hectareas' => $lote->superficie ?? 0,
                 'precio_promedio' => $precio_promedio,
                 'costo_promedio' => $costo_promedio,
@@ -211,8 +211,8 @@ class ReporteController extends Controller
         }
 
         $distribucion_costos = [
-            ['name' => 'Insumos', 'value' => (float)($costos_totales->insumos ?? 0)],
-            ['name' => 'Maquinaria', 'value' => (float)($costos_totales->maquinaria ?? 0)],
+            ['name' => 'Insumos', 'value' => (float) ($costos_totales->insumos ?? 0)],
+            ['name' => 'Maquinaria', 'value' => (float) ($costos_totales->maquinaria ?? 0)],
             ['name' => 'Mano de Obra', 'value' => round($liquidacionesPeriodo, 2)],
         ];
 
@@ -273,7 +273,7 @@ class ReporteController extends Controller
             [$fechaDesde, $fechaHasta] = [$fechaHasta, $fechaDesde];
         }
 
-        $periodo = $fechaDesde->format('d/m/Y') . ' - ' . $fechaHasta->format('d/m/Y');
+        $periodo = $fechaDesde->format('d/m/Y').' - '.$fechaHasta->format('d/m/Y');
         $generadoPor = auth()->user()->name ?? auth()->user()->email ?? 'Usuario';
         $fechaHora = Carbon::now()->format('d/m/Y H:i');
         $base = [
@@ -438,7 +438,7 @@ class ReporteController extends Controller
 
                 return [
                     'id' => $lote->id_lote,
-                    'nombre' => $lote->ubicacion ?? $lote->propietario ?? 'Lote ' . $lote->id_lote,
+                    'nombre' => $lote->ubicacion ?? $lote->propietario ?? 'Lote '.$lote->id_lote,
                     'hectareas' => $lote->superficie ?? 0,
                     'produccion' => round($produccion, 2),
                     'precio_promedio' => $precio_promedio,
@@ -528,7 +528,7 @@ class ReporteController extends Controller
 
                 return [
                     'id' => $lote->id_lote,
-                    'nombre' => $lote->ubicacion ?? $lote->propietario ?? 'Lote ' . $lote->id_lote,
+                    'nombre' => $lote->ubicacion ?? $lote->propietario ?? 'Lote '.$lote->id_lote,
                     'superficie' => $superficie,
                     'toneladas' => round($toneladas, 2),
                     'rendimiento' => round($rendimiento, 2),
@@ -559,7 +559,7 @@ class ReporteController extends Controller
             ]);
         }
 
-        $options = new Options();
+        $options = new Options;
         $options->set('isRemoteEnabled', true);
         $options->set('isPhpEnabled', true);
         $options->set('defaultFont', 'DejaVu Sans');
@@ -582,12 +582,12 @@ class ReporteController extends Controller
         ');
 
         $filename = $tipo === 'lote'
-            ? 'reporte-lote-' . ($data['lote']->id_lote ?? 'n-a') . '-' . Carbon::now()->format('Ymd_His') . '.pdf'
-            : 'reporte-global-' . Carbon::now()->format('Ymd_His') . '.pdf';
+            ? 'reporte-lote-'.($data['lote']->id_lote ?? 'n-a').'-'.Carbon::now()->format('Ymd_His').'.pdf'
+            : 'reporte-global-'.Carbon::now()->format('Ymd_His').'.pdf';
 
         return response($dompdf->output(), 200)
             ->header('Content-Type', 'application/pdf')
-            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
+            ->header('Content-Disposition', 'attachment; filename="'.$filename.'"');
     }
 
     private function buildChartImage(array $labels, array $serieProduccion, array $serieCostos): ?string
@@ -640,13 +640,14 @@ class ReporteController extends Controller
             ],
         ];
 
-        $url = 'https://quickchart.io/chart?c=' . urlencode(json_encode($chartConfig));
+        $url = 'https://quickchart.io/chart?c='.urlencode(json_encode($chartConfig));
         try {
             $response = Http::timeout(10)->get($url);
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 return null;
             }
-            return 'data:image/png;base64,' . base64_encode($response->body());
+
+            return 'data:image/png;base64,'.base64_encode($response->body());
         } catch (\Throwable $e) {
             return null;
         }
@@ -760,7 +761,7 @@ class ReporteController extends Controller
             [$fechaDesde, $fechaHasta] = [$fechaHasta, $fechaDesde];
         }
 
-        $periodo = $fechaDesde->format('d/m/Y') . ' - ' . $fechaHasta->format('d/m/Y');
+        $periodo = $fechaDesde->format('d/m/Y').' - '.$fechaHasta->format('d/m/Y');
         $generadoPor = auth()->user()->name ?? auth()->user()->email ?? 'Usuario';
         $fechaHora = Carbon::now()->format('d/m/Y H:i');
 
@@ -784,10 +785,12 @@ class ReporteController extends Controller
                 $lote = $items->first()->lote;
                 $mmTotal = $items->sum(function ($item) {
                     $snapshot = is_array($item->snapshot) ? $item->snapshot : [];
+
                     return (float) ($snapshot['real_precipitacion_mm'] ?? 0);
                 });
+
                 return [
-                    'lote' => $lote?->ubicacion ?? $lote?->propietario ?? ('Lote ' . $items->first()->id_lote),
+                    'lote' => $lote?->ubicacion ?? $lote?->propietario ?? ('Lote '.$items->first()->id_lote),
                     'cantidad' => $items->count(),
                     'mm_total' => round($mmTotal, 1),
                 ];
@@ -808,7 +811,7 @@ class ReporteController extends Controller
             'lote_seleccionado' => $loteSeleccionado,
         ];
 
-        $options = new Options();
+        $options = new Options;
         $options->set('isRemoteEnabled', true);
         $options->set('isPhpEnabled', true);
         $options->set('defaultFont', 'DejaVu Sans');
@@ -830,10 +833,10 @@ class ReporteController extends Controller
             $pdf->text($x, $y, $text, $font, $size, [127, 140, 141]);
         ');
 
-        $filename = 'reporte-lluvias-' . Carbon::now()->format('Ymd_His') . '.pdf';
+        $filename = 'reporte-lluvias-'.Carbon::now()->format('Ymd_His').'.pdf';
 
         return response($dompdf->output(), 200)
             ->header('Content-Type', 'application/pdf')
-            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
+            ->header('Content-Disposition', 'attachment; filename="'.$filename.'"');
     }
 }

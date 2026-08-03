@@ -3,10 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Carga;
-use App\Models\Lote;
 use App\Models\CategoriaMadera;
-use App\Models\ParteDiario;
 use App\Models\Chofer;
+use App\Models\Lote;
+use App\Models\ParteDiario;
 use Illuminate\Http\Request;
 
 class CargaController extends Controller
@@ -19,6 +19,7 @@ class CargaController extends Controller
         $cargas = Carga::with(['categoriaMadera', 'parteDiario', 'lote', 'chofer.cliente'])
             ->orderByDesc('id_carga')
             ->get();
+
         return view('cargas.index', compact('cargas'));
     }
 
@@ -31,6 +32,7 @@ class CargaController extends Controller
         $categorias = CategoriaMadera::orderBy('nombre')->get();
         $partes = ParteDiario::orderByDesc('id_parte_diario')->get();
         $choferes = Chofer::with('cliente')->orderBy('apellido')->orderBy('nombre')->get();
+
         return view('cargas.create', compact('lotes', 'categorias', 'partes', 'choferes'));
     }
 
@@ -75,6 +77,7 @@ class CargaController extends Controller
         $categorias = CategoriaMadera::orderBy('nombre')->get();
         $partes = ParteDiario::orderByDesc('id_parte_diario')->get();
         $choferes = Chofer::with('cliente')->orderBy('apellido')->orderBy('nombre')->get();
+
         return view('cargas.edit', compact('carga', 'lotes', 'categorias', 'partes', 'choferes'));
     }
 
@@ -108,6 +111,7 @@ class CargaController extends Controller
     public function destroy(Carga $carga)
     {
         $carga->delete();
+
         return redirect()->route('cargas.index')->with('status', 'Carga eliminada correctamente.');
     }
 }

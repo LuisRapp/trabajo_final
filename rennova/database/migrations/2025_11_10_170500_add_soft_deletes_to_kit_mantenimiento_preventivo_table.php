@@ -4,11 +4,12 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     public function up(): void
     {
         Schema::table('kit_mantenimiento_preventivo', function (Blueprint $table) {
-            if (!Schema::hasColumn('kit_mantenimiento_preventivo', 'deleted_at')) {
+            if (! Schema::hasColumn('kit_mantenimiento_preventivo', 'deleted_at')) {
                 $table->softDeletes();
             }
         });

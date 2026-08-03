@@ -5,7 +5,6 @@ namespace App\Http\Livewire;
 use Livewire\Component;
 use Livewire\WithPagination;
 use OwenIt\Auditing\Models\Audit;
-use Carbon\Carbon;
 
 class Auditorias extends Component
 {
@@ -16,11 +15,17 @@ class Auditorias extends Component
     public bool $mostrarFiltros = true;
 
     public $busqueda = '';
+
     public $filtroModelo = '';
+
     public $filtroEvento = '';
+
     public $filtroUsuario = '';
+
     public $filtroFechaDesde = '';
+
     public $filtroFechaHasta = '';
+
     public $perPage = 20;
 
     protected $queryString = [
@@ -82,10 +87,10 @@ class Auditorias extends Component
 
         // Filtro por búsqueda en URL o IP
         if ($this->busqueda) {
-            $query->where(function($q) {
-                $q->where('url', 'like', '%' . $this->busqueda . '%')
-                  ->orWhere('ip_address', 'like', '%' . $this->busqueda . '%')
-                  ->orWhere('tags', 'like', '%' . $this->busqueda . '%');
+            $query->where(function ($q) {
+                $q->where('url', 'like', '%'.$this->busqueda.'%')
+                    ->orWhere('ip_address', 'like', '%'.$this->busqueda.'%')
+                    ->orWhere('tags', 'like', '%'.$this->busqueda.'%');
             });
         }
 
@@ -120,10 +125,10 @@ class Auditorias extends Component
             ->distinct()
             ->orderBy('auditable_type')
             ->pluck('auditable_type')
-            ->map(function($modelo) {
+            ->map(function ($modelo) {
                 return [
                     'value' => $modelo,
-                    'label' => class_basename($modelo)
+                    'label' => class_basename($modelo),
                 ];
             });
 
@@ -133,10 +138,10 @@ class Auditorias extends Component
             ->select('user_id', 'user_type')
             ->distinct()
             ->get()
-            ->map(function($audit) {
+            ->map(function ($audit) {
                 return [
                     'id' => $audit->user_id,
-                    'nombre' => $audit->user?->name ?? 'Usuario #' . $audit->user_id
+                    'nombre' => $audit->user?->name ?? 'Usuario #'.$audit->user_id,
                 ];
             })
             ->unique('id')
