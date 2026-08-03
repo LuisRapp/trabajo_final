@@ -265,7 +265,7 @@ try {
     print_item("ID", $rolLaboral->id_rol_laboral);
     print_item("Nombre", $rolLaboral->nombre);
     print_item("Jornal", '$' . $rolLaboral->valor_jornal);
-    print_item("Tarifa", '$' . $rolLaboral->tarifa_fija_por_tonelada . '/tn");
+    print_item("Tarifa", '$' . $rolLaboral->tarifa_fija_por_tonelada . '/tn');
     print_end();
     
     print_success("Rol laboral creado con histórico");
