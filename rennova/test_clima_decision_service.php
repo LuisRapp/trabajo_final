@@ -2,7 +2,7 @@
 
 /**
  * Script de prueba completo para ClimaDecisionService
- * 
+ *
  * Simula diferentes escenarios:
  * 1. Anticipación viable (aumento < 25%)
  * 2. Anticipación al límite (aumento > 25%)
@@ -10,12 +10,12 @@
  * 4. Reacción con suspensión
  */
 
-require_once __DIR__ . '/vendor/autoload.php';
+require_once __DIR__.'/vendor/autoload.php';
 
 use App\Models\Lote;
 use App\Services\ClimaDecisionService;
 
-$app = require_once __DIR__ . '/bootstrap/app.php';
+$app = require_once __DIR__.'/bootstrap/app.php';
 $app->make('Illuminate\Contracts\Console\Kernel')->bootstrap();
 
 echo "\n";
@@ -30,7 +30,7 @@ try {
     // Buscar o crear lote de prueba
     $lote = Lote::first();
 
-    if (!$lote) {
+    if (! $lote) {
         echo "❌ ERROR: No hay lotes en el sistema.\n";
         echo "💡 Cree al menos un lote desde el menú de gestión.\n";
         exit(1);
@@ -69,19 +69,19 @@ try {
         echo "   Nivel de urgencia: {$resultado1['nivel_urgencia']}\n";
         echo "\n";
         echo "📋 RECOMENDACIÓN:\n";
-        echo str_repeat("─", 63) . "\n";
+        echo str_repeat('─', 63)."\n";
         echo $resultado1['recomendacion'];
         echo "\n";
-        echo str_repeat("─", 63) . "\n";
+        echo str_repeat('─', 63)."\n";
         echo "\n";
 
         // Mostrar días analizados
         if (isset($resultado1['dias_detalle'])) {
             echo "📅 PRONÓSTICO DETALLADO (7 DÍAS):\n";
             echo "\n";
-            printf("%-12s %-10s %-8s %-10s %-8s %-6s %-10s %-18s\n", "Fecha", "Día", "Lluvia", "Lluvia 6-18", "Viento", "ET0", "Nubosidad", "Estado");
-            echo str_repeat("─", 110) . "\n";
-            
+            printf("%-12s %-10s %-8s %-10s %-8s %-6s %-10s %-18s\n", 'Fecha', 'Día', 'Lluvia', 'Lluvia 6-18', 'Viento', 'ET0', 'Nubosidad', 'Estado');
+            echo str_repeat('─', 110)."\n";
+
             foreach ($resultado1['dias_detalle'] as $dia) {
                 $iconoEstado = match ($dia['estado']) {
                     'OPERATIVO' => '✅',
@@ -146,31 +146,31 @@ try {
         echo "   Nivel de urgencia: {$resultado2['nivel_urgencia']}\n";
         echo "\n";
         echo "📋 RECOMENDACIÓN:\n";
-        echo str_repeat("─", 63) . "\n";
+        echo str_repeat('─', 63)."\n";
         echo $resultado2['recomendacion'];
         echo "\n";
-        echo str_repeat("─", 63) . "\n";
+        echo str_repeat('─', 63)."\n";
         echo "\n";
 
         // Mostrar datos calculados
         if (isset($resultado2['datos_calculados'])) {
             echo "📊 DATOS CALCULADOS:\n";
             $datos = $resultado2['datos_calculados'];
-            
+
             if (isset($datos['dias_hasta_lluvia'])) {
                 echo "   • Días hasta lluvia: {$datos['dias_hasta_lluvia']}\n";
                 echo "   • Día Cero: {$datos['dia_cero']}\n";
                 echo "   • Días operativos previos: {$datos['dias_operativos_previos']}\n";
                 echo "   • Volumen en riesgo: {$datos['volumen_riesgo']} ton\n";
                 echo "   • Meta diaria normal: {$datos['meta_diaria_normal']} ton\n";
-                echo "   • Aumento necesario: " . round($datos['aumento_necesario_pct'], 1) . "%\n";
-                echo "   • Viable 100%: " . ($datos['es_viable_100'] ? '✅ SÍ' : '⚠️  NO') . "\n";
+                echo '   • Aumento necesario: '.round($datos['aumento_necesario_pct'], 1)."%\n";
+                echo '   • Viable 100%: '.($datos['es_viable_100'] ? '✅ SÍ' : '⚠️  NO')."\n";
             } elseif (isset($datos['maquinarias_mantenimiento'])) {
                 echo "   • Días perdidos proyectados: {$datos['dias_perdidos_proyectados']}\n";
                 echo "   • Volumen en riesgo: {$datos['volumen_riesgo']} ton\n";
-                echo "   • Maquinarias para mantenimiento: " . count($datos['maquinarias_mantenimiento']) . "\n";
+                echo '   • Maquinarias para mantenimiento: '.count($datos['maquinarias_mantenimiento'])."\n";
             }
-            
+
             echo "\n";
         }
     } else {
@@ -204,17 +204,17 @@ try {
     if ($resultado3['success']) {
         echo "✅ ANÁLISIS EXITOSO\n";
         echo "   Estrategia: {$resultado3['estrategia']}\n";
-        
+
         if (isset($resultado3['accion_recomendada'])) {
             echo "   Acción: {$resultado3['accion_recomendada']}\n";
         }
-        
+
         echo "\n";
         echo "📋 RECOMENDACIÓN:\n";
-        echo str_repeat("─", 63) . "\n";
+        echo str_repeat('─', 63)."\n";
         echo $resultado3['recomendacion'];
         echo "\n";
-        echo str_repeat("─", 63) . "\n";
+        echo str_repeat('─', 63)."\n";
     } else {
         echo "❌ ERROR: {$resultado3['error']}\n";
     }
@@ -231,12 +231,18 @@ try {
     echo "\n";
 
     $exitososCount = 0;
-    if ($resultado1['success']) $exitososCount++;
-    if ($resultado2['success']) $exitososCount++;
-    if ($resultado3['success']) $exitososCount++;
+    if ($resultado1['success']) {
+        $exitososCount++;
+    }
+    if ($resultado2['success']) {
+        $exitososCount++;
+    }
+    if ($resultado3['success']) {
+        $exitososCount++;
+    }
 
     echo "✅ Escenarios exitosos: {$exitososCount}/3\n";
-    echo "⏱️  Tiempo promedio de análisis: " . round(($tiempo1 + $tiempo2 + $tiempo3) / 3, 2) . "ms\n";
+    echo '⏱️  Tiempo promedio de análisis: '.round(($tiempo1 + $tiempo2 + $tiempo3) / 3, 2)."ms\n";
     echo "\n";
 
     echo "📊 ESTRATEGIAS DETECTADAS:\n";

@@ -2,11 +2,11 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Usuario;
-use Spatie\Permission\Models\Role;
-use Spatie\Permission\Models\Permission;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 class SuperAdminSeeder extends Seeder
 {
@@ -30,13 +30,13 @@ class SuperAdminSeeder extends Seeder
         $role->syncPermissions($allPermissions);
 
         // Asignar rol al usuario
-        if (!$superAdmin->hasRole('Super Admin')) {
+        if (! $superAdmin->hasRole('Super Admin')) {
             $superAdmin->assignRole($role);
         }
 
         $this->command->info('✓ Super Admin creado exitosamente');
         $this->command->info('  Email: superadmin@rennova.com');
         $this->command->info('  Password: admin123');
-        $this->command->info('  Permisos: ' . $allPermissions->count() . ' permisos asignados');
+        $this->command->info('  Permisos: '.$allPermissions->count().' permisos asignados');
     }
 }

@@ -2,17 +2,19 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Contracts\Auditable;
 
 class TipoMaquinaria extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable;
-    
+    use HasFactory, \OwenIt\Auditing\Auditable, SoftDeletes;
+
     protected $table = 'tipo_maquinarias';
+
     protected $primaryKey = 'id_tipo_maquinaria';
+
     protected $fillable = ['nombre', 'umbral_toneladas'];
 
     public function maquinarias()

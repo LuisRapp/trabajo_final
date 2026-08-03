@@ -19,7 +19,7 @@ return new class extends Migration
 
             $table->foreign('id_parte_diario')->references('id_parte_diario')->on('parte_diarios')->onDelete('cascade');
             $table->foreign('id_empleado')->references('id_empleado')->on('empleados')->onDelete('cascade');
-            
+
             // Evitar duplicados
             $table->unique(['id_parte_diario', 'id_empleado']);
         });

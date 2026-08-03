@@ -3,8 +3,8 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 class RolesAndPermissionsSeeder extends Seeder
 {
@@ -51,12 +51,12 @@ class RolesAndPermissionsSeeder extends Seeder
 
         // Crear permisos para cada módulo
         $actions = ['ver', 'crear', 'editar', 'eliminar'];
-        
+
         foreach ($modules as $moduleKey => $moduleName) {
             foreach ($actions as $action) {
                 Permission::firstOrCreate([
                     'name' => "{$action}-{$moduleKey}",
-                    'guard_name' => 'web'
+                    'guard_name' => 'web',
                 ]);
             }
         }
@@ -92,13 +92,13 @@ class RolesAndPermissionsSeeder extends Seeder
         // SUPERVISOR - Puede ver todo, editar operaciones, no puede eliminar ni gestionar usuarios
         $supervisorRole->givePermissionTo([
             // Ver todo
-            'ver-partes-diarios', 'ver-lotes', 'ver-cargas', 'ver-maquinarias', 
+            'ver-partes-diarios', 'ver-lotes', 'ver-cargas', 'ver-maquinarias',
             'ver-mantenimientos', 'ver-insumos', 'ver-empleados', 'ver-adelantos',
-            'ver-clientes', 'ver-ventas', 'ver-recibos', 'ver-proveedores', 
+            'ver-clientes', 'ver-ventas', 'ver-recibos', 'ver-proveedores',
             'ver-choferes', 'ver-roles-laborales', 'ver-categorias-madera',
             'ver-tipos-maquinaria', 'ver-tipos-mantenimiento', 'ver-unidades-medida',
             'ver-lista-precios', 'ver-reportes', 'ver-dashboard',
-            
+
             // Crear y editar operaciones
             'crear-partes-diarios', 'editar-partes-diarios',
             'crear-cargas', 'editar-cargas',
@@ -108,7 +108,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'crear-empleados', 'editar-empleados',
             'crear-adelantos', 'editar-adelantos',
             'crear-maquinarias', 'editar-maquinarias',
-            
+
             // Reportes
             'exportar-reportes',
         ]);
@@ -165,6 +165,6 @@ class RolesAndPermissionsSeeder extends Seeder
         $this->command->info('- Contador (finanzas y reportes)');
         $this->command->info('- Vendedor (clientes y ventas)');
         $this->command->info('');
-        $this->command->info('Total de permisos creados: ' . Permission::count());
+        $this->command->info('Total de permisos creados: '.Permission::count());
     }
 }

@@ -2,13 +2,13 @@
 
 use App\Models\Lote;
 use App\Services\ClimaDecisionService;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 
-require __DIR__ . '/../vendor/autoload.php';
-$app = require __DIR__ . '/../bootstrap/app.php';
+require __DIR__.'/../vendor/autoload.php';
+$app = require __DIR__.'/../bootstrap/app.php';
 
 $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 $kernel->bootstrap();
@@ -21,7 +21,7 @@ config([
 DB::purge('sqlite');
 DB::reconnect('sqlite');
 
-if (!file_exists(database_path('demo_clima.sqlite'))) {
+if (! file_exists(database_path('demo_clima.sqlite'))) {
     touch(database_path('demo_clima.sqlite'));
 }
 
@@ -82,18 +82,19 @@ Schema::enableForeignKeyConstraints();
 function getLoteDemo(): Lote
 {
     $lote = Lote::first();
-    if (!$lote) {
+    if (! $lote) {
         $lote = Lote::create([
             'propietario' => 'Demo',
             'latitud' => -34.6,
             'longitud' => -58.4,
         ]);
     }
-    if (!$lote->latitud || !$lote->longitud) {
+    if (! $lote->latitud || ! $lote->longitud) {
         $lote->latitud = $lote->latitud ?: -34.6;
         $lote->longitud = $lote->longitud ?: -58.4;
         $lote->save();
     }
+
     return $lote;
 }
 
@@ -157,15 +158,15 @@ function escenario(string $nombre, array $precipitaciones, array $nubosidades)
         $res = $react->invoke($svc, $lote, $analisis);
     }
 
-    echo "==== {$nombre} ====" . PHP_EOL;
-    echo "Estrategia: {$res['estrategia']}" . PHP_EOL;
+    echo "==== {$nombre} ====".PHP_EOL;
+    echo "Estrategia: {$res['estrategia']}".PHP_EOL;
     if (isset($res['accion_recomendada'])) {
-        echo "Accion: {$res['accion_recomendada']}" . PHP_EOL;
+        echo "Accion: {$res['accion_recomendada']}".PHP_EOL;
     }
     if (isset($res['datos_calculados']['aumento_necesario_pct'])) {
-        echo "Aumento (visual): {$res['datos_calculados']['aumento_necesario_pct']}%" . PHP_EOL;
+        echo "Aumento (visual): {$res['datos_calculados']['aumento_necesario_pct']}%".PHP_EOL;
     }
-    echo "Recomendacion:\n" . $res['recomendacion'] . PHP_EOL . PHP_EOL;
+    echo "Recomendacion:\n".$res['recomendacion'].PHP_EOL.PHP_EOL;
 }
 
 // Escenario 1: Anticipacion moderada (lluvia en 2 dias)

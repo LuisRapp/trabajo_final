@@ -2,33 +2,32 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\Usuario;
+use App\Models\Empleado;
+use App\Models\HistoricoRolLaboral;
 use App\Models\Lote;
 use App\Models\Maquinaria;
-use App\Models\TipoMaquinaria;
-use App\Models\Empleado;
 use App\Models\RolLaboral;
-use App\Models\ParteDiario;
-use App\Models\Carga;
-use App\Models\Cliente;
-use App\Models\Proveedor;
-use App\Models\Insumo;
-use App\Models\UnidadMedida;
-use App\Models\HistoricoRolLaboral;
+use App\Models\TipoMaquinaria;
+use App\Models\Usuario;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\Log;
+use Tests\TestCase;
 
 class ControllerHttpTest extends TestCase
 {
     use RefreshDatabase, WithFaker;
 
     protected Usuario $usuario;
+
     protected Lote $lote;
+
     protected Maquinaria $maquinaria;
+
     protected TipoMaquinaria $tipoMaquinaria;
+
     protected RolLaboral $rolLaboral;
+
     protected Empleado $empleado;
 
     protected function setUp(): void
@@ -40,7 +39,7 @@ class ControllerHttpTest extends TestCase
 
         $this->tipoMaquinaria = TipoMaquinaria::create([
             'nombre' => 'Cosechadora',
-            'descripcion' => 'Máquina cosechadora forestal'
+            'descripcion' => 'Máquina cosechadora forestal',
         ]);
 
         $this->maquinaria = Maquinaria::create([
@@ -50,14 +49,14 @@ class ControllerHttpTest extends TestCase
             'es_alquilada' => false,
             'fecha_inicio_actividades' => now(),
             'toneladas_acumuladas' => 100,
-            'umbral_toneladas' => 500
+            'umbral_toneladas' => 500,
         ]);
 
         $this->rolLaboral = RolLaboral::create([
             'nombre' => 'Operario',
             'descripcion' => 'Operario general',
             'valor_jornal' => 1000,
-            'tarifa_fija_por_tonelada' => 50
+            'tarifa_fija_por_tonelada' => 50,
         ]);
 
         HistoricoRolLaboral::create([
@@ -65,7 +64,7 @@ class ControllerHttpTest extends TestCase
             'valor_jornal' => 1000,
             'tarifa_fija_por_tonelada' => 50,
             'fecha_inicio' => now()->subMonths(6),
-            'fecha_fin' => null
+            'fecha_fin' => null,
         ]);
 
         $this->lote = Lote::create([
@@ -76,7 +75,7 @@ class ControllerHttpTest extends TestCase
             'especie' => 'Pino',
             'superficie' => 100,
             'latitud' => -27.3612,
-            'longitud' => -55.5116
+            'longitud' => -55.5116,
         ]);
 
         $this->empleado = Empleado::create([
@@ -86,7 +85,7 @@ class ControllerHttpTest extends TestCase
             'nombre' => 'Juan',
             'fecha_nacimiento' => '1990-01-15',
             'fecha_inicio_actividades' => now()->subYear(),
-            'fecha_fin_actividades' => null
+            'fecha_fin_actividades' => null,
         ]);
 
         Log::info('═══ PRUEBAS DE CONTROLADORES HTTP ═══');

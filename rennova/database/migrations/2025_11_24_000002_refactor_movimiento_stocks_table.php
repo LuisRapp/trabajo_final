@@ -2,14 +2,14 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
     /**
      * Run the migrations.
-     * 
+     *
      * Refactorización para agregar tracking de precios y FIFO a movimientos de stock
      */
     public function up(): void
@@ -19,29 +19,29 @@ return new class extends Migration
             // Para entradas: precio de compra
             // Para salidas: precio FIFO calculado automáticamente
             $table->decimal('precio_unitario', 10, 2)->nullable()->after('cantidad');
-            
+
             // Referencia al lote consumido (solo para salidas procesadas por FIFO)
             // Nullable porque las entradas crean lotes nuevos
             $table->unsignedBigInteger('id_lote_inventario')->nullable()->after('precio_unitario');
-            
+
             // Costo total del movimiento = cantidad × precio_unitario
             // Facilita reportes sin recalcular
             $table->decimal('costo_total_movimiento', 12, 2)->nullable()->after('id_lote_inventario');
-            
+
             // Foreign key al lote consumido
             $table->foreign('id_lote_inventario')
-                  ->references('id_lote_inventario')
-                  ->on('lotes_inventario')
-                  ->onDelete('set null')
-                  ->onUpdate('cascade');
-            
+                ->references('id_lote_inventario')
+                ->on('lotes_inventario')
+                ->onDelete('set null')
+                ->onUpdate('cascade');
+
             // Índice para consultas de movimientos por lote
             $table->index('id_lote_inventario', 'idx_movimiento_lote');
-            
+
             // Índice compuesto para reportes por insumo y fecha
             $table->index(['id_insumo', 'fecha', 'tipo'], 'idx_movimiento_reportes');
         });
-        
+
         $driver = DB::connection()->getDriverName();
 
         if ($driver === 'sqlite') {
@@ -102,7 +102,7 @@ return new class extends Migration
             $table->dropColumn([
                 'precio_unitario',
                 'id_lote_inventario',
-                'costo_total_movimiento'
+                'costo_total_movimiento',
             ]);
         });
     }

@@ -2,14 +2,22 @@
 
 namespace App\Http\Livewire;
 
+use App\Models\UnidadMedida;
 use Livewire\Component;
 use Livewire\WithPagination;
-use App\Models\UnidadMedida;
 
 class UnidadesMedida extends Component
 {
     use WithPagination;
-    public $unidad_id, $nombre, $abreviatura, $busqueda = '';
+
+    public $unidad_id;
+
+    public $nombre;
+
+    public $abreviatura;
+
+    public $busqueda = '';
+
     public $tab_activo = 'listado';
 
     protected $rules = [
@@ -38,9 +46,9 @@ class UnidadesMedida extends Component
 
         if ($this->busqueda) {
             $busq = $this->busqueda;
-            $query->where(function($q) use ($busq) {
-                $q->where('nombre', 'ILIKE', '%' . $busq . '%')
-                  ->orWhere('abreviatura', 'ILIKE', '%' . $busq . '%');
+            $query->where(function ($q) use ($busq) {
+                $q->where('nombre', 'ILIKE', '%'.$busq.'%')
+                    ->orWhere('abreviatura', 'ILIKE', '%'.$busq.'%');
             });
         }
 

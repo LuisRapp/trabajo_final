@@ -15,20 +15,20 @@ class ActualizarOdometroMaquina
     {
         try {
             $maquinaria = Maquinaria::findOrFail($event->maquinariaId);
-            
+
             // Incrementar las toneladas acumuladas (odómetro)
             $maquinaria->increment('toneladas_acumuladas', $event->toneladas);
-            
-            Log::info("Odómetro actualizado", [
+
+            Log::info('Odómetro actualizado', [
                 'maquinaria_id' => $event->maquinariaId,
                 'toneladas_agregadas' => $event->toneladas,
-                'toneladas_totales' => $maquinaria->fresh()->toneladas_acumuladas
+                'toneladas_totales' => $maquinaria->fresh()->toneladas_acumuladas,
             ]);
-            
+
         } catch (\Exception $e) {
-            Log::error("Error actualizando odómetro de maquinaria", [
+            Log::error('Error actualizando odómetro de maquinaria', [
                 'maquinaria_id' => $event->maquinariaId,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
         }
     }

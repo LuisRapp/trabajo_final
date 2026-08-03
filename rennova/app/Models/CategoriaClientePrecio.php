@@ -8,9 +8,10 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class CategoriaClientePrecio extends Model implements Auditable
 {
-    use SoftDeletes, \OwenIt\Auditing\Auditable;
-    
+    use \OwenIt\Auditing\Auditable, SoftDeletes;
+
     protected $table = 'categoria_cliente_precio';
+
     protected $fillable = [
         'cliente_id',
         'categoria_id',
@@ -31,12 +32,12 @@ class CategoriaClientePrecio extends Model implements Auditable
     public function scopeVigentesEn($query, $fecha = null)
     {
         $fecha = $fecha ?? now()->toDateString();
-        
+
         return $query->where('fecha_desde', '<=', $fecha)
-                    ->where(function($q) use ($fecha) {
-                        $q->whereNull('fecha_hasta')
-                          ->orWhere('fecha_hasta', '>=', $fecha);
-                    });
+            ->where(function ($q) use ($fecha) {
+                $q->whereNull('fecha_hasta')
+                    ->orWhere('fecha_hasta', '>=', $fecha);
+            });
     }
 
     /**

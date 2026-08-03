@@ -2,28 +2,30 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
 use App\Models\Mantenimiento;
 use App\Models\NotificacionSistema;
 use App\Models\Usuario;
 use App\Notifications\MantenimientoProgramadoRecordatorio;
+use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
 
 class CheckMantenimientosProgramados extends Command
 {
     protected $signature = 'mantenimiento:check-programados';
+
     protected $description = 'Verifica mantenimientos programados para hoy y marca como vencidos los no confirmados';
+
     protected float $ultimoEnvioMail = 0.0;
 
     public function handle()
     {
         $this->info('Verificando mantenimientos programados...');
-        
+
         $hoy = now()->toDateString();
         $limiteAviso = now()->addDays(2)->toDateString();
-        
+
         // Buscar mantenimientos programados para hoy
         $mantenimientosHoy = Mantenimiento::with(['maquinaria', 'tipoMantenimiento'])
             ->where('estado', 'programado')
@@ -32,7 +34,7 @@ class CheckMantenimientosProgramados extends Command
 
         if ($mantenimientosHoy->count() > 0) {
             $this->info("📅 {$mantenimientosHoy->count()} mantenimiento(s) programado(s) para hoy");
-            
+
             foreach ($mantenimientosHoy as $mant) {
                 $this->info("  - Orden #{$mant->id_mantenimiento}: {$mant->maquinaria->modelo}");
             }
@@ -55,6 +57,7 @@ class CheckMantenimientosProgramados extends Command
             ->values()
             ->filter(function ($notif) {
                 $mant = $notif->mantenimiento;
+
                 return $mant && $mant->estado === 'programado' && empty($mant->fecha_programada);
             });
 
@@ -74,20 +77,21 @@ class CheckMantenimientosProgramados extends Command
 
         if ($mantenimientosVencidos->count() > 0) {
             $this->warn("⚠️  {$mantenimientosVencidos->count()} mantenimiento(s) vencido(s)");
-            
+
             foreach ($mantenimientosVencidos as $mant) {
                 $mant->update(['estado' => 'vencido']);
                 $this->warn("  - Orden #{$mant->id_mantenimiento} marcada como vencida");
-                
-                Log::warning("Mantenimiento vencido", [
+
+                Log::warning('Mantenimiento vencido', [
                     'id_mantenimiento' => $mant->id_mantenimiento,
                     'id_maquinaria' => $mant->id_maquinaria,
-                    'fecha_programada' => $mant->fecha_programada
+                    'fecha_programada' => $mant->fecha_programada,
                 ]);
             }
         }
 
         $this->info("\nVerificación completada.");
+
         return 0;
     }
 
@@ -103,7 +107,7 @@ class CheckMantenimientosProgramados extends Command
             $userIds = DB::table('configuracion_notificaciones_mantenimiento')
                 ->where('tipo_notificacion', 'recordatorio')
                 ->pluck('user_id');
-            
+
             if ($userIds->isEmpty()) {
                 $adminEmail = config('mail.admin_email', 'admin@example.com');
                 $this->enviarConReintento(function () use ($adminEmail, $mantenimientos, $pendientesProgramar) {
@@ -124,7 +128,7 @@ class CheckMantenimientosProgramados extends Command
             }
         } catch (\Exception $e) {
             $this->warn("⚠  No se pudo enviar recordatorio: {$e->getMessage()}");
-            Log::error("Error enviando recordatorio de mantenimientos", ['error' => $e->getMessage()]);
+            Log::error('Error enviando recordatorio de mantenimientos', ['error' => $e->getMessage()]);
         }
     }
 
@@ -137,12 +141,13 @@ class CheckMantenimientosProgramados extends Command
         while (true) {
             try {
                 $enviar();
+
                 return;
             } catch (\Exception $e) {
                 $intentos++;
                 $mensaje = $e->getMessage();
                 $esRateLimit = stripos($mensaje, 'Too many emails per second') !== false || stripos($mensaje, '550') !== false;
-                if (!$esRateLimit || $intentos >= $maxIntentos) {
+                if (! $esRateLimit || $intentos >= $maxIntentos) {
                     throw $e;
                 }
                 sleep($espera);
@@ -161,7 +166,7 @@ class CheckMantenimientosProgramados extends Command
         if ($referencia > 0) {
             $delta = $ahora - $referencia;
             if ($delta < $minInterval) {
-                usleep((int)(($minInterval - $delta) * 1000000));
+                usleep((int) (($minInterval - $delta) * 1000000));
             }
         }
 

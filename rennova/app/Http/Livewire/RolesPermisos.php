@@ -2,23 +2,29 @@
 
 namespace App\Http\Livewire;
 
-use Livewire\Component;
-use Illuminate\Support\Facades\DB;
-use Spatie\Permission\Models\Role;
-use Spatie\Permission\Models\Permission;
 use App\Models\Usuario;
+use Illuminate\Support\Facades\DB;
+use Livewire\Component;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 class RolesPermisos extends Component
 {
     public $activeTab = 'roles';
+
     public $selectedRole = null;
+
     public $selectedUser = null;
+
     public $rolePermissions = [];
+
     public $userRoles = [];
+
     public $userModelClassName = null;
-    
+
     // Para crear nuevo rol
     public $newRoleName = '';
+
     public $busqueda = '';
 
     protected function userModelClass(): string
@@ -49,7 +55,7 @@ class RolesPermisos extends Component
     public function displayUserName($user): string
     {
         if ($user instanceof Usuario) {
-            return trim($user->nombre . ' ' . $user->apellido);
+            return trim($user->nombre.' '.$user->apellido);
         }
 
         return (string) ($user->name ?? $user->email ?? '');
@@ -58,13 +64,14 @@ class RolesPermisos extends Component
     public function render()
     {
         $roles = Role::with('permissions')->get();
-        
-        $permissions = Permission::orderBy('name')->get()->groupBy(function($permission) {
+
+        $permissions = Permission::orderBy('name')->get()->groupBy(function ($permission) {
             // Agrupar por módulo (extraer el módulo del nombre del permiso)
             $parts = explode('-', $permission->name);
+
             return count($parts) > 1 ? implode('-', array_slice($parts, 1)) : 'otros';
         });
-        
+
         $userModel = $this->userModelClass();
         $query = $userModel::query();
         if ($this->busqueda) {
@@ -73,14 +80,14 @@ class RolesPermisos extends Component
             $query->where(function ($query) use ($columns, $operator) {
                 foreach ($columns as $index => $column) {
                     $method = $index === 0 ? 'where' : 'orWhere';
-                    $query->{$method}($column, $operator, '%' . $this->busqueda . '%');
+                    $query->{$method}($column, $operator, '%'.$this->busqueda.'%');
                 }
             });
         }
         $users = $query->with('roles')->get();
 
         $this->userModelClassName = $userModel;
-        
+
         return view('livewire.roles-permisos', compact('roles', 'permissions', 'users'));
     }
 
@@ -93,29 +100,30 @@ class RolesPermisos extends Component
 
     public function updateRolePermissions()
     {
-        if (!$this->selectedRole) {
+        if (! $this->selectedRole) {
             session()->flash('error', 'Debe seleccionar un rol');
+
             return;
         }
 
         $role = Role::find($this->selectedRole);
         $role->syncPermissions($this->rolePermissions);
-        
+
         session()->flash('message', 'Permisos del rol actualizados correctamente');
     }
 
     public function createRole()
     {
         $this->validate([
-            'newRoleName' => 'required|unique:roles,name|min:3'
+            'newRoleName' => 'required|unique:roles,name|min:3',
         ], [
             'newRoleName.required' => 'El nombre del rol es requerido',
             'newRoleName.unique' => 'Ya existe un rol con ese nombre',
-            'newRoleName.min' => 'El nombre debe tener al menos 3 caracteres'
+            'newRoleName.min' => 'El nombre debe tener al menos 3 caracteres',
         ]);
 
         Role::create(['name' => $this->newRoleName, 'guard_name' => 'web']);
-        
+
         session()->flash('message', "Rol '{$this->newRoleName}' creado correctamente");
         $this->newRoleName = '';
     }
@@ -123,20 +131,22 @@ class RolesPermisos extends Component
     public function deleteRole($roleId)
     {
         $role = Role::find($roleId);
-        
+
         if ($role->name === 'Administrador') {
             session()->flash('error', 'No se puede eliminar el rol Administrador');
+
             return;
         }
 
         if ($role->users()->count() > 0) {
             session()->flash('error', 'No se puede eliminar un rol que tiene usuarios asignados');
+
             return;
         }
 
         $role->delete();
         session()->flash('message', 'Rol eliminado correctamente');
-        
+
         if ($this->selectedRole == $roleId) {
             $this->selectedRole = null;
             $this->rolePermissions = [];
@@ -153,15 +163,16 @@ class RolesPermisos extends Component
 
     public function updateUserRoles()
     {
-        if (!$this->selectedUser) {
+        if (! $this->selectedUser) {
             session()->flash('error', 'Debe seleccionar un usuario');
+
             return;
         }
 
         $userModel = $this->userModelClassName ?: $this->userModelClass();
         $user = $userModel::find($this->selectedUser);
         $user->syncRoles($this->userRoles);
-        
+
         session()->flash('message', 'Roles del usuario actualizados correctamente');
     }
 

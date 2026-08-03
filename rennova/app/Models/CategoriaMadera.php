@@ -8,13 +8,14 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class CategoriaMadera extends Model implements Auditable
 {
-    use SoftDeletes, \OwenIt\Auditing\Auditable;
-    
+    use \OwenIt\Auditing\Auditable, SoftDeletes;
+
     protected $table = 'categoria_maderas';
+
     protected $primaryKey = 'id_categoria_madera';
+
     protected $fillable = [
         'nombre',
         'descripcion',
     ];
-    
 }

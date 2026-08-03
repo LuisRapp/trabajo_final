@@ -53,6 +53,7 @@ class SincronizarClimaReal extends Command
 
         if ($lotes->isEmpty()) {
             $this->warn('No hay lotes disponibles para sincronizar clima real.');
+
             return Command::SUCCESS;
         }
 
@@ -62,7 +63,7 @@ class SincronizarClimaReal extends Command
 
         foreach ($lotes as $lote) {
             $resultado = $this->climaService->sincronizarReal($lote, $fechaObjetivo);
-            if (!$resultado['success']) {
+            if (! $resultado['success']) {
                 $errores++;
                 $this->error("Lote {$lote->id_lote}: {$resultado['error']}");
             }

@@ -9,7 +9,7 @@ abstract class TestCase extends BaseTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Disable Vite for testing (avoid manifest not found errors)
         $this->withoutVite();
     }

@@ -73,7 +73,7 @@ return new class extends Migration
                 // Para evitar ruido, los eliminamos para los partes duplicados.
                 if (Schema::hasTable('movimiento_stocks')) {
                     DB::table('movimiento_stocks')
-                        ->where('motivo', 'like', 'Parte Diario #' . $oldId . ' - %')
+                        ->where('motivo', 'like', 'Parte Diario #'.$oldId.' - %')
                         ->delete();
                 }
 
@@ -103,7 +103,7 @@ return new class extends Migration
 
                 // Mantener el primero, borrar el resto
                 array_shift($maqParteIds);
-                if (!empty($maqParteIds)) {
+                if (! empty($maqParteIds)) {
                     DB::table('maquinaria_parte_diarios')
                         ->whereIn('id_maquinaria_parte', $maqParteIds)
                         ->delete();

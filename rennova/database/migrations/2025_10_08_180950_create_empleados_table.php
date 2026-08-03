@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('empleados', function (Blueprint $table) {
-           $table->id('id_empleado');
+            $table->id('id_empleado');
             $table->unsignedBigInteger('id_rol_laboral')->nullable();
             $table->string('dni', 10)->unique();
             $table->string('apellido', 60);
@@ -22,10 +22,10 @@ return new class extends Migration
             $table->date('fecha_fin_actividades')->nullable();
             $table->timestamps();
 
-        $table->foreign('id_rol_laboral')
-            ->references('id_rol_laboral')
-            ->on('rol_laborals')
-            ->onDelete('set null');
+            $table->foreign('id_rol_laboral')
+                ->references('id_rol_laboral')
+                ->on('rol_laborals')
+                ->onDelete('set null');
         });
     }
 

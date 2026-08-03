@@ -11,11 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (!Schema::hasTable('usuarios')) {
+        if (! Schema::hasTable('usuarios')) {
             return;
         }
 
-        if (!Schema::hasColumn('usuarios', 'two_factor_secret')) {
+        if (! Schema::hasColumn('usuarios', 'two_factor_secret')) {
             Schema::table('usuarios', function (Blueprint $table) {
                 $table->text('two_factor_secret')->after('password')->nullable();
                 $table->text('two_factor_recovery_codes')->after('two_factor_secret')->nullable();
@@ -29,7 +29,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        if (!Schema::hasTable('usuarios')) {
+        if (! Schema::hasTable('usuarios')) {
             return;
         }
 

@@ -25,10 +25,10 @@ class StockInsuficiente extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         $message = (new MailMessage)
-                    ->subject('⚠️ Advertencia: Stock Insuficiente para Mantenimientos')
-                    ->greeting('Advertencia de Stock')
-                    ->line('Se han generado órdenes de mantenimiento pero falta stock de algunos insumos:')
-                    ->line('');
+            ->subject('⚠️ Advertencia: Stock Insuficiente para Mantenimientos')
+            ->greeting('Advertencia de Stock')
+            ->line('Se han generado órdenes de mantenimiento pero falta stock de algunos insumos:')
+            ->line('');
 
         foreach ($this->advertencias as $adv) {
             $message->line("**Orden #{$adv['orden']}** - Maquinaria {$adv['maquinaria']}");
@@ -39,7 +39,7 @@ class StockInsuficiente extends Notification
         }
 
         $message->line('Por favor, gestione la compra de estos insumos antes de aprobar las órdenes.')
-                ->line('Este es un mensaje automático del sistema.');
+            ->line('Este es un mensaje automático del sistema.');
 
         return $message;
     }

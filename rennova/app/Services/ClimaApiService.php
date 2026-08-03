@@ -8,12 +8,13 @@ use Illuminate\Support\Facades\Log;
 
 /**
  * Servicio de API Climática
- * 
+ *
  * Responsable de obtener datos de Open-Meteo API
  */
 class ClimaApiService
 {
     const TIMEZONE = 'America/Argentina/Buenos_Aires';
+
     const DIAS_FORECAST = 7;
 
     /**
@@ -22,7 +23,7 @@ class ClimaApiService
      */
     public function obtenerPronosticoCompleto(Lote $lote): ?array
     {
-        $url = "https://api.open-meteo.com/v1/forecast";
+        $url = 'https://api.open-meteo.com/v1/forecast';
 
         $params = [
             'latitude' => $lote->latitud,
@@ -36,17 +37,18 @@ class ClimaApiService
         try {
             $response = Http::timeout(10)->get($url, $params);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 throw new \Exception("API respondió con status {$response->status()}");
             }
 
             return $response->json();
 
         } catch (\Exception $e) {
-            Log::error("Error al consultar Open-Meteo API", [
+            Log::error('Error al consultar Open-Meteo API', [
                 'lote_id' => $lote->id_lote,
                 'error' => $e->getMessage(),
             ]);
+
             return null;
         }
     }
@@ -56,7 +58,7 @@ class ClimaApiService
      */
     public function obtenerHistoricoCompleto(Lote $lote, string $startDate, string $endDate): ?array
     {
-        $url = "https://archive-api.open-meteo.com/v1/archive";
+        $url = 'https://archive-api.open-meteo.com/v1/archive';
 
         $params = [
             'latitude' => $lote->latitud,
@@ -71,16 +73,17 @@ class ClimaApiService
         try {
             $response = Http::timeout(10)->get($url, $params);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 throw new \Exception("API respondió con status {$response->status()}");
             }
 
             return $response->json();
         } catch (\Exception $e) {
-            Log::error("Error al consultar Open-Meteo Histórico", [
+            Log::error('Error al consultar Open-Meteo Histórico', [
                 'lote_id' => $lote->id_lote,
                 'error' => $e->getMessage(),
             ]);
+
             return null;
         }
     }
@@ -90,7 +93,7 @@ class ClimaApiService
      */
     public function obtenerPronosticoPasado(Lote $lote, int $pastDays, int $forecastDays): ?array
     {
-        $url = "https://api.open-meteo.com/v1/forecast";
+        $url = 'https://api.open-meteo.com/v1/forecast';
 
         $params = [
             'latitude' => $lote->latitud,
@@ -105,16 +108,17 @@ class ClimaApiService
         try {
             $response = Http::timeout(10)->get($url, $params);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 throw new \Exception("API respondió con status {$response->status()}");
             }
 
             return $response->json();
         } catch (\Exception $e) {
-            Log::error("Error al consultar Open-Meteo Forecast (past_days)", [
+            Log::error('Error al consultar Open-Meteo Forecast (past_days)', [
                 'lote_id' => $lote->id_lote,
                 'error' => $e->getMessage(),
             ]);
+
             return null;
         }
     }

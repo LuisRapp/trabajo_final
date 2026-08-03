@@ -12,7 +12,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (!Schema::hasTable('users') || !Schema::hasTable('usuarios')) {
+        if (! Schema::hasTable('users') || ! Schema::hasTable('usuarios')) {
             return;
         }
 
@@ -37,6 +37,7 @@ return new class extends Migration
 
                 if ($existing) {
                     $idMap[$user->id] = $existing->id;
+
                     continue;
                 }
 
@@ -62,7 +63,7 @@ return new class extends Migration
                 ];
 
                 $idExists = DB::table('usuarios')->where('id', $user->id)->exists();
-                if (!$idExists) {
+                if (! $idExists) {
                     $data['id'] = $user->id;
                     DB::table('usuarios')->insert($data);
                     $idMap[$user->id] = $user->id;

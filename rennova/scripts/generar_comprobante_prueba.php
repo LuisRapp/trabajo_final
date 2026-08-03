@@ -1,8 +1,8 @@
 <?php
 
-require __DIR__ . '/../vendor/autoload.php';
+require __DIR__.'/../vendor/autoload.php';
 
-$app = require __DIR__ . '/../bootstrap/app.php';
+$app = require __DIR__.'/../bootstrap/app.php';
 $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
 $recibo = (object) [
@@ -22,7 +22,7 @@ $periodo = '01/02/2026 a 08/02/2026';
 $generadoPor = 'Sistema';
 $fechaGeneracion = now()->format('d/m/Y H:i');
 
-$options = new Dompdf\Options();
+$options = new Dompdf\Options;
 $options->set('defaultFont', 'DejaVu Sans');
 
 $dompdf = new Dompdf\Dompdf($options);

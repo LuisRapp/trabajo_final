@@ -37,7 +37,7 @@ return new class extends Migration
         Schema::table('categoria_cliente_precio', function (Blueprint $table) {
             // Eliminamos fecha_hasta
             $table->dropColumn('fecha_hasta');
-            
+
             // Renombramos fecha_desde de vuelta a fecha_vigencia
             $table->renameColumn('fecha_desde', 'fecha_vigencia');
         });

@@ -10,8 +10,11 @@ use Livewire\Component;
 class SelectorLote extends Component
 {
     public $loteSeleccionado = null;
+
     public $lotes = [];
+
     public $pronosticoData = null;
+
     protected $climaService;
 
     public function mount(ClimaDecisionService $climaService)
@@ -22,7 +25,7 @@ class SelectorLote extends Component
             ->orderByDesc('created_at')
             ->get()
             ->toArray();
-        
+
         // Cargar el primer lote por defecto
         if (count($this->lotes) > 0) {
             $this->loteSeleccionado = $this->lotes[0]['id_lote'];
@@ -37,21 +40,24 @@ class SelectorLote extends Component
 
     public function actualizarPronostico()
     {
-        if (!$this->loteSeleccionado) {
+        if (! $this->loteSeleccionado) {
             $this->pronosticoData = null;
+
             return;
         }
 
         $lote = Lote::where('id_lote', $this->loteSeleccionado)->first();
-        
-        if (!$lote) {
+
+        if (! $lote) {
             $this->pronosticoData = null;
+
             return;
         }
 
         // Verificar que tiene coordenadas
-        if (!$lote->latitud || !$lote->longitud) {
+        if (! $lote->latitud || ! $lote->longitud) {
             $this->pronosticoData = null;
+
             return;
         }
 
@@ -61,8 +67,8 @@ class SelectorLote extends Component
         } else {
             $climaData = $this->climaService->analizarYRecomendar($lote);
         }
-        
-        if ($climaData && !isset($climaData['error'])) {
+
+        if ($climaData && ! isset($climaData['error'])) {
             // Mapear pronostico (dias_detalle) al formato del componente
             $pronosticoFormateado = [];
             $diasDetalle = $climaData['pronostico'] ?? $climaData['dias_detalle'] ?? [];
@@ -77,7 +83,7 @@ class SelectorLote extends Component
                     $estado = $dia['estado'] ?? 'OPERATIVO';
 
                     $pronosticoFormateado[] = [
-                        'label' => ucfirst(substr($dia['dia_semana'], 0, 3)) . ' (' . $dia['fecha_str'] . ')',
+                        'label' => ucfirst(substr($dia['dia_semana'], 0, 3)).' ('.$dia['fecha_str'].')',
                         'estado' => $estado === 'INACTIVO' ? 'NO OPERATIVO' : ($estado === 'OPERATIVO_CONDICIONAL' ? 'OPERATIVO COND.' : 'OPERATIVO'),
                         'icono' => $iconMap[$estado] ?? 'sun',
                         'inactivo' => $estado === 'INACTIVO',
@@ -94,7 +100,7 @@ class SelectorLote extends Component
             }
 
             $nivelUrgencia = $climaData['nivel_urgencia'] ?? 'BAJA';
-            $tipoAlerta = match($nivelUrgencia) {
+            $tipoAlerta = match ($nivelUrgencia) {
                 'ALTA' => 'ACELERAR',
                 'MEDIA' => 'ACELERAR',
                 'CRITICA' => 'SUSPENDER',
@@ -109,7 +115,7 @@ class SelectorLote extends Component
                     'deficitTn' => $climaData['datos_calculados']['volumen_riesgo'] ?? 0,
                     'accionPorcentaje' => round($climaData['datos_calculados']['aumento_necesario_pct'] ?? 0),
                 ],
-                'loteNombre' => $lote->nombre ?? $lote->propietario ?? ('Lote #' . $lote->id_lote),
+                'loteNombre' => $lote->nombre ?? $lote->propietario ?? ('Lote #'.$lote->id_lote),
                 'recomendacionDetallada' => $climaData['recomendacion'] ?? '',
             ];
         } else {
@@ -124,10 +130,11 @@ class SelectorLote extends Component
 
     private function esLoteDemoLluvia(Lote $lote): bool
     {
-        if (!app()->environment(['local', 'testing'])) {
+        if (! app()->environment(['local', 'testing'])) {
             return false;
         }
         $nombre = strtolower((string) ($lote->nombre ?? $lote->propietario ?? ''));
+
         return str_contains($nombre, 'lluvia');
     }
 
@@ -164,7 +171,7 @@ class SelectorLote extends Component
         return [
             'success' => true,
             'nivel_urgencia' => 'MEDIA',
-            'recomendacion' => "Se detecta lluvia en la ventana operativa. Ajustar planificación y evaluar anticipación.",
+            'recomendacion' => 'Se detecta lluvia en la ventana operativa. Ajustar planificación y evaluar anticipación.',
             'dias_detalle' => $diasDetalle,
             'datos_calculados' => [
                 'volumen_riesgo' => 120,

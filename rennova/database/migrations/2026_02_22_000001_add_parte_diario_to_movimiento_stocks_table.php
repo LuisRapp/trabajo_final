@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('movimiento_stocks', function (Blueprint $table) {
-            if (!Schema::hasColumn('movimiento_stocks', 'id_parte_diario')) {
+            if (! Schema::hasColumn('movimiento_stocks', 'id_parte_diario')) {
                 $table->unsignedBigInteger('id_parte_diario')->nullable()->after('id_lote_inventario');
                 $table->index('id_parte_diario', 'idx_movimiento_parte_diario');
                 $table->foreign('id_parte_diario')

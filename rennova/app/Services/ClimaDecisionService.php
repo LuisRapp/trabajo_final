@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Log;
 
 /**
  * Servicio de Decisiones Climáticas (Orquestador)
- * 
+ *
  * Coordina los servicios especializados para analizar clima y generar recomendaciones
  * operativas para lotes forestales en tres fases: Anticipación, Bloqueo y Reacción.
  */
@@ -17,8 +17,11 @@ class ClimaDecisionService
     const TIMEZONE = 'America/Argentina/Buenos_Aires';
 
     protected ClimaApiService $apiService;
+
     protected ClimaAnalisisService $analisisService;
+
     protected ClimaEstrategiaService $estrategiaService;
+
     protected ClimaPersistenciaService $persistenciaService;
 
     public function __construct(
@@ -35,23 +38,24 @@ class ClimaDecisionService
 
     /**
      * Método principal: Analiza clima y genera recomendaciones
-     * 
-     * @param Lote $lote Lote a analizar
+     *
+     * @param  Lote  $lote  Lote a analizar
      * @return array [
-     *   'success' => bool,
-     *   'pronostico' => array,
-     *   'dias_inactivos' => array,
-     *   'estrategia' => string,
-     *   'recomendacion' => string,
-     *   'datos_calculados' => array
-     * ]
+     *               'success' => bool,
+     *               'pronostico' => array,
+     *               'dias_inactivos' => array,
+     *               'estrategia' => string,
+     *               'recomendacion' => string,
+     *               'datos_calculados' => array
+     *               ]
      */
     public function analizarYRecomendar(Lote $lote): array
     {
         try {
             // Validar que el lote tenga coordenadas
-            if (!$lote->latitud || !$lote->longitud) {
+            if (! $lote->latitud || ! $lote->longitud) {
                 $this->persistenciaService->persistirFallback($lote, 'Lote sin coordenadas GPS configuradas.');
+
                 return [
                     'success' => false,
                     'error' => 'El lote no tiene coordenadas GPS configuradas.',
@@ -62,8 +66,9 @@ class ClimaDecisionService
             // 1. Obtener pronóstico de Open-Meteo
             $pronostico = $this->apiService->obtenerPronosticoCompleto($lote);
 
-            if (!$pronostico) {
+            if (! $pronostico) {
                 $this->persistenciaService->persistirFallback($lote, 'No se pudo obtener el pronóstico climático.');
+
                 return [
                     'success' => false,
                     'error' => 'No se pudo obtener el pronóstico climático.',
@@ -79,7 +84,7 @@ class ClimaDecisionService
             return $this->estrategiaService->determinarEstrategia($lote, $analisisDias);
 
         } catch (\Exception $e) {
-            Log::error("Error en ClimaDecisionService::analizarYRecomendar", [
+            Log::error('Error en ClimaDecisionService::analizarYRecomendar', [
                 'lote_id' => $lote->id_lote,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
@@ -98,8 +103,9 @@ class ClimaDecisionService
      */
     public function sincronizarPronostico(Lote $lote): array
     {
-        if (!$lote->latitud || !$lote->longitud) {
+        if (! $lote->latitud || ! $lote->longitud) {
             $this->persistenciaService->persistirFallback($lote, 'Lote sin coordenadas GPS configuradas.');
+
             return [
                 'success' => false,
                 'error' => 'El lote no tiene coordenadas GPS configuradas.',
@@ -108,8 +114,9 @@ class ClimaDecisionService
 
         $pronostico = $this->apiService->obtenerPronosticoCompleto($lote);
 
-        if (!$pronostico) {
+        if (! $pronostico) {
             $this->persistenciaService->persistirFallback($lote, 'No se pudo obtener el pronostico climatico.');
+
             return [
                 'success' => false,
                 'error' => 'No se pudo obtener el pronostico climatico.',
@@ -130,8 +137,9 @@ class ClimaDecisionService
      */
     public function sincronizarReal(Lote $lote, $fecha = null): array
     {
-        if (!$lote->latitud || !$lote->longitud) {
+        if (! $lote->latitud || ! $lote->longitud) {
             $this->persistenciaService->persistirRealFallback($lote, $fecha, 'Lote sin coordenadas GPS configuradas.');
+
             return [
                 'success' => false,
                 'error' => 'El lote no tiene coordenadas GPS configuradas.',
@@ -148,13 +156,14 @@ class ClimaDecisionService
         $historico = $this->apiService->obtenerHistoricoCompleto($lote, $startDate, $endDate);
         $fuente = 'archive';
 
-        if (!$historico) {
+        if (! $historico) {
             $historico = $this->apiService->obtenerPronosticoPasado($lote, 2, 1);
             $fuente = 'forecast';
         }
 
-        if (!$historico) {
+        if (! $historico) {
             $this->persistenciaService->persistirRealFallback($lote, $fechaObjetivo, 'No se pudo obtener el historico climatico.');
+
             return [
                 'success' => false,
                 'error' => 'No se pudo obtener el historico climatico.',

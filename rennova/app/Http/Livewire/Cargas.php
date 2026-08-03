@@ -2,23 +2,49 @@
 
 namespace App\Http\Livewire;
 
+use App\Models\Carga;
+use App\Models\CategoriaMadera;
+use App\Models\Lote;
+use App\Models\ParteDiario;
 use Livewire\Component;
 use Livewire\WithPagination;
-use App\Models\Carga;
-use App\Models\Lote;
-use App\Models\CategoriaMadera;
-use App\Models\ParteDiario;
 
 class Cargas extends Component
 {
     use WithPagination;
+
     public $lotes = [];
+
     public $categorias = [];
+
     public $partes = [];
+
     public $tab_activo = 'listado';
+
     public $pagina = 15;
 
-    public $carga_id, $id_lote, $id_categoria_madera, $id_chofer, $id_parte_diario, $ticket, $peso_bruto, $tara, $peso_neto, $destino, $fecha_carga;
+    public $carga_id;
+
+    public $id_lote;
+
+    public $id_categoria_madera;
+
+    public $id_chofer;
+
+    public $id_parte_diario;
+
+    public $ticket;
+
+    public $peso_bruto;
+
+    public $tara;
+
+    public $peso_neto;
+
+    public $destino;
+
+    public $fecha_carga;
+
     public $busqueda = '';
 
     protected $rules = [
@@ -49,21 +75,21 @@ class Cargas extends Component
             $busq = $this->busqueda;
             $query->where(function ($q) use ($busq) {
                 $q->where('ticket', 'ILIKE', "%{$busq}%")
-                  ->orWhere('destino', 'ILIKE', "%{$busq}%")
-                  ->orWhereRaw("CAST(peso_bruto AS TEXT) ILIKE ?", ["%{$busq}%"]) 
-                  ->orWhereRaw("CAST(peso_neto AS TEXT) ILIKE ?", ["%{$busq}%"]) 
-                  ->orWhereDate('fecha_carga', $busq)
-                  ->orWhereHas('lote', function($qr) use ($busq) {
-                      $qr->where('propietario', 'ILIKE', "%{$busq}%")
-                         ->orWhere('ubicacion', 'ILIKE', "%{$busq}%");
-                  })
-                  ->orWhereHas('categoriaMadera', function($qr) use ($busq) {
-                      $qr->where('nombre', 'ILIKE', "%{$busq}%");
-                  })
-                  ->orWhereHas('chofer', function($qr) use ($busq) {
-                      $qr->where('apellido', 'ILIKE', "%{$busq}%")
-                         ->orWhere('nombre', 'ILIKE', "%{$busq}%");
-                  });
+                    ->orWhere('destino', 'ILIKE', "%{$busq}%")
+                    ->orWhereRaw('CAST(peso_bruto AS TEXT) ILIKE ?', ["%{$busq}%"])
+                    ->orWhereRaw('CAST(peso_neto AS TEXT) ILIKE ?', ["%{$busq}%"])
+                    ->orWhereDate('fecha_carga', $busq)
+                    ->orWhereHas('lote', function ($qr) use ($busq) {
+                        $qr->where('propietario', 'ILIKE', "%{$busq}%")
+                            ->orWhere('ubicacion', 'ILIKE', "%{$busq}%");
+                    })
+                    ->orWhereHas('categoriaMadera', function ($qr) use ($busq) {
+                        $qr->where('nombre', 'ILIKE', "%{$busq}%");
+                    })
+                    ->orWhereHas('chofer', function ($qr) use ($busq) {
+                        $qr->where('apellido', 'ILIKE', "%{$busq}%")
+                            ->orWhere('nombre', 'ILIKE', "%{$busq}%");
+                    });
             });
         }
 
@@ -73,7 +99,7 @@ class Cargas extends Component
     public function render()
     {
         return view('livewire.cargas', [
-            'cargas' => $this->getCargas()
+            'cargas' => $this->getCargas(),
         ]);
     }
 
@@ -88,6 +114,7 @@ class Cargas extends Component
         // Bloqueo adicional: evitar fecha futura
         if (\Carbon\Carbon::parse($this->fecha_carga)->isAfter(\Carbon\Carbon::today())) {
             session()->flash('error', 'La fecha de la carga no puede ser futura.');
+
             return;
         }
         // Si el campo destino es un id, buscar el nombre del cliente
@@ -151,7 +178,7 @@ class Cargas extends Component
     {
         $this->reset([
             'carga_id', 'id_lote', 'id_categoria_madera', 'id_chofer', 'id_parte_diario', 'ticket',
-            'peso_bruto', 'tara', 'peso_neto', 'destino', 'fecha_carga'
+            'peso_bruto', 'tara', 'peso_neto', 'destino', 'fecha_carga',
         ]);
     }
 }

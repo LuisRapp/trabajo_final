@@ -27,7 +27,7 @@ return new class extends Migration
     {
         Schema::table('historico_rol_laborals', function (Blueprint $table) {
             // Restaurar columna y FK en caso de rollback
-            if (!Schema::hasColumn('historico_rol_laborals', 'empleado_id')) {
+            if (! Schema::hasColumn('historico_rol_laborals', 'empleado_id')) {
                 $table->unsignedBigInteger('empleado_id')->nullable();
                 $table->foreign('empleado_id')->references('id_empleado')->on('empleados')->onDelete('cascade');
             }
