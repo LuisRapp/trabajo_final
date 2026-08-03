@@ -1,0 +1,33 @@
+# OpenSpec Configuration
+# Project: trabajo_final (Rennova)
+
+project:
+  name: trabajo_final
+  stack:
+    backend: PHP 8.2, Laravel 12
+    frontend: Livewire 3, Flux UI 2, Tailwind CSS 4
+    database: PostgreSQL (prod), SQLite (test)
+    testing: Pest 3 + RefreshDatabase
+
+linter:
+  available: true
+  command: "cd rennova && vendor/bin/pint --test"
+  fix_command: "cd rennova && vendor/bin/pint"
+
+phases:
+  explore:
+    enabled: true
+  propose:
+    enabled: true
+  spec:
+    enabled: true
+  design:
+    enabled: true
+  tasks:
+    enabled: true
+  apply:
+    enabled: true
+  verify:
+    enabled: true
+  archive:
+    enabled: true
