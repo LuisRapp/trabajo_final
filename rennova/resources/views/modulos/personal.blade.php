@@ -1,114 +1,125 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container-fluid px-4 py-4">
-    <div class="text-center mb-5">
-        <h1 class="fw-bold text-secondary mb-2"><i class="bi bi-people me-2"></i>Gestión de Personal</h1>
-        <p class="text-muted lead">Administra empleados, choferes, pagos y asignaciones</p>
+<div class="max-w-7xl mx-auto px-4 py-6">
+    <div class="text-center mb-8">
+        <h1 class="text-2xl font-bold text-slate-700 flex items-center justify-center gap-2 mb-2">
+            <flux:icon.users class="size-6" />
+            Gestión de Personal
+        </h1>
+        <p class="text-slate-500">Administra empleados, choferes, pagos y asignaciones</p>
     </div>
 
-    <div class="row g-4 justify-content-center">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
         <!-- Empleados -->
         @can('ver-empleados')
-        <div class="col-12 col-md-6 col-lg-4 col-xl-3">
-            <div class="card h-100 border-0 shadow-sm hover-elevate">
-                <div class="card-body text-center p-4">
-                    <div class="mb-3" style="color: var(--primary-color);"><i class="bi bi-person-workspace display-4"></i></div>
-                    <h5 class="card-title fw-bold">Empleados</h5>
-                    <a href="{{ route('empleados.index') }}" class="btn btn-outline-success w-100 mt-3 stretched-link">Gestionar</a>
-                </div>
+        <div class="bg-white rounded-xl border border-slate-200 p-6 text-center shadow-sm hover:shadow-md transition-shadow">
+            <div class="text-brand mb-4">
+                <flux:icon.user class="size-12" />
             </div>
+            <h3 class="text-base font-bold text-slate-800 mb-4">Empleados</h3>
+            <a href="{{ route('empleados.index') }}"
+                class="inline-flex items-center justify-center w-full rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-hover transition-colors">
+                Gestionar
+            </a>
         </div>
         @endcan
 
         <!-- Choferes -->
         @can('ver-choferes')
-        <div class="col-12 col-md-6 col-lg-4 col-xl-3">
-            <div class="card h-100 border-0 shadow-sm hover-elevate">
-                <div class="card-body text-center p-4">
-                    <div class="mb-3" style="color: var(--primary-color);"><i class="bi bi-person-vcard display-4"></i></div>
-                    <h5 class="card-title fw-bold">Choferes</h5>
-                    <a href="{{ route('choferes.index') }}" class="btn btn-outline-success w-100 mt-3 stretched-link">Gestionar</a>
-                </div>
+        <div class="bg-white rounded-xl border border-slate-200 p-6 text-center shadow-sm hover:shadow-md transition-shadow">
+            <div class="text-brand mb-4">
+                <flux:icon.identification class="size-12" />
             </div>
+            <h3 class="text-base font-bold text-slate-800 mb-4">Choferes</h3>
+            <a href="{{ route('choferes.index') }}"
+                class="inline-flex items-center justify-center w-full rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-hover transition-colors">
+                Gestionar
+            </a>
         </div>
         @endcan
 
         <!-- Adelantos -->
         @can('ver-adelantos')
-        <div class="col-12 col-md-6 col-lg-4 col-xl-3">
-            <div class="card h-100 border-0 shadow-sm hover-elevate">
-                <div class="card-body text-center p-4">
-                    <div class="mb-3" style="color: var(--primary-color);"><i class="bi bi-cash-coin display-4"></i></div>
-                    <h5 class="card-title fw-bold">Adelantos</h5>
-                    <a href="{{ route('adelantos.index') }}" class="btn btn-outline-success w-100 mt-3 stretched-link">Gestionar</a>
-                </div>
+        <div class="bg-white rounded-xl border border-slate-200 p-6 text-center shadow-sm hover:shadow-md transition-shadow">
+            <div class="text-brand mb-4">
+                <flux:icon.banknotes class="size-12" />
             </div>
+            <h3 class="text-base font-bold text-slate-800 mb-4">Adelantos</h3>
+            <a href="{{ route('adelantos.index') }}"
+                class="inline-flex items-center justify-center w-full rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-hover transition-colors">
+                Gestionar
+            </a>
         </div>
         @endcan
 
         <!-- Recibos -->
         @can('ver-recibos')
-        <div class="col-12 col-md-6 col-lg-4 col-xl-3">
-            <div class="card h-100 border-0 shadow-sm hover-elevate">
-                <div class="card-body text-center p-4">
-                    <div class="mb-3" style="color: var(--primary-color);"><i class="bi bi-file-earmark-text display-4"></i></div>
-                    <h5 class="card-title fw-bold">Recibos</h5>
-                    <a href="{{ route('recibos.index') }}" class="btn btn-outline-success w-100 mt-3 stretched-link">Gestionar</a>
-                </div>
+        <div class="bg-white rounded-xl border border-slate-200 p-6 text-center shadow-sm hover:shadow-md transition-shadow">
+            <div class="text-brand mb-4">
+                <flux:icon.document-text class="size-12" />
             </div>
+            <h3 class="text-base font-bold text-slate-800 mb-4">Recibos</h3>
+            <a href="{{ route('recibos.index') }}"
+                class="inline-flex items-center justify-center w-full rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-hover transition-colors">
+                Gestionar
+            </a>
         </div>
         @endcan
 
         <!-- Liquidación -->
         @can('ver-liquidacion-pagos')
-        <div class="col-12 col-md-6 col-lg-4 col-xl-3">
-            <div class="card h-100 border-0 shadow-sm hover-elevate">
-                <div class="card-body text-center p-4">
-                    <div class="mb-3" style="color: var(--primary-color);"><i class="bi bi-calculator display-4"></i></div>
-                    <h5 class="card-title fw-bold">Liquidación de Pagos</h5>
-                    <a href="{{ route('liquidacion-pagos.index') }}" class="btn btn-outline-success w-100 mt-3 stretched-link">Gestionar</a>
-                </div>
+        <div class="bg-white rounded-xl border border-slate-200 p-6 text-center shadow-sm hover:shadow-md transition-shadow">
+            <div class="text-brand mb-4">
+                <flux:icon.calculator class="size-12" />
             </div>
+            <h3 class="text-base font-bold text-slate-800 mb-4">Liquidación de Pagos</h3>
+            <a href="{{ route('liquidacion-pagos.index') }}"
+                class="inline-flex items-center justify-center w-full rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-hover transition-colors">
+                Gestionar
+            </a>
         </div>
         @endcan
 
         <!-- Asignaciones -->
         @can('ver-asignaciones-lote')
-        <div class="col-12 col-md-6 col-lg-4 col-xl-3">
-            <div class="card h-100 border-0 shadow-sm hover-elevate">
-                <div class="card-body text-center p-4">
-                    <div class="mb-3" style="color: var(--primary-color);"><i class="bi bi-link-45deg display-4"></i></div>
-                    <h5 class="card-title fw-bold">Asignaciones por Lote</h5>
-                    <a href="{{ route('asignaciones-lote.index') }}" class="btn btn-outline-success w-100 mt-3 stretched-link">Gestionar</a>
-                </div>
+        <div class="bg-white rounded-xl border border-slate-200 p-6 text-center shadow-sm hover:shadow-md transition-shadow">
+            <div class="text-brand mb-4">
+                <flux:icon.link class="size-12" />
             </div>
+            <h3 class="text-base font-bold text-slate-800 mb-4">Asignaciones por Lote</h3>
+            <a href="{{ route('asignaciones-lote.index') }}"
+                class="inline-flex items-center justify-center w-full rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-hover transition-colors">
+                Gestionar
+            </a>
         </div>
         @endcan
 
         <!-- Roles -->
         @can('ver-roles-laborales')
-        <div class="col-12 col-md-6 col-lg-4 col-xl-3">
-            <div class="card h-100 border-0 shadow-sm hover-elevate">
-                <div class="card-body text-center p-4">
-                    <div class="mb-3" style="color: var(--primary-color);"><i class="bi bi-person-badge display-4"></i></div>
-                    <h5 class="card-title fw-bold">Roles Laborales</h5>
-                    <a href="{{ route('roles-laborales.index') }}" class="btn btn-outline-success w-100 mt-3 stretched-link">Gestionar</a>
-                </div>
+        <div class="bg-white rounded-xl border border-slate-200 p-6 text-center shadow-sm hover:shadow-md transition-shadow">
+            <div class="text-brand mb-4">
+                <flux:icon.shield-check class="size-12" />
             </div>
+            <h3 class="text-base font-bold text-slate-800 mb-4">Roles Laborales</h3>
+            <a href="{{ route('roles-laborales.index') }}"
+                class="inline-flex items-center justify-center w-full rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-hover transition-colors">
+                Gestionar
+            </a>
         </div>
         @endcan
 
         <!-- Histórico Roles -->
         @can('ver-roles-laborales')
-        <div class="col-12 col-md-6 col-lg-4 col-xl-3">
-            <div class="card h-100 border-0 shadow-sm hover-elevate">
-                <div class="card-body text-center p-4">
-                    <div class="mb-3" style="color: var(--primary-color);"><i class="bi bi-clock-history display-4"></i></div>
-                    <h5 class="card-title fw-bold">Histórico Roles</h5>
-                    <a href="{{ route('historico-roles-laborales.index') }}" class="btn btn-outline-success w-100 mt-3 stretched-link">Ver Histórico</a>
-                </div>
+        <div class="bg-white rounded-xl border border-slate-200 p-6 text-center shadow-sm hover:shadow-md transition-shadow">
+            <div class="text-brand mb-4">
+                <flux:icon.clock class="size-12" />
             </div>
+            <h3 class="text-base font-bold text-slate-800 mb-4">Histórico Roles</h3>
+            <a href="{{ route('historico-roles-laborales.index') }}"
+                class="inline-flex items-center justify-center w-full rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-hover transition-colors">
+                Ver Histórico
+            </a>
         </div>
         @endcan
     </div>

@@ -348,4 +348,37 @@ class InventarioService
                 ->where('agotado', false),
         ]);
     }
+
+    /**
+     * Cuenta insumos cuyo stock está por debajo del umbral crítico.
+     *
+     * Utiliza la función PostgreSQL obtener_stock_disponible() cuando está disponible,
+     * delegando el cálculo a la base de datos para evitar cargar modelos en memoria.
+     * En otros motores (SQLite/testing) itera sobre IDs con el servicio como fallback.
+     *
+     * @param  int  $umbral  Umbral de stock crítico (default 10)
+     * @return int  Cantidad de insumos críticos
+     */
+    public static function contarInsumosCriticos(int $umbral = 10): int
+    {
+        if (DB::connection()->getDriverName() === 'pgsql') {
+            $resultado = DB::selectOne(
+                'SELECT COUNT(*) as total FROM insumos WHERE obtener_stock_disponible(insumos.id_insumo) < ?',
+                [$umbral]
+            );
+
+            return $resultado->total ?? 0;
+        }
+
+        // Fallback para SQLite/testing: itera IDs sin cargar modelos completos
+        $ids = Insumo::pluck('id_insumo');
+        $count = 0;
+        foreach ($ids as $id) {
+            if (self::stockDisponible($id) < $umbral) {
+                $count++;
+            }
+        }
+
+        return $count;
+    }
 }

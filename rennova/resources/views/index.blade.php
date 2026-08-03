@@ -2,109 +2,54 @@
 
 @section('content')
 
-<style>
-    .modern-card {
-        border: none;
-        border-radius: 0.5rem;
-        transition: all 0.3s ease;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.06);
-    }
-    .modern-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 12px rgba(0,0,0,0.08);
-    }
-    .kpi-card {
-        background: white;
-        border-radius: 0.5rem;
-        padding: 1rem;
-        border: none;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.06);
-        transition: all 0.3s ease;
-    }
-    .kpi-card:hover {
-        box-shadow: 0 4px 8px rgba(0,0,0,0.08);
-    }
-    .kpi-number {
-        font-size: 1.75rem;
-        font-weight: 700;
-        line-height: 1;
-    }
-    .kpi-icon {
-        width: 40px;
-        height: 40px;
-        border-radius: 0.5rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    .weather-day {
-        text-align: center;
-        padding: 0.5rem;
-    }
-    .weather-icon-bg {
-        width: 40px;
-        height: 40px;
-        border-radius: 0.5rem;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto 0.5rem;
-    }
-    .weather-bar {
-        height: 2px;
-        border-radius: 1px;
-        margin-top: 0.4rem;
-    }
-    .cta-card {
-        background: linear-gradient(135deg, var(--primary-color) 0%, #1e5631 100%);
-        position: relative;
-        overflow: hidden;
-    }
-    .cta-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(255,255,255,0);
-        transition: background 0.3s ease;
-    }
-    .cta-card:hover::before {
-        background: rgba(255,255,255,0.1);
-    }
-    .page-header {
-        background: white;
-        border-radius: 0.5rem;
-        padding: 1rem;
-        margin-bottom: 1rem;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.06);
-    }
-</style>
+@php
+    $alerta = $pronosticoData['alerta'] ?? 'NORMAL';
+    $accionRecomendada = $pronosticoData['accion_recomendada'] ?? null;
+    $recomendacionDetallada = $pronosticoData['recomendacionDetallada'] ?? '';
+
+    $mapaAcciones = [
+        'AUMENTAR_PRODUCCION' => ['label' => 'Aumentar producción', 'colorClass' => 'bg-amber-100 text-amber-800', 'icon' => 'bolt'],
+        'MANTENIMIENTO_PREVENTIVO' => ['label' => 'Mantenimiento preventivo', 'colorClass' => 'bg-blue-100 text-blue-800', 'icon' => 'wrench'],
+        'SUSPENSION_JORNADA' => ['label' => 'Suspender jornada', 'colorClass' => 'bg-red-100 text-red-800', 'icon' => 'x-circle'],
+        'OPERACION_NORMAL' => ['label' => 'Operación normal', 'colorClass' => 'bg-green-100 text-green-800', 'icon' => 'check-circle'],
+    ];
+    $mapaAlertas = [
+        'ACELERAR' => ['label' => 'Aumentar producción', 'colorClass' => 'bg-amber-100 text-amber-800', 'icon' => 'bolt'],
+        'SUSPENDER' => ['label' => 'Suspender operaciones', 'colorClass' => 'bg-red-100 text-red-800', 'icon' => 'x-circle'],
+        'NORMAL' => ['label' => 'Operación normal', 'colorClass' => 'bg-green-100 text-green-800', 'icon' => 'check-circle'],
+    ];
+    $alertaInfo = $accionRecomendada && isset($mapaAcciones[$accionRecomendada])
+        ? $mapaAcciones[$accionRecomendada]
+        : ($mapaAlertas[$alerta] ?? $mapaAlertas['NORMAL']);
+@endphp
+
+<div class="max-w-7xl mx-auto px-4 py-4 space-y-4">
 
     {{-- ALERTAS DEL SISTEMA --}}
     @if(session('status'))
-        <div class="alert alert-success alert-dismissible fade show shadow-sm mb-4 rounded-3">
-            <i class="bi bi-check-circle-fill me-2"></i> {{ session('status') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    @endif
-    
-    @if(session('error'))
-        <div class="alert alert-danger alert-dismissible fade show shadow-sm mb-4 rounded-3">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ session('error') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
+    <div x-data="{ show: true }" x-show="show" x-transition
+        class="flex items-center justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-emerald-800 shadow-sm">
+        <span class="flex items-center gap-2 text-sm"><flux:icon.check-circle class="size-4" /> {{ session('status') }}</span>
+        <button type="button" @click="show = false" class="text-emerald-500 hover:text-emerald-700">&times;</button>
+    </div>
     @endif
 
-    {{-- HEADER MODERNO --}}
-    <div class="page-header">
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+    @if(session('error'))
+    <div x-data="{ show: true }" x-show="show" x-transition
+        class="flex items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-red-800 shadow-sm">
+        <span class="flex items-center gap-2 text-sm"><flux:icon.exclamation-triangle class="size-4" /> {{ session('error') }}</span>
+        <button type="button" @click="show = false" class="text-red-500 hover:text-red-700">&times;</button>
+    </div>
+    @endif
+
+    {{-- HEADER + SELECTOR --}}
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+        <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-3">
             <div>
-                <h1 class="h4 fw-bold mb-1">Panel de Control</h1>
-                <p class="text-muted small mb-0" style="font-size: 0.8rem;">Gestión Forestal Rennova</p>
+                <h1 class="text-lg font-bold text-slate-800 mb-0.5">Panel de Control</h1>
+                <p class="text-sm text-slate-500">Gestión Forestal Rennova</p>
             </div>
-            <div class="d-flex gap-2">
+            <div>
                 @include('partials.selector-lote', ['lotes' => $lotes ?? collect(), 'loteSeleccionado' => $loteSeleccionado ?? null])
             </div>
         </div>
@@ -112,263 +57,206 @@
 
     {{-- ERRORES DE CLIMA --}}
     @if(isset($pronosticoError) && $pronosticoError)
-        <div class="alert alert-warning rounded-3 mb-4">
-            <i class="bi bi-exclamation-triangle me-2"></i> {{ $pronosticoError }}
-        </div>
+    <div class="flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-5 py-3 text-amber-800 shadow-sm">
+        <flux:icon.exclamation-triangle class="size-4 shrink-0" />
+        <span class="text-sm">{{ $pronosticoError }}</span>
+    </div>
     @endif
 
     @if(isset($pronosticoData) && !empty($pronosticoData))
-        {{-- KPIs MODERNOS --}}
-        <div class="row g-2 mb-2">
+        {{-- KPIs --}}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
             {{-- Días Perdidos --}}
-            <div class="col-12 col-md-6">
-                <div class="kpi-card">
-                    <div class="d-flex justify-content-between align-items-start mb-2">
-                        <div>
-                            <p class="text-uppercase text-muted fw-semibold mb-1" style="font-size: 0.7rem;">Días Perdidos</p>
-                            <div class="kpi-number text-dark">{{ $pronosticoData['analisisImpacto']['diasPerdidos'] ?? 0 }}</div>
-                        </div>
-                        <div class="kpi-icon bg-danger bg-opacity-10">
-                            <i class="bi bi-exclamation-circle text-danger" style="font-size: 1.1rem;"></i>
-                        </div>
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+                <div class="flex justify-between items-start mb-3">
+                    <div>
+                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Días Perdidos</p>
+                        <p class="text-3xl font-bold text-slate-900">{{ $pronosticoData['analisisImpacto']['diasPerdidos'] ?? 0 }}</p>
                     </div>
-                    <div class="pt-2 border-top">
-                        <p class="text-uppercase text-muted fw-semibold mb-1" style="font-size: 0.7rem;">Período</p>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span class="small text-muted">Últimos 7 días</span>
-                            @php
-                                $dias = $pronosticoData['analisisImpacto']['diasPerdidos'] ?? 0;
-                            @endphp
-                            @if($dias > 5)
-                                <span class="badge bg-danger">Alto</span>
-                            @elseif($dias > 2)
-                                <span class="badge bg-warning">Moderado</span>
-                            @else
-                                <span class="badge bg-success">Normal</span>
-                            @endif
-                        </div>
+                    <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-red-100">
+                        <flux:icon.exclamation-circle class="size-5 text-red-500" />
+                    </div>
+                </div>
+                @php $dias = $pronosticoData['analisisImpacto']['diasPerdidos'] ?? 0; @endphp
+                <div class="pt-3 border-t border-slate-100">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs text-slate-400">Últimos 7 días</span>
+                        @if($dias > 5)
+                            <span class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-700">Alto</span>
+                        @elseif($dias > 2)
+                            <span class="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-700">Moderado</span>
+                        @else
+                            <span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-semibold text-green-700">Normal</span>
+                        @endif
                     </div>
                 </div>
             </div>
 
             {{-- Déficit TN --}}
-            <div class="col-12 col-md-6">
-                <div class="kpi-card">
-                    <div class="d-flex justify-content-between align-items-start mb-2">
-                        <div>
-                            <p class="text-uppercase text-muted fw-semibold mb-1" style="font-size: 0.7rem;">Déficit TN</p>
-                            <div class="kpi-number text-dark">{{ $pronosticoData['analisisImpacto']['deficitTn'] ?? 0 }}</div>
-                        </div>
-                        <div class="kpi-icon bg-warning bg-opacity-10">
-                            <i class="bi bi-graph-down text-warning" style="font-size: 1.1rem;"></i>
-                        </div>
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+                <div class="flex justify-between items-start mb-3">
+                    <div>
+                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Déficit TN</p>
+                        <p class="text-3xl font-bold text-slate-900">{{ $pronosticoData['analisisImpacto']['deficitTn'] ?? 0 }}</p>
                     </div>
-                    @if(isset($pronosticoData['analisisImpacto']['accionPorcentaje']) && $pronosticoData['analisisImpacto']['accionPorcentaje'] > 0)
-                        <div class="pt-2 border-top">
-                            <p class="text-uppercase text-muted fw-semibold mb-1" style="font-size: 0.7rem;">Acción Recomendada</p>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span class="small text-muted">Aumentar producción</span>
-                                <span class="fw-bold text-warning">+{{ $pronosticoData['analisisImpacto']['accionPorcentaje'] }}%</span>
-                            </div>
-                        </div>
-                    @endif
+                    <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-amber-100">
+                        <flux:icon.chart-bar class="size-5 text-amber-500 rotate-180" />
+                    </div>
                 </div>
+                @if(isset($pronosticoData['analisisImpacto']['accionPorcentaje']) && $pronosticoData['analisisImpacto']['accionPorcentaje'] > 0)
+                <div class="pt-3 border-t border-slate-100">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs text-slate-400">Aumentar producción</span>
+                        <span class="text-sm font-bold text-amber-600">+{{ $pronosticoData['analisisImpacto']['accionPorcentaje'] }}%</span>
+                    </div>
+                </div>
+                @endif
             </div>
         </div>
 
         {{-- CAMINO DE RECOMENDACIÓN --}}
-        @php
-            $alerta = $pronosticoData['alerta'] ?? 'NORMAL';
-            $accionRecomendada = $pronosticoData['accion_recomendada'] ?? null;
-            $recomendacionDetallada = $pronosticoData['recomendacionDetallada'] ?? '';
-            $mapaAcciones = [
-                'AUMENTAR_PRODUCCION' => ['label' => 'Aumentar producción', 'color' => 'warning', 'icon' => 'bi-lightning-charge'],
-                'MANTENIMIENTO_PREVENTIVO' => ['label' => 'Mantenimiento preventivo', 'color' => 'info', 'icon' => 'bi-tools'],
-                'SUSPENSION_JORNADA' => ['label' => 'Suspender jornada', 'color' => 'danger', 'icon' => 'bi-pause-circle'],
-                'OPERACION_NORMAL' => ['label' => 'Operación normal', 'color' => 'success', 'icon' => 'bi-check-circle'],
-            ];
-            $mapaAlertas = [
-                'ACELERAR' => ['label' => 'Aumentar producción', 'color' => 'warning', 'icon' => 'bi-lightning-charge'],
-                'SUSPENDER' => ['label' => 'Suspender operaciones', 'color' => 'danger', 'icon' => 'bi-pause-circle'],
-                'NORMAL' => ['label' => 'Operación normal', 'color' => 'success', 'icon' => 'bi-check-circle'],
-            ];
-            $alertaInfo = $accionRecomendada && isset($mapaAcciones[$accionRecomendada])
-                ? $mapaAcciones[$accionRecomendada]
-                : ($mapaAlertas[$alerta] ?? $mapaAlertas['NORMAL']);
-        @endphp
-
-        <div class="card modern-card mb-2">
-            <div class="card-body p-3">
-                <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2 mb-2">
-                    <h2 class="fw-bold mb-0" style="font-size: 0.9rem;">Camino recomendado</h2>
-                    <span class="badge bg-{{ $alertaInfo['color'] }}">
-                        <i class="bi {{ $alertaInfo['icon'] }} me-1"></i>{{ $alertaInfo['label'] }}
-                    </span>
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+            <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-2 mb-3">
+                <h2 class="text-sm font-bold text-slate-800">Camino recomendado</h2>
+                <span class="inline-flex items-center gap-1 rounded-full {{ $alertaInfo['colorClass'] }} px-2.5 py-0.5 text-xs font-semibold">
+                    <flux:icon.{{ $alertaInfo['icon'] }} class="size-3" />
+                    {{ $alertaInfo['label'] }}
+                </span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div class="rounded-xl bg-{{ $accionRecomendada === 'SUSPENSION_JORNADA' ? 'red' : ($accionRecomendada === 'AUMENTAR_PRODUCCION' ? 'amber' : ($accionRecomendada === 'MANTENIMIENTO_PREVENTIVO' ? 'blue' : 'green')) }}-50 p-3">
+                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Estrategia</p>
+                    <p class="text-base font-bold text-slate-800">{{ $alertaInfo['label'] }}</p>
+                    <p class="text-xs text-slate-400 mt-1">Basado en clima y operatividad del lote seleccionado.</p>
                 </div>
-
-                <div class="row g-2">
-                    <div class="col-12 col-md-4">
-                        <div class="p-3 rounded-3 bg-{{ $alertaInfo['color'] }} bg-opacity-10 h-100">
-                            <div class="text-uppercase text-muted fw-semibold" style="font-size: 0.65rem;">Estrategia</div>
-                            <div class="fw-bold text-{{ $alertaInfo['color'] }}" style="font-size: 1rem;">
-                                {{ $alertaInfo['label'] }}
-                            </div>
-                            <div class="small text-muted mt-1">Basado en clima y operatividad del lote seleccionado.</div>
-                        </div>
-                    </div>
-                    <div class="col-12 col-md-8">
-                        <div class="p-3 rounded-3 bg-light h-100">
-                            <div class="text-uppercase text-muted fw-semibold" style="font-size: 0.65rem;">Detalle de recomendación</div>
-                            <div class="small text-muted" style="white-space: pre-wrap;">{{ $recomendacionDetallada ?: 'Sin detalle disponible.' }}</div>
-                        </div>
-                    </div>
+                <div class="md:col-span-2 rounded-xl bg-slate-50 p-3">
+                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Detalle de recomendación</p>
+                    <p class="text-xs text-slate-500 whitespace-pre-wrap">{{ $recomendacionDetallada ?: 'Sin detalle disponible.' }}</p>
                 </div>
             </div>
         </div>
 
         {{-- PRONÓSTICO DE OPERATIVIDAD --}}
-        <div class="card modern-card mb-2">
-            <div class="card-body p-2">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <h2 class="fw-bold mb-0" style="font-size: 0.9rem;">Pronóstico de Operatividad</h2>
-                    <span class="text-muted" style="font-size: 0.75rem;">Próximos {{ count($pronosticoData['pronostico'] ?? []) }} días</span>
-                </div>
-                
-                <div class="row g-3">
-                    @foreach(($pronosticoData['pronostico'] ?? []) as $dia)
-                        @php
-                            $esOperativo = strtoupper($dia['estado'] ?? 'OPERATIVO') === 'OPERATIVO';
-                            $esFinDeSemana = isset($dia['suelo']) && stripos($dia['suelo'], 'fin de semana') !== false;
-                            $colorBg = $esFinDeSemana ? 'secondary' : ($esOperativo ? 'success' : 'danger');
-                            $labelParts = explode('(', $dia['label'] ?? 'Día');
-                            $diaNombre = trim($labelParts[0] ?? 'Día');
-                            $fecha = isset($labelParts[1]) ? trim(str_replace(')', '', $labelParts[1])) : '';
-                            $textoEstado = $esFinDeSemana ? 'No laboral' : ($esOperativo ? 'Operativo' : ($dia['suelo'] ?? 'Inactivo'));
-                        @endphp
-                        <div class="col-6 col-sm-4 col-md-3 col-lg">
-                            <div class="weather-day">
-                                <p class="fw-semibold mb-0" style="font-size: 0.75rem;">{{ $diaNombre }}</p>
-                                <p class="text-muted mb-2" style="font-size: 0.65rem;">{{ $fecha }}</p>
-                                <div class="weather-icon-bg bg-{{ $colorBg }} bg-opacity-10">
-                                    @if($esFinDeSemana)
-                                        <i class="bi bi-calendar-x text-{{ $colorBg }}" style="font-size: 1.2rem;"></i>
-                                    @elseif($esOperativo)
-                                        <i class="bi bi-sun text-{{ $colorBg }}" style="font-size: 1.2rem;"></i>
-                                    @else
-                                        <i class="bi bi-cloud-rain text-{{ $colorBg }}" style="font-size: 1.2rem;"></i>
-                                    @endif
-                                </div>
-                                <div class="weather-bar bg-{{ $colorBg }}"></div>
-                                <p class="fw-medium text-{{ $colorBg }} mt-1 mb-0" style="font-size: 0.7rem;">
-                                    {{ $textoEstado }}
-                                </p>
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+            <div class="flex justify-between items-center mb-3">
+                <h2 class="text-sm font-bold text-slate-800">Pronóstico de Operatividad</h2>
+                <span class="text-xs text-slate-400">Próximos {{ count($pronosticoData['pronostico'] ?? []) }} días</span>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3">
+                @foreach(($pronosticoData['pronostico'] ?? []) as $dia)
+                    @php
+                        $esOperativo = strtoupper($dia['estado'] ?? 'OPERATIVO') === 'OPERATIVO';
+                        $esFinDeSemana = isset($dia['suelo']) && stripos($dia['suelo'], 'fin de semana') !== false;
+                        $labelParts = explode('(', $dia['label'] ?? 'Día');
+                        $diaNombre = trim($labelParts[0] ?? 'Día');
+                        $fecha = isset($labelParts[1]) ? trim(str_replace(')', '', $labelParts[1])) : '';
+                        $textoEstado = $esFinDeSemana ? 'No laboral' : ($esOperativo ? 'Operativo' : ($dia['suelo'] ?? 'Inactivo'));
+                    @endphp
+                    <div class="text-center p-2">
+                        <p class="text-xs font-semibold text-slate-700">{{ $diaNombre }}</p>
+                        <p class="text-xs text-slate-400 mb-2">{{ $fecha }}</p>
+                        @if($esFinDeSemana)
+                            <div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center mx-auto mb-2">
+                                <flux:icon.calendar class="size-5 text-slate-400" />
                             </div>
-                        </div>
-                    @endforeach
-                </div>
+                            <div class="h-0.5 bg-slate-300 rounded mb-1"></div>
+                            <p class="text-xs font-medium text-slate-400">{{ $textoEstado }}</p>
+                        @elseif($esOperativo)
+                            <div class="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center mx-auto mb-2">
+                                <flux:icon.sun class="size-5 text-green-500" />
+                            </div>
+                            <div class="h-0.5 bg-green-300 rounded mb-1"></div>
+                            <p class="text-xs font-medium text-green-600">{{ $textoEstado }}</p>
+                        @else
+                            <div class="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center mx-auto mb-2">
+                                <flux:icon.cloud class="size-5 text-red-500" />
+                            </div>
+                            <div class="h-0.5 bg-red-300 rounded mb-1"></div>
+                            <p class="text-xs font-medium text-red-600">{{ $textoEstado }}</p>
+                        @endif
+                    </div>
+                @endforeach
             </div>
         </div>
     @endif
 
-    {{-- ACCESOS DIRECTOS MODERNOS --}}
-    <div class="row g-2 mb-2">
+    {{-- ACCESOS DIRECTOS --}}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3">
         {{-- Maquinaria --}}
-        <div class="col-12 col-sm-6 col-lg-3">
-            <a href="{{ route('modulos.maquinaria') }}" class="text-decoration-none">
-                <div class="card modern-card h-100">
-                    <div class="card-body text-center p-2">
-                        <div class="kpi-icon bg-primary bg-opacity-10 mx-auto mb-2">
-                            <i class="bi bi-truck text-primary" style="font-size: 1.2rem;"></i>
-                        </div>
-                        <h5 class="fw-bold mb-1 text-dark" style="font-size: 0.9rem;">Maquinaria</h5>
-                        <p class="text-muted mb-0" style="font-size: 0.7rem;">Gestión de equipos</p>
-                    </div>
-                </div>
-            </a>
-        </div>
+        <a href="{{ route('modulos.maquinaria') }}" class="block bg-white rounded-xl shadow-sm border border-slate-200 p-3 text-center hover:shadow-md hover:-translate-y-0.5 transition-all">
+            <div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center mx-auto mb-2">
+                <flux:icon.truck class="size-5 text-blue-500" />
+            </div>
+            <h5 class="text-sm font-bold text-slate-800 mb-0.5">Maquinaria</h5>
+            <p class="text-xs text-slate-400">Gestión de equipos</p>
+        </a>
 
         {{-- Inventario --}}
-        <div class="col-12 col-sm-6 col-lg-3">
-            <a href="{{ route('modulos.inventario-forestal') }}" class="text-decoration-none">
-                <div class="card modern-card h-100">
-                    <div class="card-body text-center p-2">
-                        <div class="kpi-icon" style="background: rgba(139, 92, 246, 0.1); margin: 0 auto;" class="mb-2">
-                            <i class="bi bi-box-seam" style="color: #8B5CF6; font-size: 1.2rem;"></i>
-                        </div>
-                        <h5 class="fw-bold mb-1 text-dark" style="font-size: 0.9rem;">Inventario</h5>
-                        <p class="text-muted mb-0" style="font-size: 0.7rem;">Control de stock</p>
-                    </div>
-                </div>
-            </a>
-        </div>
+        <a href="{{ route('modulos.inventario-forestal') }}" class="block bg-white rounded-xl shadow-sm border border-slate-200 p-3 text-center hover:shadow-md hover:-translate-y-0.5 transition-all">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center mx-auto mb-2" style="background: rgba(139, 92, 246, 0.1);">
+                <flux:icon.cube class="size-5" style="color: #8B5CF6;" />
+            </div>
+            <h5 class="text-sm font-bold text-slate-800 mb-0.5">Inventario</h5>
+            <p class="text-xs text-slate-400">Control de stock</p>
+        </a>
 
         {{-- Personal --}}
-        <div class="col-12 col-sm-6 col-lg-3">
-            <a href="{{ route('modulos.personal') }}" class="text-decoration-none">
-                <div class="card modern-card h-100">
-                    <div class="card-body text-center p-2">
-                        <div class="kpi-icon" style="background: rgba(249, 115, 22, 0.1); margin: 0 auto;" class="mb-2">
-                            <i class="bi bi-people" style="color: #F97316; font-size: 1.2rem;"></i>
-                        </div>
-                        <h5 class="fw-bold mb-1 text-dark" style="font-size: 0.9rem;">Personal</h5>
-                        <p class="text-muted mb-0" style="font-size: 0.7rem;">Gestión de empleados</p>
-                    </div>
-                </div>
-            </a>
-        </div>
+        <a href="{{ route('modulos.personal') }}" class="block bg-white rounded-xl shadow-sm border border-slate-200 p-3 text-center hover:shadow-md hover:-translate-y-0.5 transition-all">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center mx-auto mb-2" style="background: rgba(249, 115, 22, 0.1);">
+                <flux:icon.users class="size-5" style="color: #F97316;" />
+            </div>
+            <h5 class="text-sm font-bold text-slate-800 mb-0.5">Personal</h5>
+            <p class="text-xs text-slate-400">Gestión de empleados</p>
+        </a>
 
         {{-- Registrar Operaciones - CTA --}}
-        <div class="col-12 col-sm-6 col-lg-3">
-            <a href="{{ route('modulos.operaciones') }}" class="text-decoration-none">
-                <div class="card cta-card modern-card h-100 position-relative">
-                    <div class="card-body text-center p-2">
-                        <div class="kpi-icon mx-auto mb-2" style="background: rgba(255,255,255,0.2);">
-                            <i class="bi bi-plus-lg text-white" style="font-size: 1.2rem;"></i>
-                        </div>
-                        <h5 class="fw-bold mb-1 text-white" style="font-size: 0.9rem;">Registrar Operaciones</h5>
-                        <p class="text-white-50 mb-0" style="font-size: 0.7rem;">Nueva operación</p>
-                    </div>
-                    <div class="position-absolute top-0 end-0 m-3">
-                        <span class="badge bg-light bg-opacity-25 text-white">★</span>
-                    </div>
-                </div>
-            </a>
-        </div>
+        <a href="{{ route('modulos.operaciones') }}" class="block relative overflow-hidden rounded-xl shadow-sm border border-brand p-3 text-center hover:shadow-md hover:-translate-y-0.5 transition-all" style="background: linear-gradient(135deg, #2d7a4f 0%, #1e5631 100%);">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center mx-auto mb-2" style="background: rgba(255,255,255,0.2);">
+                <flux:icon.plus class="size-5 text-white" />
+            </div>
+            <h5 class="text-sm font-bold text-white mb-0.5">Registrar Operaciones</h5>
+            <p class="text-xs text-white/60">Nueva operación</p>
+            <span class="absolute top-2 right-2 text-xs text-white/40">★</span>
+        </a>
 
         {{-- Reporte de Lluvias - PDF --}}
-        <div class="col-12 col-sm-6 col-lg-3">
-            <div class="card modern-card h-100">
-                <div class="card-body p-2">
-                    <div class="text-center mb-2">
-                        <div class="kpi-icon" style="background: rgba(59, 130, 246, 0.12); margin: 0 auto;">
-                            <i class="bi bi-cloud-rain" style="color: #3B82F6; font-size: 1.2rem;"></i>
-                        </div>
-                        <h5 class="fw-bold mb-1 text-dark" style="font-size: 0.9rem;">Reporte de Lluvias</h5>
-                        <p class="text-muted mb-2" style="font-size: 0.7rem;">Exportar PDF</p>
-                    </div>
-                    <form action="{{ route('reportes.clima-lluvias.pdf') }}" method="GET">
-                        <div class="mb-2">
-                            <label class="form-label mb-1" style="font-size: 0.7rem;">Lote</label>
-                            <select name="id_lote" class="form-select form-select-sm">
-                                <option value="">Todos</option>
-                                @foreach($lotes as $lote)
-                                    <option value="{{ $lote->id_lote }}">{{ $lote->propietario }} - {{ $lote->ubicacion }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="mb-2">
-                            <label class="form-label mb-1" style="font-size: 0.7rem;">Desde</label>
-                            <input type="date" name="desde" max="{{ \Carbon\Carbon::now()->toDateString() }}" class="form-control form-control-sm" value="{{ \Carbon\Carbon::now()->subDays(30)->toDateString() }}">
-                        </div>
-                        <div class="mb-2">
-                            <label class="form-label mb-1" style="font-size: 0.7rem;">Hasta</label>
-                            <input type="date" name="hasta" max="{{ \Carbon\Carbon::now()->toDateString() }}" class="form-control form-control-sm" value="{{ \Carbon\Carbon::now()->toDateString() }}">
-                        </div>
-                        <button type="submit" class="btn btn-sm btn-primary w-100">Descargar PDF</button>
-                    </form>
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-3">
+            <div class="text-center mb-3">
+                <div class="w-10 h-10 rounded-lg flex items-center justify-center mx-auto mb-2" style="background: rgba(59, 130, 246, 0.12);">
+                    <flux:icon.cloud class="size-5" style="color: #3B82F6;" />
                 </div>
+                <h5 class="text-sm font-bold text-slate-800 mb-0.5">Reporte de Lluvias</h5>
+                <p class="text-xs text-slate-400">Exportar PDF</p>
             </div>
+            <form action="{{ route('reportes.clima-lluvias.pdf') }}" method="GET" class="space-y-2">
+                <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-0.5">Lote</label>
+                    <select name="id_lote" class="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-800 shadow-sm focus:border-brand focus:ring-1 focus:ring-brand">
+                        <option value="">Todos</option>
+                        @foreach($lotes as $lote)
+                            <option value="{{ $lote->id_lote }}">{{ $lote->propietario }} - {{ $lote->ubicacion }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-0.5">Desde</label>
+                    <input type="date" name="desde" max="{{ \Carbon\Carbon::now()->toDateString() }}"
+                        class="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-800 shadow-sm focus:border-brand focus:ring-1 focus:ring-brand"
+                        value="{{ \Carbon\Carbon::now()->subDays(30)->toDateString() }}">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-0.5">Hasta</label>
+                    <input type="date" name="hasta" max="{{ \Carbon\Carbon::now()->toDateString() }}"
+                        class="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-800 shadow-sm focus:border-brand focus:ring-1 focus:ring-brand"
+                        value="{{ \Carbon\Carbon::now()->toDateString() }}">
+                </div>
+                <button type="submit"
+                    class="inline-flex items-center justify-center w-full rounded-lg bg-brand px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-brand-hover transition-colors">
+                    Descargar PDF
+                </button>
+            </form>
         </div>
     </div>
+</div>
 
 @endsection

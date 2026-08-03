@@ -16,26 +16,26 @@
 @if($lotes && $lotes->count() > 0)
 <div class="bg-white rounded-xl shadow-sm border border-slate-200 mb-6">
     <div class="p-4">
-                <form method="GET" action="{{ route('dashboard') }}" class="d-flex flex-wrap align-items-center gap-3">
-            <label class="fw-semibold text-dark small mb-0" style="min-width: fit-content;">Seleccionar lote:</label>
-            <select name="lote" class="form-select form-select-sm" style="max-width: 350px; border: 2px solid var(--primary-color);" onchange="this.form.submit()">
+        <form method="GET" action="{{ route('dashboard') }}" class="flex flex-wrap items-center gap-3">
+            <label class="text-sm font-semibold text-slate-700 shrink-0">Seleccionar lote:</label>
+            <select name="lote" class="rounded-lg border border-brand bg-white px-3 py-1.5 text-sm text-slate-800 shadow-sm focus:border-brand focus:ring-1 focus:ring-brand" style="max-width: 350px;" onchange="this.form.submit()">
                 @foreach($lotes as $op)
                     <option value="{{ $op->id_lote }}" @selected(optional($loteSeleccionado)->id_lote === $op->id_lote)>
                         {{ $op->nombre ?? $op->propietario ?? ('Lote #' . $op->id_lote) }}
                     </option>
                 @endforeach
             </select>
-            <div class="form-check form-switch ms-2">
-                <input class="form-check-input" type="checkbox" role="switch" id="demoSwitch" name="demo" value="1" @checked($demoActivo)>
-                <label class="form-check-label small" for="demoSwitch">Modo demo</label>
+            <div class="flex items-center gap-2">
+                <input class="rounded border-slate-300 text-brand shadow-sm focus:ring-brand" type="checkbox" role="switch" id="demoSwitch" name="demo" value="1" @checked($demoActivo)>
+                <label class="text-sm text-slate-600" for="demoSwitch">Modo demo</label>
             </div>
-            <select name="escenario" id="demoScenario" class="form-select form-select-sm" style="max-width: 240px;" @disabled(!$demoActivo)>
+            <select name="escenario" id="demoScenario" class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-800 shadow-sm focus:border-brand focus:ring-1 focus:ring-brand disabled:opacity-50" style="max-width: 240px;" @disabled(!$demoActivo)>
                 <option value="">Auto por nombre</option>
                 @foreach($escenarios as $key => $label)
                     <option value="{{ $key }}" @selected($escenario === $key)>{{ $label }}</option>
                 @endforeach
             </select>
-            <button type="submit" class="bg-brand hover:bg-brand-hover text-white px-3 py-1.5 rounded-lg text-sm font-medium">Actualizar</button>
+            <button type="submit" class="inline-flex items-center gap-1.5 rounded-lg bg-brand px-4 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-hover transition-colors">Actualizar</button>
         </form>
     </div>
 </div>

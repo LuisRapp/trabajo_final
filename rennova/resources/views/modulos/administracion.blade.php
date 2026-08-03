@@ -1,102 +1,89 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="h3 mb-0 text-gray-800">
-                <i class="bi bi-shield-lock me-2 text-success"></i>Administración
-            </h1>
-            <p class="text-muted mb-0">Gestión de usuarios, roles, permisos y configuraciones del sistema</p>
-        </div>
+<div class="max-w-7xl mx-auto px-4 py-6">
+    <div class="mb-8">
+        <h1 class="text-2xl font-bold text-slate-800 flex items-center gap-2 mb-1">
+            <flux:icon.shield-exclamation class="size-6 text-green-700" />
+            Administración
+        </h1>
+        <p class="text-slate-500">Gestión de usuarios, roles, permisos y configuraciones del sistema</p>
     </div>
 
-    <div class="row g-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
         <!-- Usuarios -->
         @can('gestionar-usuarios')
-        <div class="col-12 col-md-6 col-xl-4">
-            <div class="card h-100 border-0 shadow-sm hover-elevate">
-                <div class="card-body p-4">
-                    <div class="d-flex align-items-center mb-3">
-                        <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3">
-                            <i class="bi bi-people fs-3 text-success"></i>
-                        </div>
-                        <h5 class="card-title mb-0 fw-bold text-success">Usuarios</h5>
-                    </div>
-                    <p class="card-text text-muted">
-                        Gestión de cuentas de usuario y accesos al sistema.
-                    </p>
-                    <a href="{{ route('usuarios.index') }}" class="btn btn-outline-success stretched-link w-100">
-                        Gestionar
-                    </a>
+        <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-shadow">
+            <div class="flex items-center gap-4 mb-3">
+                <div class="rounded-full bg-green-100 p-3 shrink-0">
+                    <flux:icon.users class="size-7 text-green-700" />
                 </div>
+                <h3 class="text-lg font-bold text-green-700">Usuarios</h3>
             </div>
+            <p class="text-sm text-slate-500 mb-4">
+                Gestión de cuentas de usuario y accesos al sistema.
+            </p>
+            <a href="{{ route('usuarios.index') }}"
+                class="inline-flex items-center justify-center w-full rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-hover transition-colors">
+                Gestionar
+            </a>
         </div>
         @endcan
 
         <!-- Roles y Permisos -->
         @can('gestionar-permisos')
-        <div class="col-12 col-md-6 col-xl-4">
-            <div class="card h-100 border-0 shadow-sm hover-elevate">
-                <div class="card-body p-4">
-                    <div class="d-flex align-items-center mb-3">
-                        <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3">
-                            <i class="bi bi-shield-check fs-3 text-success"></i>
-                        </div>
-                        <h5 class="card-title mb-0 fw-bold text-success">Roles y Permisos</h5>
-                    </div>
-                    <p class="card-text text-muted">
-                        Configuración de roles y asignación de permisos.
-                    </p>
-                    <a href="{{ route('roles-permisos.index') }}" class="btn btn-outline-success stretched-link w-100">
-                        Gestionar
-                    </a>
+        <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-shadow">
+            <div class="flex items-center gap-4 mb-3">
+                <div class="rounded-full bg-green-100 p-3 shrink-0">
+                    <flux:icon.shield-check class="size-7 text-green-700" />
                 </div>
+                <h3 class="text-lg font-bold text-green-700">Roles y Permisos</h3>
             </div>
+            <p class="text-sm text-slate-500 mb-4">
+                Configuración de roles y asignación de permisos.
+            </p>
+            <a href="{{ route('roles-permisos.index') }}"
+                class="inline-flex items-center justify-center w-full rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-hover transition-colors">
+                Gestionar
+            </a>
         </div>
         @endcan
 
         <!-- Auditorías -->
         @can('ver-auditoria')
-        <div class="col-12 col-md-6 col-xl-4">
-            <div class="card h-100 border-0 shadow-sm hover-elevate">
-                <div class="card-body p-4">
-                    <div class="d-flex align-items-center mb-3">
-                        <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3">
-                            <i class="bi bi-file-earmark-text fs-3 text-success"></i>
-                        </div>
-                        <h5 class="card-title mb-0 fw-bold text-success">Auditorías</h5>
-                    </div>
-                    <p class="card-text text-muted">
-                        Registro y consulta de actividades del sistema.
-                    </p>
-                    <a href="{{ route('auditorias.index') }}" class="btn btn-outline-success stretched-link w-100">
-                        Ver Historial
-                    </a>
+        <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-shadow">
+            <div class="flex items-center gap-4 mb-3">
+                <div class="rounded-full bg-green-100 p-3 shrink-0">
+                    <flux:icon.document-text class="size-7 text-green-700" />
                 </div>
+                <h3 class="text-lg font-bold text-green-700">Auditorías</h3>
             </div>
+            <p class="text-sm text-slate-500 mb-4">
+                Registro y consulta de actividades del sistema.
+            </p>
+            <a href="{{ route('auditorias.index') }}"
+                class="inline-flex items-center justify-center w-full rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-hover transition-colors">
+                Ver Historial
+            </a>
         </div>
         @endcan
 
         <!-- Configuración de Mantenimiento -->
         @can('configurar-mantenimiento')
-        <div class="col-12 col-md-6 col-xl-4">
-            <div class="card h-100 border-0 shadow-sm hover-elevate">
-                <div class="card-body p-4">
-                    <div class="d-flex align-items-center mb-3">
-                        <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3">
-                            <i class="bi bi-calendar-check fs-3 text-success"></i>
-                        </div>
-                        <h5 class="card-title mb-0 fw-bold text-success">Configuración Mantenimiento</h5>
-                    </div>
-                    <p class="card-text text-muted">
-                        Ajustes y parámetros para el módulo de mantenimiento.
-                    </p>
-                    <a href="{{ route('configuracion-mantenimiento.index') }}" class="btn btn-outline-success stretched-link w-100">
-                        Configurar
-                    </a>
+        <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-shadow">
+            <div class="flex items-center gap-4 mb-3">
+                <div class="rounded-full bg-green-100 p-3 shrink-0">
+                    <flux:icon.calendar-date-range class="size-7 text-green-700" />
                 </div>
+                <h3 class="text-lg font-bold text-green-700">Configuración Mantenimiento</h3>
             </div>
+            <p class="text-sm text-slate-500 mb-4">
+                Ajustes y parámetros para el módulo de mantenimiento.
+            </p>
+            <a href="{{ route('configuracion-mantenimiento.index') }}"
+                class="inline-flex items-center justify-center w-full rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-hover transition-colors">
+                Configurar
+            </a>
         </div>
         @endcan
     </div>
