@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Contracts\Auditable;
 
 class MovimientoStock extends Model implements Auditable
 {
+    use HasFactory;
     use \OwenIt\Auditing\Auditable;
     use SoftDeletes;
 
@@ -66,20 +68,4 @@ class MovimientoStock extends Model implements Auditable
                 });
         });
     }
-
-    /**
-     * @deprecated Use InventarioService::registrarSalida() instead
-     */
-
-    /**
-     * @deprecated Use InventarioService::registrarEntrada() instead
-     */
-
-    /**
-     * @deprecated Use InventarioService::stockDisponible() instead
-     */
-
-    /**
-     * @deprecated Use InventarioService::precioPromedio() instead
-     */
 }
