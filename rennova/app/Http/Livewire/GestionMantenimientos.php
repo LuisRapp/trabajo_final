@@ -101,7 +101,7 @@ class GestionMantenimientos extends Component
 
             // Verificar stock nuevamente
             $verificacion = $this->mantenimientoService
-                ->verificarStockParaAprobacion($this->orden_seleccionada->id);
+                ->verificarStockParaAprobacion($this->orden_seleccionada->id_mantenimiento);
 
             if (! $verificacion['puede_aprobar']) {
                 $faltantes = collect($verificacion['insuficientes'])
@@ -141,15 +141,15 @@ class GestionMantenimientos extends Component
             }
 
             // Si es preventivo, cargar kit
-            if ($this->orden_seleccionada->tipo_mantenimiento === 'preventivo') {
+            if ($this->orden_seleccionada->tipoMantenimiento && str_contains(strtolower($this->orden_seleccionada->tipoMantenimiento->nombre), 'preventivo')) {
                 $kit = $this->mantenimientoService->obtenerKitPreventivo(
-                    $this->orden_seleccionada->maquinaria->tipo_maquinaria_id
+                    $this->orden_seleccionada->maquinaria->id_tipo_maquinaria
                 );
 
                 // Inicializar insumos con cantidades del kit
                 $this->insumos_usados = $kit->map(function ($item) {
                     return [
-                        'insumo_id' => $item->insumo_id,
+                        'insumo_id' => $item->id_insumo,
                         'cantidad' => $item->cantidad_requerida,
                         'nombre' => $item->insumo->nombre,
                         'stock_disponible' => $item->insumo->stock,
@@ -210,12 +210,13 @@ class GestionMantenimientos extends Component
         // Validaciones
         $this->validate([
             'costo_mano_obra' => 'required|numeric|min:0',
-            'insumos_usados.*.insumo_id' => 'required|exists:insumos,id',
+            'insumos_usados.*.insumo_id' => 'required|exists:insumos,id_insumo',
             'insumos_usados.*.cantidad' => 'required|numeric|min:0.01',
         ], [
             'costo_mano_obra.required' => 'El costo de mano de obra es requerido',
             'costo_mano_obra.min' => 'El costo debe ser mayor o igual a 0',
             'insumos_usados.*.insumo_id.required' => 'Debe seleccionar un insumo',
+            'insumos_usados.*.insumo_id.exists' => 'El insumo seleccionado no es válido',
             'insumos_usados.*.cantidad.required' => 'Debe especificar la cantidad',
             'insumos_usados.*.cantidad.min' => 'La cantidad debe ser mayor a 0',
         ]);
@@ -224,14 +225,14 @@ class GestionMantenimientos extends Component
             // Preparar datos de insumos
             $insumosData = collect($this->insumos_usados)->map(function ($item) {
                 return [
-                    'insumo_id' => $item['insumo_id'],
-                    'cantidad' => $item['cantidad'],
+                    'id_insumo' => $item['insumo_id'],
+                    'cantidad_utilizada' => $item['cantidad'],
                 ];
             })->toArray();
 
             // Completar mantenimiento usando el servicio
             $this->mantenimientoService->completarMantenimiento(
-                $this->orden_seleccionada->id,
+                $this->orden_seleccionada->id_mantenimiento,
                 $insumosData,
                 $this->costo_mano_obra
             );
@@ -267,8 +268,8 @@ class GestionMantenimientos extends Component
 
     public function getOrdenesProperty()
     {
-        $query = Mantenimiento::with(['maquinaria.tipoMaquinaria'])
-            ->whereBetween('created_at', [
+        $query = Mantenimiento::with(['maquinaria.tipoMaquinaria', 'tipoMantenimiento'])
+            ->whereBetween('fecha_inicio', [
                 $this->filtro_fecha_desde ?: now()->subYear(),
                 $this->filtro_fecha_hasta ?: now(),
             ]);
@@ -278,11 +279,11 @@ class GestionMantenimientos extends Component
         }
 
         if ($this->filtro_maquinaria) {
-            $query->where('maquinaria_id', $this->filtro_maquinaria);
+            $query->where('id_maquinaria', $this->filtro_maquinaria);
         }
 
         if ($this->filtro_tipo) {
-            $query->where('tipo_mantenimiento', $this->filtro_tipo);
+            $query->where('id_tipo_mantenimiento', $this->filtro_tipo);
         }
 
         // Filtrar según la pestaña activa
@@ -292,7 +293,7 @@ class GestionMantenimientos extends Component
             $query->where('estado', 'completado');
         }
 
-        return $query->orderBy('created_at', 'desc')->get();
+        return $query->orderBy('fecha_inicio', 'desc')->get();
     }
 
     public function getMaquinariasProperty()

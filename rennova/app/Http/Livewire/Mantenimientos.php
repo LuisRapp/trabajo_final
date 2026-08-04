@@ -209,7 +209,7 @@ class Mantenimientos extends Component
 
         session()->flash('message', "Orden de {$tipoNombre} creada correctamente para {$maquinaNombre}.");
         $this->resetCampos();
-        $this->activeTab = 'listado';
+        $this->tab_activo = 'listado';
         $this->dispatch('mantenimientoGuardado');
     }
 
@@ -222,7 +222,7 @@ class Mantenimientos extends Component
         $this->fecha_inicio = $mantenimiento->fecha_inicio;
         $this->fecha_programada = $mantenimiento->fecha_programada;
         $this->estado = $mantenimiento->estado;
-        $this->activeTab = 'nuevo';
+        $this->tab_activo = 'nuevo';
     }
 
     public function eliminar($id)
@@ -314,7 +314,7 @@ class Mantenimientos extends Component
             $this->insumos_usados = [['id_insumo' => '', 'cantidad' => '']];
         }
 
-        $this->activeTab = 'listado';
+        $this->tab_activo = 'listado';
         $this->mostrarModalCompletar = true;
         $this->dispatch('modal-completar-opened', id: $id);
     }
