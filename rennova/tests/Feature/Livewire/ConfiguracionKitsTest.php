@@ -340,13 +340,11 @@ class ConfiguracionKitsTest extends TestCase
             'es_obligatorio' => true,
         ]);
 
-        // editarKit() calls dispatchBrowserEvent() which does not exist in Livewire 3.
-        // This documents the known bug — the method sets properties before crashing.
-        $this->expectException(\BadMethodCallException::class);
-
         Livewire::actingAs($this->usuario)
             ->test(ConfiguracionKits::class)
-            ->call('editarKit', $maquinaria->id_maquinaria);
+            ->call('editarKit', $maquinaria->id_maquinaria)
+            ->assertSet('maquinaria_seleccionada', $maquinaria->id_maquinaria)
+            ->assertSet('editando_kit', true);
     }
 
     // =========================================================================

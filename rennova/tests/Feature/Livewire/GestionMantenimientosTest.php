@@ -265,17 +265,32 @@ class GestionMantenimientosTest extends TestCase
             'id_tipo_mantenimiento' => $tipo->id_tipo_mantenimiento,
         ]);
 
-        // Bug conocido: validación exists:insumos,id debería ser exists:insumos,id_insumo
-        // El componente no llama al servicio cuando hay insumos por este bug
-        $this->mockService();
+        $insumo = Insumo::factory()->create();
+
+        $mock = $this->mockService();
+        $mock->shouldReceive('completarMantenimiento')
+            ->once()
+            ->withArgs(function ($id, $insumos) use ($orden) {
+                return $id === $orden->id_mantenimiento
+                    && count($insumos) === 1
+                    && $insumos[0]['id_insumo'] === 1
+                    && $insumos[0]['cantidad_utilizada'] === 5;
+            })
+            ->andReturn(['success' => true, 'costo_total' => 500]);
 
         Livewire::actingAs($this->usuario)
             ->test(GestionMantenimientos::class)
             ->call('abrirModalCompletar', $orden->id_mantenimiento)
-            ->set('insumos_usados', [])
+            ->set('insumos_usados', [[
+                'insumo_id' => $insumo->id_insumo,
+                'cantidad' => 5,
+                'nombre' => $insumo->nombre,
+                'stock_disponible' => 100,
+                'es_obligatorio' => false,
+            ]])
             ->set('costo_mano_obra', 100)
             ->call('completarMantenimiento')
-            ->assertStatus(200);
+            ->assertHasNoErrors();
     }
 
     public function test_completar_mantenimiento_sin_insumos(): void
@@ -287,9 +302,13 @@ class GestionMantenimientosTest extends TestCase
             'id_tipo_mantenimiento' => $tipo->id_tipo_mantenimiento,
         ]);
 
-        // Bug conocido: key mismatch entre componente y servicio
-        // El componente envía keys diferentes a las que espera el servicio
-        $this->mockService();
+        $mock = $this->mockService();
+        $mock->shouldReceive('completarMantenimiento')
+            ->once()
+            ->withArgs(function ($id, $insumos) use ($orden) {
+                return $id === $orden->id_mantenimiento && empty($insumos);
+            })
+            ->andReturn(['success' => true, 'costo_total' => 100]);
 
         Livewire::actingAs($this->usuario)
             ->test(GestionMantenimientos::class)
@@ -297,28 +316,48 @@ class GestionMantenimientosTest extends TestCase
             ->set('insumos_usados', [])
             ->set('costo_mano_obra', 100)
             ->call('completarMantenimiento')
-            ->assertStatus(200);
+            ->assertHasNoErrors();
     }
 
     public function test_completar_mantenimiento_preventivo_con_kit(): void
     {
         $maquinaria = Maquinaria::factory()->create();
-        $tipo = TipoMantenimiento::factory()->create(['nombre' => 'Preventivo']);
+        $tipo = TipoMantenimiento::factory()->create(['nombre' => 'Mantenimiento Preventivo']);
         $orden = Mantenimiento::factory()->enCurso()->create([
             'id_maquinaria' => $maquinaria->id_maquinaria,
             'id_tipo_mantenimiento' => $tipo->id_tipo_mantenimiento,
         ]);
 
-        $this->mockService();
+        $insumo = Insumo::factory()->create();
+        KitMantenimientoPreventivo::factory()->create([
+            'id_maquinaria' => $maquinaria->id_maquinaria,
+            'id_insumo' => $insumo->id_insumo,
+            'cantidad_requerida' => 3,
+            'es_obligatorio' => true,
+        ]);
 
-        // Bug conocido: component checks $orden->tipo_mantenimiento which doesn't exist
-        // on the model (it has id_tipo_mantenimiento FK). So obtenerKitPreventivo
-        // is never called — this documents the known bug.
+        $mock = $this->mockService();
+        $mock->shouldReceive('obtenerKitPreventivo')
+            ->once()
+            ->with($maquinaria->id_tipo_maquinaria)
+            ->andReturn(collect([(object) [
+                'id_insumo' => $insumo->id_insumo,
+                'cantidad_requerida' => 3,
+                'es_obligatorio' => true,
+                'insumo' => $insumo,
+            ]]));
 
-        Livewire::actingAs($this->usuario)
+        $component = Livewire::actingAs($this->usuario)
             ->test(GestionMantenimientos::class)
-            ->call('abrirModalCompletar', $orden->id_mantenimiento)
-            ->assertStatus(200);
+            ->call('abrirModalCompletar', $orden->id_mantenimiento);
+
+        $component->assertSet('modal_completar', true);
+        $component->assertSet('insumos_usados', function ($insumos) use ($insumo) {
+            return count($insumos) === 1
+                && $insumos[0]['insumo_id'] === $insumo->id_insumo
+                && $insumos[0]['cantidad'] === 3
+                && $insumos[0]['es_obligatorio'] === true;
+        });
     }
 
     public function test_validacion_costo_mano_obra_minimo(): void
@@ -376,9 +415,10 @@ class GestionMantenimientosTest extends TestCase
             'id_tipo_mantenimiento' => $tipo->id_tipo_mantenimiento,
         ]);
 
-        // Bug conocido: validación y key mismatch previenen que se llame al servicio
-        // Este test documenta que el estado no cambia cuando falla
-        $this->mockService();
+        $mock = $this->mockService();
+        $mock->shouldReceive('completarMantenimiento')
+            ->once()
+            ->andThrow(new \Exception('FIFO error'));
 
         Livewire::actingAs($this->usuario)
             ->test(GestionMantenimientos::class)
@@ -462,12 +502,13 @@ class GestionMantenimientosTest extends TestCase
 
         $this->mockService();
 
-        // Bug conocido: el método verDetalle puede fallar silenciosamente
-        // Este test documenta el comportamiento actual
         Livewire::actingAs($this->usuario)
             ->test(GestionMantenimientos::class)
             ->call('verDetalle', $orden->id_mantenimiento)
-            ->assertStatus(200);
+            ->assertSet('modal_detalle', true)
+            ->assertSet('detalle_orden', function ($detalle) use ($orden) {
+                return $detalle !== null && $detalle->id_mantenimiento === $orden->id_mantenimiento;
+            });
     }
 
     public function test_detalle_orden_inexistente_no_falla(): void

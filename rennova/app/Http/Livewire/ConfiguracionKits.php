@@ -162,7 +162,7 @@ class ConfiguracionKits extends Component
         $this->cargarItemsKit();
 
         // Emitir evento para cambiar a la pestaña de configuración
-        $this->dispatchBrowserEvent('cambiar-tab', ['tab' => 'nuevo-kit']);
+        $this->dispatch('cambiar-tab', tab: 'nuevo-kit');
     }
 
     public function eliminarKit($maquinariaId)
