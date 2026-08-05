@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\Carga;
-use App\Models\Cliente;
 use App\Models\LoteTarea;
 use App\Models\MovimientoStock;
 use App\Models\ParteDiario;
@@ -65,7 +64,7 @@ class PartesDiariosService
      *
      * @param  int  $parteDiarioId  The ParteDiario ID
      * @param  array  $cargas  Array of carga data with keys: id_categoria_madera, ticket,
-     *                         peso_bruto, tara, peso_neto, id_chofer, destino, empleados, maquinarias
+     *                         peso_bruto, tara, peso_neto, id_chofer, destino (id_cliente), empleados, maquinarias
      * @param  int  $loteId  The Lote ID
      * @param  string  $fecha  The cargo date (Y-m-d)
      * @param  int|null  $parteId  Original parte ID for deletion of previous cargas (null = new)
@@ -85,19 +84,16 @@ class PartesDiariosService
         $eventos = [];
 
         foreach ($cargas as $cargaData) {
-            $cliente = Cliente::find($cargaData['destino']);
-            $nombreDestino = $cliente ? $cliente->razon_social : 'Cliente no encontrado';
-
             $carga = Carga::create([
                 'id_parte_diario' => $parteDiarioId,
                 'id_lote' => $loteId,
                 'id_categoria_madera' => $cargaData['id_categoria_madera'],
                 'id_chofer' => $cargaData['id_chofer'],
+                'id_cliente' => $cargaData['destino'],
                 'ticket' => $cargaData['ticket'],
                 'peso_bruto' => $cargaData['peso_bruto'],
                 'tara' => $cargaData['tara'],
                 'peso_neto' => $cargaData['peso_neto'],
-                'destino' => $nombreDestino,
                 'fecha_carga' => $fecha,
             ]);
 

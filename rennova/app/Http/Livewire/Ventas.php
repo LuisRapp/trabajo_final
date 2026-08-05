@@ -2,17 +2,40 @@
 
 namespace App\Http\Livewire;
 
-use App\Models\Carga;
 use App\Models\Cliente;
 use App\Models\Venta;
 use App\Services\VentaService;
-use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
 
 class Ventas extends Component
 {
     use WithPagination;
+
+    protected $rules = [
+        'id_cliente' => 'required|exists:clientes,id_cliente',
+        'fecha_desde' => 'required|date',
+        'fecha_hasta' => 'required|date|after_or_equal:fecha_desde',
+        'observaciones' => 'nullable|string|max:500',
+        'busqueda' => 'nullable|string|max:100',
+        'obs_edicion' => 'nullable|string|max:500',
+        'monto_edicion' => 'nullable|numeric|min:0',
+    ];
+
+    protected $messages = [
+        'id_cliente.required' => 'El cliente seleccionado no es válido.',
+        'id_cliente.exists' => 'El cliente seleccionado no es válido.',
+        'fecha_desde.required' => 'La fecha desde es obligatoria.',
+        'fecha_desde.date' => 'La fecha desde debe ser una fecha válida.',
+        'fecha_hasta.required' => 'La fecha hasta es obligatoria.',
+        'fecha_hasta.date' => 'La fecha hasta debe ser una fecha válida.',
+        'fecha_hasta.after_or_equal' => 'La fecha hasta debe ser posterior a la fecha desde.',
+        'observaciones.max' => 'Las observaciones no pueden superar 500 caracteres.',
+        'busqueda.max' => 'La búsqueda no puede superar 100 caracteres.',
+        'obs_edicion.max' => 'Las observaciones no pueden superar 500 caracteres.',
+        'monto_edicion.numeric' => 'El monto debe ser un número.',
+        'monto_edicion.min' => 'El monto no puede ser negativo.',
+    ];
 
     // Control de pestañas
     public $tab_activo = 'historial';
@@ -54,79 +77,36 @@ class Ventas extends Component
 
     public function buscarCargasPendientes()
     {
-        if (empty($this->id_cliente)) {
-            session()->flash('error', 'Seleccione un cliente.');
+        $this->validate([
+            'id_cliente' => 'required|exists:clientes,id_cliente',
+            'fecha_desde' => 'required|date',
+            'fecha_hasta' => 'required|date|after_or_equal:fecha_desde',
+        ]);
 
-            return;
+        try {
+            $cargas = VentaService::buscarCargasPendientes(
+                $this->id_cliente,
+                $this->fecha_desde,
+                $this->fecha_hasta
+            );
+
+            if (empty($cargas)) {
+                $this->detalle_cargas = [];
+                $this->total_venta = 0;
+                session()->flash('message', 'No se encontraron cargas pendientes.');
+
+                return;
+            }
+
+            $this->detalle_cargas = $cargas;
+            $this->total_venta = collect($this->detalle_cargas)->sum('subtotal');
+            session()->flash('message', 'Cargas cargadas: '.count($this->detalle_cargas));
+
+        } catch (\InvalidArgumentException $e) {
+            session()->flash('error', $e->getMessage());
+        } catch (\Exception $e) {
+            session()->flash('error', 'Error al buscar cargas: '.$e->getMessage());
         }
-        if (empty($this->fecha_desde) || empty($this->fecha_hasta)) {
-            session()->flash('error', 'Seleccione el rango de fechas.');
-
-            return;
-        }
-
-        $cliente = Cliente::find($this->id_cliente);
-        if (! $cliente) {
-            session()->flash('error', 'Cliente no encontrado.');
-
-            return;
-        }
-
-        $nombreCliente = $cliente->razon_social;
-
-        $query = Carga::query()
-            ->select([
-                'cargas.id_carga',
-                'cargas.fecha_carga',
-                'cargas.ticket',
-                'cargas.peso_neto',
-                'cargas.id_categoria_madera',
-                'cargas.destino',
-                DB::raw('cat.nombre as categoria'),
-                DB::raw('ROUND(cargas.peso_neto / 1000.0, 3) as peso_toneladas'),
-                DB::raw('COALESCE(ccp.precio, 0) as precio_unitario'),
-                DB::raw('ROUND((cargas.peso_neto / 1000.0) * COALESCE(ccp.precio, 0), 2) as subtotal'),
-            ])
-            ->join('categoria_maderas as cat', 'cat.id_categoria_madera', '=', 'cargas.id_categoria_madera')
-            ->leftJoin('categoria_cliente_precio as ccp', function ($join) {
-                $join->on('ccp.categoria_id', '=', 'cargas.id_categoria_madera')
-                    ->where('ccp.cliente_id', '=', $this->id_cliente)
-                    ->whereColumn('ccp.fecha_desde', '<=', 'cargas.fecha_carga')
-                    ->where(function ($q) {
-                        $q->whereNull('ccp.fecha_hasta')
-                            ->orWhereColumn('ccp.fecha_hasta', '>=', 'cargas.fecha_carga');
-                    });
-            })
-            ->where('cargas.destino', $nombreCliente)
-            ->where('cargas.estado', 'pendiente')
-            ->whereBetween('cargas.fecha_carga', [$this->fecha_desde, $this->fecha_hasta])
-            ->orderBy('cargas.fecha_carga');
-
-        $rows = $query->get();
-
-        if ($rows->isEmpty()) {
-            $this->detalle_cargas = [];
-            $this->total_venta = 0;
-            session()->flash('message', 'No se encontraron cargas pendientes.');
-
-            return;
-        }
-
-        $this->detalle_cargas = $rows->map(function ($r) {
-            return [
-                'id_carga' => $r->id_carga,
-                'fecha_carga' => $r->fecha_carga,
-                'ticket' => $r->ticket,
-                'categoria' => $r->categoria,
-                'peso_kg' => (float) $r->peso_neto,
-                'peso_toneladas' => (float) $r->peso_toneladas,
-                'precio_unitario' => (float) $r->precio_unitario,
-                'subtotal' => (float) $r->subtotal,
-            ];
-        })->toArray();
-
-        $this->total_venta = collect($this->detalle_cargas)->sum('subtotal');
-        session()->flash('message', 'Cargas cargadas: '.count($this->detalle_cargas));
     }
 
     public function guardarVenta()
@@ -137,11 +117,10 @@ class Ventas extends Component
             return;
         }
 
-        if (empty($this->id_cliente)) {
-            session()->flash('error', 'Cliente no encontrado.');
-
-            return;
-        }
+        $this->validate([
+            'id_cliente' => 'required|exists:clientes,id_cliente',
+            'observaciones' => 'nullable|string|max:500',
+        ]);
 
         try {
             $venta = VentaService::registrarVenta(
@@ -165,22 +144,7 @@ class Ventas extends Component
 
     public function cargarVentas()
     {
-        $query = Venta::with(['cliente', 'cargas'])
-            ->orderBy('fecha_emision', 'desc')
-            ->orderBy('id_recibo', 'desc');
-
-        if ($this->busqueda) {
-            $busq = $this->busqueda;
-            $query->where(function ($q) use ($busq) {
-                $q->whereHas('cliente', function ($qc) use ($busq) {
-                    $qc->where('razon_social', 'ILIKE', '%'.$busq.'%');
-                })
-                    ->orWhere('id_recibo', 'LIKE', '%'.$busq.'%')
-                    ->orWhereRaw('CAST(monto AS TEXT) ILIKE ?', ['%'.$busq.'%']);
-            });
-        }
-
-        return $query->paginate(15);
+        return VentaService::listarVentas($this->busqueda, 15);
     }
 
     public function updatedBusqueda()
@@ -235,11 +199,17 @@ class Ventas extends Component
             return;
         }
 
+        $this->validate([
+            'obs_edicion' => 'nullable|string|max:500',
+            'monto_edicion' => 'nullable|numeric|min:0',
+        ]);
+
         try {
-            $this->venta_seleccionada->update([
-                'observaciones' => $this->obs_edicion,
-                'monto' => $this->monto_edicion,
-            ]);
+            VentaService::editarVenta(
+                $this->venta_seleccionada->id_recibo,
+                $this->obs_edicion,
+                $this->monto_edicion
+            );
 
             $this->modo_edicion = false;
             session()->flash('message', 'Venta actualizada exitosamente.');

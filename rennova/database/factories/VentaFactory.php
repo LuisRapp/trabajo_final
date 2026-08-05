@@ -15,9 +15,9 @@ class VentaFactory extends Factory
     public function definition(): array
     {
         return [
-            'id_empleado' => $this->faker->optional(0.6)->lazy(fn () => Empleado::factory()->create()->id_empleado),
-            'id_cliente' => $this->faker->optional(0.8)->lazy(fn () => Cliente::factory()->create()->id_cliente),
-            'id_proveedor' => $this->faker->optional(0.25)->lazy(fn () => Proveedor::factory()->create()->id_proveedor),
+            'id_empleado' => $this->faker->boolean(60) ? Empleado::factory() : null,
+            'id_cliente' => Cliente::factory(),
+            'id_proveedor' => $this->faker->boolean(25) ? Proveedor::factory() : null,
             'fecha_emision' => $this->faker->dateTimeBetween('-6 months', 'now'),
             'monto' => $this->faker->randomFloat(2, 150000, 2500000),
             'observaciones' => $this->faker->optional()->sentence(8),

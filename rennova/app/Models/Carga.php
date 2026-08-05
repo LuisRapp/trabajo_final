@@ -20,11 +20,11 @@ class Carga extends Model implements Auditable
         'id_categoria_madera',
         'id_chofer',
         'id_parte_diario',
+        'id_cliente',
         'ticket',
         'peso_bruto',
         'tara',
         'peso_neto',
-        'destino',
         'fecha_carga',
         'estado',
     ];
@@ -61,9 +61,7 @@ class Carga extends Model implements Auditable
 
     public function cliente()
     {
-        // La relación no es directa ya que destino contiene el nombre, no el id
-        // Esta relación no se debe usar directamente
-        return $this->belongsTo(Cliente::class, 'destino', 'razon_social');
+        return $this->belongsTo(Cliente::class, 'id_cliente');
     }
 
     public function ventas()

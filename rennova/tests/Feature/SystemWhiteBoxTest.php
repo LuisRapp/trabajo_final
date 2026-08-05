@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Carga;
+use App\Models\Cliente;
 use App\Models\Empleado;
 use App\Models\HistoricoRolLaboral;
 use App\Models\Insumo;
@@ -41,6 +42,8 @@ class SystemWhiteBoxTest extends TestCase
     protected RolLaboral $rolLaboral;
 
     protected Empleado $empleado;
+
+    protected Cliente $cliente;
 
     protected function setUp(): void
     {
@@ -105,6 +108,12 @@ class SystemWhiteBoxTest extends TestCase
             'fecha_nacimiento' => '1990-01-15',
             'fecha_inicio_actividades' => now()->subYear(),
             'fecha_fin_actividades' => null,
+        ]);
+
+        // Crear cliente
+        $this->cliente = Cliente::create([
+            'razon_social' => 'Cliente Test SA',
+            'cuit' => '30-99999999-9',
         ]);
 
         Log::info('═══ INICIALIZACIÓN DE DATOS DE PRUEBA ═══', [
@@ -375,6 +384,7 @@ class SystemWhiteBoxTest extends TestCase
 
         $datos = [
             'id_lote' => $this->lote->id_lote,
+            'id_cliente' => $this->cliente->id_cliente,
             'fecha_carga' => today(),
             'peso_neto' => 8000, // 8 toneladas
             'descripcion' => 'Carga de madera A',
@@ -700,6 +710,7 @@ class SystemWhiteBoxTest extends TestCase
         // Crear carga y asignar empleado
         $carga = Carga::create([
             'id_lote' => $this->lote->id_lote,
+            'id_cliente' => $this->cliente->id_cliente,
             'fecha_carga' => now()->subDays(4),
             'peso_neto' => 10000, // 10 toneladas
             'descripcion' => 'Carga de prueba',
@@ -772,6 +783,7 @@ class SystemWhiteBoxTest extends TestCase
         // Crear cargas con ventas
         $carga1 = Carga::create([
             'id_lote' => $this->lote->id_lote,
+            'id_cliente' => $this->cliente->id_cliente,
             'fecha_carga' => today(),
             'peso_neto' => 5000, // 5 toneladas
             'descripcion' => 'Carga 1',
@@ -805,6 +817,7 @@ class SystemWhiteBoxTest extends TestCase
 
         Carga::create([
             'id_lote' => $this->lote->id_lote,
+            'id_cliente' => $this->cliente->id_cliente,
             'fecha_carga' => today(),
             'peso_neto' => 3000, // 3 toneladas
             'descripcion' => 'Carga de prueba',

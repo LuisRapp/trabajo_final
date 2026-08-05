@@ -874,21 +874,11 @@ class PartesDiarios extends Component
         // Cargar CARGAS si es producción
         $this->cargas = [];
         if (! $this->es_dia_caido) {
-            $cargas = Carga::with(['empleados', 'maquinarias'])
+            $cargas = Carga::with(['empleados', 'maquinarias', 'cliente'])
                 ->where('id_parte_diario', $parte->id_parte_diario)
                 ->get();
 
-            // Pre-cargar clientes para evitar N+1
-            $destinos = $cargas->pluck('destino')->filter()->unique()->values();
-            $clientesMap = Cliente::whereIn('razon_social', $destinos)
-                ->get()
-                ->keyBy('razon_social');
-
             foreach ($cargas as $c) {
-                // Buscar el ID del cliente a partir del nombre guardado en destino
-                $cliente = $clientesMap[$c->destino] ?? null;
-                $idCliente = $cliente ? $cliente->id_cliente : null;
-
                 $this->cargas[] = [
                     'id_categoria_madera' => $c->id_categoria_madera,
                     'ticket' => $c->ticket,
@@ -896,8 +886,8 @@ class PartesDiarios extends Component
                     'tara' => (float) $c->tara,
                     'peso_neto' => (float) $c->peso_neto,
                     'id_chofer' => $c->id_chofer,
-                    'destino' => $idCliente, // ID del cliente para el select
-                    'destino_nombre' => $c->destino, // Nombre original
+                    'destino' => $c->id_cliente,
+                    'destino_nombre' => $c->cliente->razon_social ?? 'Cliente no encontrado',
                     'empleados' => $c->empleados->pluck('id_empleado')->all(),
                     'maquinarias' => $c->maquinarias->pluck('id_maquinaria')->all(),
                 ];

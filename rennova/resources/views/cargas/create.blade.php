@@ -119,11 +119,17 @@
                     </div>
 
                     <div>
-                        <label for="destino" class="block text-sm font-semibold text-slate-700 mb-1.5">Destino</label>
-                        <input type="text" name="destino" id="destino" value="{{ old('destino') }}" maxlength="100"
-                            class="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-800 shadow-sm placeholder:text-slate-400 focus:border-brand focus:ring-1 focus:ring-brand @error('destino') border-red-300 ring-1 ring-red-300 @enderror"
-                            placeholder="Lugar de destino">
-                        @error('destino') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+                        <label for="id_cliente" class="block text-sm font-semibold text-slate-700 mb-1.5">Cliente</label>
+                        <select name="id_cliente" id="id_cliente"
+                            class="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-800 shadow-sm focus:border-brand focus:ring-1 focus:ring-brand @error('id_cliente') border-red-300 ring-1 ring-red-300 @enderror">
+                            <option value="">-- Seleccionar cliente --</option>
+                            @foreach($clientes as $cliente)
+                                <option value="{{ $cliente->id_cliente }}" @selected(old('id_cliente') == $cliente->id_cliente)>
+                                    {{ $cliente->razon_social }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('id_cliente') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
                 </div>
 
