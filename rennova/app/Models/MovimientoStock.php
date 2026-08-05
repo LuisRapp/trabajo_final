@@ -9,7 +9,8 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class MovimientoStock extends Model implements Auditable
 {
-    use HasFactory, \OwenIt\Auditing\Auditable;
+    use HasFactory;
+    use \OwenIt\Auditing\Auditable;
     use SoftDeletes;
 
     protected $table = 'movimiento_stocks';
@@ -67,20 +68,4 @@ class MovimientoStock extends Model implements Auditable
                 });
         });
     }
-
-    /**
-     * @deprecated Use InventarioService::registrarSalida() instead
-     */
-
-    /**
-     * @deprecated Use InventarioService::registrarEntrada() instead
-     */
-
-    /**
-     * @deprecated Use InventarioService::stockDisponible() instead
-     */
-
-    /**
-     * @deprecated Use InventarioService::precioPromedio() instead
-     */
 }
