@@ -41,7 +41,7 @@ class Cargas extends Component
 
     public $peso_neto;
 
-    public $destino;
+    public $id_cliente;
 
     public $fecha_carga;
 
@@ -56,7 +56,7 @@ class Cargas extends Component
         'peso_bruto' => 'nullable|numeric|min:0',
         'tara' => 'nullable|numeric|min:0',
         'peso_neto' => 'nullable|numeric|min:0',
-        'destino' => 'nullable|string|max:100',
+        'id_cliente' => 'nullable|exists:clientes,id_cliente',
         'fecha_carga' => 'required|date|before_or_equal:today',
     ];
 
@@ -69,13 +69,12 @@ class Cargas extends Component
 
     public function getCargas()
     {
-        $query = Carga::with(['lote', 'parteDiario', 'categoriaMadera', 'chofer']);
+        $query = Carga::with(['lote', 'parteDiario', 'categoriaMadera', 'chofer', 'cliente']);
 
         if ($this->busqueda) {
             $busq = $this->busqueda;
             $query->where(function ($q) use ($busq) {
                 $q->where('ticket', 'ILIKE', "%{$busq}%")
-                    ->orWhere('destino', 'ILIKE', "%{$busq}%")
                     ->orWhereRaw('CAST(peso_bruto AS TEXT) ILIKE ?', ["%{$busq}%"])
                     ->orWhereRaw('CAST(peso_neto AS TEXT) ILIKE ?', ["%{$busq}%"])
                     ->orWhereDate('fecha_carga', $busq)
@@ -89,6 +88,9 @@ class Cargas extends Component
                     ->orWhereHas('chofer', function ($qr) use ($busq) {
                         $qr->where('apellido', 'ILIKE', "%{$busq}%")
                             ->orWhere('nombre', 'ILIKE', "%{$busq}%");
+                    })
+                    ->orWhereHas('cliente', function ($qr) use ($busq) {
+                        $qr->where('razon_social', 'ILIKE', "%{$busq}%");
                     });
             });
         }
@@ -98,8 +100,11 @@ class Cargas extends Component
 
     public function render()
     {
+        $clientes = \App\Models\Cliente::orderBy('razon_social')->get();
+
         return view('livewire.cargas', [
             'cargas' => $this->getCargas(),
+            'clientes' => $clientes,
         ]);
     }
 
@@ -117,16 +122,6 @@ class Cargas extends Component
 
             return;
         }
-        // Si el campo destino es un id, buscar el nombre del cliente
-        $nombre_cliente = null;
-        if (is_numeric($this->destino) && $this->destino) {
-            $cliente = \App\Models\Cliente::find($this->destino);
-            if ($cliente) {
-                $nombre_cliente = $cliente->razon_social;
-            }
-        }
-        // Si no es id, usar el valor tal cual
-        $valor_destino = $nombre_cliente ?? $this->destino;
         $carga = Carga::updateOrCreate(
             ['id_carga' => $this->carga_id],
             [
@@ -134,11 +129,11 @@ class Cargas extends Component
                 'id_categoria_madera' => $this->id_categoria_madera,
                 'id_chofer' => $this->id_chofer,
                 'id_parte_diario' => $this->id_parte_diario,
+                'id_cliente' => $this->id_cliente,
                 'ticket' => $this->ticket,
                 'peso_bruto' => $this->peso_bruto,
                 'tara' => $this->tara,
                 'peso_neto' => $this->peso_neto,
-                'destino' => $valor_destino,
                 'fecha_carga' => $this->fecha_carga,
             ]
         );
@@ -162,7 +157,7 @@ class Cargas extends Component
         $this->peso_bruto = $carga->peso_bruto;
         $this->tara = $carga->tara;
         $this->peso_neto = $carga->peso_neto;
-        $this->destino = $carga->destino;
+        $this->id_cliente = $carga->id_cliente;
         $this->fecha_carga = $carga->fecha_carga;
     }
 
@@ -178,7 +173,7 @@ class Cargas extends Component
     {
         $this->reset([
             'carga_id', 'id_lote', 'id_categoria_madera', 'id_chofer', 'id_parte_diario', 'ticket',
-            'peso_bruto', 'tara', 'peso_neto', 'destino', 'fecha_carga',
+            'peso_bruto', 'tara', 'peso_neto', 'id_cliente', 'fecha_carga',
         ]);
     }
 }

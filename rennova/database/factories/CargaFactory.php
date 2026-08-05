@@ -3,7 +3,6 @@
 namespace Database\Factories;
 
 use App\Models\Carga;
-use App\Models\Cliente;
 use App\Models\Lote;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -21,11 +20,11 @@ class CargaFactory extends Factory
             'id_lote' => Lote::factory(),
             'id_parte_diario' => null,
             'id_categoria_madera' => null,
+            'id_cliente' => \App\Models\Cliente::factory(),
             'ticket' => $this->faker->unique()->numerify('TK-#####'),
             'peso_bruto' => $pesoBruto,
             'tara' => $tara,
             'peso_neto' => $pesoNeto,
-            'destino' => fn () => Cliente::factory()->create()->razon_social,
             'fecha_carga' => $this->faker->dateTimeBetween('-3 months', 'now'),
         ];
     }

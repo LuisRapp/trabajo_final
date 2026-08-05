@@ -9,9 +9,7 @@ use App\Models\CategoriaMadera;
 use App\Models\Cliente;
 use App\Models\Usuario;
 use App\Models\Venta;
-use App\Services\VentaService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -100,7 +98,7 @@ class VentasTest extends TestCase
         $carga = Carga::factory()->create([
             'id_lote' => $lote->id_lote,
             'id_categoria_madera' => $categoria->id_categoria_madera,
-            'destino' => $cliente->razon_social,
+            'id_cliente' => $cliente->id_cliente,
             'estado' => 'pendiente',
             'fecha_carga' => now()->format('Y-m-d'),
         ]);
@@ -146,7 +144,7 @@ class VentasTest extends TestCase
         Carga::factory()->create([
             'id_lote' => $lote->id_lote,
             'id_categoria_madera' => $categoria->id_categoria_madera,
-            'destino' => $cliente->razon_social,
+            'id_cliente' => $cliente->id_cliente,
             'estado' => 'pendiente',
             'fecha_carga' => now()->format('Y-m-d'),
             'peso_neto' => 10000,
@@ -184,7 +182,7 @@ class VentasTest extends TestCase
         $carga = Carga::factory()->create([
             'id_lote' => $lote->id_lote,
             'id_categoria_madera' => $categoria->id_categoria_madera,
-            'destino' => $cliente->razon_social,
+            'id_cliente' => $cliente->id_cliente,
             'estado' => 'pendiente',
             'peso_neto' => 10000,
         ]);
@@ -258,7 +256,7 @@ class VentasTest extends TestCase
         $carga = Carga::factory()->create([
             'id_lote' => $lote->id_lote,
             'id_categoria_madera' => $categoria->id_categoria_madera,
-            'destino' => $cliente->razon_social,
+            'id_cliente' => $cliente->id_cliente,
             'estado' => 'facturada',
         ]);
 
@@ -290,7 +288,7 @@ class VentasTest extends TestCase
         $carga = Carga::factory()->create([
             'id_lote' => $lote->id_lote,
             'id_categoria_madera' => $categoria->id_categoria_madera,
-            'destino' => $cliente->razon_social,
+            'id_cliente' => $cliente->id_cliente,
             'estado' => 'facturada',
         ]);
 
@@ -396,7 +394,7 @@ class VentasTest extends TestCase
         Carga::factory()->create([
             'id_lote' => $lote->id_lote,
             'id_categoria_madera' => $categoria->id_categoria_madera,
-            'destino' => $cliente->razon_social,
+            'id_cliente' => $cliente->id_cliente,
             'estado' => 'pendiente',
             'fecha_carga' => now()->format('Y-m-d'),
         ]);

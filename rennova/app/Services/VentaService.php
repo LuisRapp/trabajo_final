@@ -118,8 +118,6 @@ class VentaService
             throw new \InvalidArgumentException('Client not found.');
         }
 
-        $nombreCliente = $cliente->razon_social;
-
         $query = Carga::query()
             ->select([
                 'cargas.id_carga',
@@ -127,7 +125,7 @@ class VentaService
                 'cargas.ticket',
                 'cargas.peso_neto',
                 'cargas.id_categoria_madera',
-                'cargas.destino',
+                'cargas.id_cliente',
                 DB::raw('cat.nombre as categoria'),
                 DB::raw('ROUND(cargas.peso_neto / 1000.0, 3) as peso_toneladas'),
                 DB::raw('COALESCE(ccp.precio, 0) as precio_unitario'),
@@ -143,7 +141,7 @@ class VentaService
                             ->orWhereColumn('ccp.fecha_hasta', '>=', 'cargas.fecha_carga');
                     });
             })
-            ->where('cargas.destino', $nombreCliente)
+            ->where('cargas.id_cliente', $idCliente)
             ->where('cargas.estado', 'pendiente')
             ->whereBetween('cargas.fecha_carga', [$fechaDesde, $fechaHasta])
             ->orderBy('cargas.fecha_carga');

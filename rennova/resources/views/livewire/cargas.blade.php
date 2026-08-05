@@ -95,10 +95,15 @@
                             @error('peso_neto') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
-                            <label for="destino" class="block text-sm font-semibold text-slate-700 mb-1.5">Destino</label>
-                            <input type="text" id="destino" wire:model="destino" maxlength="100"
-                                class="w-full px-4 py-2.5 border rounded-lg text-sm transition-colors @error('destino') border-red-400 bg-red-50 @else border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 @enderror">
-                            @error('destino') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+                            <label for="id_cliente" class="block text-sm font-semibold text-slate-700 mb-1.5">Cliente</label>
+                            <select id="id_cliente" wire:model="id_cliente"
+                                class="w-full px-4 py-2.5 border rounded-lg text-sm transition-colors @error('id_cliente') border-red-400 bg-red-50 @else border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 @enderror">
+                                <option value="">-- Seleccionar cliente --</option>
+                                @foreach($clientes as $cliente)
+                                    <option value="{{ $cliente->id_cliente }}">{{ $cliente->razon_social }}</option>
+                                @endforeach
+                            </select>
+                            @error('id_cliente') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label for="fecha_carga" class="block text-sm font-semibold text-slate-700 mb-1.5">Fecha Carga <span class="text-red-500">*</span></label>
@@ -129,7 +134,7 @@
     @elseif($tab_activo === 'listado')
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
             <div class="p-6">
-                <x-search-input placeholder="Buscar por lote, ticket, destino, chofer o fecha..." />
+                <x-search-input placeholder="Buscar por lote, ticket, cliente, chofer o fecha..." />
 
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm">
@@ -167,7 +172,7 @@
                                     <td class="px-3 py-2.5 text-right text-slate-600">{{ number_format($carga->peso_bruto ?? 0, 2) }}</td>
                                     <td class="px-3 py-2.5 text-right text-slate-600">{{ number_format($carga->tara ?? 0, 2) }}</td>
                                     <td class="px-3 py-2.5 text-right font-semibold text-slate-800">{{ number_format($carga->peso_neto ?? 0, 2) }}</td>
-                                    <td class="px-3 py-2.5 text-slate-600">{{ $carga->destino ?? '-' }}</td>
+                                    <td class="px-3 py-2.5 text-slate-600">{{ $carga->cliente->razon_social ?? '-' }}</td>
                                     <td class="px-3 py-2.5 text-slate-600">{{ \Carbon\Carbon::parse($carga->fecha_carga)->format('d/m/Y') }}</td>
                                     <td class="px-3 py-2.5 text-right">
                                         <x-action-buttons

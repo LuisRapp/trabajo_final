@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Carga;
 use App\Models\CategoriaMadera;
 use App\Models\Chofer;
+use App\Models\Cliente;
 use App\Models\Lote;
 use App\Models\ParteDiario;
 use Illuminate\Http\Request;
@@ -32,8 +33,9 @@ class CargaController extends Controller
         $categorias = CategoriaMadera::orderBy('nombre')->get();
         $partes = ParteDiario::orderByDesc('id_parte_diario')->get();
         $choferes = Chofer::with('cliente')->orderBy('apellido')->orderBy('nombre')->get();
+        $clientes = Cliente::orderBy('razon_social')->get();
 
-        return view('cargas.create', compact('lotes', 'categorias', 'partes', 'choferes'));
+        return view('cargas.create', compact('lotes', 'categorias', 'partes', 'choferes', 'clientes'));
     }
 
     /**
@@ -49,7 +51,7 @@ class CargaController extends Controller
             'ticket' => 'nullable|string|max:20',
             'peso_bruto' => 'nullable|numeric|min:0',
             'tara' => 'nullable|numeric|min:0',
-            'destino' => 'nullable|string|max:100',
+            'id_cliente' => 'nullable|exists:clientes,id_cliente',
             'fecha_carga' => 'required|date|before_or_equal:today',
         ]);
 
@@ -77,8 +79,9 @@ class CargaController extends Controller
         $categorias = CategoriaMadera::orderBy('nombre')->get();
         $partes = ParteDiario::orderByDesc('id_parte_diario')->get();
         $choferes = Chofer::with('cliente')->orderBy('apellido')->orderBy('nombre')->get();
+        $clientes = Cliente::orderBy('razon_social')->get();
 
-        return view('cargas.edit', compact('carga', 'lotes', 'categorias', 'partes', 'choferes'));
+        return view('cargas.edit', compact('carga', 'lotes', 'categorias', 'partes', 'choferes', 'clientes'));
     }
 
     /**
@@ -94,7 +97,7 @@ class CargaController extends Controller
             'ticket' => 'nullable|string|max:20',
             'peso_bruto' => 'nullable|numeric|min:0',
             'tara' => 'nullable|numeric|min:0',
-            'destino' => 'nullable|string|max:100',
+            'id_cliente' => 'nullable|exists:clientes,id_cliente',
             'fecha_carga' => 'required|date|before_or_equal:today',
         ]);
 
