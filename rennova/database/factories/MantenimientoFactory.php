@@ -16,31 +16,40 @@ class MantenimientoFactory extends Factory
         return [
             'id_maquinaria' => Maquinaria::factory(),
             'id_tipo_mantenimiento' => TipoMantenimiento::factory(),
-            'fecha_inicio' => $this->faker->date(),
-            'fecha_programada' => $this->faker->date(),
+            'fecha_inicio' => $this->faker->dateTimeBetween('-1 month', 'now')->format('Y-m-d'),
+            'fecha_programada' => $this->faker->dateTimeBetween('now', '+1 month')->format('Y-m-d'),
             'estado' => 'programado',
-            'costo_total' => $this->faker->randomFloat(2, 100, 5000),
-            'costo_mano_obra' => $this->faker->randomFloat(2, 50, 1000),
+            'costo_total' => null,
+            'fecha_fin' => null,
+            'toneladas_snapshot' => null,
+            'costo_mano_obra' => null,
         ];
     }
 
-    public function programado(): self
+    public function programado(): static
     {
-        return $this->state(['estado' => 'programado']);
+        return $this->state(fn () => ['estado' => 'programado']);
     }
 
-    public function enCurso(): self
+    public function enCurso(): static
     {
-        return $this->state(['estado' => 'en curso']);
+        return $this->state(fn () => ['estado' => 'en curso']);
     }
 
-    public function completado(): self
+    public function completado(): static
     {
-        return $this->state(['estado' => 'completado']);
+        return $this->state(fn () => [
+            'estado' => 'completado',
+            'fecha_fin' => $this->faker->dateTimeBetween('-1 week', 'now')->format('Y-m-d'),
+            'costo_total' => $this->faker->randomFloat(2, 100, 5000),
+        ]);
     }
 
-    public function vencido(): self
+    public function vencido(): static
     {
-        return $this->state(['estado' => 'vencido']);
+        return $this->state(fn () => [
+            'estado' => 'vencido',
+            'fecha_programada' => $this->faker->dateTimeBetween('-2 months', '-1 day')->format('Y-m-d'),
+        ]);
     }
 }

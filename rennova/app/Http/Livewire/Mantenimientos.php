@@ -8,6 +8,7 @@ use App\Models\Maquinaria;
 use App\Models\MovimientoStock;
 use App\Models\NotificacionSistema;
 use App\Models\TipoMantenimiento;
+use App\Services\InventarioService;
 use App\Services\MantenimientoService;
 use App\Services\NotificacionService;
 use Illuminate\Support\Facades\Artisan;
@@ -102,8 +103,8 @@ class Mantenimientos extends Component
     public function cargarInsumosDisponibles()
     {
         return Insumo::orderBy('nombre')->get()->map(function ($insumo) {
-            $insumo->stock_disponible = MovimientoStock::stockDisponible($insumo->id_insumo);
-            $insumo->precio_promedio = MovimientoStock::precioPromedio($insumo->id_insumo);
+            $insumo->stock_disponible = InventarioService::stockDisponible($insumo->id_insumo);
+            $insumo->precio_promedio = InventarioService::precioPromedio($insumo->id_insumo);
 
             return $insumo;
         });
