@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\Carga;
+use App\Models\Cliente;
 use App\Models\Lote;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -14,7 +15,7 @@ class CargaFactory extends Factory
     {
         $pesoBruto = $this->faker->randomFloat(2, 18000, 32000);
         $tara = $this->faker->randomFloat(2, 7000, 12000);
-        $pesoNeto = max($pesoBruto - $tara, 8000);
+        $pesoNeto = $pesoBruto - $tara;
 
         return [
             'id_lote' => Lote::factory(),
@@ -24,7 +25,7 @@ class CargaFactory extends Factory
             'peso_bruto' => $pesoBruto,
             'tara' => $tara,
             'peso_neto' => $pesoNeto,
-            'destino' => $this->faker->randomElement(['Aserradero Sur', 'Planta de chips', 'Depósito central', 'Cliente final']),
+            'destino' => fn () => Cliente::factory()->create()->razon_social,
             'fecha_carga' => $this->faker->dateTimeBetween('-3 months', 'now'),
         ];
     }
