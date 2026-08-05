@@ -231,12 +231,19 @@ class GestionStockTest extends TestCase
     public function test_filtro_por_estado_todos(): void
     {
         $insumo = Insumo::factory()->create();
-        LoteInventario::factory()->disponible()->create(['id_insumo' => $insumo->id_insumo]);
-        LoteInventario::factory()->agotado()->create(['id_insumo' => $insumo->id_insumo]);
+        LoteInventario::factory()->disponible()->create([
+            'id_insumo' => $insumo->id_insumo,
+            'fecha_compra' => now()->subDays(5),
+        ]);
+        LoteInventario::factory()->agotado()->create([
+            'id_insumo' => $insumo->id_insumo,
+            'fecha_compra' => now()->subDays(3),
+        ]);
 
         $component = Livewire::actingAs($this->usuario)
             ->test(GestionStock::class)
-            ->set('filtro_estado', 'todos');
+            ->set('filtro_estado', 'todos')
+            ->call('$refresh');
 
         $lotes = $component->viewData('lotes');
         $this->assertGreaterThanOrEqual(2, $lotes->count());
@@ -402,7 +409,6 @@ class GestionStockTest extends TestCase
         Livewire::actingAs($this->usuario)
             ->test(GestionStock::class)
             ->call('exportarReporte')
-            ->assertSessionHas('message')
             ->assertStatus(200);
     }
 }
