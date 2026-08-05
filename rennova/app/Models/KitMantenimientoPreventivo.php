@@ -9,7 +9,8 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class KitMantenimientoPreventivo extends Model implements Auditable
 {
-    use HasFactory, \OwenIt\Auditing\Auditable;
+    use HasFactory;
+    use \OwenIt\Auditing\Auditable;
     use SoftDeletes;
 
     protected $table = 'kit_mantenimiento_preventivo';

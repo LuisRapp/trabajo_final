@@ -12,17 +12,17 @@ class TipoMantenimientoFactory extends Factory
     public function definition(): array
     {
         return [
-            'nombre' => $this->faker->randomElement(['Preventivo', 'Correctivo', 'Inspección']),
+            'nombre' => $this->faker->randomElement(['Preventivo', 'Correctivo', 'Preventivo 500hs', 'Correctivo Mayor']),
         ];
     }
 
-    public function preventivo(): self
+    public function preventivo(): static
     {
-        return $this->state(['nombre' => 'Mantenimiento Preventivo']);
+        return $this->state(fn () => ['nombre' => 'Preventivo '.$this->faker->numberBetween(100, 1000).'hs']);
     }
 
-    public function correctivo(): self
+    public function correctivo(): static
     {
-        return $this->state(['nombre' => 'Mantenimiento Correctivo']);
+        return $this->state(fn () => ['nombre' => 'Correctivo '.$this->faker->randomElement(['Motor', 'Frenos', 'Hidraulico'])]);
     }
 }

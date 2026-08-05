@@ -9,7 +9,8 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class TipoMantenimiento extends Model implements Auditable
 {
-    use HasFactory, \OwenIt\Auditing\Auditable, SoftDeletes;
+    use HasFactory;
+    use \OwenIt\Auditing\Auditable, SoftDeletes;
 
     protected $table = 'tipo_mantenimientos';
 
