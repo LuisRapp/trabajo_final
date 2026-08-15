@@ -2,13 +2,11 @@
 
 namespace App\Http\Livewire;
 
-use App\Models\Insumo;
+use App\Http\Livewire\Traits\MensajesErrorUsuario;
 use App\Models\Mantenimiento;
 use App\Models\Maquinaria;
-use App\Models\MovimientoStock;
 use App\Models\NotificacionSistema;
 use App\Models\TipoMantenimiento;
-use App\Services\InventarioService;
 use App\Services\MantenimientoService;
 use App\Services\NotificacionService;
 use Illuminate\Support\Facades\Artisan;
@@ -17,6 +15,8 @@ use Livewire\Component;
 
 class Mantenimientos extends Component
 {
+    use MensajesErrorUsuario;
+
     public $mantenimientos;
 
     public $mantenimiento_id;
@@ -40,23 +40,6 @@ class Mantenimientos extends Component
     public $kitPreventivo = [];
 
     public $tab_activo = 'listado';
-
-    // Modal completar
-    public $mostrarModalCompletar = false;
-
-    public $orden_completar_id = null;
-
-    public $orden_completar_info = [];
-
-    public $orden_es_correctivo = false;
-
-    public $fecha_fin_completar;
-
-    public $costo_total_completar;
-
-    public $insumos_usados = [];
-
-    public $insumosDisponibles = [];
 
     protected function rules()
     {
@@ -89,25 +72,9 @@ class Mantenimientos extends Component
     {
         $this->maquinarias = Maquinaria::where('estado', '!=', 'dado_de_baja')->orderBy('modelo')->get();
         $this->tipos = TipoMantenimiento::orderBy('nombre')->get();
-        $this->insumosDisponibles = $this->cargarInsumosDisponibles();
         $this->fecha_inicio = date('Y-m-d');
         $this->estado = 'programado';
         $this->tab_activo = 'listado';
-    }
-
-    /**
-     * Carga todos los insumos con su stock y precio actual.
-     *
-     * @return \Illuminate\Support\Collection
-     */
-    public function cargarInsumosDisponibles()
-    {
-        return Insumo::orderBy('nombre')->get()->map(function ($insumo) {
-            $insumo->stock_disponible = InventarioService::stockDisponible($insumo->id_insumo);
-            $insumo->precio_promedio = InventarioService::precioPromedio($insumo->id_insumo);
-
-            return $insumo;
-        });
     }
 
     public function updatedIdMaquinaria()
@@ -259,7 +226,7 @@ class Mantenimientos extends Component
                 : 'El flujo de presentacion finalizo con advertencias. Revisar logs.';
             session()->flash('message', $mensaje);
         } catch (\Throwable $e) {
-            session()->flash('error', 'Error al ejecutar flujo de presentacion: '.$e->getMessage());
+            session()->flash('error', $this->mensajeErrorUsuario($e, 'ejecutar el flujo'));
         }
     }
 
@@ -270,135 +237,12 @@ class Mantenimientos extends Component
 
     public function abrirModalCompletar($id)
     {
-        $orden = Mantenimiento::with(['maquinaria', 'tipoMantenimiento'])->findOrFail($id);
-
-        $this->orden_completar_id = $orden->id_mantenimiento;
-        $this->orden_completar_info = [
-            'id' => $orden->id_mantenimiento,
-            'maquinaria' => $orden->maquinaria?->modelo ?? 'N/A',
-            'tipo' => $orden->tipoMantenimiento?->nombre ?? 'N/A',
-            'fecha_inicio' => $orden->fecha_inicio,
-        ];
-
-        $this->fecha_fin_completar = date('Y-m-d');
-        $this->costo_total_completar = null;
-        $this->insumos_usados = [];
-
-        $this->orden_es_correctivo = str_contains(strtolower($this->orden_completar_info['tipo']), 'correctivo');
-
-        // Siempre mostrar la sección de insumos
-        // Si es preventivo, cargar los insumos del kit automáticamente
-        if (! $this->orden_es_correctivo) {
-            // Cargar insumos del kit de mantenimiento preventivo
-            $kitInsumos = \App\Models\KitMantenimientoPreventivo::where('id_maquinaria', $orden->id_maquinaria)
-                ->join('insumos', 'kit_mantenimiento_preventivo.id_insumo', '=', 'insumos.id_insumo')
-                ->select(
-                    'kit_mantenimiento_preventivo.id_insumo',
-                    'kit_mantenimiento_preventivo.cantidad_requerida',
-                    'insumos.nombre'
-                )
-                ->get();
-
-            if ($kitInsumos->count() > 0) {
-                foreach ($kitInsumos as $item) {
-                    $this->insumos_usados[] = [
-                        'id_insumo' => $item->id_insumo,
-                        'cantidad' => $item->cantidad_requerida,
-                    ];
-                }
-            } else {
-                // Si no hay kit, mostrar un campo vacío
-                $this->insumos_usados = [['id_insumo' => '', 'cantidad' => '']];
-            }
-        } else {
-            // Para correctivos, iniciar con un campo vacío
-            $this->insumos_usados = [['id_insumo' => '', 'cantidad' => '']];
-        }
-
-        $this->tab_activo = 'listado';
-        $this->mostrarModalCompletar = true;
-        $this->dispatch('modal-completar-opened', id: $id);
+        $this->dispatch('abrirCompletarOrden', $id);
     }
 
-    public function cerrarModalCompletar()
+    public function onOrdenCompletada(): void
     {
-        $this->mostrarModalCompletar = false;
-        $this->reset(['orden_completar_id', 'orden_completar_info', 'orden_es_correctivo', 'fecha_fin_completar', 'costo_total_completar', 'insumos_usados']);
-    }
-
-    public function agregarInsumo()
-    {
-        $this->insumos_usados[] = ['id_insumo' => '', 'cantidad' => ''];
-    }
-
-    public function eliminarInsumo($index)
-    {
-        unset($this->insumos_usados[$index]);
-        $this->insumos_usados = array_values($this->insumos_usados);
-    }
-
-    public function updatedInsumosUsados($value, $key)
-    {
-        // Ya no necesitamos cargar el precio_unitario porque usamos FIFO
-        // Este método puede quedar vacío o eliminarse, pero lo mantenemos por compatibilidad
-    }
-
-    public function completarOrden()
-    {
-        try {
-            \Log::info('Iniciando completarOrden', ['orden_id' => $this->orden_completar_id]);
-
-            $orden = Mantenimiento::with(['maquinaria', 'tipoMantenimiento'])->findOrFail($this->orden_completar_id);
-
-            \Log::info('Orden encontrada', ['orden' => $orden->toArray()]);
-
-            $this->validate([
-                'fecha_fin_completar' => [
-                    'required',
-                    'date',
-                    function ($attribute, $value, $fail) use ($orden) {
-                        if ($value < $orden->fecha_inicio) {
-                            $fail('La fecha de finalización no puede ser anterior a la fecha de inicio del mantenimiento.');
-                        }
-                    },
-                ],
-                'costo_total_completar' => 'nullable|numeric|min:0',
-            ]);
-
-            \Log::info('Validación pasada');
-
-            $costoBase = floatval($this->costo_total_completar ?? 0);
-            $tipoMantenimiento = $this->orden_es_correctivo ? 'Correctivo' : 'Preventivo';
-
-            $servicio = app(MantenimientoService::class);
-            $resultado = $servicio->completarMantenimientoConFifo(
-                $this->orden_completar_id,
-                $this->fecha_fin_completar,
-                $costoBase,
-                $this->insumos_usados,
-                $tipoMantenimiento
-            );
-
-            \Log::info('Proceso completado exitosamente');
-
-            session()->flash('message', 'Orden completada exitosamente. Costo total: $'.number_format($resultado['costo_total'], 2));
-
-            $this->cerrarModalCompletar();
-            $this->cargarMantenimientos();
-
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            \Log::error('Error de validación', ['errors' => $e->errors()]);
-            $this->addError('general', 'Error de validación: '.implode(', ', array_map(fn ($err) => implode(', ', $err), $e->errors())));
-        } catch (\Exception $e) {
-            \Log::error('Error completando orden', [
-                'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-            session()->flash('error', 'Error al completar la orden: '.$e->getMessage());
-            $this->addError('general', $e->getMessage());
-        }
+        $this->cargarMantenimientos();
     }
 
     public function confirmarMantenimiento($id)
@@ -424,7 +268,7 @@ class Mantenimientos extends Component
             $this->cargarMantenimientos();
 
         } catch (\Exception $e) {
-            session()->flash('error', 'Error al confirmar mantenimiento: '.$e->getMessage());
+            session()->flash('error', $this->mensajeErrorUsuario($e, 'confirmar el mantenimiento'));
         }
     }
 
@@ -448,7 +292,7 @@ class Mantenimientos extends Component
             $this->editar($id);
 
         } catch (\Exception $e) {
-            session()->flash('error', 'Error al reprogramar: '.$e->getMessage());
+            session()->flash('error', $this->mensajeErrorUsuario($e, 'reprogramar el mantenimiento'));
         }
     }
 

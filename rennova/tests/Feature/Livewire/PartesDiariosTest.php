@@ -3,6 +3,8 @@
 namespace Tests\Feature\Livewire;
 
 use App\Enums\TaskType;
+use App\Http\Livewire\JornalForm;
+use App\Http\Livewire\MovimientoForm;
 use App\Http\Livewire\PartesDiarios;
 use App\Models\CategoriaMadera;
 use App\Models\Chofer;
@@ -628,142 +630,35 @@ class PartesDiariosTest extends TestCase
     }
 
     // ================================================================
-    // CARGA MANAGEMENT
+    // CARGA MANAGEMENT (via events from CargaForm)
     // ================================================================
 
-    public function test_agregar_carga_with_valid_data(): void
+    public function test_carga_agregada_event_adds_to_cargas_array(): void
     {
         $component = Livewire::actingAs($this->usuario)
-            ->test(PartesDiarios::class)
-            ->set('carga_id_categoria_madera', $this->categoriaMadera->id_categoria_madera)
-            ->set('carga_ticket', 'TK-TEST-001')
-            ->set('carga_peso_bruto', 25000)
-            ->set('carga_tara', 8000)
-            ->set('carga_peso_neto', 17000)
-            ->set('carga_id_chofer', $this->chofer->id_chofer)
-            ->set('carga_destino', $this->cliente->id_cliente)
-            ->set('carga_empleados', [$this->empleado->id_empleado])
-            ->set('carga_maquinarias', [$this->maquinaria->id_maquinaria]);
+            ->test(PartesDiarios::class);
 
-        $component->call('agregarCarga');
+        $cargaData = $this->cargaData(['ticket' => 'TK-EVENT']);
+
+        $component->call('cargaAgregada', cargaData: $cargaData);
 
         $cargas = $component->get('cargas');
         $this->assertCount(1, $cargas);
-        $this->assertEquals('TK-TEST-001', $cargas[0]['ticket']);
-        $this->assertEquals(17000, $cargas[0]['peso_neto']);
+        $this->assertEquals('TK-EVENT', $cargas[0]['ticket']);
     }
 
-    public function test_agregar_carga_resets_form_after_adding(): void
+    public function test_carga_agregada_recalculates_total_toneladas(): void
     {
         $component = Livewire::actingAs($this->usuario)
-            ->test(PartesDiarios::class)
-            ->set('carga_id_categoria_madera', $this->categoriaMadera->id_categoria_madera)
-            ->set('carga_ticket', 'TK-RESET')
-            ->set('carga_peso_bruto', 20000)
-            ->set('carga_tara', 5000)
-            ->set('carga_peso_neto', 15000)
-            ->set('carga_id_chofer', $this->chofer->id_chofer)
-            ->set('carga_destino', $this->cliente->id_cliente)
-            ->set('carga_empleados', [$this->empleado->id_empleado])
-            ->set('carga_maquinarias', [$this->maquinaria->id_maquinaria]);
+            ->test(PartesDiarios::class);
 
-        $component->call('agregarCarga');
+        $component->call('cargaAgregada', cargaData: $this->cargaData(['peso_neto' => 15000]));
+        $component->call('cargaAgregada', cargaData: $this->cargaData(['peso_neto' => 16000]));
 
-        $component->assertSet('carga_ticket', null)
-            ->assertSet('carga_peso_bruto', null)
-            ->assertSet('carga_tara', null)
-            ->assertSet('carga_peso_neto', null)
-            ->assertSet('carga_id_chofer', null)
-            ->assertSet('carga_destino', null)
-            ->assertSet('carga_empleados', [])
-            ->assertSet('carga_maquinarias', []);
+        $this->assertEquals(31000, $component->get('total_toneladas'));
     }
 
-    public function test_cannot_agregar_carga_with_negative_peso_neto(): void
-    {
-        Livewire::actingAs($this->usuario)
-            ->test(PartesDiarios::class)
-            ->set('carga_id_categoria_madera', $this->categoriaMadera->id_categoria_madera)
-            ->set('carga_ticket', 'TK-NEG')
-            ->set('carga_peso_bruto', 5000)
-            ->set('carga_tara', 8000)
-            ->set('carga_peso_neto', -5)
-            ->set('carga_id_chofer', $this->chofer->id_chofer)
-            ->set('carga_destino', $this->cliente->id_cliente)
-            ->set('carga_empleados', [$this->empleado->id_empleado])
-            ->set('carga_maquinarias', [$this->maquinaria->id_maquinaria])
-            ->call('agregarCarga')
-            ->assertHasErrors(['carga_peso_neto']);
-    }
-
-    public function test_cannot_agregar_carga_with_zero_peso_neto(): void
-    {
-        Livewire::actingAs($this->usuario)
-            ->test(PartesDiarios::class)
-            ->set('carga_id_categoria_madera', $this->categoriaMadera->id_categoria_madera)
-            ->set('carga_ticket', 'TK-ZERO')
-            ->set('carga_peso_bruto', 5000)
-            ->set('carga_tara', 5000)
-            ->set('carga_peso_neto', 0)
-            ->set('carga_id_chofer', $this->chofer->id_chofer)
-            ->set('carga_destino', $this->cliente->id_cliente)
-            ->set('carga_empleados', [$this->empleado->id_empleado])
-            ->set('carga_maquinarias', [$this->maquinaria->id_maquinaria])
-            ->call('agregarCarga')
-            ->assertHasErrors(['carga_peso_neto']);
-    }
-
-    public function test_cannot_agregar_carga_without_ticket(): void
-    {
-        Livewire::actingAs($this->usuario)
-            ->test(PartesDiarios::class)
-            ->set('carga_id_categoria_madera', $this->categoriaMadera->id_categoria_madera)
-            ->set('carga_peso_bruto', 20000)
-            ->set('carga_tara', 5000)
-            ->set('carga_peso_neto', 15000)
-            ->set('carga_id_chofer', $this->chofer->id_chofer)
-            ->set('carga_destino', $this->cliente->id_cliente)
-            ->set('carga_empleados', [$this->empleado->id_empleado])
-            ->set('carga_maquinarias', [$this->maquinaria->id_maquinaria])
-            ->call('agregarCarga')
-            ->assertHasErrors(['carga_ticket']);
-    }
-
-    public function test_cannot_agregar_carga_without_employees(): void
-    {
-        Livewire::actingAs($this->usuario)
-            ->test(PartesDiarios::class)
-            ->set('carga_id_categoria_madera', $this->categoriaMadera->id_categoria_madera)
-            ->set('carga_ticket', 'TK-NOEMP')
-            ->set('carga_peso_bruto', 20000)
-            ->set('carga_tara', 5000)
-            ->set('carga_peso_neto', 15000)
-            ->set('carga_id_chofer', $this->chofer->id_chofer)
-            ->set('carga_destino', $this->cliente->id_cliente)
-            ->set('carga_empleados', [])
-            ->set('carga_maquinarias', [$this->maquinaria->id_maquinaria])
-            ->call('agregarCarga')
-            ->assertHasErrors(['carga_empleados']);
-    }
-
-    public function test_cannot_agregar_carga_without_maquinarias(): void
-    {
-        Livewire::actingAs($this->usuario)
-            ->test(PartesDiarios::class)
-            ->set('carga_id_categoria_madera', $this->categoriaMadera->id_categoria_madera)
-            ->set('carga_ticket', 'TK-NOMAQ')
-            ->set('carga_peso_bruto', 20000)
-            ->set('carga_tara', 5000)
-            ->set('carga_peso_neto', 15000)
-            ->set('carga_id_chofer', $this->chofer->id_chofer)
-            ->set('carga_destino', $this->cliente->id_cliente)
-            ->set('carga_empleados', [$this->empleado->id_empleado])
-            ->set('carga_maquinarias', [])
-            ->call('agregarCarga')
-            ->assertHasErrors(['carga_maquinarias']);
-    }
-
-    public function test_eliminar_carga_removes_from_array(): void
+    public function test_carga_eliminada_event_removes_from_array(): void
     {
         $component = Livewire::actingAs($this->usuario)
             ->test(PartesDiarios::class)
@@ -772,20 +667,15 @@ class PartesDiariosTest extends TestCase
                 $this->cargaData(['ticket' => 'TK-DEL-2', 'peso_neto' => 16000]),
             ]);
 
-        $component->call('eliminarCarga', 0);
+        $component->call('cargaEliminada', index: 0);
 
         $cargas = $component->get('cargas');
         $this->assertCount(1, $cargas);
         $this->assertEquals('TK-DEL-2', $cargas[0]['ticket']);
     }
 
-    public function test_eliminar_carga_recalculates_total_toneladas(): void
+    public function test_carga_eliminada_recalculates_total_toneladas(): void
     {
-        $component = Livewire::actingAs($this->usuario)
-            ->test(PartesDiarios::class);
-
-        $component->call('agregarCarga');
-
         $component = Livewire::actingAs($this->usuario)
             ->test(PartesDiarios::class)
             ->set('cargas', [
@@ -793,7 +683,7 @@ class PartesDiariosTest extends TestCase
                 $this->cargaData(['ticket' => 'TK-T2', 'peso_neto' => 16000]),
             ]);
 
-        $component->call('eliminarCarga', 0);
+        $component->call('cargaEliminada', index: 0);
 
         $cargas = $component->get('cargas');
         $this->assertCount(1, $cargas);
@@ -801,14 +691,17 @@ class PartesDiariosTest extends TestCase
     }
 
     // ================================================================
-    // JORNAL MANAGEMENT
+    // JORNAL MANAGEMENT (via JornalForm child component)
     // ================================================================
 
     public function test_agregar_jornal_with_valid_data(): void
     {
         $component = Livewire::actingAs($this->usuario)
-            ->test(PartesDiarios::class)
-            ->set('fecha', Carbon::today()->toDateString())
+            ->test(JornalForm::class, [
+                'fecha' => Carbon::today()->toDateString(),
+                'empleadosFiltrados' => $this->empleado->fresh()->empleados ?? collect(),
+                'es_dia_caido' => true,
+            ])
             ->set('jornal_id_empleado', $this->empleado->id_empleado);
 
         $component->call('agregarJornal');
@@ -821,7 +714,11 @@ class PartesDiariosTest extends TestCase
     public function test_cannot_agregar_jornal_without_employee(): void
     {
         Livewire::actingAs($this->usuario)
-            ->test(PartesDiarios::class)
+            ->test(JornalForm::class, [
+                'fecha' => Carbon::today()->toDateString(),
+                'empleadosFiltrados' => collect(),
+                'es_dia_caido' => true,
+            ])
             ->set('jornal_id_empleado', null)
             ->call('agregarJornal')
             ->assertHasErrors(['jornal_id_empleado']);
@@ -830,7 +727,11 @@ class PartesDiariosTest extends TestCase
     public function test_cannot_agregar_jornal_with_invalid_employee(): void
     {
         Livewire::actingAs($this->usuario)
-            ->test(PartesDiarios::class)
+            ->test(JornalForm::class, [
+                'fecha' => Carbon::today()->toDateString(),
+                'empleadosFiltrados' => collect(),
+                'es_dia_caido' => true,
+            ])
             ->set('jornal_id_empleado', 99999)
             ->call('agregarJornal')
             ->assertHasErrors(['jornal_id_empleado']);
@@ -839,8 +740,11 @@ class PartesDiariosTest extends TestCase
     public function test_cannot_agregar_duplicate_jornal(): void
     {
         $component = Livewire::actingAs($this->usuario)
-            ->test(PartesDiarios::class)
-            ->set('fecha', Carbon::today()->toDateString())
+            ->test(JornalForm::class, [
+                'fecha' => Carbon::today()->toDateString(),
+                'empleadosFiltrados' => collect(),
+                'es_dia_caido' => true,
+            ])
             ->set('jornal_id_empleado', $this->empleado->id_empleado);
 
         $component->call('agregarJornal');
@@ -862,10 +766,14 @@ class PartesDiariosTest extends TestCase
         ]);
 
         $component = Livewire::actingAs($this->usuario)
-            ->test(PartesDiarios::class)
-            ->set('jornales', [
-                $this->jornalData(),
-                $this->jornalData(['id_empleado' => $empleado2->id_empleado, 'nombre_completo' => 'Other, Person', 'rol' => 'N/A', 'jornal_diario' => 0]),
+            ->test(JornalForm::class, [
+                'fecha' => Carbon::today()->toDateString(),
+                'empleadosFiltrados' => collect(),
+                'es_dia_caido' => true,
+                'jornales' => [
+                    $this->jornalData(),
+                    $this->jornalData(['id_empleado' => $empleado2->id_empleado, 'nombre_completo' => 'Other, Person', 'rol' => 'N/A', 'jornal_diario' => 0]),
+                ],
             ]);
 
         $component->call('eliminarJornal', 0);
@@ -876,7 +784,7 @@ class PartesDiariosTest extends TestCase
     }
 
     // ================================================================
-    // MOVIMIENTO (STOCK) MANAGEMENT
+    // MOVIMIENTO (STOCK) MANAGEMENT (via MovimientoForm child component)
     // ================================================================
 
     public function test_agregar_movimiento_with_valid_data_and_stock(): void
@@ -884,7 +792,9 @@ class PartesDiariosTest extends TestCase
         $this->crearStockDisponible();
 
         $component = Livewire::actingAs($this->usuario)
-            ->test(PartesDiarios::class)
+            ->test(MovimientoForm::class, [
+                'insumos' => $this->getInsumos(),
+            ])
             ->set('movimiento_id_insumo', $this->insumo->id_insumo)
             ->set('movimiento_cantidad', 10)
             ->set('movimiento_motivo', 'Producción');
@@ -903,7 +813,9 @@ class PartesDiariosTest extends TestCase
         $this->crearStockDisponible(null, 5);
 
         $component = Livewire::actingAs($this->usuario)
-            ->test(PartesDiarios::class)
+            ->test(MovimientoForm::class, [
+                'insumos' => $this->getInsumos(),
+            ])
             ->set('movimiento_id_insumo', $this->insumo->id_insumo)
             ->set('movimiento_cantidad', 10)
             ->set('movimiento_motivo', 'Producción');
@@ -917,7 +829,9 @@ class PartesDiariosTest extends TestCase
     public function test_cannot_agregar_movimiento_without_insumo(): void
     {
         Livewire::actingAs($this->usuario)
-            ->test(PartesDiarios::class)
+            ->test(MovimientoForm::class, [
+                'insumos' => $this->getInsumos(),
+            ])
             ->set('movimiento_cantidad', 10)
             ->set('movimiento_motivo', 'Producción')
             ->call('agregarMovimiento')
@@ -929,7 +843,9 @@ class PartesDiariosTest extends TestCase
         $this->crearStockDisponible();
 
         Livewire::actingAs($this->usuario)
-            ->test(PartesDiarios::class)
+            ->test(MovimientoForm::class, [
+                'insumos' => $this->getInsumos(),
+            ])
             ->set('movimiento_id_insumo', $this->insumo->id_insumo)
             ->set('movimiento_cantidad', 0)
             ->set('movimiento_motivo', 'Producción')
@@ -942,7 +858,9 @@ class PartesDiariosTest extends TestCase
         $this->crearStockDisponible();
 
         Livewire::actingAs($this->usuario)
-            ->test(PartesDiarios::class)
+            ->test(MovimientoForm::class, [
+                'insumos' => $this->getInsumos(),
+            ])
             ->set('movimiento_id_insumo', $this->insumo->id_insumo)
             ->set('movimiento_cantidad', -5)
             ->set('movimiento_motivo', 'Producción')
@@ -955,7 +873,9 @@ class PartesDiariosTest extends TestCase
         $this->crearStockDisponible();
 
         Livewire::actingAs($this->usuario)
-            ->test(PartesDiarios::class)
+            ->test(MovimientoForm::class, [
+                'insumos' => $this->getInsumos(),
+            ])
             ->set('movimiento_id_insumo', $this->insumo->id_insumo)
             ->set('movimiento_cantidad', 10)
             ->set('movimiento_motivo', 'Invalido')
@@ -966,10 +886,12 @@ class PartesDiariosTest extends TestCase
     public function test_eliminar_movimiento_removes_from_array(): void
     {
         $component = Livewire::actingAs($this->usuario)
-            ->test(PartesDiarios::class)
-            ->set('movimientos', [
-                $this->movimientoData(),
-                $this->movimientoData(['cantidad' => 5, 'motivo' => 'Mantenimiento']),
+            ->test(MovimientoForm::class, [
+                'insumos' => $this->getInsumos(),
+                'movimientos' => [
+                    $this->movimientoData(),
+                    $this->movimientoData(['cantidad' => 5, 'motivo' => 'Mantenimiento']),
+                ],
             ]);
 
         $component->call('eliminarMovimiento', 0);
@@ -979,32 +901,12 @@ class PartesDiariosTest extends TestCase
         $this->assertEquals(5, $movimientos[0]['cantidad']);
     }
 
-    // ================================================================
-    // PESO NETO AUTO-CALCULATION
-    // ================================================================
-
-    public function test_peso_neto_calculated_from_peso_bruto_minus_tara(): void
+    private function getInsumos()
     {
-        $component = Livewire::actingAs($this->usuario)
-            ->test(PartesDiarios::class);
-
-        $component->set('carga_peso_bruto', 25000);
-        $component->set('carga_tara', 8000);
-
-        $component->assertSet('carga_peso_neto', 17000);
-    }
-
-    public function test_peso_neto_cleared_when_inputs_are_empty(): void
-    {
-        $component = Livewire::actingAs($this->usuario)
-            ->test(PartesDiarios::class);
-
-        $component->set('carga_peso_bruto', 25000);
-        $component->set('carga_tara', 8000);
-        $component->assertSet('carga_peso_neto', 17000);
-
-        $component->set('carga_peso_bruto', null);
-        $component->assertSet('carga_peso_neto', null);
+        return \App\Services\InventarioService::queryInsumosConStockYPrecio()
+            ->with('unidadMedida')
+            ->orderBy('nombre')
+            ->get();
     }
 
     // ================================================================
@@ -1293,46 +1195,82 @@ class PartesDiariosTest extends TestCase
     }
 
     // ================================================================
-    // WIZARD — validarPaso1()
+    // SEARCHABLE MULTI-SELECTS
     // ================================================================
 
-    public function test_validar_paso1_returns_true_with_valid_data(): void
+    public function test_busqueda_empleado_defaults_to_empty(): void
     {
-        Livewire::actingAs($this->usuario)
-            ->test(PartesDiarios::class)
-            ->tap(fn ($c) => $this->setRequiredFields($c))
-            ->call('validarPaso1')
-            ->assertHasNoErrors();
+        $component = Livewire::actingAs($this->usuario)
+            ->test(PartesDiarios::class);
+
+        $component->assertSet('busqueda_empleado', '');
     }
 
-    public function test_validar_paso1_fails_without_lote(): void
+    public function test_empleados_filtrados_filters_by_busqueda(): void
     {
-        Livewire::actingAs($this->usuario)
+        $component = Livewire::actingAs($this->usuario)
             ->test(PartesDiarios::class)
-            ->set('id_lote_tarea', $this->loteTarea->id_lote_tarea)
-            ->set('fecha', Carbon::today()->toDateString())
-            ->call('validarPaso1')
-            ->assertHasErrors(['id_lote']);
+            ->set('id_lote', $this->lote->id_lote);
+
+        // Without search — employee should be visible
+        $filtrados = $component->get('empleadosFiltrados');
+        $this->assertTrue($filtrados->contains('id_empleado', $this->empleado->id_empleado));
+
+        // With matching search
+        $component->set('busqueda_empleado', 'TestApe');
+        $filtrados = $component->get('empleadosFiltrados');
+        $this->assertTrue($filtrados->contains('id_empleado', $this->empleado->id_empleado));
+
+        // With non-matching search
+        $component->set('busqueda_empleado', 'ZZZZNOEXISTE');
+        $filtrados = $component->get('empleadosFiltrados');
+        $this->assertFalse($filtrados->contains('id_empleado', $this->empleado->id_empleado));
     }
 
-    public function test_validar_paso1_fails_without_fecha(): void
+    public function test_lote_change_clears_search_properties(): void
     {
-        Livewire::actingAs($this->usuario)
+        $component = Livewire::actingAs($this->usuario)
+            ->test(PartesDiarios::class)
+            ->set('busqueda_empleado', 'test');
+
+        $component->set('id_lote', $this->lote->id_lote);
+
+        $component->assertSet('busqueda_empleado', '');
+    }
+
+    // ================================================================
+    // TAREA RAPIDA MODAL
+    // ================================================================
+
+    public function test_mostrar_modal_tarea_rapida_defaults_to_false(): void
+    {
+        $component = Livewire::actingAs($this->usuario)
+            ->test(PartesDiarios::class);
+
+        $component->assertSet('mostrarModalTareaRapida', false);
+    }
+
+    public function test_mostrar_modal_tarea_rapida_can_be_opened(): void
+    {
+        $component = Livewire::actingAs($this->usuario)
+            ->test(PartesDiarios::class)
+            ->set('mostrarModalTareaRapida', true);
+
+        $component->assertSet('mostrarModalTareaRapida', true);
+    }
+
+    public function test_crear_tarea_rapida_cierra_modal(): void
+    {
+        $component = Livewire::actingAs($this->usuario)
             ->test(PartesDiarios::class)
             ->set('id_lote', $this->lote->id_lote)
-            ->set('id_lote_tarea', $this->loteTarea->id_lote_tarea)
-            ->call('validarPaso1')
-            ->assertHasErrors(['fecha']);
-    }
-
-    public function test_validar_paso1_fails_without_tarea(): void
-    {
-        Livewire::actingAs($this->usuario)
-            ->test(PartesDiarios::class)
-            ->set('id_lote', $this->lote->id_lote)
             ->set('fecha', Carbon::today()->toDateString())
-            ->call('validarPaso1')
-            ->assertHasErrors(['id_lote_tarea']);
+            ->set('nueva_tarea_tipo_tarea', TaskType::PODA->value)
+            ->set('mostrarModalTareaRapida', true);
+
+        $component->call('crearTareaRapida');
+
+        $component->assertSet('mostrarModalTareaRapida', false);
     }
 
     // ================================================================
