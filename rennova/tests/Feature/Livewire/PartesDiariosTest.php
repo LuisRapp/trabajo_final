@@ -56,6 +56,9 @@ class PartesDiariosTest extends TestCase
     {
         parent::setUp();
 
+        // Freeze time to a known Wednesday so tests don't depend on the actual day
+        Carbon::setTestNow(Carbon::parse('last Wednesday'));
+
         Queue::fake();
 
         $this->usuario = Usuario::factory()->create();
@@ -142,6 +145,12 @@ class PartesDiariosTest extends TestCase
         ]);
 
         $this->mockClimaOperativo();
+    }
+
+    protected function tearDown(): void
+    {
+        Carbon::setTestNow();
+        parent::tearDown();
     }
 
     private function mockClimaOperativo(string $estado = 'OPERATIVO'): void
@@ -404,7 +413,8 @@ class PartesDiariosTest extends TestCase
             ->tap(fn ($c) => $this->setRequiredFields($c))
             ->set('es_dia_caido', false)
             ->set('cargas', [$this->cargaData()])
-            ->call('guardar');
+            ->call('guardar')
+            ->assertHasNoErrors();
 
         $this->assertDatabaseHas('parte_diarios', [
             'id_lote' => $this->lote->id_lote,
