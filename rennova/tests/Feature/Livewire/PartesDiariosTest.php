@@ -3,6 +3,8 @@
 namespace Tests\Feature\Livewire;
 
 use App\Enums\TaskType;
+use App\Http\Livewire\JornalForm;
+use App\Http\Livewire\MovimientoForm;
 use App\Http\Livewire\PartesDiarios;
 use App\Models\CategoriaMadera;
 use App\Models\Chofer;
@@ -801,14 +803,17 @@ class PartesDiariosTest extends TestCase
     }
 
     // ================================================================
-    // JORNAL MANAGEMENT
+    // JORNAL MANAGEMENT (via JornalForm child component)
     // ================================================================
 
     public function test_agregar_jornal_with_valid_data(): void
     {
         $component = Livewire::actingAs($this->usuario)
-            ->test(PartesDiarios::class)
-            ->set('fecha', Carbon::today()->toDateString())
+            ->test(JornalForm::class, [
+                'fecha' => Carbon::today()->toDateString(),
+                'empleadosFiltrados' => $this->empleado->fresh()->empleados ?? collect(),
+                'es_dia_caido' => true,
+            ])
             ->set('jornal_id_empleado', $this->empleado->id_empleado);
 
         $component->call('agregarJornal');
@@ -821,7 +826,11 @@ class PartesDiariosTest extends TestCase
     public function test_cannot_agregar_jornal_without_employee(): void
     {
         Livewire::actingAs($this->usuario)
-            ->test(PartesDiarios::class)
+            ->test(JornalForm::class, [
+                'fecha' => Carbon::today()->toDateString(),
+                'empleadosFiltrados' => collect(),
+                'es_dia_caido' => true,
+            ])
             ->set('jornal_id_empleado', null)
             ->call('agregarJornal')
             ->assertHasErrors(['jornal_id_empleado']);
@@ -830,7 +839,11 @@ class PartesDiariosTest extends TestCase
     public function test_cannot_agregar_jornal_with_invalid_employee(): void
     {
         Livewire::actingAs($this->usuario)
-            ->test(PartesDiarios::class)
+            ->test(JornalForm::class, [
+                'fecha' => Carbon::today()->toDateString(),
+                'empleadosFiltrados' => collect(),
+                'es_dia_caido' => true,
+            ])
             ->set('jornal_id_empleado', 99999)
             ->call('agregarJornal')
             ->assertHasErrors(['jornal_id_empleado']);
@@ -839,8 +852,11 @@ class PartesDiariosTest extends TestCase
     public function test_cannot_agregar_duplicate_jornal(): void
     {
         $component = Livewire::actingAs($this->usuario)
-            ->test(PartesDiarios::class)
-            ->set('fecha', Carbon::today()->toDateString())
+            ->test(JornalForm::class, [
+                'fecha' => Carbon::today()->toDateString(),
+                'empleadosFiltrados' => collect(),
+                'es_dia_caido' => true,
+            ])
             ->set('jornal_id_empleado', $this->empleado->id_empleado);
 
         $component->call('agregarJornal');
@@ -862,10 +878,14 @@ class PartesDiariosTest extends TestCase
         ]);
 
         $component = Livewire::actingAs($this->usuario)
-            ->test(PartesDiarios::class)
-            ->set('jornales', [
-                $this->jornalData(),
-                $this->jornalData(['id_empleado' => $empleado2->id_empleado, 'nombre_completo' => 'Other, Person', 'rol' => 'N/A', 'jornal_diario' => 0]),
+            ->test(JornalForm::class, [
+                'fecha' => Carbon::today()->toDateString(),
+                'empleadosFiltrados' => collect(),
+                'es_dia_caido' => true,
+                'jornales' => [
+                    $this->jornalData(),
+                    $this->jornalData(['id_empleado' => $empleado2->id_empleado, 'nombre_completo' => 'Other, Person', 'rol' => 'N/A', 'jornal_diario' => 0]),
+                ],
             ]);
 
         $component->call('eliminarJornal', 0);
@@ -876,7 +896,7 @@ class PartesDiariosTest extends TestCase
     }
 
     // ================================================================
-    // MOVIMIENTO (STOCK) MANAGEMENT
+    // MOVIMIENTO (STOCK) MANAGEMENT (via MovimientoForm child component)
     // ================================================================
 
     public function test_agregar_movimiento_with_valid_data_and_stock(): void
@@ -884,7 +904,9 @@ class PartesDiariosTest extends TestCase
         $this->crearStockDisponible();
 
         $component = Livewire::actingAs($this->usuario)
-            ->test(PartesDiarios::class)
+            ->test(MovimientoForm::class, [
+                'insumos' => $this->getInsumos(),
+            ])
             ->set('movimiento_id_insumo', $this->insumo->id_insumo)
             ->set('movimiento_cantidad', 10)
             ->set('movimiento_motivo', 'Producción');
@@ -903,7 +925,9 @@ class PartesDiariosTest extends TestCase
         $this->crearStockDisponible(null, 5);
 
         $component = Livewire::actingAs($this->usuario)
-            ->test(PartesDiarios::class)
+            ->test(MovimientoForm::class, [
+                'insumos' => $this->getInsumos(),
+            ])
             ->set('movimiento_id_insumo', $this->insumo->id_insumo)
             ->set('movimiento_cantidad', 10)
             ->set('movimiento_motivo', 'Producción');
@@ -917,7 +941,9 @@ class PartesDiariosTest extends TestCase
     public function test_cannot_agregar_movimiento_without_insumo(): void
     {
         Livewire::actingAs($this->usuario)
-            ->test(PartesDiarios::class)
+            ->test(MovimientoForm::class, [
+                'insumos' => $this->getInsumos(),
+            ])
             ->set('movimiento_cantidad', 10)
             ->set('movimiento_motivo', 'Producción')
             ->call('agregarMovimiento')
@@ -929,7 +955,9 @@ class PartesDiariosTest extends TestCase
         $this->crearStockDisponible();
 
         Livewire::actingAs($this->usuario)
-            ->test(PartesDiarios::class)
+            ->test(MovimientoForm::class, [
+                'insumos' => $this->getInsumos(),
+            ])
             ->set('movimiento_id_insumo', $this->insumo->id_insumo)
             ->set('movimiento_cantidad', 0)
             ->set('movimiento_motivo', 'Producción')
@@ -942,7 +970,9 @@ class PartesDiariosTest extends TestCase
         $this->crearStockDisponible();
 
         Livewire::actingAs($this->usuario)
-            ->test(PartesDiarios::class)
+            ->test(MovimientoForm::class, [
+                'insumos' => $this->getInsumos(),
+            ])
             ->set('movimiento_id_insumo', $this->insumo->id_insumo)
             ->set('movimiento_cantidad', -5)
             ->set('movimiento_motivo', 'Producción')
@@ -955,7 +985,9 @@ class PartesDiariosTest extends TestCase
         $this->crearStockDisponible();
 
         Livewire::actingAs($this->usuario)
-            ->test(PartesDiarios::class)
+            ->test(MovimientoForm::class, [
+                'insumos' => $this->getInsumos(),
+            ])
             ->set('movimiento_id_insumo', $this->insumo->id_insumo)
             ->set('movimiento_cantidad', 10)
             ->set('movimiento_motivo', 'Invalido')
@@ -966,10 +998,12 @@ class PartesDiariosTest extends TestCase
     public function test_eliminar_movimiento_removes_from_array(): void
     {
         $component = Livewire::actingAs($this->usuario)
-            ->test(PartesDiarios::class)
-            ->set('movimientos', [
-                $this->movimientoData(),
-                $this->movimientoData(['cantidad' => 5, 'motivo' => 'Mantenimiento']),
+            ->test(MovimientoForm::class, [
+                'insumos' => $this->getInsumos(),
+                'movimientos' => [
+                    $this->movimientoData(),
+                    $this->movimientoData(['cantidad' => 5, 'motivo' => 'Mantenimiento']),
+                ],
             ]);
 
         $component->call('eliminarMovimiento', 0);
@@ -977,6 +1011,14 @@ class PartesDiariosTest extends TestCase
         $movimientos = $component->get('movimientos');
         $this->assertCount(1, $movimientos);
         $this->assertEquals(5, $movimientos[0]['cantidad']);
+    }
+
+    private function getInsumos()
+    {
+        return \App\Services\InventarioService::queryInsumosConStockYPrecio()
+            ->with('unidadMedida')
+            ->orderBy('nombre')
+            ->get();
     }
 
     // ================================================================

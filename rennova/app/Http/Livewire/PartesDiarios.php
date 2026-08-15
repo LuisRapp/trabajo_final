@@ -9,7 +9,6 @@ use App\Models\CategoriaMadera;
 use App\Models\Chofer;
 use App\Models\Cliente;
 use App\Models\Empleado;
-use App\Models\Insumo;
 use App\Models\Lote;
 use App\Models\LoteTarea;
 use App\Models\MovimientoStock;
@@ -111,27 +110,11 @@ class PartesDiarios extends Component
 
     public $busqueda_cliente = '';
 
-    // Detalles de Jornales (Modo Día Caído)
+    // Detalles de Jornales (Modo Día Caído) — managed by JornalForm child
     public $jornales = [];
 
-    public $jornal_id_empleado;
-
-    public $jornal_observaciones;
-
-    public $jornal_por_empleado = [];
-
-    // Detalles de Movimientos de Insumos
+    // Detalles de Movimientos de Insumos — managed by MovimientoForm child
     public $movimientos = [];
-
-    public $movimiento_id_insumo;
-
-    public $movimiento_cantidad;
-
-    public $movimiento_motivo = 'Producción';
-
-    public $movimiento_observaciones;
-
-    public $stock_disponible_insumo = null; // Para mostrar en UI
 
     // Creación rápida de tarea
     public $nueva_tarea_tipo_tarea;
@@ -411,7 +394,6 @@ class PartesDiarios extends Component
 
     public function updatedFecha()
     {
-        $this->actualizarJornalPorEmpleado();
         $this->revisarClima();
     }
 
@@ -583,61 +565,7 @@ class PartesDiarios extends Component
     }
 
     // ============ GESTIÓN DE JORNALES (DÍA CAÍDO) ============
-
-    public function agregarJornal()
-    {
-        $this->validate([
-            'jornal_id_empleado' => 'required|exists:empleados,id_empleado',
-        ], [
-            'jornal_id_empleado.required' => 'Debe seleccionar un empleado',
-        ]);
-
-        // Verificar que no esté ya agregado
-        foreach ($this->jornales as $j) {
-            if ($j['id_empleado'] == $this->jornal_id_empleado) {
-                session()->flash('error', 'El empleado ya está en la lista.');
-
-                return;
-            }
-        }
-
-        $empleado = Empleado::with('rolLaboral')->find($this->jornal_id_empleado);
-        // Obtener jornal vigente para la fecha del parte
-        $jornalVigente = $this->obtenerJornalEmpleadoParaFecha($empleado?->id_empleado, $this->fecha) ?? 0;
-
-        $this->jornales[] = [
-            'id_empleado' => $empleado->id_empleado,
-            'nombre_completo' => $empleado->apellido.', '.$empleado->nombre,
-            'rol' => $empleado->rolLaboral->nombre ?? 'N/A',
-            'jornal_diario' => $jornalVigente,
-            'observaciones' => $this->jornal_observaciones,
-        ];
-
-        $this->resetJornalForm();
-    }
-
-    public function eliminarJornal($index)
-    {
-        unset($this->jornales[$index]);
-        $this->jornales = array_values($this->jornales);
-    }
-
-    private function resetJornalForm()
-    {
-        $this->jornal_id_empleado = null;
-        $this->jornal_observaciones = null;
-    }
-
-    private function actualizarJornalPorEmpleado()
-    {
-        $this->jornal_por_empleado = [];
-        if (! $this->fecha) {
-            return;
-        }
-        foreach ($this->empleados as $emp) {
-            $this->jornal_por_empleado[$emp->id_empleado] = $this->obtenerJornalEmpleadoParaFecha($emp->id_empleado, $this->fecha) ?? (float) ($emp->rolLaboral->jornal_diario ?? 0);
-        }
-    }
+    // Methods extracted to JornalForm child component
 
     private function obtenerJornalEmpleadoParaFecha($empleadoId, $fecha)
     {
@@ -664,89 +592,7 @@ class PartesDiarios extends Component
     }
 
     // ============ GESTIÓN DE MOVIMIENTOS DE INSUMOS ============
-
-    public function agregarMovimiento()
-    {
-        \Log::info('agregarMovimiento llamado', [
-            'id_insumo' => $this->movimiento_id_insumo,
-            'cantidad' => $this->movimiento_cantidad,
-            'motivo' => $this->movimiento_motivo,
-        ]);
-
-        try {
-            $this->validate([
-                'movimiento_id_insumo' => 'required|exists:insumos,id_insumo',
-                'movimiento_cantidad' => 'required|numeric|min:0.01',
-                'movimiento_motivo' => 'required|in:Producción,Mantenimiento,Varios',
-            ], [
-                'movimiento_id_insumo.required' => 'Debe seleccionar un insumo',
-                'movimiento_cantidad.required' => 'La cantidad es obligatoria',
-                'movimiento_cantidad.min' => 'La cantidad debe ser mayor a 0',
-                'movimiento_motivo.required' => 'El motivo es obligatorio',
-            ]);
-
-            \Log::info('Validación pasada');
-
-            // Validar stock disponible
-            $stockDisponible = InventarioService::stockDisponible($this->movimiento_id_insumo);
-            \Log::info('Stock disponible', ['stock' => $stockDisponible, 'requerido' => $this->movimiento_cantidad]);
-
-            if ($this->movimiento_cantidad > $stockDisponible) {
-                \Log::warning('Stock insuficiente');
-                $this->dispatch('mostrarError', mensaje: "Stock insuficiente. Disponible: {$stockDisponible}");
-
-                return;
-            }
-
-            $insumo = Insumo::with('unidadMedida')->find($this->movimiento_id_insumo);
-
-            $this->movimientos[] = [
-                'id_insumo' => $insumo->id_insumo,
-                'nombre_insumo' => $insumo->nombre,
-                'tipo' => 'salida', // Siempre salida (consumo)
-                'cantidad' => $this->movimiento_cantidad,
-                'motivo' => $this->movimiento_motivo,
-                'observaciones' => $this->movimiento_observaciones,
-                'unidad' => $insumo->unidadMedida->nombre ?? 'Unidad',
-            ];
-
-            \Log::info('Insumo agregado exitosamente', ['total_movimientos' => count($this->movimientos)]);
-            $this->dispatch('mostrarExito', mensaje: 'Insumo agregado correctamente');
-            $this->resetMovimientoForm();
-
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            \Log::error('Error de validación: '.json_encode($e->errors()));
-            throw $e;
-        } catch (\Exception $e) {
-            \Log::error('Error en agregarMovimiento: '.$e->getMessage());
-            \Log::error($e->getTraceAsString());
-            $this->dispatch('mostrarError', mensaje: 'Error al agregar insumo: '.$e->getMessage());
-        }
-    }
-
-    public function eliminarMovimiento($index)
-    {
-        unset($this->movimientos[$index]);
-        $this->movimientos = array_values($this->movimientos);
-    }
-
-    private function resetMovimientoForm()
-    {
-        $this->movimiento_id_insumo = null;
-        $this->movimiento_cantidad = null;
-        $this->movimiento_motivo = 'Producción';
-        $this->movimiento_observaciones = null;
-        $this->stock_disponible_insumo = null;
-    }
-
-    public function updatedMovimientoIdInsumo($value)
-    {
-        if ($value) {
-            $this->stock_disponible_insumo = InventarioService::stockDisponible($value);
-        } else {
-            $this->stock_disponible_insumo = null;
-        }
-    }
+    // Methods extracted to MovimientoForm child component
 
     public function guardar()
     {
@@ -948,8 +794,6 @@ class PartesDiarios extends Component
 
         $this->movimientos = array_values($movimientosAgrupados);
 
-        // Asegurar que el mapa de jornales vigentes esté actualizado
-        $this->actualizarJornalPorEmpleado();
         $this->revisarClima();
     }
 
@@ -970,13 +814,9 @@ class PartesDiarios extends Component
             'carga_id_categoria_madera', 'carga_ticket', 'carga_peso_bruto', 'carga_tara',
             'carga_peso_neto', 'carga_id_chofer', 'carga_destino', 'carga_empleados', 'carga_maquinarias',
             'busqueda_chofer', 'busqueda_cliente', 'empleados_asignados_ids', 'maquinarias_asignadas_ids',
-            'jornal_id_empleado', 'jornal_observaciones',
-            'movimiento_id_insumo', 'movimiento_cantidad', 'movimiento_motivo', 'movimiento_observaciones',
             'nueva_tarea_tipo_tarea', 'nueva_tarea_superficie_afectada_ha',
         ]);
         $this->total_toneladas = 0;
-        $this->stock_disponible_insumo = null;
-        $this->actualizarJornalPorEmpleado();
     }
 
     public function cancelarEdicion()
@@ -985,6 +825,30 @@ class PartesDiarios extends Component
         $this->resetValidation();
         $this->tab_activo = 'listado';
         $this->dispatch('parteDiarioCancelado');
+    }
+
+    // ============ EVENT LISTENERS (Child Components) ============
+
+    public function onJornalAgregado($jornalData): void
+    {
+        $this->jornales[] = $jornalData;
+    }
+
+    public function onJornalEliminado($index): void
+    {
+        unset($this->jornales[$index]);
+        $this->jornales = array_values($this->jornales);
+    }
+
+    public function onMovimientoAgregado($movData): void
+    {
+        $this->movimientos[] = $movData;
+    }
+
+    public function onMovimientoEliminado($index): void
+    {
+        unset($this->movimientos[$index]);
+        $this->movimientos = array_values($this->movimientos);
     }
 
     // ============ PROPIEDADES COMPUTADAS (Catálogos) ============
