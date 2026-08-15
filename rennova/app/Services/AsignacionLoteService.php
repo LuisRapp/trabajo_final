@@ -106,6 +106,34 @@ class AsignacionLoteService
     }
 
     /**
+     * Finalize a lot: release resources and close proposals.
+     *
+     * Sets estado='cerrado', removes pivot records, and closes all
+     * allocation proposals for the lot.
+     */
+    public static function finalizar(int $loteId): void
+    {
+        DB::transaction(function () use ($loteId) {
+            $lote = Lote::findOrFail($loteId);
+
+            $lote->update(['estado' => 'cerrado']);
+
+            DB::table('lote_empleado')
+                ->where('id_lote', $loteId)
+                ->delete();
+
+            DB::table('lote_maquinaria')
+                ->where('id_lote', $loteId)
+                ->delete();
+
+            DB::table('allocation_proposals')
+                ->where('id_lote', $loteId)
+                ->whereNull('deleted_at')
+                ->update(['status' => 'closed']);
+        });
+    }
+
+    /**
      * Register audit records for attached resources.
      */
     private function registrarAuditoriaAdjuntos(Lote $lote, string $relacion, array $ids, array $requestData): void

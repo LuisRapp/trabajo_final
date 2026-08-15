@@ -8,10 +8,8 @@ use App\Jobs\GenerateAllocationProposalsForLote;
 use App\Models\Lote;
 use App\Models\LoteTarea;
 use App\Models\PropuestaAsignacion;
-use App\Notifications\OrdenCompraPropuestaNotification;
-use App\Services\AutomaticAllocationService;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Notification;
+use App\Services\AsignacionLoteService;
+use App\Services\PropuestaAsignacionService;
 use Illuminate\Support\Facades\Validator;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -96,7 +94,6 @@ class Lotes extends Component
     {
         $query = Lote::query();
 
-        // Aplicar búsqueda si existe
         if (! empty($this->busqueda)) {
             $query->where(function ($q) {
                 $q->where('propietario', 'ILIKE', '%'.$this->busqueda.'%')
@@ -108,7 +105,6 @@ class Lotes extends Component
         return $query->orderBy('id_lote', 'desc')->paginate(15);
     }
 
-    // Actualizar listado cuando cambie la búsqueda
     public function updatedBusqueda()
     {
         $this->resetPage();
@@ -132,6 +128,10 @@ class Lotes extends Component
     {
         return TaskType::cases();
     }
+
+    // =========================================================================
+    // CRUD — delegates to Eloquent (simple operations)
+    // =========================================================================
 
     public function guardar()
     {
@@ -176,7 +176,6 @@ class Lotes extends Component
         }
         $this->resetCampos();
 
-        // Emitir evento para cambiar a la pestaña de listado
         $this->dispatch('loteGuardado');
     }
 
@@ -205,34 +204,16 @@ class Lotes extends Component
     public function finalizarLote($id)
     {
         try {
-            DB::transaction(function () use ($id) {
-                $lote = Lote::findOrFail($id);
-
-                // Cambiar estado a cerrado
-                $lote->update(['estado' => 'cerrado']);
-
-                // Liberar empleados asignados al lote
-                DB::table('lote_empleado')
-                    ->where('id_lote', $id)
-                    ->delete();
-
-                // Liberar maquinarias asignadas al lote
-                DB::table('lote_maquinaria')
-                    ->where('id_lote', $id)
-                    ->delete();
-
-                // Opcional: marcar todas las propuestas como cerradas
-                DB::table('allocation_proposals')
-                    ->where('id_lote', $id)
-                    ->whereNull('deleted_at')
-                    ->update(['status' => 'closed']);
-            });
-
+            AsignacionLoteService::finalizar((int) $id);
             session()->flash('message', 'Lote finalizado correctamente. Los recursos han sido liberados.');
         } catch (\Throwable $e) {
             session()->flash('error', $this->mensajeErrorUsuario($e, 'finalizar el lote'));
         }
     }
+
+    // =========================================================================
+    // Recommendations — delegates to PropuestaAsignacionService
+    // =========================================================================
 
     public function openLaunchpad($loteId)
     {
@@ -276,46 +257,16 @@ class Lotes extends Component
         $this->recomendacionesError = null;
         $this->recomendacionesMensaje = null;
 
-        $lote = Lote::find($this->modalLoteId);
-        if (! $lote) {
-            $this->recomendacionesError = 'No se encontró el lote seleccionado.';
+        $resultado = PropuestaAsignacionService::generar($this->modalLoteId);
+
+        if ($resultado['error']) {
+            $this->recomendacionesError = $resultado['error'];
 
             return;
         }
 
-        if ($lote->estado === 'inactivo') {
-            $this->recomendacionesError = 'El lote está inactivo. Activá el lote para generar recomendaciones.';
-
-            return;
-        }
-
-        try {
-            DB::table('allocation_proposals')
-                ->where('id_lote', $lote->id_lote)
-                ->whereNull('deleted_at')
-                ->where('status', 'draft')
-                ->update(['status' => 'closed']);
-
-            GenerateAllocationProposalsForLote::dispatchSync(
-                $this->modalLoteId,
-                months: 24,
-                minSamples: 5,
-                gapDaysForRunSplit: 7,
-                skipIfAlreadyGeneratedToday: true,
-            );
-
-            $this->cargarRecomendaciones();
-
-            if (empty($this->recomendaciones)) {
-                $this->recomendacionesError = 'No se generaron recomendaciones. Planificá tareas o intentá nuevamente.';
-
-                return;
-            }
-
-            $this->recomendacionesMensaje = 'Recomendaciones generadas correctamente.';
-        } catch (\Throwable $e) {
-            $this->recomendacionesError = 'No se pudieron generar las recomendaciones.';
-        }
+        $this->recomendaciones = $resultado['proposals'];
+        $this->recomendacionesMensaje = 'Recomendaciones generadas correctamente.';
     }
 
     public function refrescarRecomendaciones()
@@ -330,104 +281,60 @@ class Lotes extends Component
         $this->recomendacionesError = null;
         $this->recomendacionesMensaje = null;
 
-        $requiresReview = false;
-        $reviewMessage = null;
+        $resultado = PropuestaAsignacionService::confirmar((int) $proposalId);
 
-        try {
-            DB::transaction(function () use ($proposalId, &$requiresReview, &$reviewMessage) {
-                /** @var PropuestaAsignacion $proposal */
-                $proposal = PropuestaAsignacion::query()
-                    ->with(['lote', 'proposedEmployees', 'proposedMaquinarias'])
-                    ->lockForUpdate()
-                    ->findOrFail((int) $proposalId);
+        if ($resultado['error']) {
+            $this->recomendacionesError = $resultado['error'];
 
-                if ($proposal->status === 'applied') {
-                    return;
-                }
-
-                $lote = $proposal->lote;
-                if (! $lote) {
-                    throw new \RuntimeException('La propuesta no tiene lote asociado.');
-                }
-
-                $meta = $proposal->meta ?? [];
-                $lowConfidence = $this->isLowConfidence($meta);
-                if ($lowConfidence && $proposal->status !== 'confirmed') {
-                    $meta['review_required'] = true;
-                    $meta['reviewed_at'] = now()->toISOString();
-                    $proposal->meta = $meta;
-                    $proposal->status = 'confirmed';
-                    if (! $proposal->confirmed_at) {
-                        $proposal->confirmed_at = now();
-                    }
-                    $proposal->save();
-                    $requiresReview = true;
-                    $reviewMessage = 'Propuesta con baja confianza. Confirmada para revision manual. Vuelva a aplicar para asignar.';
-
-                    return;
-                }
-
-                $empleadosIds = $proposal->proposedEmployees
-                    ->where('selected', true)
-                    ->pluck('id_empleado')
-                    ->map(fn ($v) => (int) $v)
-                    ->values()
-                    ->toArray();
-
-                $maquinariasIds = $proposal->proposedMaquinarias
-                    ->where('selected', true)
-                    ->pluck('id_maquinaria')
-                    ->map(fn ($v) => (int) $v)
-                    ->values()
-                    ->toArray();
-
-                $busyEmployees = $this->findBusyEmployees($empleadosIds, (int) $lote->id_lote);
-                if (! empty($busyEmployees)) {
-                    throw new \RuntimeException('Algunos empleados ya estan asignados a otros lotes en proceso.');
-                }
-
-                $busyMaquinarias = $this->findBusyMaquinarias($maquinariasIds, (int) $lote->id_lote);
-                if (! empty($busyMaquinarias)) {
-                    throw new \RuntimeException('Algunas maquinarias ya estan asignadas a otros lotes en proceso.');
-                }
-
-                $this->closeOtherProposals($proposal);
-
-                $lote->empleados()->sync($empleadosIds);
-                $lote->maquinarias()->sync($maquinariasIds);
-
-                $proposal->status = 'applied';
-                if (! $proposal->confirmed_at) {
-                    $proposal->confirmed_at = now();
-                }
-                $proposal->applied_at = now();
-                $proposal->save();
-
-                if ($lote->estado !== 'en_proceso') {
-                    $lote->update(['estado' => 'en_proceso']);
-                }
-            });
-
-            if ($requiresReview) {
-                $this->recomendacionesMensaje = $reviewMessage;
-                $this->cargarRecomendaciones();
-
-                return;
-            }
-
-            $this->enviarOrdenCompraSiCorresponde((int) $proposalId);
-
-            $this->recomendacionesMensaje = 'Recomendación aplicada y lote actualizado a En explotación.';
-            $this->cargarRecomendaciones();
-        } catch (\Throwable $e) {
-            \Log::error('Error en confirmarRecomendacion: '.$e->getMessage(), [
-                'proposalId' => $proposalId,
-                'exception' => get_class($e),
-                'trace' => $e->getTraceAsString(),
-            ]);
-            $this->recomendacionesError = 'No se pudo aplicar la recomendación. Intente nuevamente o contacte al administrador.';
+            return;
         }
+
+        if ($resultado['requiresReview']) {
+            $this->recomendacionesMensaje = $resultado['reviewMessage'];
+        } else {
+            $this->recomendacionesMensaje = 'Recomendación aplicada y lote actualizado a En explotación.';
+        }
+
+        $this->cargarRecomendaciones();
     }
+
+    public function eliminarRecomendacion(int $proposalId): void
+    {
+        $this->recomendacionesError = null;
+        $this->recomendacionesMensaje = null;
+
+        $resultado = PropuestaAsignacionService::eliminar($proposalId);
+
+        if ($resultado['error']) {
+            $this->recomendacionesError = $resultado['error'];
+
+            return;
+        }
+
+        $this->recomendacionesMensaje = $resultado['message'];
+        $this->cargarRecomendaciones();
+    }
+
+    public function eliminarBorradores(): void
+    {
+        $this->recomendacionesError = null;
+        $this->recomendacionesMensaje = null;
+
+        $resultado = PropuestaAsignacionService::eliminarBorradores($this->modalLoteId);
+
+        if ($resultado['error']) {
+            $this->recomendacionesError = $resultado['error'];
+
+            return;
+        }
+
+        $this->recomendacionesMensaje = $resultado['message'];
+        $this->cargarRecomendaciones();
+    }
+
+    // =========================================================================
+    // Edit proposal — delegates to PropuestaAsignacionService
+    // =========================================================================
 
     public function startEdit($proposalId)
     {
@@ -438,7 +345,6 @@ class Lotes extends Component
             return;
         }
 
-        // Bloquear edición de propuestas que ya están aplicadas
         if ($proposal->status === 'applied') {
             $this->recomendacionesError = 'No se pueden editar recomendaciones que ya han sido aplicadas.';
 
@@ -454,7 +360,6 @@ class Lotes extends Component
             'suggested_machinery_count' => $proposal->suggested_machinery_count,
         ];
 
-        // Cargar empleados, maquinarias e insumos para edición
         $this->editProposedEmployees = $proposal->proposedEmployees
             ->map(fn ($e) => [
                 'id' => $e->id_allocation_proposal_employee,
@@ -502,20 +407,6 @@ class Lotes extends Component
             return;
         }
 
-        $proposal = PropuestaAsignacion::find((int) $proposalId);
-        if (! $proposal) {
-            $this->recomendacionesError = 'No se encontró la recomendación seleccionada.';
-
-            return;
-        }
-
-        // Bloquear edición de propuestas que ya están aplicadas
-        if ($proposal->status === 'applied') {
-            $this->recomendacionesError = 'No se pueden editar recomendaciones que ya han sido aplicadas.';
-
-            return;
-        }
-
         $validator = Validator::make($this->editData, [
             'estimated_person_days' => 'nullable|numeric|min:0',
             'estimated_machine_days' => 'nullable|numeric|min:0',
@@ -530,68 +421,21 @@ class Lotes extends Component
             return;
         }
 
-        // Validar que los empleados seleccionados no estén ya asignados a otras propuestas aplicadas
-        $empleadosSeleccionados = collect($this->editProposedEmployees)
-            ->filter(fn ($e) => $e['selected'])
-            ->pluck('id_empleado')
-            ->toArray();
+        $resultado = PropuestaAsignacionService::editar(
+            (int) $proposalId,
+            $validator->validated(),
+            $this->editProposedEmployees,
+            $this->editProposedMaquinarias,
+            $this->editProposedInsumos
+        );
 
-        if (! empty($empleadosSeleccionados)) {
-            $empleadosDuplicados = DB::table('allocation_proposal_employees as ape')
-                ->join('allocation_proposals as ap', 'ape.id_allocation_proposal', '=', 'ap.id_allocation_proposal')
-                ->where('ap.id_lote', $proposal->id_lote)
-                ->where('ap.status', 'applied')
-                ->where('ap.id_allocation_proposal', '!=', $proposal->id_allocation_proposal)
-                ->where('ape.selected', true)
-                ->whereIn('ape.id_empleado', $empleadosSeleccionados)
-                ->pluck('ape.id_empleado')
-                ->unique()
-                ->toArray();
-
-            if (! empty($empleadosDuplicados)) {
-                $this->recomendacionesError = 'Algunos empleados ya están asignados en otras propuestas aplicadas del mismo lote.';
-
-                return;
-            }
-        }
-
-        try {
-            DB::transaction(function () use ($proposal, $validator) {
-                // Actualizar estimaciones
-                $proposal->update($validator->validated());
-
-                // Actualizar selecciones de empleados
-                foreach ($this->editProposedEmployees as $emp) {
-                    DB::table('allocation_proposal_employees')
-                        ->where('id_allocation_proposal_employee', $emp['id'])
-                        ->update(['selected' => $emp['selected']]);
-                }
-
-                // Actualizar selecciones de maquinarias
-                foreach ($this->editProposedMaquinarias as $maq) {
-                    DB::table('allocation_proposal_maquinarias')
-                        ->where('id_allocation_proposal_maquinaria', $maq['id'])
-                        ->update(['selected' => $maq['selected']]);
-                }
-
-                // Actualizar selecciones de insumos
-                foreach ($this->editProposedInsumos as $ins) {
-                    DB::table('allocation_proposal_insumos')
-                        ->where('id_allocation_proposal_insumo', $ins['id'])
-                        ->update([
-                            'selected' => $ins['selected'],
-                            'cantidad_semana_1' => $ins['cantidad_semana_1'],
-                        ]);
-                }
-            });
-
-            $this->recomendacionesMensaje = 'Recomendación actualizada correctamente.';
-        } catch (\Throwable $e) {
-            $this->recomendacionesError = 'Error al actualizar la recomendación. Intente nuevamente o contacte al administrador.';
+        if ($resultado['error']) {
+            $this->recomendacionesError = $resultado['error'];
 
             return;
         }
 
+        $this->recomendacionesMensaje = 'Recomendación actualizada correctamente.';
         $this->editProposalId = null;
         $this->editData = [];
         $this->editProposedEmployees = [];
@@ -600,252 +444,14 @@ class Lotes extends Component
         $this->cargarRecomendaciones();
     }
 
-    public function eliminarRecomendacion(int $proposalId): void
-    {
-        $this->recomendacionesError = null;
-        $this->recomendacionesMensaje = null;
-
-        $proposal = PropuestaAsignacion::find($proposalId);
-        if (! $proposal) {
-            $this->recomendacionesError = 'No se encontró la recomendación seleccionada.';
-
-            return;
-        }
-
-        // Solo permitir eliminar borradores
-        if ($proposal->status !== 'draft') {
-            $this->recomendacionesError = 'Solo se pueden eliminar recomendaciones en borrador.';
-
-            return;
-        }
-
-        try {
-            $proposal->delete();
-            $this->recomendacionesMensaje = 'Recomendación eliminada correctamente.';
-            $this->cargarRecomendaciones();
-        } catch (\Throwable $e) {
-            $this->recomendacionesError = 'No se pudo eliminar la recomendación.';
-        }
-    }
-
-    public function eliminarBorradores(): void
-    {
-        $this->recomendacionesError = null;
-        $this->recomendacionesMensaje = null;
-
-        if (! $this->modalLoteId) {
-            $this->recomendacionesError = 'No se encontró el lote seleccionado.';
-
-            return;
-        }
-
-        try {
-            $count = PropuestaAsignacion::query()
-                ->where('id_lote', $this->modalLoteId)
-                ->where('status', 'draft')
-                ->delete();
-
-            if ($count > 0) {
-                $this->recomendacionesMensaje = "Se eliminaron {$count} recomendación(es) en borrador.";
-            } else {
-                $this->recomendacionesMensaje = 'No hay recomendaciones en borrador para eliminar.';
-            }
-
-            $this->cargarRecomendaciones();
-        } catch (\Throwable $e) {
-            $this->recomendacionesError = 'No se pudieron eliminar las recomendaciones.';
-        }
-    }
-
-    private function cargarRecomendaciones(): void
-    {
-        if (! $this->modalLoteId) {
-            $this->recomendaciones = [];
-
-            return;
-        }
-
-        try {
-            $this->recomendaciones = PropuestaAsignacion::query()
-                ->with([
-                    'proposedInsumos.insumo.unidadMedida',
-                    'proposedEmployees.empleado.rolLaboral',
-                    'proposedMaquinarias.maquinaria.tipoMaquinaria',
-                ])
-                ->where('id_lote', $this->modalLoteId)
-                ->orderByDesc('id_allocation_proposal')
-                ->get()
-                ->all();
-        } catch (\Throwable $e) {
-            $this->recomendaciones = [];
-            $this->recomendacionesError = 'No se pudieron cargar las recomendaciones.';
-        }
-    }
+    // =========================================================================
+    // UI helpers
+    // =========================================================================
 
     public function toggleExpand($proposalId)
     {
         $proposalId = (int) $proposalId;
         $this->expandedProposalId = $this->expandedProposalId === $proposalId ? null : $proposalId;
-    }
-
-    private function isLowConfidence($meta): bool
-    {
-        if (! is_array($meta)) {
-            return false;
-        }
-
-        if (! empty($meta['review_required'])) {
-            return true;
-        }
-
-        $reason = $meta['default_rates']['reason'] ?? null;
-
-        return $reason === 'sin_historico';
-    }
-
-    private function closeOtherProposals(PropuestaAsignacion $proposal): void
-    {
-        $query = PropuestaAsignacion::query()
-            ->where('id_lote', $proposal->id_lote)
-            ->where('id_allocation_proposal', '!=', $proposal->id_allocation_proposal);
-
-        if (! empty($proposal->id_lote_tarea)) {
-            $query->where('id_lote_tarea', $proposal->id_lote_tarea);
-        } else {
-            $query->whereNull('id_lote_tarea')
-                ->where('tipo_tarea', $proposal->tipo_tarea);
-        }
-
-        $query->where(function ($q) {
-            $q->whereNull('status')
-                ->orWhereIn('status', ['draft', 'confirmed', 'applied']);
-        })->update(['status' => 'closed']);
-    }
-
-    private function findBusyEmployees(array $empleadosIds, int $currentLoteId): array
-    {
-        if (empty($empleadosIds)) {
-            return [];
-        }
-
-        return DB::table('lote_empleado as le')
-            ->join('lotes as l', 'l.id_lote', '=', 'le.id_lote')
-            ->where('l.estado', 'en_proceso')
-            ->where('l.id_lote', '!=', $currentLoteId)
-            ->whereIn('le.id_empleado', $empleadosIds)
-            ->pluck('le.id_empleado')
-            ->unique()
-            ->values()
-            ->all();
-    }
-
-    private function findBusyMaquinarias(array $maquinariasIds, int $currentLoteId): array
-    {
-        if (empty($maquinariasIds)) {
-            return [];
-        }
-
-        return DB::table('lote_maquinaria as lm')
-            ->join('lotes as l', 'l.id_lote', '=', 'lm.id_lote')
-            ->where('l.estado', 'en_proceso')
-            ->where('l.id_lote', '!=', $currentLoteId)
-            ->whereIn('lm.id_maquinaria', $maquinariasIds)
-            ->pluck('lm.id_maquinaria')
-            ->unique()
-            ->values()
-            ->all();
-    }
-
-    private function enviarOrdenCompraSiCorresponde(int $proposalId): void
-    {
-        /** @var PropuestaAsignacion|null $proposal */
-        $proposal = PropuestaAsignacion::query()
-            ->with([
-                'lote',
-                'loteTarea',
-                'proposedEmployees.empleado.rolLaboral',
-                'proposedMaquinarias.maquinaria.tipoMaquinaria',
-                'proposedInsumos.insumo.unidadMedida',
-            ])
-            ->find($proposalId);
-
-        if (! $proposal) {
-            return;
-        }
-
-        $meta = $proposal->meta ?? [];
-        if (! empty($meta['purchase_order']['sent_at'] ?? null)) {
-            return;
-        }
-
-        app(AutomaticAllocationService::class)->ensureWeek1SupplyEstimates($proposal);
-        $proposal->refresh();
-        $proposal->load([
-            'proposedEmployees.empleado.rolLaboral',
-            'proposedMaquinarias.maquinaria.tipoMaquinaria',
-            'proposedInsumos.insumo.unidadMedida',
-        ]);
-
-        $emails = $this->resolvePurchaseOrderRecipients($proposal);
-        if (empty($emails)) {
-            return;
-        }
-
-        foreach ($emails as $email) {
-            Notification::route('mail', $email)->notify(new OrdenCompraPropuestaNotification($proposal));
-        }
-
-        $meta['purchase_order'] = [
-            'sent_at' => now()->toISOString(),
-            'recipients' => $emails,
-        ];
-        $proposal->meta = $meta;
-        $proposal->save();
-    }
-
-    private function resolvePurchaseOrderRecipients(PropuestaAsignacion $proposal): array
-    {
-        $emails = [];
-
-        foreach ((array) config('mail.purchase_order_emails', []) as $e) {
-            $e = trim((string) $e);
-            if ($e !== '') {
-                $emails[] = $e;
-            }
-        }
-
-        foreach ($proposal->proposedEmployees->where('selected', true) as $row) {
-            $email = trim((string) ($row->empleado->email ?? ''));
-            if ($email === '') {
-                continue;
-            }
-
-            $rol = mb_strtolower((string) ($row->rol_sugerido ?? ($row->empleado->rolLaboral->nombre ?? '')));
-            if ($rol !== '' && str_contains($rol, 'capataz')) {
-                $emails[] = $email;
-            }
-        }
-
-        if (empty($emails)) {
-            $fallback = $proposal->proposedEmployees
-                ->where('selected', true)
-                ->map(fn ($r) => trim((string) ($r->empleado->email ?? '')))
-                ->filter()
-                ->first();
-
-            if ($fallback) {
-                $emails[] = (string) $fallback;
-            }
-        }
-
-        if (empty($emails)) {
-            $admin = trim((string) config('mail.admin_email', ''));
-            if ($admin !== '') {
-                $emails[] = $admin;
-            }
-        }
-
-        return array_values(array_unique(array_filter($emails)));
     }
 
     public function cerrarModalRecomendaciones()
@@ -858,6 +464,22 @@ class Lotes extends Component
         $this->editProposalId = null;
         $this->editData = [];
         $this->expandedProposalId = null;
+    }
+
+    private function cargarRecomendaciones(): void
+    {
+        if (! $this->modalLoteId) {
+            $this->recomendaciones = [];
+
+            return;
+        }
+
+        $this->recomendaciones = PropuestaAsignacionService::cargar($this->modalLoteId);
+
+        if (empty($this->recomendaciones) && $this->recomendacionesError === null) {
+            // Service returns [] on error too; only set error if we had a lote but got nothing
+            // and no error was already set by the caller
+        }
     }
 
     public function render()

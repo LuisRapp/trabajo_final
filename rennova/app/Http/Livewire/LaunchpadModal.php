@@ -3,17 +3,21 @@
 namespace App\Http\Livewire;
 
 use App\Enums\TaskType;
+use App\Http\Livewire\Traits\MensajesErrorUsuario;
 use App\Jobs\SendPurchaseOrderEmail;
 use App\Models\Lote;
 use App\Models\PropuestaAsignacion;
 use App\Models\PropuestaAsignacionEmpleado;
 use App\Services\AutomaticAllocationService;
+use App\Services\PropuestaAsignacionService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
 class LaunchpadModal extends Component
 {
+    use MensajesErrorUsuario;
+
     public bool $showModal = false;
 
     public ?int $loteId = null;
@@ -150,7 +154,7 @@ class LaunchpadModal extends Component
                 }
 
                 $meta = $proposal->meta ?? [];
-                $lowConfidence = $this->isLowConfidence($meta);
+                $lowConfidence = PropuestaAsignacionService::esBajaConfianza($meta);
                 if ($lowConfidence && $proposal->status !== 'confirmed') {
                     $meta['review_required'] = true;
                     $meta['reviewed_at'] = now()->toISOString();
@@ -180,17 +184,17 @@ class LaunchpadModal extends Component
                     ->values()
                     ->toArray();
 
-                $busyEmployees = $this->findBusyEmployees($empleadosIds, (int) $lote->id_lote);
+                $busyEmployees = PropuestaAsignacionService::buscarEmpleadosOcupados($empleadosIds, (int) $lote->id_lote);
                 if (! empty($busyEmployees)) {
                     throw new \RuntimeException('Algunos empleados ya estÃ¡n asignados a otros lotes en proceso.');
                 }
 
-                $busyMaquinarias = $this->findBusyMaquinarias($maquinariasIds, (int) $lote->id_lote);
+                $busyMaquinarias = PropuestaAsignacionService::buscarMaquinariasOcupadas($maquinariasIds, (int) $lote->id_lote);
                 if (! empty($busyMaquinarias)) {
                     throw new \RuntimeException('Algunas maquinarias ya estÃ¡n asignadas a otros lotes en proceso.');
                 }
 
-                $this->closeOtherProposals($proposal);
+                PropuestaAsignacionService::cerrarPropuestasCompetidoras($proposal);
 
                 $lote->empleados()->sync($empleadosIds);
                 $lote->maquinarias()->sync($maquinariasIds);
@@ -217,78 +221,10 @@ class LaunchpadModal extends Component
 
             session()->flash('message', 'Asignación aplicada y lote iniciado.');
         } catch (\Throwable $e) {
-            session()->flash('error', 'Error al iniciar operación: '.$e->getMessage());
+            session()->flash('error', $this->mensajeErrorUsuario($e, 'iniciar la operación'));
         } finally {
             $this->guardando = false;
         }
-    }
-
-    private function isLowConfidence($meta): bool
-    {
-        if (! is_array($meta)) {
-            return false;
-        }
-
-        if (! empty($meta['review_required'])) {
-            return true;
-        }
-
-        $reason = $meta['default_rates']['reason'] ?? null;
-
-        return $reason === 'sin_historico';
-    }
-
-    private function closeOtherProposals(PropuestaAsignacion $proposal): void
-    {
-        $query = PropuestaAsignacion::query()
-            ->where('id_lote', $proposal->id_lote)
-            ->where('id_allocation_proposal', '!=', $proposal->id_allocation_proposal);
-
-        if (! empty($proposal->id_lote_tarea)) {
-            $query->where('id_lote_tarea', $proposal->id_lote_tarea);
-        } else {
-            $query->whereNull('id_lote_tarea')
-                ->where('tipo_tarea', $proposal->tipo_tarea);
-        }
-
-        $query->where(function ($q) {
-            $q->whereNull('status')
-                ->orWhereIn('status', ['draft', 'confirmed', 'applied']);
-        })->update(['status' => 'closed']);
-    }
-
-    private function findBusyEmployees(array $empleadosIds, int $currentLoteId): array
-    {
-        if (empty($empleadosIds)) {
-            return [];
-        }
-
-        return DB::table('lote_empleado as le')
-            ->join('lotes as l', 'l.id_lote', '=', 'le.id_lote')
-            ->where('l.estado', 'en_proceso')
-            ->where('l.id_lote', '!=', $currentLoteId)
-            ->whereIn('le.id_empleado', $empleadosIds)
-            ->pluck('le.id_empleado')
-            ->unique()
-            ->values()
-            ->all();
-    }
-
-    private function findBusyMaquinarias(array $maquinariasIds, int $currentLoteId): array
-    {
-        if (empty($maquinariasIds)) {
-            return [];
-        }
-
-        return DB::table('lote_maquinaria as lm')
-            ->join('lotes as l', 'l.id_lote', '=', 'lm.id_lote')
-            ->where('l.estado', 'en_proceso')
-            ->where('l.id_lote', '!=', $currentLoteId)
-            ->whereIn('lm.id_maquinaria', $maquinariasIds)
-            ->pluck('lm.id_maquinaria')
-            ->unique()
-            ->values()
-            ->all();
     }
 
     public function render()
