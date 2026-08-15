@@ -6,14 +6,10 @@ use App\Http\Livewire\Mantenimientos;
 use App\Models\Insumo;
 use App\Models\KitMantenimientoPreventivo;
 use App\Models\Mantenimiento;
-use App\Models\MantenimientoInsumo;
 use App\Models\Maquinaria;
-use App\Models\MovimientoStock;
 use App\Models\NotificacionSistema;
 use App\Models\TipoMantenimiento;
 use App\Models\Usuario;
-use App\Services\MantenimientoService;
-use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -391,450 +387,7 @@ class MantenimientosTest extends TestCase
     }
 
     // =========================================================================
-    // Slice 2: Modal de completar
-    // =========================================================================
-
-    public function test_abrir_modal_completar_carga_info_orden(): void
-    {
-        $maquinaria = Maquinaria::factory()->create(['estado' => 'activo', 'modelo' => 'MODAL-TEST']);
-        $tipo = TipoMantenimiento::factory()->preventivo()->create();
-        $mantenimiento = Mantenimiento::factory()->enCurso()->create([
-            'id_maquinaria' => $maquinaria->id_maquinaria,
-            'id_tipo_mantenimiento' => $tipo->id_tipo_mantenimiento,
-            'fecha_inicio' => now()->toDateString(),
-        ]);
-
-        Livewire::actingAs($this->usuario)
-            ->test(Mantenimientos::class)
-            ->call('abrirModalCompletar', $mantenimiento->id_mantenimiento)
-            ->assertSet('mostrarModalCompletar', true)
-            ->assertSet('orden_completar_id', $mantenimiento->id_mantenimiento);
-
-        $component = Livewire::actingAs($this->usuario)
-            ->test(Mantenimientos::class)
-            ->call('abrirModalCompletar', $mantenimiento->id_mantenimiento);
-
-        $info = $component->get('orden_completar_info');
-        $this->assertEquals('MODAL-TEST', $info['maquinaria']);
-        $this->assertEquals($mantenimiento->fecha_inicio, $info['fecha_inicio']);
-    }
-
-    public function test_cerrar_modal_completar_resetea_estado(): void
-    {
-        $mantenimiento = Mantenimiento::factory()->enCurso()->create();
-
-        $component = Livewire::actingAs($this->usuario)
-            ->test(Mantenimientos::class)
-            ->call('abrirModalCompletar', $mantenimiento->id_mantenimiento)
-            ->assertSet('mostrarModalCompletar', true)
-            ->call('cerrarModalCompletar')
-            ->assertSet('mostrarModalCompletar', false)
-            ->assertSet('orden_completar_id', null)
-            ->assertSet('insumos_usados', []);
-    }
-
-    public function test_agregar_insumo_a_lista_insumos_usados(): void
-    {
-        $mantenimiento = Mantenimiento::factory()->enCurso()->create();
-
-        $component = Livewire::actingAs($this->usuario)
-            ->test(Mantenimientos::class)
-            ->call('abrirModalCompletar', $mantenimiento->id_mantenimiento);
-
-        $initialCount = count($component->get('insumos_usados'));
-
-        $component->call('agregarInsumo');
-
-        $this->assertCount($initialCount + 1, $component->get('insumos_usados'));
-    }
-
-    public function test_eliminar_insumo_de_lista_insumos_usados(): void
-    {
-        $mantenimiento = Mantenimiento::factory()->enCurso()->create();
-
-        $component = Livewire::actingAs($this->usuario)
-            ->test(Mantenimientos::class)
-            ->call('abrirModalCompletar', $mantenimiento->id_mantenimiento)
-            ->call('agregarInsumo')
-            ->call('agregarInsumo');
-
-        $beforeCount = count($component->get('insumos_usados'));
-
-        $component->call('eliminarInsumo', 0);
-
-        $this->assertCount($beforeCount - 1, $component->get('insumos_usados'));
-    }
-
-    public function test_modal_no_abre_para_orden_ya_completada(): void
-    {
-        $mantenimiento = Mantenimiento::factory()->completado()->create();
-
-        Livewire::actingAs($this->usuario)
-            ->test(Mantenimientos::class)
-            ->call('abrirModalCompletar', $mantenimiento->id_mantenimiento)
-            ->assertSet('mostrarModalCompletar', true);
-    }
-
-    // =========================================================================
-    // Slice 2: Completar orden - Happy path
-    // =========================================================================
-
-    public function test_completar_orden_con_insumos_y_costo_base(): void
-    {
-        $maquinaria = Maquinaria::factory()->create(['estado' => 'activo']);
-        $tipo = TipoMantenimiento::factory()->correctivo()->create();
-        $mantenimiento = Mantenimiento::factory()->enCurso()->create([
-            'id_maquinaria' => $maquinaria->id_maquinaria,
-            'id_tipo_mantenimiento' => $tipo->id_tipo_mantenimiento,
-            'fecha_inicio' => now()->subDay()->toDateString(),
-        ]);
-
-        $this->mock(MantenimientoService::class, function ($mock) use ($mantenimiento) {
-            $mock->shouldReceive('completarMantenimientoConFifo')
-                ->once()
-                ->andReturnUsing(function ($id, $fechaFin, $costoBase, $insumos, $tipo) use ($mantenimiento) {
-                    $mantenimiento->update([
-                        'fecha_fin' => $fechaFin,
-                        'costo_total' => $costoBase,
-                        'estado' => 'completado',
-                    ]);
-                    return [
-                        'costo_total' => 2500.00,
-                        'costo_insumos' => 1500.00,
-                    ];
-                });
-        });
-
-        Livewire::actingAs($this->usuario)
-            ->test(Mantenimientos::class)
-            ->call('abrirModalCompletar', $mantenimiento->id_mantenimiento)
-            ->set('fecha_fin_completar', now()->toDateString())
-            ->set('costo_total_completar', 1000)
-            ->set('insumos_usados', [])
-            ->call('completarOrden');
-
-        $this->assertDatabaseHas('mantenimientos', [
-            'id_mantenimiento' => $mantenimiento->id_mantenimiento,
-            'estado' => 'completado',
-        ]);
-    }
-
-    public function test_completar_orden_sin_insumos_solo_costo_base(): void
-    {
-        $tipo = TipoMantenimiento::factory()->correctivo()->create();
-        $mantenimiento = Mantenimiento::factory()->enCurso()->create([
-            'id_tipo_mantenimiento' => $tipo->id_tipo_mantenimiento,
-            'fecha_inicio' => now()->subDay()->toDateString(),
-        ]);
-
-        $this->mock(MantenimientoService::class, function ($mock) use ($mantenimiento) {
-            $mock->shouldReceive('completarMantenimientoConFifo')
-                ->once()
-                ->withArgs(function ($id, $fecha, $costoBase, $insumos, $tipo) {
-                    return $costoBase === 500.0 && empty($insumos);
-                })
-                ->andReturnUsing(function ($id, $fechaFin, $costoBase, $insumos, $tipo) use ($mantenimiento) {
-                    $mantenimiento->update([
-                        'fecha_fin' => $fechaFin,
-                        'costo_total' => $costoBase,
-                        'estado' => 'completado',
-                    ]);
-                    return [
-                        'costo_total' => 500.00,
-                        'costo_insumos' => 0.00,
-                    ];
-                });
-        });
-
-        Livewire::actingAs($this->usuario)
-            ->test(Mantenimientos::class)
-            ->call('abrirModalCompletar', $mantenimiento->id_mantenimiento)
-            ->set('fecha_fin_completar', now()->toDateString())
-            ->set('costo_total_completar', 500)
-            ->set('insumos_usados', [])
-            ->call('completarOrden');
-
-        $this->assertDatabaseHas('mantenimientos', [
-            'id_mantenimiento' => $mantenimiento->id_mantenimiento,
-            'estado' => 'completado',
-        ]);
-    }
-
-    public function test_completar_orden_registra_movimientos_stock_salida(): void
-    {
-        $tipo = TipoMantenimiento::factory()->correctivo()->create();
-        $mantenimiento = Mantenimiento::factory()->enCurso()->create([
-            'id_tipo_mantenimiento' => $tipo->id_tipo_mantenimiento,
-            'fecha_inicio' => now()->subDay()->toDateString(),
-        ]);
-
-        $this->mock(MantenimientoService::class, function ($mock) use ($mantenimiento) {
-            $mock->shouldReceive('completarMantenimientoConFifo')
-                ->once()
-                ->andReturnUsing(function ($id, $fechaFin, $costoBase, $insumos, $tipo) use ($mantenimiento) {
-                    $mantenimiento->update([
-                        'fecha_fin' => $fechaFin,
-                        'costo_total' => $costoBase,
-                        'estado' => 'completado',
-                    ]);
-                    return [
-                        'costo_total' => 1800.00,
-                        'costo_insumos' => 1800.00,
-                    ];
-                });
-        });
-
-        Livewire::actingAs($this->usuario)
-            ->test(Mantenimientos::class)
-            ->call('abrirModalCompletar', $mantenimiento->id_mantenimiento)
-            ->set('fecha_fin_completar', now()->toDateString())
-            ->set('costo_total_completar', 0)
-            ->set('insumos_usados', [['id_insumo' => 1, 'cantidad' => 5]])
-            ->call('completarOrden');
-
-        $this->assertDatabaseHas('mantenimientos', [
-            'id_mantenimiento' => $mantenimiento->id_mantenimiento,
-            'estado' => 'completado',
-        ]);
-    }
-
-    public function test_completar_orden_cambia_estado_a_completado(): void
-    {
-        $tipo = TipoMantenimiento::factory()->correctivo()->create();
-        $mantenimiento = Mantenimiento::factory()->enCurso()->create([
-            'id_tipo_mantenimiento' => $tipo->id_tipo_mantenimiento,
-            'fecha_inicio' => now()->subDay()->toDateString(),
-        ]);
-
-        $this->mock(MantenimientoService::class, function ($mock) use ($mantenimiento) {
-            $mock->shouldReceive('completarMantenimientoConFifo')
-                ->andReturnUsing(function ($id, $fechaFin, $costoBase, $insumos, $tipo) use ($mantenimiento) {
-                    $mantenimiento->update([
-                        'fecha_fin' => $fechaFin,
-                        'costo_total' => $costoBase,
-                        'estado' => 'completado',
-                    ]);
-                    return [
-                        'costo_total' => 100.00,
-                        'costo_insumos' => 0.00,
-                    ];
-                });
-        });
-
-        Livewire::actingAs($this->usuario)
-            ->test(Mantenimientos::class)
-            ->call('abrirModalCompletar', $mantenimiento->id_mantenimiento)
-            ->set('fecha_fin_completar', now()->toDateString())
-            ->set('costo_total_completar', 100)
-            ->set('insumos_usados', [])
-            ->call('completarOrden');
-
-        $this->assertDatabaseHas('mantenimientos', [
-            'id_mantenimiento' => $mantenimiento->id_mantenimiento,
-            'estado' => 'completado',
-        ]);
-    }
-
-    // =========================================================================
-    // Slice 2: Completar orden - Validaciones
-    // =========================================================================
-
-    public function test_validacion_fecha_fin_mayor_o_igual_fecha_inicio(): void
-    {
-        $tipo = TipoMantenimiento::factory()->correctivo()->create();
-        $mantenimiento = Mantenimiento::factory()->enCurso()->create([
-            'id_tipo_mantenimiento' => $tipo->id_tipo_mantenimiento,
-            'fecha_inicio' => now()->toDateString(),
-        ]);
-
-        $this->mock(MantenimientoService::class, function ($mock) {
-            $mock->shouldNotReceive('completarMantenimientoConFifo');
-        });
-
-        Livewire::actingAs($this->usuario)
-            ->test(Mantenimientos::class)
-            ->call('abrirModalCompletar', $mantenimiento->id_mantenimiento)
-            ->set('fecha_fin_completar', now()->subDays(5)->toDateString())
-            ->set('costo_total_completar', 100)
-            ->set('insumos_usados', [])
-            ->call('completarOrden');
-
-        $this->assertDatabaseMissing('mantenimientos', [
-            'id_mantenimiento' => $mantenimiento->id_mantenimiento,
-            'estado' => 'completado',
-        ]);
-    }
-
-    public function test_validacion_costo_total_no_negativo(): void
-    {
-        $tipo = TipoMantenimiento::factory()->correctivo()->create();
-        $mantenimiento = Mantenimiento::factory()->enCurso()->create([
-            'id_tipo_mantenimiento' => $tipo->id_tipo_mantenimiento,
-            'fecha_inicio' => now()->subDay()->toDateString(),
-        ]);
-
-        Livewire::actingAs($this->usuario)
-            ->test(Mantenimientos::class)
-            ->call('abrirModalCompletar', $mantenimiento->id_mantenimiento)
-            ->set('fecha_fin_completar', now()->toDateString())
-            ->set('costo_total_completar', -100)
-            ->set('insumos_usados', [])
-            ->call('completarOrden');
-
-        $this->assertDatabaseMissing('mantenimientos', [
-            'id_mantenimiento' => $mantenimiento->id_mantenimiento,
-            'estado' => 'completado',
-        ]);
-    }
-
-    public function test_validacion_insumos_con_cantidad_positiva(): void
-    {
-        $tipo = TipoMantenimiento::factory()->correctivo()->create();
-        $mantenimiento = Mantenimiento::factory()->enCurso()->create([
-            'id_tipo_mantenimiento' => $tipo->id_tipo_mantenimiento,
-            'fecha_inicio' => now()->subDay()->toDateString(),
-        ]);
-
-        $this->mock(MantenimientoService::class, function ($mock) use ($mantenimiento) {
-            $mock->shouldReceive('completarMantenimientoConFifo')
-                ->once()
-                ->andReturnUsing(function ($id, $fechaFin, $costoBase, $insumos, $tipo) use ($mantenimiento) {
-                    $mantenimiento->update([
-                        'fecha_fin' => $fechaFin,
-                        'costo_total' => $costoBase,
-                        'estado' => 'completado',
-                    ]);
-                    return [
-                        'costo_total' => 0.00,
-                        'costo_insumos' => 0.00,
-                    ];
-                });
-        });
-
-        Livewire::actingAs($this->usuario)
-            ->test(Mantenimientos::class)
-            ->call('abrirModalCompletar', $mantenimiento->id_mantenimiento)
-            ->set('fecha_fin_completar', now()->toDateString())
-            ->set('costo_total_completar', 0)
-            ->set('insumos_usados', [['id_insumo' => '', 'cantidad' => '']])
-            ->call('completarOrden');
-
-        $this->assertDatabaseHas('mantenimientos', [
-            'id_mantenimiento' => $mantenimiento->id_mantenimiento,
-            'estado' => 'completado',
-        ]);
-    }
-
-    public function test_completar_orden_sin_fecha_fin_falla(): void
-    {
-        $tipo = TipoMantenimiento::factory()->correctivo()->create();
-        $mantenimiento = Mantenimiento::factory()->enCurso()->create([
-            'id_tipo_mantenimiento' => $tipo->id_tipo_mantenimiento,
-            'fecha_inicio' => now()->subDay()->toDateString(),
-        ]);
-
-        Livewire::actingAs($this->usuario)
-            ->test(Mantenimientos::class)
-            ->call('abrirModalCompletar', $mantenimiento->id_mantenimiento)
-            ->set('fecha_fin_completar', '')
-            ->set('costo_total_completar', 100)
-            ->set('insumos_usados', [])
-            ->call('completarOrden');
-
-        $this->assertDatabaseMissing('mantenimientos', [
-            'id_mantenimiento' => $mantenimiento->id_mantenimiento,
-            'estado' => 'completado',
-        ]);
-    }
-
-    // =========================================================================
-    // Slice 2: Completar orden - Edge cases
-    // =========================================================================
-
-    public function test_completar_orden_con_stock_insuficiente_falla(): void
-    {
-        $tipo = TipoMantenimiento::factory()->correctivo()->create();
-        $mantenimiento = Mantenimiento::factory()->enCurso()->create([
-            'id_tipo_mantenimiento' => $tipo->id_tipo_mantenimiento,
-            'fecha_inicio' => now()->subDay()->toDateString(),
-        ]);
-
-        $this->mock(MantenimientoService::class, function ($mock) {
-            $mock->shouldReceive('completarMantenimientoConFifo')
-                ->andThrow(new \Exception('Stock insuficiente para el insumo: Aceite'));
-        });
-
-        Livewire::actingAs($this->usuario)
-            ->test(Mantenimientos::class)
-            ->call('abrirModalCompletar', $mantenimiento->id_mantenimiento)
-            ->set('fecha_fin_completar', now()->toDateString())
-            ->set('costo_total_completar', 0)
-            ->set('insumos_usados', [['id_insumo' => 999, 'cantidad' => 100]])
-            ->call('completarOrden');
-
-        $this->assertDatabaseMissing('mantenimientos', [
-            'id_mantenimiento' => $mantenimiento->id_mantenimiento,
-            'estado' => 'completado',
-        ]);
-    }
-
-    public function test_completar_orden_con_insumo_inexistente_falla(): void
-    {
-        $tipo = TipoMantenimiento::factory()->correctivo()->create();
-        $mantenimiento = Mantenimiento::factory()->enCurso()->create([
-            'id_tipo_mantenimiento' => $tipo->id_tipo_mantenimiento,
-            'fecha_inicio' => now()->subDay()->toDateString(),
-        ]);
-
-        $this->mock(MantenimientoService::class, function ($mock) {
-            $mock->shouldReceive('completarMantenimientoConFifo')
-                ->andThrow(new \Exception('Insumo no encontrado'));
-        });
-
-        Livewire::actingAs($this->usuario)
-            ->test(Mantenimientos::class)
-            ->call('abrirModalCompletar', $mantenimiento->id_mantenimiento)
-            ->set('fecha_fin_completar', now()->toDateString())
-            ->set('costo_total_completar', 0)
-            ->set('insumos_usados', [['id_insumo' => 99999, 'cantidad' => 5]])
-            ->call('completarOrden');
-
-        $this->assertDatabaseMissing('mantenimientos', [
-            'id_mantenimiento' => $mantenimiento->id_mantenimiento,
-            'estado' => 'completado',
-        ]);
-    }
-
-    public function test_completar_orden_hace_rollback_si_falla_transaccion(): void
-    {
-        $tipo = TipoMantenimiento::factory()->correctivo()->create();
-        $mantenimiento = Mantenimiento::factory()->enCurso()->create([
-            'id_tipo_mantenimiento' => $tipo->id_tipo_mantenimiento,
-            'fecha_inicio' => now()->subDay()->toDateString(),
-            'estado' => 'en curso',
-        ]);
-
-        $this->mock(MantenimientoService::class, function ($mock) {
-            $mock->shouldReceive('completarMantenimientoConFifo')
-                ->andThrow(new \Exception('Error de transacción'));
-        });
-
-        Livewire::actingAs($this->usuario)
-            ->test(Mantenimientos::class)
-            ->call('abrirModalCompletar', $mantenimiento->id_mantenimiento)
-            ->set('fecha_fin_completar', now()->toDateString())
-            ->set('costo_total_completar', 0)
-            ->set('insumos_usados', [])
-            ->call('completarOrden');
-
-        $this->assertDatabaseHas('mantenimientos', [
-            'id_mantenimiento' => $mantenimiento->id_mantenimiento,
-            'estado' => 'en curso',
-        ]);
-    }
-
-    // =========================================================================
-    // Slice 2: Kit preventivo automático
+    // Kit preventivo automático
     // =========================================================================
 
     public function test_seleccionar_maquinaria_y_tipo_preventivo_carga_kit(): void
@@ -893,7 +446,7 @@ class MantenimientosTest extends TestCase
     }
 
     // =========================================================================
-    // Slice 2: Notificaciones
+    // Notificaciones
     // =========================================================================
 
     public function test_crear_mantenimiento_marca_notificacion_como_accionada(): void
@@ -962,7 +515,7 @@ class MantenimientosTest extends TestCase
     }
 
     // =========================================================================
-    // Slice 2: Validación fecha programada
+    // Validación fecha programada
     // =========================================================================
 
     public function test_validacion_fecha_programada_dentro_de_7_dias_desde_notificacion(): void
@@ -1010,7 +563,7 @@ class MantenimientosTest extends TestCase
     }
 
     // =========================================================================
-    // Slice 2: Edge cases generales
+    // Edge cases generales
     // =========================================================================
 
     public function test_editar_mantenimiento_inexistente_no_rompe(): void
@@ -1048,5 +601,19 @@ class MantenimientosTest extends TestCase
 
         $this->assertTrue($mantenimientos->contains('id_mantenimiento', $m1->id_mantenimiento));
         $this->assertFalse($mantenimientos->contains('id_mantenimiento', $m2->id_mantenimiento));
+    }
+
+    // =========================================================================
+    // Completar orden - dispatch event to child
+    // =========================================================================
+
+    public function test_abrir_modal_completar_despacha_evento(): void
+    {
+        $mantenimiento = Mantenimiento::factory()->enCurso()->create();
+
+        Livewire::actingAs($this->usuario)
+            ->test(Mantenimientos::class)
+            ->call('abrirModalCompletar', $mantenimiento->id_mantenimiento)
+            ->assertDispatched('abrirCompletarOrden', $mantenimiento->id_mantenimiento);
     }
 }

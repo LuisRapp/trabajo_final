@@ -4,6 +4,7 @@ namespace App\Http\Livewire;
 
 use App\Enums\TaskType;
 use App\Events\CargaRegistrada;
+use App\Http\Livewire\Traits\MensajesErrorUsuario;
 use App\Models\Carga;
 use App\Models\CategoriaMadera;
 use App\Models\Chofer;
@@ -23,6 +24,7 @@ use Livewire\WithPagination;
 
 class PartesDiarios extends Component
 {
+    use MensajesErrorUsuario;
     use WithPagination;
 
     protected $paginationTheme = 'tailwind';
@@ -65,6 +67,8 @@ class PartesDiarios extends Component
 
     public $busqueda_fecha = '';
 
+    public $busqueda_empleado = '';
+
     public $tab_activo = 'listado';
 
     // Catálogos (lazy loaded via computed properties)
@@ -72,43 +76,16 @@ class PartesDiarios extends Component
 
     protected $empleadosFiltradosCache;
 
-    protected $maquinariasFiltradaCache;
-
     // Catálogos pesados se obtienen vía propiedades computadas para evitar deshidratación
     public $empleados_asignados_ids = [];
 
     // Se usa propiedad computada
     public $maquinarias_asignadas_ids = [];
 
-    // selección por carga (múltiple)
-    public $carga_maquinarias = [];
-    // Catálogos: se resolverán por getters computados
-
     // Detalles de Cargas (Modo Destajo)
     public $cargas = [];
 
-    public $carga_id_categoria_madera;
-
-    public $carga_ticket;
-
-    public $carga_peso_bruto;
-
-    public $carga_tara;
-
-    public $carga_peso_neto;
-
-    public $carga_id_chofer;
-
-    public $carga_destino; // Este será el id_cliente
-
-    public $carga_empleados = []; // Array de IDs de empleados para esta carga
-
     public $total_toneladas = 0;
-
-    // Búsqueda dinámica para autocomplete
-    public $busqueda_chofer = '';
-
-    public $busqueda_cliente = '';
 
     // Detalles de Jornales (Modo Día Caído) — managed by JornalForm child
     public $jornales = [];
@@ -117,6 +94,8 @@ class PartesDiarios extends Component
     public $movimientos = [];
 
     // Creación rápida de tarea
+    public $mostrarModalTareaRapida = false;
+
     public $nueva_tarea_tipo_tarea;
 
     public $nueva_tarea_superficie_afectada_ha;
@@ -191,8 +170,6 @@ class PartesDiarios extends Component
         // Al cambiar el lote, cargar empleados y maquinarias asignadas para filtrar
         $this->empleados_asignados_ids = [];
         $this->maquinarias_asignadas_ids = [];
-        $this->carga_maquinarias = [];
-        $this->carga_empleados = [];
 
         if ($this->id_lote) {
             // Query directa sin validación extra - más rápido
@@ -208,7 +185,10 @@ class PartesDiarios extends Component
         }
 
         // Limpiar cache de propiedades computadas
-        unset($this->empleadosFiltradosCache, $this->maquinariasFiltradaCache);
+        unset($this->empleadosFiltradosCache);
+
+        // Reset búsqueda de empleados
+        $this->busqueda_empleado = '';
 
         // Reset tarea seleccionada / creación rápida
         $this->id_lote_tarea = null;
@@ -216,6 +196,9 @@ class PartesDiarios extends Component
         $this->nueva_tarea_superficie_afectada_ha = null;
 
         $this->revisarClima();
+
+        // Notificar al componente hijo CargaForm
+        $this->dispatch('loteChanged');
     }
 
     public function crearTareaRapida()
@@ -258,11 +241,12 @@ class PartesDiarios extends Component
             $this->id_lote_tarea = $tarea->id_lote_tarea;
             $this->nueva_tarea_tipo_tarea = null;
             $this->nueva_tarea_superficie_afectada_ha = null;
+            $this->mostrarModalTareaRapida = false;
 
             session()->flash('message', 'Tarea creada y seleccionada.');
             $this->dispatch('$refresh');
         } catch (\Exception $e) {
-            session()->flash('error', 'No se pudo crear la tarea: '.$e->getMessage());
+            session()->flash('error', $this->mensajeErrorUsuario($e, 'crear la tarea rápida'));
             \Log::error('Error al crear tarea rápida', [
                 'lote' => $this->id_lote,
                 'error' => $e->getMessage(),
@@ -277,85 +261,22 @@ class PartesDiarios extends Component
         }
 
         $empleados = $this->empleados; // propiedad computada
-        if (empty($this->empleados_asignados_ids)) {
-            $this->empleadosFiltradosCache = $empleados;
-        } else {
-            $this->empleadosFiltradosCache = $empleados->filter(function ($emp) {
+        if (! empty($this->empleados_asignados_ids)) {
+            $empleados = $empleados->filter(function ($emp) {
                 return in_array($emp->id_empleado, $this->empleados_asignados_ids);
             });
         }
 
-        return $this->empleadosFiltradosCache;
-    }
-
-    public function getMaquinariasFiltradaProperty()
-    {
-        if (isset($this->maquinariasFiltradaCache)) {
-            return $this->maquinariasFiltradaCache;
-        }
-
-        $maquinarias = $this->maquinarias; // propiedad computada
-        if (empty($this->maquinarias_asignadas_ids)) {
-            $this->maquinariasFiltradaCache = $maquinarias;
-        } else {
-            $this->maquinariasFiltradaCache = $maquinarias->filter(function ($maq) {
-                return in_array($maq->id_maquinaria, $this->maquinarias_asignadas_ids);
+        if (! empty($this->busqueda_empleado)) {
+            $busq = strtolower($this->busqueda_empleado);
+            $empleados = $empleados->filter(function ($emp) use ($busq) {
+                return str_contains(strtolower($emp->apellido.' '.$emp->nombre), $busq);
             });
         }
 
-        return $this->maquinariasFiltradaCache;
-    }
+        $this->empleadosFiltradosCache = $empleados;
 
-    public function updatedCargaPesoBruto()
-    {
-        $this->calcularPesoNeto();
-    }
-
-    public function updatedCargaTara()
-    {
-        $this->calcularPesoNeto();
-    }
-
-    public function updatedCargaPesoNeto()
-    {
-        // No hacer nada; es calculado pero el usuario puede overridear
-    }
-
-    private function calcularPesoNeto()
-    {
-        if ($this->carga_peso_bruto && $this->carga_tara) {
-            $this->carga_peso_neto = $this->carga_peso_bruto - $this->carga_tara;
-        } else {
-            $this->carga_peso_neto = null;
-        }
-    }
-
-    public function getChoferesFiltradosProperty()
-    {
-        if (empty($this->busqueda_chofer)) {
-            return $this->choferes; // computada
-        }
-
-        $busq = strtolower($this->busqueda_chofer);
-
-        return $this->choferes->filter(function ($chofer) use ($busq) {
-            $nombre_completo = strtolower($chofer->apellido.' '.$chofer->nombre);
-
-            return str_contains($nombre_completo, $busq);
-        });
-    }
-
-    public function getClientesFiltradosProperty()
-    {
-        if (empty($this->busqueda_cliente)) {
-            return $this->clientes; // computada
-        }
-
-        $busq = strtolower($this->busqueda_cliente);
-
-        return $this->clientes->filter(function ($cliente) use ($busq) {
-            return str_contains(strtolower($cliente->razon_social), $busq);
-        });
+        return $this->empleadosFiltradosCache;
     }
 
     public function render()
@@ -392,6 +313,11 @@ class PartesDiarios extends Component
         $this->resetPage();
     }
 
+    public function updatedBusquedaEmpleado()
+    {
+        unset($this->empleadosFiltradosCache);
+    }
+
     public function updatedFecha()
     {
         $this->revisarClima();
@@ -402,7 +328,6 @@ class PartesDiarios extends Component
         // Limpiar datos de la sección no activa
         if ($this->es_dia_caido) {
             $this->cargas = [];
-            $this->carga_empleados = [];
             $this->total_toneladas = 0;
             $this->clima_override_confirmado = false;
             $this->clima_override_motivo = '';
@@ -486,82 +411,24 @@ class PartesDiarios extends Component
         ];
     }
 
-    // ============ GESTIÓN DE CARGAS (DESTAJO) ============
+    // ============ GESTIÓN DE CARGAS (DESTAJO) — Event Listeners ============
 
-    public function agregarCarga()
+    public function cargaAgregada(array $cargaData): void
     {
-        $this->validate([
-            'carga_id_categoria_madera' => 'required|exists:categoria_maderas,id_categoria_madera',
-            'carga_ticket' => 'required|string|max:100',
-            'carga_peso_bruto' => 'required|numeric|min:0.01',
-            'carga_tara' => 'required|numeric|min:0',
-            'carga_peso_neto' => 'required|numeric|min:0.01',
-            'carga_id_chofer' => 'required|exists:choferes,id_chofer',
-            'carga_destino' => 'required|exists:clientes,id_cliente',
-            'carga_empleados' => 'required|array|min:1',
-            'carga_maquinarias' => 'required|array|min:1',
-        ], [
-            'carga_id_categoria_madera.required' => 'La categoría de madera es obligatoria',
-            'carga_ticket.required' => 'El número de ticket es obligatorio',
-            'carga_peso_bruto.required' => 'El peso bruto es obligatorio',
-            'carga_peso_bruto.min' => 'El peso bruto debe ser mayor a 0',
-            'carga_tara.required' => 'La tara es obligatoria',
-            'carga_peso_neto.required' => 'El peso neto es obligatorio',
-            'carga_peso_neto.min' => 'El peso neto debe ser mayor a 0',
-            'carga_id_chofer.required' => 'El chofer es obligatorio',
-            'carga_destino.required' => 'El destino (cliente) es obligatorio',
-            'carga_empleados.required' => 'Debe seleccionar al menos un empleado',
-            'carga_empleados.min' => 'Debe seleccionar al menos un empleado',
-            'carga_maquinarias.required' => 'Debe seleccionar al menos una maquinaria para la carga',
-            'carga_maquinarias.min' => 'Debe seleccionar al menos una maquinaria para la carga',
-        ]);
-
-        // Obtener el nombre del cliente para mostrar en la tabla
-        $cliente = Cliente::find($this->carga_destino);
-        $nombreCliente = $cliente ? $cliente->razon_social : 'Cliente no encontrado';
-
-        $this->cargas[] = [
-            'id_categoria_madera' => $this->carga_id_categoria_madera,
-            'ticket' => $this->carga_ticket,
-            'peso_bruto' => $this->carga_peso_bruto,
-            'tara' => $this->carga_tara,
-            'peso_neto' => $this->carga_peso_neto,
-            'id_chofer' => $this->carga_id_chofer,
-            'destino' => $this->carga_destino, // ID del cliente (se convertirá al guardar en BD)
-            'destino_nombre' => $nombreCliente, // Nombre para mostrar en la tabla
-            'empleados' => $this->carga_empleados,
-            'maquinarias' => $this->carga_maquinarias,
-        ];
-
+        $this->cargas[] = $cargaData;
         $this->calcularTotalToneladas();
-        $this->resetCargaForm();
     }
 
-    public function eliminarCarga($index)
+    public function cargaEliminada(int $index): void
     {
         unset($this->cargas[$index]);
         $this->cargas = array_values($this->cargas);
         $this->calcularTotalToneladas();
     }
 
-    private function calcularTotalToneladas()
+    private function calcularTotalToneladas(): void
     {
         $this->total_toneladas = array_sum(array_column($this->cargas, 'peso_neto'));
-    }
-
-    private function resetCargaForm()
-    {
-        $this->carga_id_categoria_madera = null;
-        $this->carga_ticket = null;
-        $this->carga_peso_bruto = null;
-        $this->carga_tara = null;
-        $this->carga_peso_neto = null;
-        $this->carga_id_chofer = null;
-        $this->carga_destino = null;
-        $this->carga_empleados = [];
-        $this->carga_maquinarias = [];
-        $this->busqueda_chofer = '';
-        $this->busqueda_cliente = '';
     }
 
     // ============ GESTIÓN DE JORNALES (DÍA CAÍDO) ============
@@ -695,7 +562,7 @@ class PartesDiarios extends Component
             session()->flash('message', $mensaje);
 
         } catch (\Exception $e) {
-            session()->flash('error', 'Error al guardar el parte diario: '.$e->getMessage());
+            session()->flash('error', $this->mensajeErrorUsuario($e, 'guardar el parte diario'));
             \Log::error('Error en PartesDiarios::guardar()', [
                 'exception' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
@@ -811,9 +678,7 @@ class PartesDiarios extends Component
             'motivo_dia_caido', 'clima_estado', 'clima_razon', 'clima_fuente', 'clima_es_fin_de_semana',
             'clima_requiere_override', 'clima_override_confirmado', 'clima_override_motivo',
             'observaciones', 'cargas', 'jornales', 'movimientos',
-            'carga_id_categoria_madera', 'carga_ticket', 'carga_peso_bruto', 'carga_tara',
-            'carga_peso_neto', 'carga_id_chofer', 'carga_destino', 'carga_empleados', 'carga_maquinarias',
-            'busqueda_chofer', 'busqueda_cliente', 'empleados_asignados_ids', 'maquinarias_asignadas_ids',
+            'empleados_asignados_ids', 'maquinarias_asignadas_ids',
             'nueva_tarea_tipo_tarea', 'nueva_tarea_superficie_afectada_ha',
         ]);
         $this->total_toneladas = 0;
