@@ -102,20 +102,20 @@ class VentaService
     public static function buscarCargasPendientes(int $idCliente, string $fechaDesde, string $fechaHasta): array
     {
         if ($idCliente <= 0) {
-            throw new \InvalidArgumentException('Client ID must be positive.');
+            throw new \InvalidArgumentException('El ID del cliente debe ser positivo.');
         }
 
         if (empty($fechaDesde) || empty($fechaHasta)) {
-            throw new \InvalidArgumentException('Date range is required.');
+            throw new \InvalidArgumentException('El rango de fechas es obligatorio.');
         }
 
         if ($fechaDesde > $fechaHasta) {
-            throw new \InvalidArgumentException('Start date must be before or equal to end date.');
+            throw new \InvalidArgumentException('La fecha desde debe ser anterior o igual a la fecha hasta.');
         }
 
         $cliente = \App\Models\Cliente::find($idCliente);
         if (! $cliente) {
-            throw new \InvalidArgumentException('Client not found.');
+            throw new \InvalidArgumentException('Cliente no encontrado.');
         }
 
         $query = Carga::query()

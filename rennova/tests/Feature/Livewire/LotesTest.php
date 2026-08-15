@@ -686,7 +686,7 @@ class LotesTest extends TestCase
             ->test(Lotes::class)
             ->set('modalLoteId', $lote->id_lote)
             ->call('confirmarRecomendacion', $proposal->id_allocation_proposal)
-            ->assertSet('recomendacionesError', 'No se pudo aplicar la recomendación: Algunos empleados ya estan asignados a otros lotes en proceso.');
+            ->assertSet('recomendacionesError', 'No se pudo aplicar la recomendación. Intente nuevamente o contacte al administrador.');
     }
 
     public function test_confirmar_recomendacion_fails_when_maquinaria_busy_on_other_lote(): void
@@ -712,7 +712,7 @@ class LotesTest extends TestCase
             ->test(Lotes::class)
             ->set('modalLoteId', $lote->id_lote)
             ->call('confirmarRecomendacion', $proposal->id_allocation_proposal)
-            ->assertSet('recomendacionesError', 'No se pudo aplicar la recomendación: Algunas maquinarias ya estan asignadas a otros lotes en proceso.');
+            ->assertSet('recomendacionesError', 'No se pudo aplicar la recomendación. Intente nuevamente o contacte al administrador.');
     }
 
     public function test_confirmar_recomendacion_skips_already_applied(): void

@@ -71,7 +71,7 @@ class MovimientoForm extends Component
             throw $e;
         } catch (\Exception $e) {
             \Log::error('Error en agregarMovimiento: '.$e->getMessage());
-            $this->dispatch('mostrarError', mensaje: 'Error al agregar insumo: '.$e->getMessage());
+            $this->dispatch('mostrarError', mensaje: 'Error al agregar el insumo. Intente nuevamente.');
         }
     }
 

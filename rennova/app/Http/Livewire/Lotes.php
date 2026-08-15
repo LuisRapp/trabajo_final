@@ -3,6 +3,7 @@
 namespace App\Http\Livewire;
 
 use App\Enums\TaskType;
+use App\Http\Livewire\Traits\MensajesErrorUsuario;
 use App\Jobs\GenerateAllocationProposalsForLote;
 use App\Models\Lote;
 use App\Models\LoteTarea;
@@ -17,6 +18,7 @@ use Livewire\WithPagination;
 
 class Lotes extends Component
 {
+    use MensajesErrorUsuario;
     use WithPagination;
 
     public $propietario;
@@ -228,7 +230,7 @@ class Lotes extends Component
 
             session()->flash('message', 'Lote finalizado correctamente. Los recursos han sido liberados.');
         } catch (\Throwable $e) {
-            session()->flash('error', 'Error al finalizar el lote: '.$e->getMessage());
+            session()->flash('error', $this->mensajeErrorUsuario($e, 'finalizar el lote'));
         }
     }
 
@@ -423,7 +425,7 @@ class Lotes extends Component
                 'exception' => get_class($e),
                 'trace' => $e->getTraceAsString(),
             ]);
-            $this->recomendacionesError = 'No se pudo aplicar la recomendación: '.$e->getMessage();
+            $this->recomendacionesError = 'No se pudo aplicar la recomendación. Intente nuevamente o contacte al administrador.';
         }
     }
 
@@ -585,7 +587,7 @@ class Lotes extends Component
 
             $this->recomendacionesMensaje = 'Recomendación actualizada correctamente.';
         } catch (\Throwable $e) {
-            $this->recomendacionesError = 'Error al actualizar la recomendación: '.$e->getMessage();
+            $this->recomendacionesError = 'Error al actualizar la recomendación. Intente nuevamente o contacte al administrador.';
 
             return;
         }
