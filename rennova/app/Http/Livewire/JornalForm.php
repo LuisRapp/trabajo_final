@@ -2,12 +2,14 @@
 
 namespace App\Http\Livewire;
 
+use App\Http\Livewire\Traits\JornalLookupTrait;
 use App\Models\Empleado;
-use App\Models\HistoricoRolLaboral;
 use Livewire\Component;
 
 class JornalForm extends Component
 {
+    use JornalLookupTrait;
+
     public $jornal_id_empleado;
 
     public $jornales = [];
@@ -47,7 +49,7 @@ class JornalForm extends Component
         }
 
         $empleado = Empleado::with('rolLaboral')->find($this->jornal_id_empleado);
-        $jornalVigente = $this->obtenerJornalEmpleadoParaFecha($empleado?->id_empleado, $this->fecha) ?? 0;
+        $jornalVigente = $this->obtenerJornalEmpleadoParaFecha($empleado?->id_empleado, $this->fecha, $this->empleadosFiltrados) ?? 0;
 
         $this->jornales[] = [
             'id_empleado' => $empleado->id_empleado,
@@ -68,33 +70,6 @@ class JornalForm extends Component
         $this->dispatch('jornalEliminado', index: $index);
     }
 
-    public function obtenerJornalEmpleadoParaFecha($empleadoId, $fecha): ?float
-    {
-        if (! $empleadoId || ! $fecha) {
-            return null;
-        }
-
-        $empleado = $this->empleadosFiltrados->firstWhere('id_empleado', $empleadoId);
-        if (! $empleado || ! $empleado->rolLaboral) {
-            return null;
-        }
-
-        $rolId = $empleado->rolLaboral->id_rol_laboral ?? $empleado->id_rol_laboral ?? null;
-        if (! $rolId) {
-            return null;
-        }
-
-        $hist = HistoricoRolLaboral::where('rol_laboral_id', $rolId)
-            ->vigenteEnFecha($fecha)
-            ->first();
-
-        if ($hist) {
-            return (float) ($hist->jornal_diario ?? 0);
-        }
-
-        return (float) ($empleado->rolLaboral->jornal_diario ?? 0);
-    }
-
     private function actualizarJornalPorEmpleado(): void
     {
         $this->jornal_por_empleado = [];
@@ -103,7 +78,7 @@ class JornalForm extends Component
         }
 
         foreach ($this->empleadosFiltrados as $emp) {
-            $this->jornal_por_empleado[$emp->id_empleado] = $this->obtenerJornalEmpleadoParaFecha($emp->id_empleado, $this->fecha) ?? (float) ($emp->rolLaboral->jornal_diario ?? 0);
+            $this->jornal_por_empleado[$emp->id_empleado] = $this->obtenerJornalEmpleadoParaFecha($emp->id_empleado, $this->fecha, $this->empleadosFiltrados) ?? (float) ($emp->rolLaboral->jornal_diario ?? 0);
         }
     }
 

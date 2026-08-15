@@ -4,18 +4,13 @@ namespace App\Http\Livewire;
 
 use App\Enums\TaskType;
 use App\Events\CargaRegistrada;
+use App\Http\Livewire\Traits\CatalogosTrait;
+use App\Http\Livewire\Traits\ClimaOperativoTrait;
+use App\Http\Livewire\Traits\JornalLookupTrait;
 use App\Http\Livewire\Traits\MensajesErrorUsuario;
-use App\Models\Carga;
-use App\Models\CategoriaMadera;
-use App\Models\Chofer;
-use App\Models\Cliente;
-use App\Models\Empleado;
 use App\Models\Lote;
 use App\Models\LoteTarea;
-use App\Models\MovimientoStock;
 use App\Models\ParteDiario;
-use App\Services\ClimaOperativoService;
-use App\Services\InventarioService;
 use App\Services\ParteDiarioCostoService;
 use App\Services\PartesDiariosService;
 use Carbon\Carbon;
@@ -24,6 +19,9 @@ use Livewire\WithPagination;
 
 class PartesDiarios extends Component
 {
+    use CatalogosTrait;
+    use ClimaOperativoTrait;
+    use JornalLookupTrait;
     use MensajesErrorUsuario;
     use WithPagination;
 
@@ -195,7 +193,7 @@ class PartesDiarios extends Component
         $this->nueva_tarea_tipo_tarea = null;
         $this->nueva_tarea_superficie_afectada_ha = null;
 
-        $this->revisarClima();
+        $this->resolverClima();
 
         // Notificar al componente hijo CargaForm
         $this->dispatch('loteChanged');
@@ -320,7 +318,7 @@ class PartesDiarios extends Component
 
     public function updatedFecha()
     {
-        $this->revisarClima();
+        $this->resolverClima();
     }
 
     public function updatedEsDiaCaido()
@@ -335,80 +333,6 @@ class PartesDiarios extends Component
             $this->jornales = [];
             $this->motivo_dia_caido = '';
         }
-    }
-
-    private function revisarClima(): void
-    {
-        $this->clima_estado = null;
-        $this->clima_razon = null;
-        $this->clima_fuente = null;
-        $this->clima_es_fin_de_semana = false;
-        $this->clima_requiere_override = false;
-
-        if (! $this->id_lote || ! $this->fecha) {
-            $this->clima_override_confirmado = false;
-            $this->clima_override_motivo = '';
-
-            return;
-        }
-
-        $fecha = Carbon::parse($this->fecha);
-        $this->clima_es_fin_de_semana = $fecha->isWeekend();
-
-        $lote = Lote::find($this->id_lote);
-        if (! $lote) {
-            return;
-        }
-
-        $climaDia = app(ClimaOperativoService::class)->obtenerEstadoDia($lote, $fecha);
-        $estadoPronostico = $climaDia->estado_pronostico ?? $climaDia->estado_operativo ?? 'OPERATIVO';
-        $this->clima_estado = strtoupper((string) $estadoPronostico);
-        $this->clima_razon = $climaDia->razon_pronostico ?? $climaDia->razon ?? null;
-        $this->clima_fuente = $climaDia->fuente_pronostico ?? $climaDia->fuente ?? null;
-
-        $noOperativo = $this->clima_estado === 'INACTIVO';
-        $this->clima_requiere_override = $noOperativo || $this->clima_es_fin_de_semana;
-
-        if (! $this->clima_requiere_override) {
-            $this->clima_override_confirmado = false;
-            $this->clima_override_motivo = '';
-        }
-    }
-
-    private function resolverClimaOperacion(): array
-    {
-        if (! $this->id_lote || ! $this->fecha) {
-            return [
-                'requiere_override' => false,
-                'estado' => null,
-                'razon' => null,
-                'fuente' => null,
-            ];
-        }
-
-        $fecha = Carbon::parse($this->fecha);
-        $esFinDeSemana = $fecha->isWeekend();
-
-        $lote = Lote::find($this->id_lote);
-        if (! $lote) {
-            return [
-                'requiere_override' => $esFinDeSemana,
-                'estado' => null,
-                'razon' => null,
-                'fuente' => null,
-            ];
-        }
-
-        $climaDia = app(ClimaOperativoService::class)->obtenerEstadoDia($lote, $fecha);
-        $estado = strtoupper((string) ($climaDia->estado_pronostico ?? $climaDia->estado_operativo ?? 'OPERATIVO'));
-        $requiere = $esFinDeSemana || $estado === 'INACTIVO';
-
-        return [
-            'requiere_override' => $requiere,
-            'estado' => $estado,
-            'razon' => $climaDia->razon ?? null,
-            'fuente' => $climaDia->fuente ?? null,
-        ];
     }
 
     // ============ GESTIÓN DE CARGAS (DESTAJO) — Event Listeners ============
@@ -433,30 +357,6 @@ class PartesDiarios extends Component
 
     // ============ GESTIÓN DE JORNALES (DÍA CAÍDO) ============
     // Methods extracted to JornalForm child component
-
-    private function obtenerJornalEmpleadoParaFecha($empleadoId, $fecha)
-    {
-        if (! $empleadoId || ! $fecha) {
-            return null;
-        }
-        $empleado = $this->empleados->firstWhere('id_empleado', $empleadoId);
-        if (! $empleado || ! $empleado->rolLaboral) {
-            return null;
-        }
-        $rolId = $empleado->rolLaboral->id_rol_laboral ?? $empleado->id_rol_laboral ?? null;
-        if (! $rolId) {
-            return null;
-        }
-        $hist = \App\Models\HistoricoRolLaboral::where('rol_laboral_id', $rolId)
-            ->vigenteEnFecha($fecha)
-            ->first();
-        if ($hist) {
-            return (float) ($hist->jornal_diario ?? 0);
-        }
-
-        // Fallback al valor actual del rol si no hay histórico
-        return (float) ($empleado->rolLaboral->jornal_diario ?? 0);
-    }
 
     // ============ GESTIÓN DE MOVIMIENTOS DE INSUMOS ============
     // Methods extracted to MovimientoForm child component
@@ -493,7 +393,7 @@ class PartesDiarios extends Component
         }
 
         // Validación de clima
-        $climaInfo = $this->resolverClimaOperacion();
+        $climaInfo = $this->resolverClima();
         $this->clima_requiere_override = (bool) ($climaInfo['requiere_override'] ?? false);
 
         if (! $this->es_dia_caido && $this->clima_requiere_override) {
@@ -582,98 +482,25 @@ class PartesDiarios extends Component
         }
     }
 
-    public function editar($id)
+    public function editar($id): void
     {
-        $parte = ParteDiario::with(['empleados.rolLaboral'])->findOrFail($id);
-        $this->parte_id = $parte->id_parte_diario;
-        $this->id_lote = $parte->id_lote;
-        $this->id_lote_tarea = $parte->id_lote_tarea;
-        $this->fecha = $parte->fecha;
-        $this->tipo_tarea = $parte->tipo_tarea;
-        $this->es_dia_caido = (bool) $parte->es_dia_caido;
-        $this->observaciones = $parte->observaciones;
-        $this->clima_override_confirmado = (bool) ($parte->clima_override ?? false);
-        $this->clima_override_motivo = $parte->clima_override_motivo;
+        $datos = PartesDiariosService::cargarParaEdicion($id);
+
+        $this->parte_id = $datos['parte_id'];
+        $this->id_lote = $datos['id_lote'];
+        $this->id_lote_tarea = $datos['id_lote_tarea'];
+        $this->fecha = $datos['fecha'];
+        $this->es_dia_caido = $datos['es_dia_caido'];
+        $this->observaciones = $datos['observaciones'];
+        $this->clima_override_confirmado = $datos['clima_override_confirmado'];
+        $this->clima_override_motivo = $datos['clima_override_motivo'];
+        $this->cargas = $datos['cargas'];
+        $this->jornales = $datos['jornales'];
+        $this->movimientos = $datos['movimientos'];
+        $this->total_toneladas = $datos['total_toneladas'];
+
         $this->tab_activo = 'nuevo';
-
-        // Cargar CARGAS si es producción
-        $this->cargas = [];
-        if (! $this->es_dia_caido) {
-            $cargas = Carga::with(['empleados', 'maquinarias', 'cliente'])
-                ->where('id_parte_diario', $parte->id_parte_diario)
-                ->get();
-
-            foreach ($cargas as $c) {
-                $this->cargas[] = [
-                    'id_categoria_madera' => $c->id_categoria_madera,
-                    'ticket' => $c->ticket,
-                    'peso_bruto' => (float) $c->peso_bruto,
-                    'tara' => (float) $c->tara,
-                    'peso_neto' => (float) $c->peso_neto,
-                    'id_chofer' => $c->id_chofer,
-                    'destino' => $c->id_cliente,
-                    'destino_nombre' => $c->cliente->razon_social ?? 'Cliente no encontrado',
-                    'empleados' => $c->empleados->pluck('id_empleado')->all(),
-                    'maquinarias' => $c->maquinarias->pluck('id_maquinaria')->all(),
-                ];
-            }
-            $this->calcularTotalToneladas();
-        }
-
-        // Cargar JORNALES si es día caído
-        $this->jornales = [];
-        if ($this->es_dia_caido) {
-            foreach ($parte->empleados as $emp) {
-                $jornalVig = $this->obtenerJornalEmpleadoParaFecha($emp->id_empleado, $this->fecha) ?? 0;
-                $this->jornales[] = [
-                    'id_empleado' => $emp->id_empleado,
-                    'nombre_completo' => $emp->apellido.', '.$emp->nombre,
-                    'rol' => $emp->rolLaboral->nombre ?? 'N/A',
-                    'jornal_diario' => $jornalVig,
-                    'observaciones' => null,
-                ];
-            }
-        }
-
-        // Cargar MOVIMIENTOS vinculados a este parte (por motivo y fecha)
-        $this->movimientos = [];
-        $movs = MovimientoStock::delParteDiario($parte->id_parte_diario, $this->fecha)
-            ->get();
-
-        // Agrupar múltiples movimientos FIFO del mismo insumo en uno solo para edición
-        $movimientosAgrupados = [];
-        foreach ($movs as $m) {
-            // Parsear motivo para extraer el enum original y observaciones
-            $motivoTexto = $m->motivo; // Ej: "Parte Diario #ID - Producción - obs"
-            $sinPrefijo = preg_replace('/^Parte Diario #'.preg_quote($parte->id_parte_diario, '/').' - /', '', $motivoTexto);
-            $partesMotivo = explode(' - ', $sinPrefijo, 2);
-            $motivoEnum = $partesMotivo[0] ?? 'Producción';
-            $obs = $partesMotivo[1] ?? null;
-
-            $insumo = $this->insumos->firstWhere('id_insumo', $m->id_insumo);
-
-            // Clave única por insumo+tipo+motivo
-            $clave = $m->id_insumo.'_'.$m->tipo.'_'.$motivoEnum;
-
-            if (! isset($movimientosAgrupados[$clave])) {
-                $movimientosAgrupados[$clave] = [
-                    'id_insumo' => $m->id_insumo,
-                    'nombre_insumo' => $insumo->nombre ?? 'Insumo',
-                    'tipo' => $m->tipo,
-                    'cantidad' => 0,
-                    'motivo' => $motivoEnum,
-                    'observaciones' => $obs,
-                    'unidad' => $insumo->unidadMedida->nombre ?? 'Unidad',
-                ];
-            }
-
-            // Acumular cantidad (para movimientos FIFO múltiples del mismo insumo)
-            $movimientosAgrupados[$clave]['cantidad'] += (float) $m->cantidad;
-        }
-
-        $this->movimientos = array_values($movimientosAgrupados);
-
-        $this->revisarClima();
+        $this->dispatch('editarParte', parteId: $id);
     }
 
     public function eliminar($id)
@@ -739,45 +566,5 @@ class PartesDiarios extends Component
         }
 
         return $this->lotesCache;
-    }
-
-    public function getEmpleadosProperty()
-    {
-        return Empleado::with('rolLaboral')
-            ->whereNull('fecha_fin_actividades')
-            ->orderBy('apellido')
-            ->get();
-    }
-
-    public function getMaquinariasProperty()
-    {
-        return \App\Models\Maquinaria::with('tipoMaquinaria')
-            ->orderBy('modelo')
-            ->get();
-    }
-
-    public function getChoferesProperty()
-    {
-        return Chofer::where('estado', true)
-            ->orderBy('apellido')
-            ->get();
-    }
-
-    public function getInsumosProperty()
-    {
-        return InventarioService::queryInsumosConStockYPrecio()
-            ->with('unidadMedida')
-            ->orderBy('nombre')
-            ->get();
-    }
-
-    public function getCategoriasMaderaProperty()
-    {
-        return CategoriaMadera::orderBy('nombre')->get();
-    }
-
-    public function getClientesProperty()
-    {
-        return Cliente::orderBy('razon_social')->get();
     }
 }

@@ -2,15 +2,15 @@
 
 namespace App\Http\Livewire;
 
-use App\Models\CategoriaMadera;
-use App\Models\Chofer;
+use App\Http\Livewire\Traits\CatalogosTrait;
 use App\Models\Cliente;
-use App\Models\Empleado;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
 class CargaForm extends Component
 {
+    use CatalogosTrait;
+
     // Props from parent
     public $id_lote;
 
@@ -49,40 +49,6 @@ class CargaForm extends Component
     public $busqueda_empleado = '';
 
     public $busqueda_maquinaria = '';
-
-    // ============ COMPUTED PROPERTIES (Catálogos) ============
-
-    public function getCategoriasMaderaProperty()
-    {
-        return CategoriaMadera::orderBy('nombre')->get();
-    }
-
-    public function getChoferesProperty()
-    {
-        return Chofer::where('estado', true)
-            ->orderBy('apellido')
-            ->get();
-    }
-
-    public function getClientesProperty()
-    {
-        return Cliente::orderBy('razon_social')->get();
-    }
-
-    public function getEmpleadosProperty()
-    {
-        return Empleado::with('rolLaboral')
-            ->whereNull('fecha_fin_actividades')
-            ->orderBy('apellido')
-            ->get();
-    }
-
-    public function getMaquinariasProperty()
-    {
-        return \App\Models\Maquinaria::with('tipoMaquinaria')
-            ->orderBy('modelo')
-            ->get();
-    }
 
     // ============ COMPUTED PROPERTIES (Filtrados) ============
 

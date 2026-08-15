@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Carga;
+use App\Models\HistoricoRolLaboral;
 use App\Models\LoteTarea;
 use App\Models\MovimientoStock;
 use App\Models\ParteDiario;
@@ -242,5 +243,142 @@ class PartesDiariosService
             DB::rollBack();
             throw $e;
         }
+    }
+
+    /**
+     * Load a ParteDiario with all related data for editing.
+     *
+     * Builds structured arrays for cargas, jornales, and movimientos
+     * so the component can simply assign them to its properties.
+     *
+     * @param  int  $id  The ParteDiario ID
+     * @return array{parte_id: int, id_lote: int, id_lote_tarea: int, fecha: string, es_dia_caido: bool, observaciones: ?string, clima_override_confirmado: bool, clima_override_motivo: ?string, cargas: array, jornales: array, movimientos: array, total_toneladas: float}
+     *
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+     */
+    public static function cargarParaEdicion(int $id): array
+    {
+        $parte = ParteDiario::with(['empleados.rolLaboral'])->findOrFail($id);
+
+        $esDiaCaido = (bool) $parte->es_dia_caido;
+
+        // Build cargas array (production mode)
+        $cargas = [];
+        $totalToneladas = 0.0;
+        if (! $esDiaCaido) {
+            $cargasModels = Carga::with(['empleados', 'maquinarias', 'cliente'])
+                ->where('id_parte_diario', $parte->id_parte_diario)
+                ->get();
+
+            foreach ($cargasModels as $c) {
+                $cargas[] = [
+                    'id_categoria_madera' => $c->id_categoria_madera,
+                    'ticket' => $c->ticket,
+                    'peso_bruto' => (float) $c->peso_bruto,
+                    'tara' => (float) $c->tara,
+                    'peso_neto' => (float) $c->peso_neto,
+                    'id_chofer' => $c->id_chofer,
+                    'destino' => $c->id_cliente,
+                    'destino_nombre' => $c->cliente->razon_social ?? 'Cliente no encontrado',
+                    'empleados' => $c->empleados->pluck('id_empleado')->all(),
+                    'maquinarias' => $c->maquinarias->pluck('id_maquinaria')->all(),
+                ];
+                $totalToneladas += (float) $c->peso_neto;
+            }
+        }
+
+        // Build jornales array (día caído mode)
+        $jornales = [];
+        if ($esDiaCaido) {
+            foreach ($parte->empleados as $emp) {
+                $jornalVig = self::buscarJornalVigente($emp, $parte->fecha);
+                $jornales[] = [
+                    'id_empleado' => $emp->id_empleado,
+                    'nombre_completo' => $emp->apellido.', '.$emp->nombre,
+                    'rol' => $emp->rolLaboral->nombre ?? 'N/A',
+                    'jornal_diario' => $jornalVig,
+                    'observaciones' => null,
+                ];
+            }
+        }
+
+        // Build movimientos array with FIFO dedup grouping
+        $movimientos = [];
+        $movs = MovimientoStock::delParteDiario($parte->id_parte_diario, $parte->fecha)->get();
+
+        if ($movs->isNotEmpty()) {
+            $insumos = InventarioService::queryInsumosConStockYPrecio()
+                ->with('unidadMedida')
+                ->orderBy('nombre')
+                ->get();
+
+            $movimientosAgrupados = [];
+            foreach ($movs as $m) {
+                $motivoTexto = $m->motivo;
+                $sinPrefijo = preg_replace('/^Parte Diario #'.preg_quote($parte->id_parte_diario, '/').' - /', '', $motivoTexto);
+                $partesMotivo = explode(' - ', $sinPrefijo, 2);
+                $motivoEnum = $partesMotivo[0] ?? 'Producción';
+                $obs = $partesMotivo[1] ?? null;
+
+                $insumo = $insumos->firstWhere('id_insumo', $m->id_insumo);
+                $clave = $m->id_insumo.'_'.$m->tipo.'_'.$motivoEnum;
+
+                if (! isset($movimientosAgrupados[$clave])) {
+                    $movimientosAgrupados[$clave] = [
+                        'id_insumo' => $m->id_insumo,
+                        'nombre_insumo' => $insumo->nombre ?? 'Insumo',
+                        'tipo' => $m->tipo,
+                        'cantidad' => 0,
+                        'motivo' => $motivoEnum,
+                        'observaciones' => $obs,
+                        'unidad' => $insumo->unidadMedida->nombre ?? 'Unidad',
+                    ];
+                }
+
+                $movimientosAgrupados[$clave]['cantidad'] += (float) $m->cantidad;
+            }
+
+            $movimientos = array_values($movimientosAgrupados);
+        }
+
+        return [
+            'parte_id' => $parte->id_parte_diario,
+            'id_lote' => $parte->id_lote,
+            'id_lote_tarea' => $parte->id_lote_tarea,
+            'fecha' => $parte->fecha,
+            'es_dia_caido' => $esDiaCaido,
+            'observaciones' => $parte->observaciones,
+            'clima_override_confirmado' => (bool) ($parte->clima_override ?? false),
+            'clima_override_motivo' => $parte->clima_override_motivo,
+            'cargas' => $cargas,
+            'jornales' => $jornales,
+            'movimientos' => $movimientos,
+            'total_toneladas' => $totalToneladas,
+        ];
+    }
+
+    /**
+     * Look up the active jornal for an employee on a given date.
+     */
+    private static function buscarJornalVigente($empleado, string $fecha): float
+    {
+        if (! $empleado->rolLaboral) {
+            return 0;
+        }
+
+        $rolId = $empleado->rolLaboral->id_rol_laboral ?? $empleado->id_rol_laboral ?? null;
+        if (! $rolId) {
+            return 0;
+        }
+
+        $hist = HistoricoRolLaboral::where('rol_laboral_id', $rolId)
+            ->vigenteEnFecha($fecha)
+            ->first();
+
+        if ($hist) {
+            return (float) ($hist->jornal_diario ?? 0);
+        }
+
+        return (float) ($empleado->rolLaboral->jornal_diario ?? 0);
     }
 }
