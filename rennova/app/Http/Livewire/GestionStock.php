@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire;
 
+use App\Http\Livewire\Traits\MensajesErrorUsuario;
 use App\Models\Insumo;
 use App\Models\LoteInventario;
 use App\Models\Proveedor;
@@ -11,9 +12,10 @@ use Livewire\WithPagination;
 
 class GestionStock extends Component
 {
+    use MensajesErrorUsuario;
     use WithPagination;
 
-    protected $paginationTheme = 'bootstrap';
+    protected $paginationTheme = 'tailwind';
 
     // Propiedades de formulario
     public $id_insumo;
@@ -80,19 +82,25 @@ class GestionStock extends Component
         $this->filtro_fecha_fin = now()->format('Y-m-d');
     }
 
+    public function getInsumosProperty()
+    {
+        return Insumo::orderBy('nombre')->get();
+    }
+
+    public function getProveedoresProperty()
+    {
+        return Proveedor::orderBy('razon_social')->get();
+    }
+
     public function render()
     {
         $lotes = $this->obtenerLotes();
-        $insumos = Insumo::orderBy('nombre')->get();
-        $proveedores = Proveedor::orderBy('razon_social')->get();
-
-        // Estadísticas
         $estadisticas = $this->calcularEstadisticas();
 
         return view('livewire.gestion-stock', [
             'lotes' => $lotes,
-            'insumos' => $insumos,
-            'proveedores' => $proveedores,
+            'insumos' => $this->insumos,
+            'proveedores' => $this->proveedores,
             'estadisticas' => $estadisticas,
         ]);
     }
@@ -224,7 +232,7 @@ class GestionStock extends Component
         } catch (\Exception $e) {
             \Log::error('Error al guardar lote: '.$e->getMessage());
             \Log::error($e->getTraceAsString());
-            session()->flash('message', 'Error al registrar el lote: '.$e->getMessage());
+            session()->flash('message', $this->mensajeErrorUsuario($e, 'registrar el lote de inventario'));
             session()->flash('alert-type', 'danger');
         }
     }

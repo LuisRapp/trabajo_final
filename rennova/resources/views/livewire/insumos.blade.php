@@ -69,7 +69,7 @@
 
                     <div class="mb-6 flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-700">
                         <span class="mt-0.5 shrink-0">ℹ️</span>
-                        <span>Precio calculado automáticamente mediante sistema FIFO</span>
+                        <span>Precio promedio calculado automáticamente según los lotes ingresados.</span>
                     </div>
 
                     <div class="flex gap-2 justify-end">

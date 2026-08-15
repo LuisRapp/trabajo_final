@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire;
 
+use App\Http\Livewire\Traits\MensajesErrorUsuario;
 use App\Models\Empleado;
 use App\Models\Lote;
 use App\Models\Maquinaria;
@@ -10,6 +11,8 @@ use Livewire\Component;
 
 class AsignacionesLote extends Component
 {
+    use MensajesErrorUsuario;
+
     public $lotes = [];
 
     public $empleados = [];
@@ -125,7 +128,7 @@ class AsignacionesLote extends Component
             $this->cargarHistorial();
             session()->flash('message', 'Asignaciones guardadas correctamente.');
         } catch (\Throwable $e) {
-            session()->flash('error', 'Error al guardar asignaciones: '.$e->getMessage());
+            session()->flash('error', $this->mensajeErrorUsuario($e, 'guardar las asignaciones'));
         } finally {
             $this->guardando = false;
         }
@@ -149,7 +152,7 @@ class AsignacionesLote extends Component
             $this->cargarHistorial();
             session()->flash('message', 'Asignaciones eliminadas correctamente.');
         } catch (\Throwable $e) {
-            session()->flash('error', 'Error al eliminar asignaciones: '.$e->getMessage());
+            session()->flash('error', $this->mensajeErrorUsuario($e, 'eliminar las asignaciones'));
         }
     }
 
@@ -170,7 +173,7 @@ class AsignacionesLote extends Component
             $this->cargarHistorial();
             $this->resetCampos();
         } catch (\Throwable $e) {
-            session()->flash('error', 'Error al liberar recursos: '.$e->getMessage());
+            session()->flash('error', $this->mensajeErrorUsuario($e, 'liberar los recursos'));
         }
     }
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire;
 
+use App\Http\Livewire\Traits\MensajesErrorUsuario;
 use App\Models\Lote;
 use App\Models\PropuestaAsignacion;
 use App\Services\PropuestaAsignacionService;
@@ -9,6 +10,8 @@ use Livewire\Component;
 
 class AllocationProposals extends Component
 {
+    use MensajesErrorUsuario;
+
     public $loteId;
 
     public $lotes = [];
@@ -179,7 +182,7 @@ class AllocationProposals extends Component
             $this->loadSelectedProposal();
             session()->flash('message', 'Selección guardada correctamente.');
         } catch (\Throwable $e) {
-            session()->flash('error', 'Error al guardar selección: '.$e->getMessage());
+            session()->flash('error', $this->mensajeErrorUsuario($e, 'guardar la selección'));
         } finally {
             $this->guardando = false;
         }
@@ -204,7 +207,7 @@ class AllocationProposals extends Component
             $this->refreshProposals();
             session()->flash('message', 'Propuesta confirmada.');
         } catch (\Throwable $e) {
-            session()->flash('error', 'Error al confirmar: '.$e->getMessage());
+            session()->flash('error', $this->mensajeErrorUsuario($e, 'confirmar la propuesta'));
         } finally {
             $this->guardando = false;
         }
@@ -229,7 +232,7 @@ class AllocationProposals extends Component
             $this->refreshProposals();
             session()->flash('message', 'Asignación aplicada al lote.');
         } catch (\Throwable $e) {
-            session()->flash('error', 'Error al aplicar: '.$e->getMessage());
+            session()->flash('error', $this->mensajeErrorUsuario($e, 'aplicar la asignación'));
         } finally {
             $this->guardando = false;
         }

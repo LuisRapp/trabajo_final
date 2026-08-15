@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire;
 
+use App\Http\Livewire\Traits\MensajesErrorUsuario;
 use App\Models\Adelanto;
 use App\Models\Empleado;
 use App\Models\Recibo;
@@ -14,6 +15,8 @@ use Livewire\Component;
 
 class LiquidacionPagos extends Component
 {
+    use MensajesErrorUsuario;
+
     public $empleados = [];
 
     public $id_empleado;
@@ -164,7 +167,7 @@ class LiquidacionPagos extends Component
             $this->dispatch('reciboGenerado');
 
         } catch (\Throwable $e) {
-            session()->flash('error', 'Error al liquidar a todos: '.$e->getMessage());
+            session()->flash('error', $this->mensajeErrorUsuario($e, 'liquidar los pagos'));
         }
     }
 
@@ -262,7 +265,7 @@ class LiquidacionPagos extends Component
             $this->dispatch('reciboGenerado');
 
         } catch (\Exception $e) {
-            session()->flash('error', 'Error al generar el recibo: '.$e->getMessage());
+            session()->flash('error', $this->mensajeErrorUsuario($e, 'generar el recibo'));
         }
     }
 

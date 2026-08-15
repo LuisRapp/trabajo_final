@@ -2,12 +2,15 @@
 
 namespace App\Http\Livewire;
 
+use App\Http\Livewire\Traits\MensajesErrorUsuario;
 use App\Models\Usuario;
 use App\Services\NotificacionService;
 use Livewire\Component;
 
 class ConfiguracionNotificacionesMantenimiento extends Component
 {
+    use MensajesErrorUsuario;
+
     public $usuariosUmbral = [];
 
     public $usuariosRecordatorio = [];
@@ -43,7 +46,7 @@ class ConfiguracionNotificacionesMantenimiento extends Component
             );
             session()->flash('message', 'Configuración de notificaciones guardada correctamente.');
         } catch (\Exception $e) {
-            session()->flash('error', 'Error al guardar configuración: '.$e->getMessage());
+            session()->flash('error', $this->mensajeErrorUsuario($e, 'guardar la configuración'));
         }
     }
 

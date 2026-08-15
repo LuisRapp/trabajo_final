@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire;
 
+use App\Http\Livewire\Traits\MensajesErrorUsuario;
 use App\Models\CategoriaClientePrecio;
 use App\Models\CategoriaMadera;
 use App\Models\Cliente;
@@ -10,6 +11,7 @@ use Livewire\WithPagination;
 
 class ListaPrecios extends Component
 {
+    use MensajesErrorUsuario;
     use WithPagination;
 
     public $clientes;
@@ -178,7 +180,7 @@ class ListaPrecios extends Component
             $this->dispatch('precioGuardado');
 
         } catch (\Exception $e) {
-            session()->flash('error', 'Error al guardar el precio: '.$e->getMessage());
+            session()->flash('error', $this->mensajeErrorUsuario($e, 'guardar el precio'));
         }
     }
 

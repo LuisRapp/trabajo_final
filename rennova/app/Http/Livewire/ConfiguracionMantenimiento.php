@@ -2,12 +2,15 @@
 
 namespace App\Http\Livewire;
 
+use App\Http\Livewire\Traits\MensajesErrorUsuario;
 use App\Services\ConfiguracionService;
 use Illuminate\Support\Facades\Artisan;
 use Livewire\Component;
 
 class ConfiguracionMantenimiento extends Component
 {
+    use MensajesErrorUsuario;
+
     public $hora_recordatorio = '08:00';
 
     public $expresion_cron = '*/30 * * * *';
@@ -52,7 +55,7 @@ class ConfiguracionMantenimiento extends Component
             session()->flash('message', 'Configuración de mantenimiento guardada correctamente.');
 
         } catch (\Exception $e) {
-            session()->flash('error', 'Error al guardar configuración: '.$e->getMessage());
+            session()->flash('error', $this->mensajeErrorUsuario($e, 'guardar la configuración'));
         }
     }
 
@@ -64,7 +67,7 @@ class ConfiguracionMantenimiento extends Component
             session()->flash('message', 'Verificación de umbrales ejecutada correctamente.');
             session()->flash('command_output', $output);
         } catch (\Exception $e) {
-            session()->flash('error', 'Error al ejecutar verificación: '.$e->getMessage());
+            session()->flash('error', $this->mensajeErrorUsuario($e, 'ejecutar la verificación'));
         }
     }
 
@@ -76,7 +79,7 @@ class ConfiguracionMantenimiento extends Component
             session()->flash('message', 'Verificación de mantenimientos programados ejecutada correctamente.');
             session()->flash('command_output', $output);
         } catch (\Exception $e) {
-            session()->flash('error', 'Error al ejecutar verificación: '.$e->getMessage());
+            session()->flash('error', $this->mensajeErrorUsuario($e, 'ejecutar la verificación'));
         }
     }
 

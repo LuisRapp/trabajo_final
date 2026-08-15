@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire;
 
+use App\Http\Livewire\Traits\MensajesErrorUsuario;
 use App\Models\Insumo;
 use App\Models\KitMantenimientoPreventivo;
 use App\Models\Maquinaria;
@@ -10,6 +11,8 @@ use Livewire\Component;
 
 class ConfiguracionKits extends Component
 {
+    use MensajesErrorUsuario;
+
     // Selección actual (nuevo: por maquinaria específica)
     public $maquinaria_seleccionada = '';
 
@@ -135,7 +138,7 @@ class ConfiguracionKits extends Component
 
         } catch (\Exception $e) {
             Log::error('Error al registrar kit: '.$e->getMessage());
-            session()->flash('error', 'Error al registrar kit: '.$e->getMessage());
+            session()->flash('error', $this->mensajeErrorUsuario($e, 'registrar el kit'));
         }
     }
 
@@ -175,7 +178,7 @@ class ConfiguracionKits extends Component
             session()->flash('message', 'Kit eliminado correctamente');
         } catch (\Exception $e) {
             Log::error('Error al eliminar kit: '.$e->getMessage());
-            session()->flash('error', 'Error al eliminar kit: '.$e->getMessage());
+            session()->flash('error', $this->mensajeErrorUsuario($e, 'eliminar el kit'));
         }
     }
 
@@ -265,7 +268,7 @@ class ConfiguracionKits extends Component
 
         } catch (\Exception $e) {
             Log::error('Error al guardar item del kit: '.$e->getMessage());
-            session()->flash('error', 'Error al guardar: '.$e->getMessage());
+            session()->flash('error', $this->mensajeErrorUsuario($e, 'guardar la configuración'));
         }
     }
 
@@ -279,7 +282,7 @@ class ConfiguracionKits extends Component
             $this->cargarItemsKit();
         } catch (\Exception $e) {
             Log::error('Error al eliminar item del kit: '.$e->getMessage());
-            session()->flash('error', 'Error al eliminar: '.$e->getMessage());
+            session()->flash('error', $this->mensajeErrorUsuario($e, 'eliminar el insumo del kit'));
         }
     }
 
@@ -295,7 +298,7 @@ class ConfiguracionKits extends Component
             $this->cargarItemsKit();
         } catch (\Exception $e) {
             Log::error('Error al restaurar item del kit: '.$e->getMessage());
-            session()->flash('error', 'Error al restaurar: '.$e->getMessage());
+            session()->flash('error', $this->mensajeErrorUsuario($e, 'restaurar el insumo'));
         }
     }
 

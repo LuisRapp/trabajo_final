@@ -1,6 +1,6 @@
 <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
     <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-bold text-slate-900">📦 Gestión de Stock (FIFO)</h1>
+        <h1 class="text-2xl font-bold text-slate-900">Control de Stock</h1>
         @can('crear-gestion-stock')
         <button class="inline-flex items-center gap-1.5 px-5 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-lg text-sm font-medium shadow-sm transition-colors" wire:click="abrirModal">
             ➕ Registrar Entrada
@@ -225,12 +225,11 @@
                                 @error('precio_unitario') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
                             </div>
 
-                            <div>
-                                <label class="block text-sm font-semibold text-slate-700 mb-1.5">Costo Total</label>
-                                <input type="text"
-                                    class="w-full px-4 py-2.5 border border-slate-300 bg-slate-50 rounded-lg text-sm text-slate-500 cursor-not-allowed"
-                                    value="${{ number_format(floatval($cantidad ?? 0) * floatval($precio_unitario ?? 0), 2) }}"
-                                    disabled readonly>
+                            <div class="flex items-end">
+                                <div class="w-full rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3">
+                                    <span class="block text-xs font-semibold text-emerald-700 mb-0.5">Costo Total</span>
+                                    <span class="text-lg font-bold text-emerald-800">${{ number_format(floatval($cantidad ?? 0) * floatval($precio_unitario ?? 0), 2) }}</span>
+                                </div>
                             </div>
 
                             <div>

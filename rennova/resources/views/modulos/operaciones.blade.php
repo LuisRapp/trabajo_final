@@ -49,17 +49,17 @@
         </div>
         @endcan
 
-        <!-- Gestión Stock (FIFO) -->
+        <!-- Control de Stock -->
         @can('ver-gestion-stock')
         <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-shadow">
             <div class="flex items-center gap-4 mb-3">
                 <div class="rounded-full bg-green-100 p-3 shrink-0">
                     <flux:icon.square-3-stack-3d class="size-7 text-green-700" />
                 </div>
-                <h3 class="text-lg font-bold text-green-700">Gestión Stock (FIFO)</h3>
+                <h3 class="text-lg font-bold text-green-700">Control de Stock</h3>
             </div>
             <p class="text-sm text-slate-500 mb-4">
-                Gestión avanzada de stock utilizando el método FIFO.
+                Gestión de stock de insumos con trazabilidad de lotes y costos.
             </p>
             <a href="{{ route('modulos.operaciones.gestionstock') }}"
                 class="inline-flex items-center justify-center w-full rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-hover transition-colors">

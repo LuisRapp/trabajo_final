@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire;
 
+use App\Http\Livewire\Traits\MensajesErrorUsuario;
 use App\Models\Insumo;
 use App\Models\Mantenimiento;
 use App\Models\Maquinaria;
@@ -11,6 +12,8 @@ use Livewire\Component;
 
 class GestionMantenimientos extends Component
 {
+    use MensajesErrorUsuario;
+
     public $tab_activo = 'ordenes'; // 'ordenes', 'completadas', 'kits'
 
     // Filtros
@@ -81,7 +84,7 @@ class GestionMantenimientos extends Component
 
             $this->modal_aprobar = true;
         } catch (\Exception $e) {
-            session()->flash('error', 'Error al cargar orden: '.$e->getMessage());
+            session()->flash('error', $this->mensajeErrorUsuario($e, 'cargar la orden'));
         }
     }
 
@@ -124,7 +127,7 @@ class GestionMantenimientos extends Component
 
         } catch (\Exception $e) {
             Log::error('Error al aprobar orden: '.$e->getMessage());
-            session()->flash('error', 'Error al aprobar orden: '.$e->getMessage());
+            session()->flash('error', $this->mensajeErrorUsuario($e, 'aprobar la orden'));
         }
     }
 
@@ -165,7 +168,7 @@ class GestionMantenimientos extends Component
             $this->modal_completar = true;
 
         } catch (\Exception $e) {
-            session()->flash('error', 'Error al cargar orden: '.$e->getMessage());
+            session()->flash('error', $this->mensajeErrorUsuario($e, 'cargar la orden'));
         }
     }
 
@@ -242,7 +245,7 @@ class GestionMantenimientos extends Component
 
         } catch (\Exception $e) {
             Log::error('Error al completar mantenimiento: '.$e->getMessage());
-            session()->flash('error', 'Error al completar: '.$e->getMessage());
+            session()->flash('error', $this->mensajeErrorUsuario($e, 'completar la orden'));
         }
     }
 
@@ -256,7 +259,7 @@ class GestionMantenimientos extends Component
 
             $this->modal_detalle = true;
         } catch (\Exception $e) {
-            session()->flash('error', 'Error al cargar detalle: '.$e->getMessage());
+            session()->flash('error', $this->mensajeErrorUsuario($e, 'cargar el detalle'));
         }
     }
 

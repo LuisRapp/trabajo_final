@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire;
 
+use App\Http\Livewire\Traits\MensajesErrorUsuario;
 use App\Models\Cliente;
 use App\Models\Venta;
 use App\Services\VentaService;
@@ -10,6 +11,7 @@ use Livewire\WithPagination;
 
 class Ventas extends Component
 {
+    use MensajesErrorUsuario;
     use WithPagination;
 
     protected $rules = [
@@ -103,9 +105,9 @@ class Ventas extends Component
             session()->flash('message', 'Cargas cargadas: '.count($this->detalle_cargas));
 
         } catch (\InvalidArgumentException $e) {
-            session()->flash('error', $e->getMessage());
+            session()->flash('error', $this->mensajeErrorUsuario($e, 'buscar cargas'));
         } catch (\Exception $e) {
-            session()->flash('error', 'Error al buscar cargas: '.$e->getMessage());
+            session()->flash('error', $this->mensajeErrorUsuario($e, 'buscar cargas'));
         }
     }
 
@@ -138,7 +140,7 @@ class Ventas extends Component
             session()->flash('message', 'Venta registrada exitosamente. ID: '.$venta->id_recibo);
 
         } catch (\Exception $e) {
-            session()->flash('error', 'Error al guardar la venta: '.$e->getMessage());
+            session()->flash('error', $this->mensajeErrorUsuario($e, 'guardar la venta'));
         }
     }
 
@@ -215,7 +217,7 @@ class Ventas extends Component
             session()->flash('message', 'Venta actualizada exitosamente.');
 
         } catch (\Exception $e) {
-            session()->flash('error', 'Error al actualizar: '.$e->getMessage());
+            session()->flash('error', $this->mensajeErrorUsuario($e, 'actualizar la venta'));
         }
     }
 
@@ -228,7 +230,7 @@ class Ventas extends Component
             session()->flash('message', 'Venta dada de baja exitosamente. Las cargas están disponibles nuevamente.');
 
         } catch (\Exception $e) {
-            session()->flash('error', 'Error al dar de baja: '.$e->getMessage());
+            session()->flash('error', $this->mensajeErrorUsuario($e, 'dar de baja la venta'));
         }
     }
 
