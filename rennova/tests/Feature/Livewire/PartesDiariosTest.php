@@ -1293,6 +1293,49 @@ class PartesDiariosTest extends TestCase
     }
 
     // ================================================================
+    // WIZARD — validarPaso1()
+    // ================================================================
+
+    public function test_validar_paso1_returns_true_with_valid_data(): void
+    {
+        Livewire::actingAs($this->usuario)
+            ->test(PartesDiarios::class)
+            ->tap(fn ($c) => $this->setRequiredFields($c))
+            ->call('validarPaso1')
+            ->assertHasNoErrors();
+    }
+
+    public function test_validar_paso1_fails_without_lote(): void
+    {
+        Livewire::actingAs($this->usuario)
+            ->test(PartesDiarios::class)
+            ->set('id_lote_tarea', $this->loteTarea->id_lote_tarea)
+            ->set('fecha', Carbon::today()->toDateString())
+            ->call('validarPaso1')
+            ->assertHasErrors(['id_lote']);
+    }
+
+    public function test_validar_paso1_fails_without_fecha(): void
+    {
+        Livewire::actingAs($this->usuario)
+            ->test(PartesDiarios::class)
+            ->set('id_lote', $this->lote->id_lote)
+            ->set('id_lote_tarea', $this->loteTarea->id_lote_tarea)
+            ->call('validarPaso1')
+            ->assertHasErrors(['fecha']);
+    }
+
+    public function test_validar_paso1_fails_without_tarea(): void
+    {
+        Livewire::actingAs($this->usuario)
+            ->test(PartesDiarios::class)
+            ->set('id_lote', $this->lote->id_lote)
+            ->set('fecha', Carbon::today()->toDateString())
+            ->call('validarPaso1')
+            ->assertHasErrors(['id_lote_tarea']);
+    }
+
+    // ================================================================
     // DIA CAIDO TOGGLES CLEANUP
     // ================================================================
 

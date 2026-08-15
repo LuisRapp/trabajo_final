@@ -748,6 +748,18 @@ class PartesDiarios extends Component
         }
     }
 
+    public function validarPaso1(): bool
+    {
+        $this->resetValidation();
+        $this->validate([
+            'id_lote' => 'required',
+            'id_lote_tarea' => 'required',
+            'fecha' => 'required|date',
+        ]);
+
+        return true;
+    }
+
     public function guardar()
     {
         $this->validate();

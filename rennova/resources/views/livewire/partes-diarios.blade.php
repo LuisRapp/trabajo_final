@@ -1,6 +1,8 @@
 <div
     class="max-w-7xl mx-auto px-4 py-6 relative"
     x-data="{
+        paso: 1,
+        maxPaso: 1,
         openOverrideModal: false,
         modalError: '',
         requiereOverride: @entangle('clima_requiere_override').live,
@@ -29,12 +31,52 @@
         </button>
     </div>
 
+    <!-- Stepper Header -->
+    @if($tab_activo === 'nuevo')
+        <div class="mb-6" x-show="true">
+            <div class="flex items-center justify-between max-w-xl mx-auto">
+                <!-- Step 1 -->
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors"
+                        :class="paso >= 1 ? 'bg-green-600 text-white' : 'bg-slate-200 text-slate-500'">
+                        <template x-if="paso > 1"><span>&#10003;</span></template>
+                        <template x-if="paso <= 1"><span>1</span></template>
+                    </div>
+                    <span class="text-sm font-medium hidden sm:inline" :class="paso === 1 ? 'text-green-700' : 'text-slate-500'">Datos</span>
+                </div>
+                <!-- Line -->
+                <div class="flex-1 h-0.5 mx-3" :class="paso > 1 ? 'bg-green-400' : 'bg-slate-200'"></div>
+                <!-- Step 2 -->
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors"
+                        :class="paso >= 2 ? 'bg-green-600 text-white' : 'bg-slate-200 text-slate-500'">
+                        <template x-if="paso > 2"><span>&#10003;</span></template>
+                        <template x-if="paso <= 2"><span>2</span></template>
+                    </div>
+                    <span class="text-sm font-medium hidden sm:inline" :class="paso === 2 ? 'text-green-700' : 'text-slate-500'">Produccion</span>
+                </div>
+                <!-- Line -->
+                <div class="flex-1 h-0.5 mx-3" :class="paso > 2 ? 'bg-green-400' : 'bg-slate-200'"></div>
+                <!-- Step 3 -->
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors"
+                        :class="paso >= 3 ? 'bg-green-600 text-white' : 'bg-slate-200 text-slate-500'">
+                        <span>3</span>
+                    </div>
+                    <span class="text-sm font-medium hidden sm:inline" :class="paso === 3 ? 'text-green-700' : 'text-slate-500'">Insumos</span>
+                </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
     <!-- Pestaña 1: Nuevo Parte Diario -->
     @if($tab_activo === 'nuevo')
         @canany(['crear-partes-diarios', 'editar-partes-diarios'])
         <div id="nuevo-parte" role="tabpanel" aria-labelledby="nuevo-tab" class="tab-pane-content">
             
             <!-- SECCIÓN 1: Datos Maestros -->
+            <div x-show="paso === 1" x-transition>
             <div class="bg-white rounded-lg shadow-md mb-6 overflow-hidden border border-slate-200">
                 <div class="bg-slate-100 px-6 py-4 border-b border-slate-200">
                     <h5 class="text-lg font-semibold text-slate-900 mb-0">
@@ -172,8 +214,18 @@
                 </div>
             </div>
 
+            <!-- Navigation: Step 1 → Step 2 -->
+            <div class="flex justify-end gap-3 mt-4 mb-6">
+                <button type="button" @click="if(await $wire.validarPaso1()) { paso = 2; maxPaso = Math.max(maxPaso, 2); }"
+                    class="px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors">
+                    Siguiente &#8594;
+                </button>
+            </div>
+            </div>
+
             <!-- SECCIÓN 2: Registro de Producción (Si NO es día caído) -->
             @if(!$es_dia_caido)
+                <div x-show="paso === 2 && !esDiaCaido" x-transition>
                 <div class="bg-white rounded-lg shadow-md mb-6 overflow-hidden border border-slate-200">
                     <div class="bg-blue-600 text-white px-6 py-4">
                         <h5 class="text-lg font-semibold mb-0">🚛 Registro de Producción</h5>
@@ -389,10 +441,24 @@
                         @endif
                     </div>
                 </div>
+
+                <!-- Navigation: Step 2 → Step 1/3 -->
+                <div class="flex justify-between gap-3 mt-4 mb-6">
+                    <button type="button" @click="paso = 1"
+                        class="px-6 py-3 border border-slate-300 text-slate-700 rounded-lg font-semibold hover:bg-slate-50 transition-colors">
+                        &#8592; Volver
+                    </button>
+                    <button type="button" @click="paso = 3; maxPaso = Math.max(maxPaso, 3);"
+                        class="px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors">
+                        Siguiente &#8594;
+                    </button>
+                </div>
+                </div>
             @endif
 
             <!-- SECCIÓN 3: Jornales (Si ES día caído) -->
             @if($es_dia_caido)
+                <div x-show="paso === 2 && esDiaCaido" x-transition>
                 <div class="bg-white rounded-lg shadow-md mb-6 overflow-hidden border border-slate-200">
                     <div class="bg-yellow-500 text-slate-900 px-6 py-4">
                         <h5 class="text-lg font-semibold mb-0">💰 Asignación de Jornales</h5>
@@ -464,6 +530,42 @@
                             </div>
                         @endif
                     </div>
+                </div>
+
+                <!-- Navigation: Step 2 → Step 1/3 (Día Caído) -->
+                <div class="flex justify-between gap-3 mt-4 mb-6">
+                    <button type="button" @click="paso = 1"
+                        class="px-6 py-3 border border-slate-300 text-slate-700 rounded-lg font-semibold hover:bg-slate-50 transition-colors">
+                        &#8592; Volver
+                    </button>
+                    <button type="button" @click="paso = 3; maxPaso = Math.max(maxPaso, 3);"
+                        class="px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors">
+                        Siguiente &#8594;
+                    </button>
+                </div>
+                </div>
+            @endif
+
+            <div x-show="paso === 3" x-transition>
+
+            <!-- Summary Counts -->
+            @if(count($cargas) > 0 || count($jornales) > 0 || count($movimientos) > 0)
+                <div class="mb-4 flex flex-wrap gap-3">
+                    @if(count($cargas) > 0)
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
+                            {{ count($cargas) }} carga(s) &middot; {{ number_format($total_toneladas, 2) }} ton
+                        </span>
+                    @endif
+                    @if(count($jornales) > 0)
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700">
+                            {{ count($jornales) }} jornal(es)
+                        </span>
+                    @endif
+                    @if(count($movimientos) > 0)
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
+                            {{ count($movimientos) }} movimiento(s)
+                        </span>
+                    @endif
                 </div>
             @endif
 
@@ -575,12 +677,17 @@
             <!-- BOTÓN GUARDAR -->
             <div class="bg-white rounded-lg shadow-md overflow-hidden border border-slate-200">
                 <div class="p-6">
-                    <div class="flex gap-3 justify-end">
-                        <button type="button" wire:click.prevent="cancelarEdicion" class="px-8 py-3 bg-slate-200 text-slate-700 rounded-lg font-semibold hover:bg-slate-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" wire:loading.attr="disabled">
-                            ✕ Cancelar
+                    <div class="flex justify-between gap-3">
+                        <button type="button" @click="paso = 2"
+                            class="px-6 py-3 border border-slate-300 text-slate-700 rounded-lg font-semibold hover:bg-slate-50 transition-colors">
+                            &#8592; Volver
                         </button>
-                        @canany(['crear-partes-diarios', 'editar-partes-diarios'])
-                        <button
+                        <div class="flex gap-3">
+                            <button type="button" wire:click.prevent="cancelarEdicion" class="px-8 py-3 bg-slate-200 text-slate-700 rounded-lg font-semibold hover:bg-slate-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" wire:loading.attr="disabled">
+                                ✕ Cancelar
+                            </button>
+                            @canany(['crear-partes-diarios', 'editar-partes-diarios'])
+                            <button
     type="button"
     @click.prevent="
         if (!esDiaCaido && requiereOverride && !overrideConfirmado) {
@@ -597,9 +704,12 @@
     <span wire:loading.remove wire:target="guardar">✓ Guardar Parte Diario</span>
     <span wire:loading wire:target="guardar"><svg class="inline-block w-4 h-4 animate-spin mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Guardando...</span>
 </button>
-                        @endcanany
+                            @endcanany
+                        </div>
                     </div>
                 </div>
+            </div>
+
             </div>
         </div>
         @endcanany
