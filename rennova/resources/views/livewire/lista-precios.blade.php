@@ -22,12 +22,12 @@
     @endif
 
     <x-tab-nav :tabs="[
-        ['value' => 'nuevo', 'label' => 'Nuevo Precio', 'icon' => 'plus-circle', 'can' => auth()->user()->canAny(['crear-precios', 'editar-precios'])],
+        ['value' => 'nuevo', 'label' => 'Nuevo Precio', 'icon' => 'plus-circle', 'can' => auth()->user()->canAny(['crear-lista-precios', 'editar-lista-precios'])],
         ['value' => 'listado', 'label' => 'Listado de Precios', 'icon' => 'list-ul'],
     ]" activeTab="{{ $tab_activo }}" tabProperty="tab_activo" />
 
     @if($tab_activo === 'nuevo')
-        @canany(['crear-precios', 'editar-precios'])
+        @canany(['crear-lista-precios', 'editar-lista-precios'])
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6">
             <div class="bg-slate-50 border-b border-slate-200 px-6 py-4">
                 <h5 class="text-lg font-semibold text-slate-800">
@@ -88,7 +88,7 @@
                                 ✕ Cancelar
                             </button>
                         @endif
-                        @canany(['crear-precios', 'editar-precios'])
+                        @canany(['crear-lista-precios', 'editar-lista-precios'])
                         <button type="submit"
                             class="inline-flex items-center gap-1.5 px-5 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-lg text-sm font-medium shadow-sm transition-colors">
                             ✓ {{ $precio_id ? 'Actualizar' : 'Guardar' }}
@@ -131,8 +131,8 @@
                                             editWireClick="editar({{ $precioItem->id }})"
                                             deleteWireClick="eliminar({{ $precioItem->id }})"
                                             deleteMessage="¿Está seguro de eliminar este precio? Esta acción no se puede deshacer."
-                                            :canEdit="auth()->user()->can('editar-precios')"
-                                            :canDelete="auth()->user()->can('eliminar-precios')" />
+                                            :canEdit="auth()->user()->can('editar-lista-precios')"
+                                            :canDelete="auth()->user()->can('eliminar-lista-precios')" />
                                     </td>
                                 </tr>
                             @empty

@@ -9,8 +9,8 @@ use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
 
 beforeEach(function () {
-    Permission::firstOrCreate(['name' => 'crear-precios', 'guard_name' => 'web']);
-    Permission::firstOrCreate(['name' => 'editar-precios', 'guard_name' => 'web']);
+    Permission::firstOrCreate(['name' => 'crear-lista-precios', 'guard_name' => 'web']);
+    Permission::firstOrCreate(['name' => 'editar-lista-precios', 'guard_name' => 'web']);
 });
 
 test('invitado es redirigido al login', function () {
