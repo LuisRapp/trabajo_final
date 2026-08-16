@@ -7,6 +7,9 @@ use App\Models\KitMantenimientoPreventivo;
 use App\Models\Mantenimiento;
 use App\Models\MantenimientoInsumo;
 use App\Models\Maquinaria;
+use App\Models\NotificacionSistema;
+use App\Models\TipoMantenimiento;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -371,6 +374,320 @@ class MantenimientoService
         } catch (\Exception $e) {
             DB::rollBack();
             throw $e;
+        }
+    }
+
+    /**
+     * List maintenance orders, marking expired scheduled ones first.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection<int, Mantenimiento>
+     */
+    public function listarMantenimientos(?string $busqueda = null): Collection
+    {
+        Mantenimiento::where('estado', 'programado')
+            ->whereNotNull('fecha_programada')
+            ->where('fecha_programada', '<', now()->toDateString())
+            ->update(['estado' => 'vencido']);
+
+        $query = Mantenimiento::with(['maquinaria', 'tipoMantenimiento']);
+
+        if ($busqueda) {
+            $busq = $busqueda;
+            $query->where(function ($q) use ($busq) {
+                $q->where('estado', 'ILIKE', '%'.$busq.'%')
+                    ->orWhereRaw('CAST(costo_total AS TEXT) ILIKE ?', ['%'.$busq.'%'])
+                    ->orWhereHas('maquinaria', function ($qm) use ($busq) {
+                        $qm->where('modelo', 'ILIKE', '%'.$busq.'%');
+                    })
+                    ->orWhereHas('tipoMantenimiento', function ($qt) use ($busq) {
+                        $qt->where('nombre', 'ILIKE', '%'.$busq.'%');
+                    });
+            });
+        }
+
+        return $query->orderBy('id_mantenimiento', 'desc')->get();
+    }
+
+    /**
+     * Get the preventive maintenance kit for a specific machine and maintenance type.
+     *
+     * @return array<int, array{nombre: string, cantidad_requerida: float}>
+     */
+    public function obtenerKitPreventivoParaMaquinaria(int $idMaquinaria, int $idTipoMantenimiento): array
+    {
+        $tipo = TipoMantenimiento::find($idTipoMantenimiento);
+
+        if (! $tipo || ! str_contains(strtolower($tipo->nombre), 'preventivo')) {
+            return [];
+        }
+
+        return KitMantenimientoPreventivo::where('kit_mantenimiento_preventivo.id_maquinaria', $idMaquinaria)
+            ->join('insumos', 'kit_mantenimiento_preventivo.id_insumo', '=', 'insumos.id_insumo')
+            ->select('insumos.nombre', 'kit_mantenimiento_preventivo.cantidad_requerida')
+            ->get()
+            ->toArray();
+    }
+
+    /**
+     * Get active machines (not decommissioned) ordered by model.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection<int, Maquinaria>
+     */
+    public function obtenerMaquinariasActivas(): Collection
+    {
+        return Maquinaria::where('estado', '!=', 'dado_de_baja')->orderBy('modelo')->get();
+    }
+
+    /**
+     * Get all maintenance types ordered by name.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection<int, TipoMantenimiento>
+     */
+    public function obtenerTiposMantenimiento(): Collection
+    {
+        return TipoMantenimiento::orderBy('nombre')->get();
+    }
+
+    /**
+     * Get a maintenance order ready for editing.
+     */
+    public function obtenerMantenimientoParaEditar(int $id): Mantenimiento
+    {
+        return Mantenimiento::findOrFail($id);
+    }
+
+    /**
+     * Save (create or update) a maintenance order and mark related notification as actioned.
+     *
+     * Runs inside a DB transaction.
+     *
+     * @param  array  $datos  Validated data
+     * @return array{success: bool, mantenimiento?: Mantenimiento, tipoNombre: string, maquinaNombre: string, message?: string}
+     */
+    public function guardarMantenimiento(array $datos, ?int $mantenimientoId = null, ?int $usuarioId = null): array
+    {
+        DB::beginTransaction();
+
+        try {
+            if ($mantenimientoId) {
+                $mantenimiento = Mantenimiento::findOrFail($mantenimientoId);
+                $mantenimiento->update([
+                    'id_maquinaria' => $datos['id_maquinaria'],
+                    'id_tipo_mantenimiento' => $datos['id_tipo_mantenimiento'],
+                    'fecha_inicio' => $datos['fecha_inicio'],
+                    'fecha_programada' => $datos['fecha_programada'] ?? null,
+                    'estado' => $datos['estado'],
+                ]);
+            } else {
+                $mantenimiento = Mantenimiento::create([
+                    'id_maquinaria' => $datos['id_maquinaria'],
+                    'id_tipo_mantenimiento' => $datos['id_tipo_mantenimiento'],
+                    'fecha_inicio' => $datos['fecha_inicio'],
+                    'fecha_programada' => $datos['fecha_programada'] ?? null,
+                    'estado' => $datos['estado'],
+                ]);
+            }
+
+            if ($usuarioId) {
+                $this->marcarNotificacionComoAccionada($mantenimiento->id_mantenimiento, $usuarioId);
+            }
+
+            $tipoNombre = TipoMantenimiento::find($datos['id_tipo_mantenimiento'])->nombre ?? 'Mantenimiento';
+            $maquinaNombre = Maquinaria::find($datos['id_maquinaria'])->modelo ?? '';
+
+            DB::commit();
+
+            return [
+                'success' => true,
+                'mantenimiento' => $mantenimiento->fresh(),
+                'tipoNombre' => $tipoNombre,
+                'maquinaNombre' => $maquinaNombre,
+            ];
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error guardando mantenimiento', [
+                'mantenimiento_id' => $mantenimientoId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return [
+                'success' => false,
+                'tipoNombre' => 'Mantenimiento',
+                'maquinaNombre' => '',
+                'message' => 'Error al guardar el mantenimiento: '.$e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Soft-delete a maintenance order.
+     */
+    public function eliminarMantenimiento(int $id): bool
+    {
+        $mantenimiento = Mantenimiento::findOrFail($id);
+        $mantenimiento->delete();
+
+        return true;
+    }
+
+    /**
+     * Confirm a scheduled maintenance order and mark its notification as actioned.
+     *
+     * Runs inside a DB transaction.
+     *
+     * @return array{success: bool, mantenimiento?: Mantenimiento, message?: string}
+     */
+    public function confirmarMantenimiento(int $id, ?int $usuarioId = null): array
+    {
+        DB::beginTransaction();
+
+        try {
+            $mantenimiento = Mantenimiento::findOrFail($id);
+
+            if ($mantenimiento->estado !== 'programado') {
+                DB::rollBack();
+
+                return [
+                    'success' => false,
+                    'message' => 'Solo se pueden confirmar mantenimientos en estado programado.',
+                ];
+            }
+
+            $mantenimiento->update([
+                'estado' => 'en curso',
+                'fecha_inicio' => now()->toDateString(),
+            ]);
+
+            if ($usuarioId) {
+                $this->marcarNotificacionComoAccionada($mantenimiento->id_mantenimiento, $usuarioId);
+            }
+
+            DB::commit();
+
+            return [
+                'success' => true,
+                'mantenimiento' => $mantenimiento->fresh(),
+                'message' => "Mantenimiento #{$id} confirmado y en curso.",
+            ];
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error confirmando mantenimiento', [
+                'mantenimiento_id' => $id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return [
+                'success' => false,
+                'message' => 'Error al confirmar el mantenimiento: '.$e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Reprogram an expired maintenance order back to scheduled state.
+     *
+     * Runs inside a DB transaction.
+     *
+     * @return array{success: bool, mantenimiento?: Mantenimiento, message?: string}
+     */
+    public function reprogramarMantenimiento(int $id): array
+    {
+        DB::beginTransaction();
+
+        try {
+            $mantenimiento = Mantenimiento::findOrFail($id);
+
+            if ($mantenimiento->estado !== 'vencido') {
+                DB::rollBack();
+
+                return [
+                    'success' => false,
+                    'message' => 'Solo se pueden reprogramar mantenimientos vencidos.',
+                ];
+            }
+
+            $mantenimiento->update([
+                'estado' => 'programado',
+                'fecha_programada' => null,
+            ]);
+
+            DB::commit();
+
+            return [
+                'success' => true,
+                'mantenimiento' => $mantenimiento->fresh(),
+                'message' => "Mantenimiento #{$id} reprogramado. Por favor, asigne una nueva fecha.",
+            ];
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error reprogramando mantenimiento', [
+                'mantenimiento_id' => $id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return [
+                'success' => false,
+                'message' => 'Error al reprogramar el mantenimiento: '.$e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Validate that a scheduled date is within 7 days from the related notification.
+     *
+     * Used when editing an existing maintenance order.
+     */
+    public function validarFechaProgramadaEdicion(int $mantenimientoId, string $fechaProgramada): ?string
+    {
+        $notificacion = NotificacionSistema::where('mantenimiento_id', $mantenimientoId)
+            ->where('tipo', 'umbral_alcanzado')
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        if (! $notificacion) {
+            return null;
+        }
+
+        $fechaNotificacion = $notificacion->created_at->toDateString();
+        $fechaLimite = $notificacion->created_at->addDays(7)->toDateString();
+
+        if ($fechaProgramada < $fechaNotificacion || $fechaProgramada > $fechaLimite) {
+            return "La fecha programada debe estar entre {$fechaNotificacion} y {$fechaLimite} (dentro de los 7 días desde la notificación).";
+        }
+
+        return null;
+    }
+
+    /**
+     * Validate that a scheduled date is within the next 7 days from today.
+     *
+     * Used when creating a new maintenance order without a previous notification.
+     */
+    public function validarFechaProgramadaNueva(string $fechaProgramada): ?string
+    {
+        $fechaHoy = now()->toDateString();
+        $fechaLimite = now()->addDays(7)->toDateString();
+
+        if ($fechaProgramada < $fechaHoy || $fechaProgramada > $fechaLimite) {
+            return "La fecha programada debe estar entre {$fechaHoy} y {$fechaLimite} (dentro de los próximos 7 días).";
+        }
+
+        return null;
+    }
+
+    /**
+     * Mark the current user's pending notification for a maintenance order as actioned.
+     */
+    public function marcarNotificacionComoAccionada(int $mantenimientoId, int $usuarioId): void
+    {
+        $notificacion = NotificacionSistema::where('user_id', $usuarioId)
+            ->where('mantenimiento_id', $mantenimientoId)
+            ->where('accionada', false)
+            ->first();
+
+        if ($notificacion) {
+            NotificacionService::marcarComoAccionada($notificacion);
+            Log::info("Notificación #{$notificacion->id} marcada como accionada para mantenimiento #{$mantenimientoId}");
         }
     }
 }
