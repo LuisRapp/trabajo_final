@@ -10,12 +10,12 @@
     @endif
 
     <x-tab-nav :tabs="[
-        ['value' => 'nuevo', 'label' => 'Nuevo Tipo', 'icon' => 'plus-circle', 'can' => auth()->user()->canAny(['crear-mantenimiento-tipos', 'editar-mantenimiento-tipos'])],
+        ['value' => 'nuevo', 'label' => 'Nuevo Tipo', 'icon' => 'plus-circle', 'can' => auth()->user()->canAny(['crear-tipos-mantenimiento', 'editar-tipos-mantenimiento'])],
         ['value' => 'listado', 'label' => 'Listado de Tipos', 'icon' => 'list-ul'],
     ]" activeTab="{{ $tab_activo }}" tabProperty="tab_activo" />
 
     @if($tab_activo === 'nuevo')
-        @canany(['crear-mantenimiento-tipos', 'editar-mantenimiento-tipos'])
+        @canany(['crear-tipos-mantenimiento', 'editar-tipos-mantenimiento'])
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6">
             <div class="bg-slate-50 border-b border-slate-200 px-6 py-4">
                 <h5 class="text-lg font-semibold text-slate-800">
@@ -38,7 +38,7 @@
                                 ✕ Cancelar
                             </button>
                         @endif
-                        @canany(['crear-mantenimiento-tipos', 'editar-mantenimiento-tipos'])
+                        @canany(['crear-tipos-mantenimiento', 'editar-tipos-mantenimiento'])
                         <button type="submit"
                             class="inline-flex items-center gap-1.5 px-5 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-lg text-sm font-medium shadow-sm transition-colors">
                             ✓ {{ $tipo_id ? 'Actualizar' : 'Guardar' }}
@@ -73,8 +73,8 @@
                                             editWireClick="editar({{ $tipo->id_tipo_mantenimiento }})"
                                             deleteWireClick="eliminar({{ $tipo->id_tipo_mantenimiento }})"
                                             deleteMessage="¿Está seguro de dar de baja este tipo?"
-                                            :canEdit="auth()->user()->can('editar-mantenimiento-tipos')"
-                                            :canDelete="auth()->user()->can('eliminar-mantenimiento-tipos')" />
+                                            :canEdit="auth()->user()->can('editar-tipos-mantenimiento')"
+                                            :canDelete="auth()->user()->can('eliminar-tipos-mantenimiento')" />
                                     </td>
                                 </tr>
                             @empty

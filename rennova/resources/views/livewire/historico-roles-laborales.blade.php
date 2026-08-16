@@ -13,12 +13,12 @@
     @endif
 
     <x-tab-nav :tabs="[
-        ['value' => 'nuevo', 'label' => 'Nuevo Histórico', 'icon' => 'plus-circle', 'can' => auth()->user()->canAny(['crear-historico-roles', 'editar-historico-roles'])],
+        ['value' => 'nuevo', 'label' => 'Nuevo Histórico', 'icon' => 'plus-circle', 'can' => auth()->user()->canAny(['crear-historico-roles-laborales', 'editar-historico-roles-laborales'])],
         ['value' => 'listado', 'label' => 'Listado de Históricos', 'icon' => 'list-ul'],
     ]" activeTab="{{ $tab_activo }}" tabProperty="tab_activo" />
 
     @if($tab_activo === 'nuevo')
-        @canany(['crear-historico-roles', 'editar-historico-roles'])
+        @canany(['crear-historico-roles-laborales', 'editar-historico-roles-laborales'])
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6">
             <div class="bg-slate-50 border-b border-slate-200 px-6 py-4">
                 <h5 class="text-lg font-semibold text-slate-800">
@@ -82,7 +82,7 @@
                                 ✕ Cancelar
                             </button>
                         @endif
-                        @canany(['crear-historico-roles', 'editar-historico-roles'])
+                        @canany(['crear-historico-roles-laborales', 'editar-historico-roles-laborales'])
                         <button type="submit"
                             class="inline-flex items-center gap-1.5 px-5 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-lg text-sm font-medium shadow-sm transition-colors">
                             ✓ {{ $historico_id ? 'Actualizar' : 'Guardar' }}
@@ -125,8 +125,8 @@
                                             editWireClick="editar({{ $historico->id }})"
                                             deleteWireClick="eliminar({{ $historico->id }})"
                                             deleteMessage="¿Está seguro de eliminar este histórico?"
-                                            :canEdit="auth()->user()->can('editar-historico-roles')"
-                                            :canDelete="auth()->user()->can('eliminar-historico-roles')" />
+                                            :canEdit="auth()->user()->can('editar-historico-roles-laborales')"
+                                            :canDelete="auth()->user()->can('eliminar-historico-roles-laborales')" />
                                     </td>
                                 </tr>
                             @empty

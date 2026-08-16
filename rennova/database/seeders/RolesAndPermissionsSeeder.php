@@ -46,6 +46,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'propuestas-asignacion' => 'Propuestas de Asignación',
             'liquidacion-pagos' => 'Liquidación de Pagos',
             'historico-costos-maquinarias' => 'Histórico Costos Maquinarias',
+            'historico-roles-laborales' => 'Histórico Roles Laborales',
             'gestion-stock' => 'Gestión Stock',
         ];
 

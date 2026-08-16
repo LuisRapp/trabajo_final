@@ -13,12 +13,12 @@
     @endif
 
     <x-tab-nav :tabs="[
-        ['value' => 'nuevo', 'label' => 'Nuevo Kit', 'icon' => 'plus-circle', 'can' => auth()->user()->canAny(['crear-kits-preventivos', 'editar-kits-preventivos'])],
+        ['value' => 'nuevo', 'label' => 'Nuevo Kit', 'icon' => 'plus-circle', 'can' => auth()->user()->canAny(['crear-kits-mantenimiento', 'editar-kits-mantenimiento'])],
         ['value' => 'listado', 'label' => 'Listado de Kits', 'icon' => 'list-ul'],
     ]" activeTab="{{ $tab_activo }}" tabProperty="tab_activo" />
 
     @if($tab_activo === 'nuevo')
-        @canany(['crear-kits-preventivos', 'editar-kits-preventivos'])
+        @canany(['crear-kits-mantenimiento', 'editar-kits-mantenimiento'])
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6">
             <div class="bg-slate-50 border-b border-slate-200 px-6 py-4">
                 <h5 class="text-lg font-semibold text-slate-800">
@@ -50,7 +50,7 @@
                                 ✕ Cancelar
                             </button>
                         @endif
-                        @canany(['crear-kits-preventivos', 'editar-kits-preventivos'])
+                        @canany(['crear-kits-mantenimiento', 'editar-kits-mantenimiento'])
                         <button type="submit"
                             class="inline-flex items-center gap-1.5 px-5 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-lg text-sm font-medium shadow-sm transition-colors">
                             ✓ {{ $kit_id ? 'Actualizar' : 'Guardar' }}
@@ -87,8 +87,8 @@
                                             editWireClick="editar({{ $kit->id_kit_preventivo }})"
                                             deleteWireClick="eliminar({{ $kit->id_kit_preventivo }})"
                                             deleteMessage="¿Está seguro de eliminar este kit?"
-                                            :canEdit="auth()->user()->can('editar-kits-preventivos')"
-                                            :canDelete="auth()->user()->can('eliminar-kits-preventivos')" />
+                                            :canEdit="auth()->user()->can('editar-kits-mantenimiento')"
+                                            :canDelete="auth()->user()->can('eliminar-kits-mantenimiento')" />
                                     </td>
                                 </tr>
                             @empty
