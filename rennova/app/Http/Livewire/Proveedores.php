@@ -26,13 +26,18 @@ class Proveedores extends Component
 
     public $tab_activo = 'listado';
 
-    protected $rules = [
-        'razon_social' => 'required|min:3',
-        'cuit' => 'required|digits:11|unique:proveedores,cuit',
-        'direccion' => 'required',
-        'telefono' => 'nullable|string',
-        'email' => 'nullable|email',
-    ];
+    protected function rules(): array
+    {
+        return [
+            'razon_social' => 'required|min:3',
+            'cuit' => $this->proveedor_id
+                ? 'required|digits:11|unique:proveedores,cuit,'.$this->proveedor_id.',id_proveedor'
+                : 'required|digits:11|unique:proveedores,cuit',
+            'direccion' => 'required',
+            'telefono' => 'nullable|string',
+            'email' => 'nullable|email',
+        ];
+    }
 
     protected $messages = [
         'razon_social.required' => 'La razón social es obligatoria.',

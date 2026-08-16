@@ -18,9 +18,14 @@ class RolesLaborales extends Component
 
     public $tab_activo = 'listado';
 
-    protected $rules = [
-        'nombre' => 'required|min:3|unique:roles_laborales,nombre',
-    ];
+    protected function rules(): array
+    {
+        return [
+            'nombre' => $this->rol_id
+                ? 'required|min:3|unique:roles_laborales,nombre,'.$this->rol_id.',id_rol_laboral'
+                : 'required|min:3|unique:roles_laborales,nombre',
+        ];
+    }
 
     protected $messages = [
         'nombre.required' => 'El nombre es obligatorio.',

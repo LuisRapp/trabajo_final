@@ -20,10 +20,15 @@ class UnidadesMedida extends Component
 
     public $tab_activo = 'listado';
 
-    protected $rules = [
-        'nombre' => 'required|min:2|unique:unidad_medidas,nombre',
-        'abreviatura' => 'required|max:10',
-    ];
+    protected function rules(): array
+    {
+        return [
+            'nombre' => $this->unidad_id
+                ? 'required|min:2|unique:unidad_medidas,nombre,'.$this->unidad_id.',id_unidad_medida'
+                : 'required|min:2|unique:unidad_medidas,nombre',
+            'abreviatura' => 'required|max:10',
+        ];
+    }
 
     protected $messages = [
         'nombre.required' => 'El nombre es obligatorio.',

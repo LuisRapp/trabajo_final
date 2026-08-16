@@ -39,7 +39,7 @@ test('puede crear un cliente', function () {
     expect(Cliente::where('cuit', '30112233445')->exists())->toBeTrue();
 });
 
-test('puede editar un cliente', function () {
+test('puede editar un cliente manteniendo el cuit', function () {
     $user = Usuario::factory()->create();
     $cliente = Cliente::factory()->create(['razon_social' => 'Viejo Nombre']);
 
@@ -47,7 +47,7 @@ test('puede editar un cliente', function () {
         ->test(Clientes::class)
         ->call('editar', $cliente->id_cliente)
         ->set('razon_social', 'Nuevo Nombre')
-        ->set('cuit', '30999888776')
+        ->set('cuit', $cliente->cuit)
         ->set('direccion', $cliente->direccion)
         ->set('contacto', $cliente->contacto)
         ->call('guardar')

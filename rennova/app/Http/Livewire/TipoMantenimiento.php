@@ -18,9 +18,14 @@ class TipoMantenimiento extends Component
 
     public $tab_activo = 'listado';
 
-    protected $rules = [
-        'nombre' => 'required|min:3|unique:tipo_mantenimientos,nombre',
-    ];
+    protected function rules(): array
+    {
+        return [
+            'nombre' => $this->tipo_id
+                ? 'required|min:3|unique:tipo_mantenimientos,nombre,'.$this->tipo_id.',id_tipo_mantenimiento'
+                : 'required|min:3|unique:tipo_mantenimientos,nombre',
+        ];
+    }
 
     protected $messages = [
         'nombre.required' => 'El nombre es obligatorio.',

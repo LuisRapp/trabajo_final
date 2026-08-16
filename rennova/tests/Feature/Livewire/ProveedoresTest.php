@@ -40,7 +40,7 @@ test('puede crear un proveedor', function () {
     expect(Proveedor::where('cuit', '30112233445')->exists())->toBeTrue();
 });
 
-test('puede editar un proveedor', function () {
+test('puede editar un proveedor manteniendo el cuit', function () {
     $user = Usuario::factory()->create();
     $proveedor = Proveedor::factory()->create(['razon_social' => 'Viejo Nombre']);
 
@@ -48,7 +48,7 @@ test('puede editar un proveedor', function () {
         ->test(Proveedores::class)
         ->call('editar', $proveedor->id_proveedor)
         ->set('razon_social', 'Nuevo Nombre')
-        ->set('cuit', '30999888776')
+        ->set('cuit', $proveedor->cuit)
         ->set('direccion', $proveedor->direccion)
         ->set('telefono', $proveedor->telefono)
         ->set('email', $proveedor->email)

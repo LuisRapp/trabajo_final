@@ -13,7 +13,7 @@ class ProveedorFactory extends Factory
     {
         return [
             'razon_social' => $this->faker->company(),
-            'cuit' => $this->faker->unique()->numerify('##-########-#'),
+            'cuit' => $this->faker->unique()->numerify('###########'),
             'direccion' => $this->faker->address(),
             'telefono' => $this->faker->unique()->numerify('11-########'),
             'email' => $this->faker->unique()->safeEmail(),

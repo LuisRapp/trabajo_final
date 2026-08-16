@@ -20,10 +20,15 @@ class CategoriasMadera extends Component
 
     public $tab_activo = 'listado';
 
-    protected $rules = [
-        'nombre' => 'required|min:3|unique:categoria_maderas,nombre',
-        'descripcion' => 'nullable|string',
-    ];
+    protected function rules(): array
+    {
+        return [
+            'nombre' => $this->categoria_id
+                ? 'required|min:3|unique:categoria_maderas,nombre,'.$this->categoria_id.',id_categoria_madera'
+                : 'required|min:3|unique:categoria_maderas,nombre',
+            'descripcion' => 'nullable|string',
+        ];
+    }
 
     protected $messages = [
         'nombre.required' => 'El nombre es obligatorio.',

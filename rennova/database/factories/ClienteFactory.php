@@ -13,7 +13,7 @@ class ClienteFactory extends Factory
     {
         return [
             'razon_social' => $this->faker->company(),
-            'cuit' => $this->faker->unique()->numerify('##-########-#'),
+            'cuit' => $this->faker->unique()->numerify('###########'),
             'direccion' => $this->faker->address(),
             'contacto' => $this->faker->name(),
         ];

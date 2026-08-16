@@ -24,12 +24,17 @@ class Clientes extends Component
 
     public $tab_activo = 'listado';
 
-    protected $rules = [
-        'razon_social' => 'required|min:3',
-        'cuit' => 'required|digits:11|unique:clientes,cuit',
-        'direccion' => 'required',
-        'contacto' => 'nullable|string',
-    ];
+    protected function rules(): array
+    {
+        return [
+            'razon_social' => 'required|min:3',
+            'cuit' => $this->cliente_id
+                ? 'required|digits:11|unique:clientes,cuit,'.$this->cliente_id.',id_cliente'
+                : 'required|digits:11|unique:clientes,cuit',
+            'direccion' => 'required',
+            'contacto' => 'nullable|string',
+        ];
+    }
 
     protected $messages = [
         'razon_social.required' => 'La razón social es obligatoria.',
