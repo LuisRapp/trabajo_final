@@ -69,6 +69,7 @@ class RolesAndPermissionsSeeder extends Seeder
         Permission::firstOrCreate(['name' => 'gestionar-usuarios', 'guard_name' => 'web']);
         Permission::firstOrCreate(['name' => 'configurar-notificaciones-mantenimiento', 'guard_name' => 'web']);
         Permission::firstOrCreate(['name' => 'confirmar-mantenimiento', 'guard_name' => 'web']);
+        Permission::firstOrCreate(['name' => 'completar-mantenimiento', 'guard_name' => 'web']);
         Permission::firstOrCreate(['name' => 'reprogramar-mantenimiento', 'guard_name' => 'web']);
         Permission::firstOrCreate(['name' => 'configurar-mantenimiento', 'guard_name' => 'web']);
 
@@ -104,6 +105,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'crear-cargas', 'editar-cargas',
             'crear-lotes', 'editar-lotes',
             'crear-mantenimientos', 'editar-mantenimientos',
+            'confirmar-mantenimiento', 'completar-mantenimiento',
             'crear-insumos', 'editar-insumos',
             'crear-empleados', 'editar-empleados',
             'crear-adelantos', 'editar-adelantos',
@@ -121,6 +123,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'ver-lotes',
             'ver-maquinarias',
             'ver-mantenimientos', 'crear-mantenimientos',
+            'confirmar-mantenimiento', 'completar-mantenimiento',
             'ver-insumos',
             'ver-empleados',
             'ver-choferes',

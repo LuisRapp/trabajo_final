@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\AdelantoController;
-use App\Http\Controllers\AuditoriaController;
 use App\Http\Controllers\CargaController;
 use App\Http\Controllers\CategoriaMaderaController;
 use App\Http\Controllers\ChoferController;
@@ -23,7 +22,6 @@ use App\Http\Controllers\UnidadMedidaController;
 use App\Http\Controllers\UsuarioController;
 use App\Http\Controllers\VentaController;
 use Illuminate\Support\Facades\Route;
-// use App\Http\Controllers\KitInsumoController;
 // Livewire ABMs
 use Laravel\Fortify\Features;
 use Livewire\Volt\Volt;
@@ -93,8 +91,12 @@ Route::middleware(['auth'])->group(function () {
 
     // Mantenimientos - Componente Livewire y endpoints de gestión
     Route::view('/mantenimientos', 'mantenimientos.index')->name('mantenimientos.index');
-    Route::post('/mantenimientos/{id}/approve', [MantenimientoController::class, 'approve'])->name('mantenimientos.approve');
-    Route::post('/mantenimientos/{id}/complete', [MantenimientoController::class, 'complete'])->name('mantenimientos.complete');
+    Route::post('/mantenimientos/{id}/aprobar', [MantenimientoController::class, 'aprobar'])
+        ->middleware(['permission:confirmar-mantenimiento'])
+        ->name('mantenimientos.aprobar');
+    Route::post('/mantenimientos/{id}/completar', [MantenimientoController::class, 'completar'])
+        ->middleware(['permission:completar-mantenimiento'])
+        ->name('mantenimientos.completar');
 
     // Configuración de Notificaciones de Mantenimiento
     Route::view('/configuracion-notificaciones-mantenimiento', 'configuracion-notificaciones.index')
@@ -127,7 +129,7 @@ Route::middleware(['auth'])->group(function () {
     Route::view('/lista-precios', 'lista-precios.index')->name('lista-precios.index');
 
     // Auditorías
-    Route::get('/auditorias', [AuditoriaController::class, 'index'])->name('auditorias.index');
+    Route::view('/auditorias', 'auditorias.index')->name('auditorias.index');
 
     // Reportes - Estadísticas Forestales
     Route::get('/reportes/estadisticas-forestales', [ReporteController::class, 'estadisticasForestales'])->name('reportes.estadisticas-forestales');
@@ -141,7 +143,7 @@ Route::middleware(['auth'])->group(function () {
     Route::view('/asignaciones-lote', 'asignaciones-lote.index')->name('asignaciones-lote.index');
 
     // Propuestas automáticas de asignación (basadas en histórico)
-    Route::view('/propuestas-asignacion', 'allocation-proposals.index')->name('allocation-proposals.index');
+    Route::view('/propuestas-asignacion', 'propuestas-asignacion.index')->name('propuestas-asignacion.index');
 
     // Gestión de Stock (FIFO) dentro del módulo Operaciones
     Route::view('/modulos/operaciones/gestionstock', 'modulos.operaciones.gestionstock')->name('modulos.operaciones.gestionstock');

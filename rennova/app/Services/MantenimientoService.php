@@ -7,7 +7,6 @@ use App\Models\KitMantenimientoPreventivo;
 use App\Models\Mantenimiento;
 use App\Models\MantenimientoInsumo;
 use App\Models\Maquinaria;
-use App\Models\MovimientoStock;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -76,63 +75,125 @@ class MantenimientoService
     }
 
     /**
-     * Complete a maintenance order: deduct inputs, calculate costs, update snapshot.
+     * Approve a preventive maintenance order: verify stock and change status.
      *
-     * For each input used:
-     * - Registers a stock exit movement
-     * - Creates a MantenimientoInsumo record with cost
-     * Updates the maintenance order status to 'completado' with final costs
-     * and a machinery tonnage snapshot.
+     * Runs inside a DB transaction. Only orders in 'programado' state can be approved.
+     *
+     * @param  int  $mantenimientoId  The maintenance order ID to approve
+     * @return array{success: bool, mantenimiento?: \App\Models\Mantenimiento, message?: string, insumos_insuficientes?: array}
+     */
+    public function aprobarMantenimiento(int $mantenimientoId): array
+    {
+        DB::beginTransaction();
+
+        try {
+            $mantenimiento = Mantenimiento::lockForUpdate()->findOrFail($mantenimientoId);
+
+            if ($mantenimiento->estado !== 'programado') {
+                DB::rollBack();
+
+                return [
+                    'success' => false,
+                    'message' => 'Solo se pueden aprobar órdenes en estado "programado"',
+                ];
+            }
+
+            $verificacion = $this->verificarStockParaAprobacion($mantenimientoId);
+
+            if (! $verificacion['puede_aprobar']) {
+                DB::rollBack();
+
+                return [
+                    'success' => false,
+                    'message' => 'No hay stock suficiente para aprobar esta orden',
+                    'insumos_insuficientes' => $verificacion['insuficientes'],
+                ];
+            }
+
+            $mantenimiento->update([
+                'estado' => 'en curso',
+            ]);
+
+            DB::commit();
+
+            Log::info('Orden de mantenimiento aprobada', [
+                'mantenimiento_id' => $mantenimientoId,
+                'maquinaria_id' => $mantenimiento->id_maquinaria,
+            ]);
+
+            return [
+                'success' => true,
+                'mantenimiento' => $mantenimiento->fresh(),
+            ];
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error aprobando mantenimiento', [
+                'mantenimiento_id' => $mantenimientoId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return [
+                'success' => false,
+                'message' => 'Error al aprobar la orden: '.$e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Complete a maintenance order: validate stock, deduct inputs, calculate costs, update snapshot.
+     *
+     * Runs inside a DB transaction. Fails if any input has insufficient stock.
      *
      * @param  int  $mantenimientoId  The maintenance order ID to complete
      * @param  array  $insumos  Array of inputs used: [{id_insumo, cantidad_utilizada, costo_unitario?}]
      * @param  float  $costoManoObra  Labor cost for this maintenance
      * @return array{success: bool, mantenimiento?: \App\Models\Mantenimiento, costo_total?: float, message?: string}
-     *
-     * @warning Runs inside a DB transaction. On failure, all changes are rolled back.
      */
-    public function completarMantenimiento($mantenimientoId, array $insumos, $costoManoObra = 0)
+    public function completarMantenimiento(int $mantenimientoId, array $insumos, float $costoManoObra = 0): array
     {
         DB::beginTransaction();
+
         try {
-            $mantenimiento = Mantenimiento::with('maquinaria')->findOrFail($mantenimientoId);
+            $mantenimiento = Mantenimiento::with('maquinaria')->lockForUpdate()->findOrFail($mantenimientoId);
+
+            if ($mantenimiento->estado === 'completado') {
+                DB::rollBack();
+
+                return [
+                    'success' => false,
+                    'message' => 'Este mantenimiento ya está completado',
+                ];
+            }
 
             $costoInsumos = 0;
 
             foreach ($insumos as $insumoData) {
                 $insumo = Insumo::findOrFail($insumoData['id_insumo']);
                 $cantidadUsada = (float) ($insumoData['cantidad_utilizada'] ?? 0);
-                $costoUnitario = isset($insumoData['costo_unitario'])
-                    ? (float) $insumoData['costo_unitario']
-                    : (float) $insumo->costo_unitario;
-                $subtotal = $cantidadUsada * $costoUnitario;
 
-                $stockDisponible = $insumo->stock;
+                $stockDisponible = InventarioService::stockDisponible($insumo->id_insumo);
 
-                if ($stockDisponible >= $cantidadUsada) {
-                    MovimientoStock::create([
-                        'id_insumo' => $insumo->id_insumo,
-                        'tipo' => 'salida',
-                        'cantidad' => $cantidadUsada,
-                        'motivo' => "Mantenimiento ID: {$mantenimientoId}",
-                        'fecha' => now(),
-                    ]);
-                } else {
-                    Log::warning('Stock insuficiente al completar mantenimiento', [
-                        'mantenimiento_id' => $mantenimientoId,
-                        'insumo' => $insumo->nombre,
-                        'requerido' => $cantidadUsada,
-                        'disponible' => $stockDisponible,
-                    ]);
+                if ($stockDisponible < $cantidadUsada) {
+                    DB::rollBack();
 
-                    MovimientoStock::create([
-                        'id_insumo' => $insumo->id_insumo,
-                        'tipo' => 'salida',
-                        'cantidad' => $cantidadUsada,
-                        'motivo' => "Mantenimiento ID: {$mantenimientoId} (STOCK INSUFICIENTE)",
-                        'fecha' => now(),
-                    ]);
+                    return [
+                        'success' => false,
+                        'message' => "Stock insuficiente para {$insumo->nombre}. Disponible: {$stockDisponible}, requerido: {$cantidadUsada}",
+                    ];
                 }
+
+                $resultadoSalida = InventarioService::registrarSalida(
+                    $insumo->id_insumo,
+                    $cantidadUsada,
+                    "Mantenimiento ID: {$mantenimientoId}",
+                    now()->toDateString()
+                );
+
+                $costoUnitario = $cantidadUsada > 0
+                    ? $resultadoSalida['costo_total'] / $cantidadUsada
+                    : 0;
+                $subtotal = $resultadoSalida['costo_total'];
 
                 MantenimientoInsumo::create([
                     'id_mantenimiento' => $mantenimientoId,
@@ -180,7 +241,7 @@ class MantenimientoService
 
             return [
                 'success' => false,
-                'message' => $e->getMessage(),
+                'message' => 'Error al completar el mantenimiento: '.$e->getMessage(),
             ];
         }
     }

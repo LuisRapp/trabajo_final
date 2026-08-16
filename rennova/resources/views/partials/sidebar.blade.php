@@ -164,7 +164,7 @@
                 <a href="{{ route('asignaciones-lote.index') }}" class="sidebar-link {{ $esActiva('asignaciones-lote.index') ? 'active' : '' }}"><span class="inline-flex items-center gap-1.5"><flux:icon.link class="size-3.5" /> Asignaciones por Lote</span></a>
                 @endcan
                 @can('ver-propuestas-asignacion')
-                <a href="{{ route('allocation-proposals.index') }}" class="sidebar-link {{ $esActiva('allocation-proposals.index') ? 'active' : '' }}"><span class="inline-flex items-center gap-1.5"><flux:icon.sparkles class="size-3.5" /> Propuestas Automáticas</span></a>
+                <a href="{{ route('propuestas-asignacion.index') }}" class="sidebar-link {{ $esActiva('propuestas-asignacion.index') ? 'active' : '' }}"><span class="inline-flex items-center gap-1.5"><flux:icon.sparkles class="size-3.5" /> Propuestas Automáticas</span></a>
                 @endcan
             </div>
         </div>
