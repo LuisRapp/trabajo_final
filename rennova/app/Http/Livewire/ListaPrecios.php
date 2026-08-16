@@ -32,6 +32,8 @@ class ListaPrecios extends Component
 
     public $busqueda = '';
 
+    public $tab_activo = 'listado';
+
     public $mostrar_historico = false; // Toggle para mostrar/ocultar historial
 
     protected function rules()

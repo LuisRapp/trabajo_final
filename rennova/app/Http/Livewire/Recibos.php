@@ -27,6 +27,8 @@ class Recibos extends Component
 
     public $busqueda = '';
 
+    public $tab_activo = 'listado';
+
     public $empleados;
 
     protected $rules = [
