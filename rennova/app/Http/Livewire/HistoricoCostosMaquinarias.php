@@ -25,6 +25,8 @@ class HistoricoCostosMaquinarias extends Component
 
     public $busqueda = '';
 
+    public $tab_activo = 'listado';
+
     protected $rules = [
         'id_maquinaria' => 'required|exists:maquinarias,id_maquinaria',
         'costo_por_tonelada' => 'required|numeric|min:0',
@@ -91,6 +93,7 @@ class HistoricoCostosMaquinarias extends Component
         );
 
         session()->flash('message', $this->historico_id ? 'Histórico actualizado correctamente.' : 'Histórico creado correctamente.');
+        $this->tab_activo = 'listado';
         $this->resetCampos();
         $this->dispatch('historicoGuardado');
     }
@@ -98,6 +101,7 @@ class HistoricoCostosMaquinarias extends Component
     public function editar($id)
     {
         $historico = HistoricoCostosMaquinaria::findOrFail($id);
+        $this->tab_activo = 'nuevo';
         $this->historico_id = $historico->id_costo;
         $this->id_maquinaria = $historico->id_maquinaria;
         $this->costo_por_tonelada = $historico->costo_por_tonelada;

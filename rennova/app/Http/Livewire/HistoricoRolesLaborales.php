@@ -11,7 +11,7 @@ class HistoricoRolesLaborales extends Component
 {
     use WithPagination;
 
-    public $roles = [];
+    public $rolesLaborales = [];
 
     public $historico_id;
 
@@ -28,6 +28,8 @@ class HistoricoRolesLaborales extends Component
     public $motivo_cambio;
 
     public $busqueda = '';
+
+    public $tab_activo = 'listado';
 
     protected $rules = [
         'rol_laboral_id' => 'required|exists:roles_laborales,id_rol_laboral',
@@ -48,7 +50,7 @@ class HistoricoRolesLaborales extends Component
 
     public function mount()
     {
-        $this->roles = RolLaboral::orderBy('nombre')->get();
+        $this->rolesLaborales = RolLaboral::orderBy('nombre')->get();
     }
 
     public function cargarHistoricos()
@@ -101,6 +103,7 @@ class HistoricoRolesLaborales extends Component
         );
 
         session()->flash('message', $this->historico_id ? 'Histórico actualizado correctamente.' : 'Histórico creado correctamente.');
+        $this->tab_activo = 'listado';
         $this->resetCampos();
         $this->dispatch('historicoGuardado');
     }
@@ -108,6 +111,7 @@ class HistoricoRolesLaborales extends Component
     public function editar($id)
     {
         $historico = HistoricoRolLaboral::findOrFail($id);
+        $this->tab_activo = 'nuevo';
         $this->historico_id = $historico->id;
         $this->rol_laboral_id = $historico->rol_laboral_id;
         $this->precio_tonelada = $historico->precio_tonelada;

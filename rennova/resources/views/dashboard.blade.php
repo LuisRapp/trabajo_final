@@ -1,150 +1,152 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="w-full py-6 px-4 sm:px-6 lg:px-8">
         {{-- Header --}}
-        <div class="mb-8">
-            <h1 class="text-3xl font-bold text-slate-900">Panel de Control</h1>
-            <p class="mt-2 text-slate-600">Bienvenido/a, {{ auth()->user()->name }}</p>
+        <div class="mb-6">
+            <h1 class="text-2xl font-bold text-tinta flex items-center gap-2">
+                <flux:icon.squares-2x2 class="size-6 text-pino" />
+                Panel de Control
+            </h1>
+            <p class="mt-1 text-sm text-tinta-suave">Bienvenido/a, {{ auth()->user()->name }}</p>
         </div>
+
+        {{-- Pronóstico del tiempo por lote --}}
+        <livewire:selector-lote />
 
         {{-- Alerta si no hay lotes activos --}}
         @if(!$hayLotesActivos)
-            <div class="mb-8 bg-yellow-50 border-l-4 border-yellow-400 p-6 rounded-lg shadow-sm">
-                <div class="flex items-start gap-4">
-                    <div class="flex-shrink-0">
-                        <flux:icon.exclamation-triangle class="size-6 text-yellow-600" />
+            <x-ui.alert variant="warning" class="mb-6">
+                <div class="flex flex-col gap-3">
+                    <div>
+                        <h3 class="text-sm font-semibold">No hay lotes activos</h3>
+                        <p class="text-xs mt-1">Creá un lote para comenzar a gestionar operaciones forestales.</p>
                     </div>
-                    <div class="flex-1">
-                        <h3 class="text-lg font-semibold text-yellow-800">No hay lotes activos</h3>
-                        <p class="mt-1 text-yellow-700">Creá un lote para comenzar a gestionar operaciones forestales.</p>
-                        <a href="{{ route('lotes.index') }}" class="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-sm font-medium transition-colors">
-                            <flux:icon.plus class="size-4" />
-                            Crear lote
-                        </a>
-                    </div>
+                    <x-ui.button href="{{ route('lotes.index') }}" icon="plus" size="sm" class="w-fit">
+                        Crear lote
+                    </x-ui.button>
                 </div>
-            </div>
+            </x-ui.alert>
         @endif
 
         {{-- Métricas --}}
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
             {{-- Toneladas Extraídas (Mes) --}}
-            <div class="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="p-3 bg-emerald-100 rounded-lg">
-                        <flux:icon.scale class="size-6 text-emerald-600" />
+            <x-ui.card class="p-5">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="p-2.5 rounded-sm bg-musgo-suave text-musgo">
+                        <flux:icon.scale class="size-5" />
                     </div>
                 </div>
-                <h3 class="text-sm font-medium text-slate-600">Toneladas Extraídas (Mes)</h3>
-                <p class="mt-2 text-3xl font-bold text-slate-900">{{ number_format($toneladasExtraidas, 1) }} <span class="text-lg font-normal text-slate-500">TN</span></p>
-            </div>
+                <p class="text-xs font-medium text-tinta-suave">Toneladas Extraídas (Mes)</p>
+                <p class="mt-1 text-2xl font-bold text-tinta">{{ number_format($toneladasExtraidas, 1) }} <span class="text-sm font-normal text-tinta-suave">TN</span></p>
+            </x-ui.card>
 
             {{-- Cargas del Mes --}}
-            <div class="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="p-3 bg-blue-100 rounded-lg">
-                        <flux:icon.truck class="size-6 text-blue-600" />
+            <x-ui.card class="p-5">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="p-2.5 rounded-sm bg-pino-suave text-pino">
+                        <flux:icon.truck class="size-5" />
                     </div>
                 </div>
-                <h3 class="text-sm font-medium text-slate-600">Cargas del Mes</h3>
-                <p class="mt-2 text-3xl font-bold text-slate-900">{{ number_format($cargasMes) }}</p>
-            </div>
+                <p class="text-xs font-medium text-tinta-suave">Cargas del Mes</p>
+                <p class="mt-1 text-2xl font-bold text-tinta">{{ number_format($cargasMes) }}</p>
+            </x-ui.card>
 
             {{-- Días Operativos (Mes) --}}
-            <div class="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="p-3 bg-amber-100 rounded-lg">
-                        <flux:icon.calendar class="size-6 text-amber-600" />
+            <x-ui.card class="p-5">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="p-2.5 rounded-sm bg-resina-suave text-resina">
+                        <flux:icon.calendar class="size-5" />
                     </div>
                 </div>
-                <h3 class="text-sm font-medium text-slate-600">Días Operativos (Mes)</h3>
-                <p class="mt-2 text-3xl font-bold text-slate-900">{{ number_format($diasOperativos) }}</p>
-            </div>
+                <p class="text-xs font-medium text-tinta-suave">Días Operativos (Mes)</p>
+                <p class="mt-1 text-2xl font-bold text-tinta">{{ number_format($diasOperativos) }}</p>
+            </x-ui.card>
 
             {{-- Costo Promedio por TN --}}
-            <div class="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="p-3 bg-rose-100 rounded-lg">
-                        <flux:icon.banknotes class="size-6 text-rose-600" />
+            <x-ui.card class="p-5">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="p-2.5 rounded-sm bg-tierra-suave text-tierra">
+                        <flux:icon.banknotes class="size-5" />
                     </div>
                 </div>
-                <h3 class="text-sm font-medium text-slate-600">Costo Prom. por TN (Mes)</h3>
-                <p class="mt-2 text-3xl font-bold text-slate-900">${{ number_format($costoPromedioTn, 2) }}</p>
-            </div>
+                <p class="text-xs font-medium text-tinta-suave">Costo Prom. por TN (Mes)</p>
+                <p class="mt-1 text-2xl font-bold text-tinta">${{ number_format($costoPromedioTn, 2) }}</p>
+            </x-ui.card>
 
             {{-- Precio Venta Promedio por TN --}}
-            <div class="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="p-3 bg-green-100 rounded-lg">
-                        <flux:icon.tag class="size-6 text-green-600" />
+            <x-ui.card class="p-5">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="p-2.5 rounded-sm bg-musgo-suave text-musgo">
+                        <flux:icon.tag class="size-5" />
                     </div>
                 </div>
-                <h3 class="text-sm font-medium text-slate-600">Precio Venta Prom. por TN (Mes)</h3>
-                <p class="mt-2 text-3xl font-bold text-slate-900">${{ number_format($precioVentaPromedioTn, 2) }}</p>
-            </div>
+                <p class="text-xs font-medium text-tinta-suave">Precio Venta Prom. por TN (Mes)</p>
+                <p class="mt-1 text-2xl font-bold text-tinta">${{ number_format($precioVentaPromedioTn, 2) }}</p>
+            </x-ui.card>
 
             {{-- Mantenimientos Pendientes --}}
-            <div class="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="p-3 bg-purple-100 rounded-lg">
-                        <flux:icon.wrench class="size-6 text-purple-600" />
+            <x-ui.card class="p-5">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="p-2.5 rounded-sm bg-resina-suave text-resina">
+                        <flux:icon.wrench class="size-5" />
                     </div>
                 </div>
-                <h3 class="text-sm font-medium text-slate-600">Mantenimientos Pendientes</h3>
-                <p class="mt-2 text-3xl font-bold text-slate-900">{{ number_format($mantenimientosPendientes) }}</p>
-            </div>
+                <p class="text-xs font-medium text-tinta-suave">Mantenimientos Pendientes</p>
+                <p class="mt-1 text-2xl font-bold text-tinta">{{ number_format($mantenimientosPendientes) }}</p>
+            </x-ui.card>
         </div>
 
         {{-- Accesos Rápidos --}}
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <a href="{{ route('maquinarias.index') }}" class="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 p-6 group">
-                <div class="flex items-center gap-4">
-                    <div class="p-3 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
-                        <flux:icon.truck class="size-6 text-blue-600" />
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <x-ui.card class="p-5 hover:bg-corteza-suave transition-colors">
+                <a href="{{ route('maquinarias.index') }}" class="flex items-center gap-4 no-underline text-tinta">
+                    <div class="p-2.5 rounded-sm bg-pino-suave text-pino">
+                        <flux:icon.truck class="size-5" />
                     </div>
                     <div>
-                        <h3 class="font-semibold text-slate-900">Gestión de Maquinaria</h3>
-                        <p class="text-sm text-slate-600">Administrar equipos</p>
+                        <h3 class="font-semibold text-sm">Gestión de Maquinaria</h3>
+                        <p class="text-xs text-tinta-suave">Administrar equipos</p>
                     </div>
-                </div>
-            </a>
+                </a>
+            </x-ui.card>
 
-            <a href="{{ route('insumos.index') }}" class="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 p-6 group">
-                <div class="flex items-center gap-4">
-                    <div class="p-3 bg-amber-100 rounded-lg group-hover:bg-amber-200 transition-colors">
-                        <flux:icon.cube class="size-6 text-amber-600" />
+            <x-ui.card class="p-5 hover:bg-corteza-suave transition-colors">
+                <a href="{{ route('insumos.index') }}" class="flex items-center gap-4 no-underline text-tinta">
+                    <div class="p-2.5 rounded-sm bg-resina-suave text-resina">
+                        <flux:icon.cube class="size-5" />
                     </div>
                     <div>
-                        <h3 class="font-semibold text-slate-900">Control de Inventario</h3>
-                        <p class="text-sm text-slate-600">Gestionar insumos</p>
+                        <h3 class="font-semibold text-sm">Control de Inventario</h3>
+                        <p class="text-xs text-tinta-suave">Gestionar insumos</p>
                     </div>
-                </div>
-            </a>
+                </a>
+            </x-ui.card>
 
-            <a href="{{ route('partes-diarios.index') }}" class="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 p-6 group">
-                <div class="flex items-center gap-4">
-                    <div class="p-3 bg-emerald-100 rounded-lg group-hover:bg-emerald-200 transition-colors">
-                        <flux:icon.clipboard-document-list class="size-6 text-emerald-600" />
+            <x-ui.card class="p-5 hover:bg-corteza-suave transition-colors">
+                <a href="{{ route('partes-diarios.index') }}" class="flex items-center gap-4 no-underline text-tinta">
+                    <div class="p-2.5 rounded-sm bg-musgo-suave text-musgo">
+                        <flux:icon.clipboard-document-list class="size-5" />
                     </div>
                     <div>
-                        <h3 class="font-semibold text-slate-900">Partes Diarios</h3>
-                        <p class="text-sm text-slate-600">Registrar operaciones</p>
+                        <h3 class="font-semibold text-sm">Partes Diarios</h3>
+                        <p class="text-xs text-tinta-suave">Registrar operaciones</p>
                     </div>
-                </div>
-            </a>
+                </a>
+            </x-ui.card>
 
-            <a href="{{ route('liquidacion-pagos.index') }}" class="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 p-6 group">
-                <div class="flex items-center gap-4">
-                    <div class="p-3 bg-rose-100 rounded-lg group-hover:bg-rose-200 transition-colors">
-                        <flux:icon.calculator class="size-6 text-rose-600" />
+            <x-ui.card class="p-5 hover:bg-corteza-suave transition-colors">
+                <a href="{{ route('liquidacion-pagos.index') }}" class="flex items-center gap-4 no-underline text-tinta">
+                    <div class="p-2.5 rounded-sm bg-tierra-suave text-tierra">
+                        <flux:icon.calculator class="size-5" />
                     </div>
                     <div>
-                        <h3 class="font-semibold text-slate-900">Liquidaciones</h3>
-                        <p class="text-sm text-slate-600">Gestionar pagos</p>
+                        <h3 class="font-semibold text-sm">Liquidaciones</h3>
+                        <p class="text-xs text-tinta-suave">Gestionar pagos</p>
                     </div>
-                </div>
-            </a>
+                </a>
+            </x-ui.card>
         </div>
     </div>
 @endsection

@@ -28,6 +28,8 @@ class Auditorias extends Component
 
     public $perPage = 20;
 
+    public $modalDetalle = null;
+
     protected $queryString = [
         'busqueda' => ['except' => ''],
         'filtroModelo' => ['except' => ''],
