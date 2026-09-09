@@ -149,7 +149,7 @@ class PropuestaAsignacionService
         }
 
         if ($lote->estado === 'inactivo') {
-            return ['proposals' => [], 'error' => 'El lote está inactivo. Activá el lote para generar recomendaciones.'];
+            return ['proposals' => [], 'error' => 'El lote está inactivo. Activá el lote para generar propuestas de asignación.'];
         }
 
         try {
@@ -170,12 +170,12 @@ class PropuestaAsignacionService
             $proposals = self::cargar($loteId);
 
             if (empty($proposals)) {
-                return ['proposals' => [], 'error' => 'No se generaron recomendaciones. Planificá tareas o intentá nuevamente.'];
+                return ['proposals' => [], 'error' => 'No se generaron propuestas de asignación. Planificá tareas o intentá nuevamente.'];
             }
 
             return ['proposals' => $proposals, 'error' => null];
         } catch (\Throwable $e) {
-            return ['proposals' => [], 'error' => 'No se pudieron generar las recomendaciones.'];
+            return ['proposals' => [], 'error' => 'No se pudieron generar las propuestas de asignación.'];
         }
     }
 
@@ -279,7 +279,7 @@ class PropuestaAsignacionService
                 'error' => null,
             ];
         } catch (\Throwable $e) {
-            \Log::error('Error en confirmarRecomendacion: '.$e->getMessage(), [
+            \Log::error('Error al confirmar la propuesta: '.$e->getMessage(), [
                 'proposalId' => $proposalId,
                 'exception' => get_class($e),
                 'trace' => $e->getTraceAsString(),
@@ -288,7 +288,7 @@ class PropuestaAsignacionService
             return [
                 'requiresReview' => false,
                 'reviewMessage' => null,
-                'error' => 'No se pudo aplicar la recomendación. Intente nuevamente o contacte al administrador.',
+                'error' => 'No se pudo aplicar la propuesta. Intente nuevamente o contacte al administrador.',
             ];
         }
     }
@@ -306,11 +306,11 @@ class PropuestaAsignacionService
     {
         $proposal = PropuestaAsignacion::find((int) $proposalId);
         if (! $proposal) {
-            return ['error' => 'No se encontró la recomendación seleccionada.'];
+            return ['error' => 'No se encontró la propuesta seleccionada.'];
         }
 
         if ($proposal->status === 'applied') {
-            return ['error' => 'No se pueden editar recomendaciones que ya han sido aplicadas.'];
+            return ['error' => 'No se pueden editar propuestas que ya han sido aplicadas.'];
         }
 
         // Validate that selected employees are not already assigned to other applied proposals
@@ -364,7 +364,7 @@ class PropuestaAsignacionService
 
             return ['error' => null];
         } catch (\Throwable $e) {
-            return ['error' => 'Error al actualizar la recomendación. Intente nuevamente o contacte al administrador.'];
+            return ['error' => 'Error al actualizar la propuesta. Intente nuevamente o contacte al administrador.'];
         }
     }
 
@@ -377,19 +377,19 @@ class PropuestaAsignacionService
     {
         $proposal = PropuestaAsignacion::find($proposalId);
         if (! $proposal) {
-            return ['error' => 'No se encontró la recomendación seleccionada.', 'message' => null];
+            return ['error' => 'No se encontró la propuesta seleccionada.', 'message' => null];
         }
 
         if ($proposal->status !== 'draft') {
-            return ['error' => 'Solo se pueden eliminar recomendaciones en borrador.', 'message' => null];
+            return ['error' => 'Solo se pueden eliminar propuestas en borrador.', 'message' => null];
         }
 
         try {
             $proposal->delete();
 
-            return ['error' => null, 'message' => 'Recomendación eliminada correctamente.'];
+            return ['error' => null, 'message' => 'Propuesta eliminada correctamente.'];
         } catch (\Throwable $e) {
-            return ['error' => 'No se pudo eliminar la recomendación.', 'message' => null];
+            return ['error' => 'No se pudo eliminar la propuesta.', 'message' => null];
         }
     }
 
@@ -411,17 +411,17 @@ class PropuestaAsignacionService
                 ->delete();
 
             if ($count > 0) {
-                return ['error' => null, 'message' => "Se eliminaron {$count} recomendación(es) en borrador."];
+                return ['error' => null, 'message' => "Se eliminaron {$count} propuesta(s) en borrador."];
             }
 
-            return ['error' => null, 'message' => 'No hay recomendaciones en borrador para eliminar.'];
+            return ['error' => null, 'message' => 'No hay propuestas en borrador para eliminar.'];
         } catch (\Throwable $e) {
-            return ['error' => 'No se pudieron eliminar las recomendaciones.', 'message' => null];
+            return ['error' => 'No se pudieron eliminar las propuestas.', 'message' => null];
         }
     }
 
     // =========================================================================
-    // Public static helpers (shared across Lotes, LaunchpadModal, services)
+    // Public static helpers (shared across AllocationProposals, services)
     // =========================================================================
 
     /**

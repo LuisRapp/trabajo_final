@@ -1,8 +1,9 @@
 <div>
-    <div class="mx-auto max-w-7xl px-4 py-8" x-data="{ tab: 'listado' }">
-    <div class="mb-8 flex items-center justify-between">
-        <h1 class="flex items-center gap-2 text-3xl font-bold text-slate-800">
-            📍 Lotes
+    <div class="w-full" x-data="{ tab: 'listado' }">
+    <div class="mb-6 flex items-center justify-between">
+        <h1 class="flex items-center gap-2 text-2xl font-bold text-tinta">
+            <flux:icon.map-pin class="size-6" />
+            Lotes
         </h1>
     </div>
 
@@ -11,222 +12,215 @@
     <div class="mb-6 flex gap-0">
         @canany(['crear-lotes', 'editar-lotes'])
         <button type="button" @click="tab = 'nuevo'; $wire.$refresh()"
-            class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border border-r-0 rounded-l-lg transition-all"
-            :class="tab === 'nuevo' ? 'text-white bg-brand border-brand' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'">
-            ➕ Nuevo Lote
+            class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border border-r-0 rounded-l-sm transition-all"
+            :class="tab === 'nuevo' ? 'text-blanco bg-pino border-pino' : 'bg-blanco text-tinta border-arena hover:bg-corteza-suave'">
+            <flux:icon.plus class="size-4" />
+            Nuevo Lote
         </button>
         @endcanany
         <button type="button" @click="tab = 'listado'; $wire.$refresh()"
-            class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border rounded-r-lg transition-all"
-            :class="tab === 'listado' ? 'text-white bg-brand border-brand' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'">
-            📋 Listado de Lotes
+            class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border rounded-r-sm transition-all"
+            :class="tab === 'listado' ? 'text-blanco bg-pino border-pino' : 'bg-blanco text-tinta border-arena hover:bg-corteza-suave'">
+            <flux:icon.list-bullet class="size-4" />
+            Listado de Lotes
         </button>
     </div>
 
     <div>
         @canany(['crear-lotes', 'editar-lotes'])
         <div x-show="tab === 'nuevo'" x-transition>
-            <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-md">
-                <div class="border-b border-slate-200 bg-slate-50 px-6 py-4">
-                    <h5 class="flex items-center gap-2 text-lg font-semibold text-slate-700">
-                        {{ $lote_id ? '✏️' : '➕' }}
-                        {{ $lote_id ? 'Modificar Lote' : 'Nuevo Lote' }}
+            <x-ui.card class="overflow-hidden">
+                <div class="bg-corteza-suave border-b border-arena px-6 py-4">
+                    <h5 class="flex items-center gap-2 text-lg font-semibold text-tinta">
+                        @if($lote_id)
+                            <flux:icon.pencil-square class="size-5" />
+                            Modificar Lote
+                        @else
+                            <flux:icon.plus class="size-5" />
+                            Nuevo Lote
+                        @endif
                     </h5>
                 </div>
                 <div class="p-6">
                     <form wire:submit.prevent="guardar" class="space-y-6">
                         <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                             <div>
-                                <label class="mb-1 block text-sm font-semibold text-slate-700">Propietario <span class="text-red-500">*</span></label>
+                                <label class="mb-1 block text-sm font-semibold text-tinta">Propietario <span class="text-tierra">*</span></label>
                                 <input type="text" wire:model="propietario"
-                                    class="w-full rounded-lg border border-slate-300 py-3 px-4 shadow-sm focus:border-green-700 focus:ring-green-600 transition-colors {{ $errors->has('propietario') ? 'ring-2 ring-red-500' : '' }}"
+                                    class="form-input {{ $errors->has('propietario') ? 'ring-2 ring-tierra' : '' }}"
                                     placeholder="Nombre del propietario">
-                                @error('propietario') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                                @error('propietario') <p class="mt-1 text-xs text-tierra">{{ $message }}</p> @enderror
                             </div>
                             <div>
-                                <label class="mb-1 block text-sm font-semibold text-slate-700">Ubicación <span class="text-red-500">*</span></label>
+                                <label class="mb-1 block text-sm font-semibold text-tinta">Ubicación <span class="text-tierra">*</span></label>
                                 <input type="text" wire:model="ubicacion"
-                                    class="w-full rounded-lg border border-slate-300 py-3 px-4 shadow-sm focus:border-green-700 focus:ring-green-600 transition-colors {{ $errors->has('ubicacion') ? 'ring-2 ring-red-500' : '' }}"
+                                    class="form-input {{ $errors->has('ubicacion') ? 'ring-2 ring-tierra' : '' }}"
                                     placeholder="Ubicación del lote">
-                                @error('ubicacion') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                                @error('ubicacion') <p class="mt-1 text-xs text-tierra">{{ $message }}</p> @enderror
                             </div>
                         </div>
 
                         <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                             <div>
-                                <label class="mb-1 block text-sm font-semibold text-slate-700">Especie</label>
+                                <label class="mb-1 block text-sm font-semibold text-tinta">Especie</label>
                                 <input type="text" wire:model="especie"
-                                    class="w-full rounded-lg border border-slate-300 py-3 px-4 shadow-sm focus:border-green-700 focus:ring-green-600 transition-colors {{ $errors->has('especie') ? 'ring-2 ring-red-500' : '' }}"
+                                    class="form-input {{ $errors->has('especie') ? 'ring-2 ring-tierra' : '' }}"
                                     placeholder="Especie de madera">
-                                @error('especie') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                                @error('especie') <p class="mt-1 text-xs text-tierra">{{ $message }}</p> @enderror
                             </div>
                             <div>
-                                <label class="mb-1 block text-sm font-semibold text-slate-700">Superficie (ha)</label>
+                                <label class="mb-1 block text-sm font-semibold text-tinta">Superficie (ha)</label>
                                 <input type="number" wire:model="superficie" step="0.1" min="0"
-                                    class="w-full rounded-lg border border-slate-300 py-3 px-4 shadow-sm focus:border-green-700 focus:ring-green-600 transition-colors {{ $errors->has('superficie') ? 'ring-2 ring-red-500' : '' }}"
+                                    class="form-input {{ $errors->has('superficie') ? 'ring-2 ring-tierra' : '' }}"
                                     placeholder="0.00">
-                                @error('superficie') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                                @error('superficie') <p class="mt-1 text-xs text-tierra">{{ $message }}</p> @enderror
                             </div>
                         </div>
 
                         <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                             <div>
-                                <label class="mb-1 block text-sm font-semibold text-slate-700">Condición de compra</label>
+                                <label class="mb-1 block text-sm font-semibold text-tinta">Condición de compra</label>
                                 <select wire:model="condicion_compra"
-                                    class="w-full rounded-lg border border-slate-300 py-3 px-4 shadow-sm focus:border-green-700 focus:ring-green-600 transition-colors {{ $errors->has('condicion_compra') ? 'ring-2 ring-red-500' : '' }}">
+                                    class="form-input {{ $errors->has('condicion_compra') ? 'ring-2 ring-tierra' : '' }}">
                                     <option value="">Seleccione...</option>
                                     <option value="propio">Vuelo Forestal</option>
                                     <option value="alquilado">Compra por tonelada</option>
                                 </select>
-                                @error('condicion_compra') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                                @error('condicion_compra') <p class="mt-1 text-xs text-tierra">{{ $message }}</p> @enderror
                             </div>
                             <div>
-                                <label class="mb-1 block text-sm font-semibold text-slate-700">Estado</label>
+                                <label class="mb-1 block text-sm font-semibold text-tinta">Estado</label>
                                 <select wire:model="estado"
-                                    class="w-full rounded-lg border border-slate-300 py-3 px-4 shadow-sm focus:border-green-700 focus:ring-green-600 transition-colors {{ $errors->has('estado') ? 'ring-2 ring-red-500' : '' }}">
+                                    class="form-input {{ $errors->has('estado') ? 'ring-2 ring-tierra' : '' }}">
                                     <option value="activo">Activo</option>
                                     <option value="en_proceso">En Explotación</option>
                                     <option value="inactivo">Inactivo</option>
                                     <option value="cerrado">Cerrado</option>
                                     <option value="baja">Baja</option>
                                 </select>
-                                @error('estado') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                                @error('estado') <p class="mt-1 text-xs text-tierra">{{ $message }}</p> @enderror
                             </div>
                         </div>
 
                         <div>
-                            <label class="mb-1 block text-sm font-semibold text-slate-700">Tarea principal <span class="text-red-500">*</span></label>
+                            <label class="mb-1 block text-sm font-semibold text-tinta">Tarea principal <span class="text-tierra">*</span></label>
                             <select wire:model="main_task_type"
-                                class="w-full rounded-lg border border-slate-300 py-3 px-4 shadow-sm focus:border-green-700 focus:ring-green-600 transition-colors {{ $errors->has('main_task_type') ? 'ring-2 ring-red-500' : '' }}">
+                                class="form-input {{ $errors->has('main_task_type') ? 'ring-2 ring-tierra' : '' }}">
                                 <option value="">Seleccione...</option>
                                 @foreach($this->taskTypes as $tt)
                                     <option value="{{ $tt->value }}" wire:key="option-{{ $tt->value }}">{{ $tt->label() }}</option>
                                 @endforeach
                             </select>
-                            @error('main_task_type') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                            @error('main_task_type') <p class="mt-1 text-xs text-tierra">{{ $message }}</p> @enderror
                         </div>
 
-                        <div class="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
-                            <div class="flex items-center gap-2 font-semibold">
-                                ℹ️
-                                Coordenadas GPS (Opcional)
-                            </div>
-                            <p class="mt-1 text-blue-700">
+                        <x-ui.alert variant="info" dismissible="false">
+                            <strong>Coordenadas GPS (Opcional)</strong>
+                            <p class="mt-1">
                                 Agregue las coordenadas para habilitar pronóstico de lluvia y alertas climáticas.
-                                <a href="https://www.google.com/maps" target="_blank" class="font-medium underline hover:text-blue-900">Buscar coordenadas</a>
+                                <a href="https://www.google.com/maps" target="_blank" class="font-medium underline hover:text-pino-oscuro">Buscar coordenadas</a>
                             </p>
-                        </div>
+                        </x-ui.alert>
 
                         <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                             <div>
-                                <label class="mb-1 block text-sm font-semibold text-slate-700">🌐 Latitud</label>
+                                <label class="mb-1 block text-sm font-semibold text-tinta">Latitud</label>
                                 <input type="number" wire:model="latitud" step="0.00000001" min="-90" max="90"
-                                    class="w-full rounded-lg border border-slate-300 py-3 px-4 shadow-sm focus:border-green-700 focus:ring-green-600 transition-colors {{ $errors->has('latitud') ? 'ring-2 ring-red-500' : '' }}"
+                                    class="form-input {{ $errors->has('latitud') ? 'ring-2 ring-tierra' : '' }}"
                                     placeholder="-27.469771">
-                                @error('latitud') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
-                                <p class="mt-1 text-xs text-slate-500">Ejemplo: -27.469771 (entre -90 y 90)</p>
+                                @error('latitud') <p class="mt-1 text-xs text-tierra">{{ $message }}</p> @enderror
+                                <p class="mt-1 text-xs text-tinta-suave">Ejemplo: -27.469771 (entre -90 y 90)</p>
                             </div>
                             <div>
-                                <label class="mb-1 block text-sm font-semibold text-slate-700">📍 Longitud</label>
+                                <label class="mb-1 block text-sm font-semibold text-tinta">Longitud</label>
                                 <input type="number" wire:model="longitud" step="0.00000001" min="-180" max="180"
-                                    class="w-full rounded-lg border border-slate-300 py-3 px-4 shadow-sm focus:border-green-700 focus:ring-green-600 transition-colors {{ $errors->has('longitud') ? 'ring-2 ring-red-500' : '' }}"
+                                    class="form-input {{ $errors->has('longitud') ? 'ring-2 ring-tierra' : '' }}"
                                     placeholder="-58.832443">
-                                @error('longitud') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
-                                <p class="mt-1 text-xs text-slate-500">Ejemplo: -58.832443 (entre -180 y 180)</p>
+                                @error('longitud') <p class="mt-1 text-xs text-tierra">{{ $message }}</p> @enderror
+                                <p class="mt-1 text-xs text-tinta-suave">Ejemplo: -58.832443 (entre -180 y 180)</p>
                             </div>
                         </div>
 
                         <div class="flex justify-end gap-3 pt-2">
-                            <button type="button" wire:click="resetCampos"
-                                class="lotes-form-btn lotes-form-btn--secondary">
-                                ✕ Cancelar
-                            </button>
+                            <x-ui.button variant="secondary" icon="x-mark" type="button" wire:click="resetCampos">
+                                Cancelar
+                            </x-ui.button>
                             @canany(['crear-lotes', 'editar-lotes'])
-                            <button type="submit"
-                                class="lotes-form-btn lotes-form-btn--primary">
-                                ✓ {{ $lote_id ? 'Actualizar' : 'Guardar' }}
-                            </button>
+                            <x-ui.button variant="primary" icon="check" type="submit">
+                                {{ $lote_id ? 'Actualizar' : 'Guardar' }}
+                            </x-ui.button>
                             @endcanany
                         </div>
                     </form>
                 </div>
-            </div>
+            </x-ui.card>
         </div>
         @endcanany
 
         <div x-show="tab === 'listado'" x-transition>
-            <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-md">
-                <div class="border-b border-slate-200 bg-slate-50 p-6">
+            <x-ui.card class="overflow-hidden">
+                <div class="bg-corteza-suave border-b border-arena px-6 py-4">
                     <div class="relative max-w-md">
-                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
-                            🔍
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-tinta-suave">
+                            <flux:icon.magnifying-glass class="size-4" />
                         </span>
                         <input type="text" wire:model.live="busqueda"
-                            class="block w-full rounded-lg border-slate-300 pl-10 focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                            class="form-input pl-10"
                             placeholder="Buscar por propietario, ubicación o especie...">
                     </div>
                 </div>
 
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-sm text-slate-600">
-                        <thead class="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500">
+                <x-ui.table-container>
+                    <table class="data-table">
+                        <thead>
                             <tr>
-                                <th class="px-3 py-4 text-center font-semibold">ID</th>
-                                <th class="px-3 py-4 font-semibold">Propietario</th>
-                                <th class="px-3 py-4 font-semibold">Ubicación</th>
-                                <th class="px-3 py-4 font-semibold">Especie</th>
-                                <th class="px-3 py-4 text-right font-semibold">Superficie (ha)</th>
-                                <th class="px-3 py-4 font-semibold">Coordenadas GPS</th>
-                                <th class="px-3 py-4 font-semibold">Condición</th>
-                                <th class="px-3 py-4 font-semibold">Estado</th>
-                                <th class="px-3 py-4 text-right font-semibold">Acciones</th>
+                                <th class="text-center">ID</th>
+                                <th>Propietario</th>
+                                <th>Ubicación</th>
+                                <th>Especie</th>
+                                <th class="text-right">Superficie (ha)</th>
+                                <th>Coordenadas GPS</th>
+                                <th>Condición</th>
+                                <th>Estado</th>
+                                <th class="text-right">Acciones</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-200">
+                        <tbody>
                             @forelse ($lotes as $lote)
-                                <tr class="transition-colors hover:bg-slate-50" wire:key="row-{{ $lote->id_lote }}">
-                                    <td class="px-3 py-4 text-center">
-                                        <span class="inline-block rounded bg-slate-100 px-2 py-1 font-mono text-xs text-slate-600">{{ $lote->id_lote }}</span>
+                                <tr wire:key="row-{{ $lote->id_lote }}">
+                                    <td class="text-center">
+                                        <x-ui.badge variant="neutral">{{ $lote->id_lote }}</x-ui.badge>
                                     </td>
-                                    <td class="px-3 py-4 font-medium text-slate-900">{{ $lote->propietario }}</td>
-                                    <td class="px-3 py-4 text-slate-500">{{ $lote->ubicacion }}</td>
-                                    <td class="px-3 py-4 text-slate-500">{{ $lote->especie ?? '-' }}</td>
-                                    <td class="px-3 py-4 text-right tabular-nums">{{ number_format($lote->superficie ?? 0, 2) }}</td>
-                                    <td class="px-3 py-4">
+                                    <td class="font-medium text-tinta">{{ $lote->propietario }}</td>
+                                    <td class="text-tinta-suave">{{ $lote->ubicacion }}</td>
+                                    <td class="text-tinta-suave">{{ $lote->especie ?? '-' }}</td>
+                                    <td class="text-right tabular-nums">{{ number_format($lote->superficie ?? 0, 2) }}</td>
+                                    <td>
                                         @if($lote->latitud && $lote->longitud)
                                             <a href="https://www.google.com/maps?q={{ $lote->latitud }},{{ $lote->longitud }}" target="_blank"
-                                                class="inline-flex items-center gap-2 text-sm text-blue-700 hover:text-blue-900">
-                                                📍
+                                                class="inline-flex items-center gap-2 text-sm text-pino hover:text-pino-oscuro">
+                                                <flux:icon.map-pin class="size-4" />
                                                 <span class="tabular-nums">{{ number_format($lote->latitud, 6) }}, {{ number_format($lote->longitud, 6) }}</span>
                                             </a>
                                         @else
-                                            <span class="text-slate-400">🌐 Sin coordenadas</span>
+                                            <span class="text-tinta-suave">Sin coordenadas</span>
                                         @endif
                                     </td>
-                                    <td class="px-3 py-4">
+                                    <td>
                                         @if($lote->condicion_compra)
                                             @php
                                                 $condicionLabel = $lote->condicion_compra === 'propio'
                                                     ? 'Vuelo Forestal'
                                                     : 'Compra por tonelada';
                                             @endphp
-                                            <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium {{ $lote->condicion_compra == 'propio' ? 'bg-green-50 border border-green-200 text-brand' : 'bg-blue-100 text-blue-800' }}">
+                                            <x-ui.badge variant="{{ $lote->condicion_compra == 'propio' ? 'success' : 'info' }}">
                                                 {{ $condicionLabel }}
-                                            </span>
+                                            </x-ui.badge>
                                         @else
-                                            <span class="text-slate-400">-</span>
+                                            <span class="text-tinta-suave">-</span>
                                         @endif
                                     </td>
-                                    <td class="px-3 py-4">
-                                        <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
-                                            {{ $lote->estado === 'activo' ? 'bg-green-50 border border-green-200 text-brand' : ($lote->estado === 'en_proceso' ? 'bg-amber-100 text-amber-800' : ($lote->estado === 'cerrado' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-800')) }}">
-                                            @if($lote->estado === 'cerrado')
-                                                ✅
-                                            @endif
-                                            {{ ucfirst(str_replace('_', ' ', $lote->estado)) }}
-                                        </span>
-                                    </td>
-                                    <td class="pe-3 ps-3 py-4 text-right">
+                                    <td>
                                         @php
                                             $estadoRaw = $lote->estado;
                                             if (is_object($estadoRaw) && property_exists($estadoRaw, 'value')) {
@@ -236,43 +230,43 @@
                                             $estado = preg_replace('/\s+/', '_', $estado);
                                             $estado = str_replace('-', '_', $estado);
 
+                                            $estadoVariant = match($estado) {
+                                                'activo' => 'success',
+                                                'en_proceso' => 'warning',
+                                                'cerrado' => 'info',
+                                                default => 'neutral',
+                                            };
+
                                             $esActivo = $estado === 'activo';
                                             $esInactivo = $estado === 'inactivo';
                                             $esCerrado = $estado === 'cerrado';
                                             $esEnProceso = $estado === 'en_proceso';
-
-                                            $accionLabel = $esActivo ? 'Iniciar' : 'Ver';
-                                            $accionIcon = $esActivo ? 'play-fill' : 'eye-fill';
-                                            $accionClass = $esActivo
-                                                ? 'lotes-accion-btn lotes-accion-btn--iniciar'
-                                                : 'lotes-accion-btn lotes-accion-btn--ver';
                                         @endphp
+                                        <x-ui.badge variant="{{ $estadoVariant }}">
+                                            {{ ucfirst(str_replace('_', ' ', $lote->estado)) }}
+                                        </x-ui.badge>
+                                    </td>
+                                    <td class="text-right">
                                         <div class="flex items-center justify-end gap-2">
                                             @if($esCerrado)
-                                                <span class="inline-flex h-8 w-24 shrink-0 items-center justify-center whitespace-nowrap rounded-lg border text-[10px] font-bold uppercase bg-green-50 text-brand border-brand">
-                                                    ✅ Finalizado
-                                                </span>
+                                                <x-ui.badge variant="success" class="h-8 items-center">Finalizado</x-ui.badge>
                                             @elseif($esInactivo)
-                                                <span class="inline-flex h-8 w-24 shrink-0 items-center justify-center whitespace-nowrap rounded-lg border border-slate-200 bg-slate-100 text-[10px] font-bold uppercase text-slate-400">
-                                                    Pausado
-                                                </span>
+                                                <x-ui.badge variant="neutral" class="h-8 items-center">Pausado</x-ui.badge>
                                             @else
                                                 @can('editar-lotes')
-                                                <button type="button" 
-                                                    wire:click="openLaunchpad({{ $lote->id_lote }})"
-                                                    class="{{ $accionClass }}">
-                                                    @if($accionIcon === 'play-fill')▶️ @elseif($accionIcon === 'eye-fill')👁️ @else ▶️ @endif
-                                                    <span>{{ $accionLabel }}</span>
-                                                </button>
-                                                
+                                                <x-ui.button variant="{{ $esActivo ? 'primary' : 'secondary' }}" size="sm" icon="sparkles"
+                                                    href="{{ route('lotes.recomendaciones', ['loteId' => $lote->id_lote]) }}"
+                                                    class="w-24">
+                                                    Propuestas
+                                                </x-ui.button>
+
                                                 @if($esEnProceso)
-                                                    <button type="button" 
+                                                    <x-ui.button variant="primary" size="sm" icon="flag"
                                                         wire:click="finalizarLote({{ $lote->id_lote }})"
                                                         onclick="return confirm('¿Finalizar este lote? Se liberarán todos los empleados y maquinarias asignadas.')"
-                                                        class="inline-flex h-8 w-24 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border text-xs font-bold uppercase text-white transition-all hover:shadow-md bg-brand border-brand hover:brightness-90">
-                                                        🚩
-                                                        <span>Finalizar</span>
-                                                    </button>
+                                                        class="w-24">
+                                                        Finalizar
+                                                    </x-ui.button>
                                                 @endif
                                                 @endcan
                                             @endif
@@ -280,22 +274,22 @@
                                             {{-- Botón de opciones (tres puntos) --}}
                                             @canany(['editar-lotes', 'eliminar-lotes'])
                                             <div x-data="{ open: false }" class="relative">
-                                                <button @click="open = !open" class="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 transition-colors">
-                                                    ⋮
+                                                <button @click="open = !open" class="flex h-8 w-8 items-center justify-center rounded-sm text-tinta-suave hover:bg-corteza-suave transition-colors">
+                                                    <flux:icon.ellipsis-vertical class="size-5" />
                                                 </button>
                                                 <div x-show="open" @click.away="open = false" x-transition
-                                                    class="absolute right-0 z-20 mt-2 w-44 origin-top-right rounded-lg border border-slate-100 bg-white shadow-xl ring-1 ring-black ring-opacity-5">
+                                                    class="absolute right-0 z-20 mt-2 w-44 origin-top-right rounded-sm border border-arena bg-blanco shadow-xl ring-1 ring-black ring-opacity-5">
                                                     <div class="py-1">
                                                         @can('editar-lotes')
                                                         <button wire:click="editar({{ $lote->id_lote }})" onclick="cambiarAPestanaFormulario()"
-                                                            class="flex w-full items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
-                                                            ✏️ Editar
+                                                            class="flex w-full items-center gap-2 px-4 py-2 text-sm text-tinta hover:bg-corteza-suave">
+                                                            <flux:icon.pencil-square class="size-4" /> Editar
                                                         </button>
                                                         @endcan
                                                         @can('eliminar-lotes')
                                                         <button wire:click="eliminar({{ $lote->id_lote }})" onclick="return confirm('¿Está seguro de eliminar este lote?')"
-                                                            class="flex w-full items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50">
-                                                            🗑️ Eliminar
+                                                            class="flex w-full items-center gap-2 px-4 py-2 text-sm text-tierra hover:bg-tierra-suave">
+                                                            <flux:icon.trash class="size-4" /> Eliminar
                                                         </button>
                                                         @endcan
                                                     </div>
@@ -307,61 +301,25 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="9" class="px-6 py-12 text-center text-slate-400">
-                                        📭
-                                        <p class="mb-0">No hay lotes registrados.</p>
+                                    <td colspan="9" class="text-center py-12 text-tinta-suave">
+                                        No hay lotes registrados.
                                     </td>
                                 </tr>
                             @endforelse
                         </tbody>
                 </table>
-            </div>
+            </x-ui.table-container>
 
-            <div class="mt-4">
+            <div class="p-4">
                 {{ $lotes->links() }}
             </div>
-            </div>
+            </x-ui.card>
         </div>
     </div>
     </div>
 
-{{-- Modal de recomendaciones - Componente reutilizable --}}
-@if($mostrarModalRecomendaciones && $modalLoteId)
-    <x-lotes.recomendaciones-modal 
-        :recomendaciones="$recomendaciones"
-        :recomendaciones-error="$recomendacionesError"
-        :recomendaciones-mensaje="$recomendacionesMensaje"
-        :modal-lote-id="$modalLoteId"
-        :edit-proposal-id="$editProposalId"
-        :edit-data="$editData"
-        :expanded-proposal-id="$expandedProposalId"
-        :editing-proposals="$editingProposals"
-        :edit-proposed-maquinarias="$editProposedMaquinarias"
-    />
-@endif
-
 @push('scripts')
 <script>
-    // Prevenir scroll del body cuando el modal está abierto
-    const checkModal = () => {
-        const modal = document.querySelector('.lotes-modal-overlay');
-        if (modal) {
-            document.body.style.overflow = 'hidden';
-        } else {
-            document.body.style.overflow = '';
-        }
-    };
-    
-    // Verificar al cargar
-    document.addEventListener('DOMContentLoaded', checkModal);
-    
-    // Verificar después de actualizaciones de Livewire
-    document.addEventListener('livewire:navigated', checkModal);
-    
-    // Observar cambios en el DOM
-    const observer = new MutationObserver(checkModal);
-    observer.observe(document.body, { childList: true, subtree: true });
-    
     // Función para cambiar a pestaña de formulario
     function cambiarAPestanaFormulario() {
         const event = new CustomEvent('cambiarTab', { detail: 'nuevo' });

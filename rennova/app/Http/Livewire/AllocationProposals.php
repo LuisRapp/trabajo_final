@@ -96,8 +96,29 @@ class AllocationProposals extends Component
             return;
         }
 
-        app(PropuestaAsignacionService::class)->despacharGeneracionRecomendaciones($loteId);
-        session()->flash('message', 'Generación solicitada. Refrescá en unos segundos.');
+        $this->guardando = true;
+
+        try {
+            $resultado = PropuestaAsignacionService::generar($loteId);
+
+            $this->refreshProposals();
+
+            if ($resultado['error']) {
+                session()->flash('error', $resultado['error']);
+
+                return;
+            }
+
+            if ($this->loteId && ! $this->selected_proposal_id && $this->proposals && $this->proposals->count() > 0) {
+                $this->seleccionar((int) $this->proposals->first()->id_allocation_proposal);
+            }
+
+            session()->flash('message', 'Propuestas generadas correctamente.');
+        } catch (\Throwable $e) {
+            session()->flash('error', $this->mensajeErrorUsuario($e, 'generar las propuestas'));
+        } finally {
+            $this->guardando = false;
+        }
     }
 
     public function seleccionar($proposalId)
@@ -199,13 +220,24 @@ class AllocationProposals extends Component
         try {
             $this->guardarSeleccion();
 
-            $servicio = app(PropuestaAsignacionService::class);
-            $servicio->confirmarRecomendacion((int) $this->selected_proposal_id);
-            $servicio->enviarOrdenCompraSiCorresponde((int) $this->selected_proposal_id);
+            $resultado = PropuestaAsignacionService::confirmar((int) $this->selected_proposal_id);
+
+            if ($resultado['error']) {
+                session()->flash('error', $resultado['error']);
+
+                return;
+            }
 
             $this->loadSelectedProposal();
             $this->refreshProposals();
-            session()->flash('message', 'Propuesta confirmada.');
+
+            if ($resultado['requiresReview']) {
+                session()->flash('message', $resultado['reviewMessage']);
+
+                return;
+            }
+
+            session()->flash('message', 'Propuesta confirmada y aplicada al lote.');
         } catch (\Throwable $e) {
             session()->flash('error', $this->mensajeErrorUsuario($e, 'confirmar la propuesta'));
         } finally {
@@ -224,12 +256,23 @@ class AllocationProposals extends Component
         try {
             $this->guardarSeleccion();
 
-            $servicio = app(PropuestaAsignacionService::class);
-            $servicio->aplicarPropuesta((int) $this->selected_proposal_id);
-            $servicio->enviarOrdenCompraSiCorresponde((int) $this->selected_proposal_id);
+            $resultado = PropuestaAsignacionService::confirmar((int) $this->selected_proposal_id);
+
+            if ($resultado['error']) {
+                session()->flash('error', $resultado['error']);
+
+                return;
+            }
 
             $this->loadSelectedProposal();
             $this->refreshProposals();
+
+            if ($resultado['requiresReview']) {
+                session()->flash('message', $resultado['reviewMessage']);
+
+                return;
+            }
+
             session()->flash('message', 'Asignación aplicada al lote.');
         } catch (\Throwable $e) {
             session()->flash('error', $this->mensajeErrorUsuario($e, 'aplicar la asignación'));

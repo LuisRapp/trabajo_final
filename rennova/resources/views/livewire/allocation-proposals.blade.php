@@ -1,76 +1,84 @@
-<div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+@php use App\Enums\EstadoPropuesta; @endphp
+<div class="w-full">
     @if(!empty($loteId))
         <div class="flex flex-wrap justify-between items-center mb-4">
             <div>
-                <h4 class="text-xl font-bold text-slate-900">✨ Recomendaciones del Lote #{{ $loteId }}</h4>
-                <div class="text-slate-500 text-sm">Al pasar el lote a <strong>en proceso</strong> se generan estas propuestas.</div>
+                <h4 class="text-xl font-bold text-tinta flex items-center gap-2">
+                    <flux:icon.sparkles class="size-5" />
+                    Sugerencias de asignación — Lote #{{ $loteId }}
+                </h4>
+                <div class="text-tinta-suave text-sm">Al pasar el lote a <strong>en proceso</strong> se generan estas propuestas.</div>
             </div>
             <div class="flex gap-2">
-                <a class="inline-flex items-center gap-1.5 px-4 py-2.5 border border-slate-300 bg-white text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors" href="{{ route('lotes.index') }}">
-                    ← Volver a Lotes
+                <a class="btn-secondary" href="{{ route('lotes.index') }}">
+                    <flux:icon.arrow-left class="size-4" />
+                    Volver a Lotes
                 </a>
                 @canany(['crear-propuestas-asignacion', 'editar-propuestas-asignacion'])
-                <button class="inline-flex items-center gap-1.5 px-4 py-2.5 border border-brand bg-white text-brand rounded-lg text-sm font-medium hover:bg-brand/5 transition-colors" wire:click="generarAhora" @if($guardando) disabled @endif>
-                    ⚙️ Generar ahora
-                </button>
+                <x-ui.button variant="secondary" icon="bolt" wire:click="generarAhora" :disabled="$guardando">
+                    Generar ahora
+                </x-ui.button>
                 @endcanany
                 @canany(['crear-propuestas-asignacion', 'editar-propuestas-asignacion'])
-                <button class="inline-flex items-center gap-1.5 px-4 py-2.5 border border-slate-300 bg-white text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors" wire:click="refreshProposals" @if($guardando) disabled @endif>
-                    ↻ Refrescar
-                </button>
+                <x-ui.button variant="ghost" icon="arrow-path" wire:click="refreshProposals" :disabled="$guardando">
+                    Refrescar
+                </x-ui.button>
                 @endcanany
             </div>
         </div>
     @endif
 
-    <div class="flex border-b border-slate-200 mb-6" role="tablist">
+    <div class="flex border-b border-arena mb-6" role="tablist">
         <button
-            class="px-4 py-2.5 text-sm font-medium border-b-2 transition-colors {{ $mostrar_listado ? 'border-brand text-brand' : 'border-transparent text-slate-500 hover:text-slate-700' }}"
+            class="px-4 py-2.5 text-sm font-medium border-b-2 transition-colors {{ $mostrar_listado ? 'border-pino text-pino' : 'border-transparent text-tinta-suave hover:text-tinta' }}"
             type="button"
             role="tab"
             wire:click="$set('mostrar_listado', true)"
         >
-            ⚡ Propuestas
+            <flux:icon.bolt class="size-4 inline mr-1" />
+            Propuestas
         </button>
         <button
-            class="px-4 py-2.5 text-sm font-medium border-b-2 transition-colors {{ !$mostrar_listado ? 'border-brand text-brand' : 'border-transparent text-slate-500 hover:text-slate-700' }}"
+            class="px-4 py-2.5 text-sm font-medium border-b-2 transition-colors {{ !$mostrar_listado ? 'border-pino text-pino' : 'border-transparent text-tinta-suave hover:text-tinta' }}"
             type="button"
             role="tab"
             wire:click="$set('mostrar_listado', false)"
             @if(!$selected_proposal_id) disabled @endif
         >
-            📋 Detalle / Confirmar
+            <flux:icon.clipboard-document-list class="size-4 inline mr-1" />
+            Detalle / Confirmar
         </button>
     </div>
 
     @if (session()->has('message'))
-        <div x-data="{ open: true }" x-show="open" x-transition
-            class="mb-6 flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-emerald-800 shadow-sm" role="alert">
-            <span class="text-emerald-600">✓</span>
-            <span class="flex-1 text-sm font-medium">{{ session('message') }}</span>
-            <button type="button" class="text-emerald-600 hover:text-emerald-800" @click="open = false">✕</button>
-        </div>
+        <x-ui.alert variant="success" class="mb-5">
+            {{ session('message') }}
+        </x-ui.alert>
     @endif
     @if (session()->has('error'))
-        <div x-data="{ open: true }" x-show="open" x-transition
-            class="mb-6 flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-red-800 shadow-sm" role="alert">
-            <span class="text-red-600">⚠</span>
-            <span class="flex-1 text-sm font-medium">{{ session('error') }}</span>
-            <button type="button" class="text-red-600 hover:text-red-800" @click="open = false">✕</button>
-        </div>
+        <x-ui.alert variant="danger" class="mb-5">
+            {{ session('error') }}
+        </x-ui.alert>
     @endif
 
     <div>
         <div class="{{ $mostrar_listado ? '' : 'hidden' }}">
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="bg-slate-50 border-b border-slate-200 px-6 py-4 flex justify-between items-center">
-                    <h5 class="text-lg font-semibold text-slate-800">✨ Propuestas Automáticas</h5>
+            <x-ui.card class="overflow-hidden">
+                <div class="bg-corteza-suave border-b border-arena px-6 py-4 flex justify-between items-center">
+                    <h5 class="text-lg font-semibold text-tinta flex items-center gap-2">
+                        <flux:icon.sparkles class="size-5" />
+                        Propuestas Automáticas
+                    </h5>
                     <div class="flex gap-2">
                         @if(empty($loteId))
+                            <a class="btn-secondary" href="{{ route('asignaciones-lote.index') }}">
+                                <flux:icon.arrow-left class="size-4" />
+                                Volver a Asignación manual
+                            </a>
                             @canany(['crear-propuestas-asignacion', 'editar-propuestas-asignacion'])
-                            <button class="inline-flex items-center gap-1.5 px-4 py-2 border border-slate-300 bg-white text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors" wire:click="refreshProposals" @if($guardando) disabled @endif>
-                                ↻ Refrescar
-                            </button>
+                            <x-ui.button variant="ghost" size="sm" icon="arrow-path" wire:click="refreshProposals" :disabled="$guardando">
+                                Refrescar
+                            </x-ui.button>
                             @endcanany
                         @endif
                     </div>
@@ -80,8 +88,8 @@
                     @if(empty($loteId))
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                         <div class="md:col-span-2">
-                            <label class="block text-sm font-semibold text-slate-700 mb-1.5">Lote</label>
-                            <select class="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20" wire:model.live="filter_lote_id">
+                            <label class="block text-sm font-semibold text-tinta mb-1.5">Lote</label>
+                            <select class="form-input" wire:model.live="filter_lote_id">
                                 <option value="">Todos</option>
                                 @foreach($lotes as $l)
                                     <option value="{{ $l->id_lote }}" wire:key="option-{{ $l->id_lote }}">Lote #{{ $l->id_lote }} - {{ $l->ubicacion }} ({{ $l->estado }})</option>
@@ -89,231 +97,239 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-1.5">Estado</label>
-                            <select class="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20" wire:model.live="filter_status">
+                            <label class="block text-sm font-semibold text-tinta mb-1.5">Estado</label>
+                            <select class="form-input" wire:model.live="filter_status">
                                 <option value="">Todos</option>
-                                <option value="draft">Draft</option>
-                                <option value="confirmed">Confirmed</option>
-                                <option value="applied">Applied</option>
+                                <option value="{{ EstadoPropuesta::DRAFT->value }}">{{ EstadoPropuesta::DRAFT->label() }}</option>
+                                <option value="{{ EstadoPropuesta::CONFIRMED->value }}">{{ EstadoPropuesta::CONFIRMED->label() }}</option>
+                                <option value="{{ EstadoPropuesta::APPLIED->value }}">{{ EstadoPropuesta::APPLIED->label() }}</option>
                             </select>
                         </div>
                         <div class="flex items-end">
-                            <div class="text-slate-500 text-sm">
+                            <div class="text-tinta-suave text-sm">
                                 Mostrando {{ is_countable($proposals) ? count($proposals) : 0 }} propuestas
                             </div>
                         </div>
                     </div>
                     @endif
 
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-sm">
+                    <x-ui.table-container>
+                        <table class="data-table">
                             <thead>
-                                <tr class="bg-slate-50 border-b border-slate-200">
-                                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">#</th>
-                                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Lote</th>
-                                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Tarea</th>
-                                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Estimación</th>
-                                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Estado</th>
-                                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Creada</th>
-                                    <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Acción</th>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Lote</th>
+                                    <th>Tarea</th>
+                                    <th>Estimación</th>
+                                    <th>Estado</th>
+                                    <th>Creada</th>
+                                    <th class="text-center">Acción</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-slate-100">
+                            <tbody>
                                 @forelse($proposals as $p)
-                                    <tr wire:key="row-{{ $p->id_allocation_proposal }}" class="hover:bg-slate-50 transition-colors">
-                                        <td class="px-4 py-2.5"><strong>#{{ $p->id_allocation_proposal }}</strong></td>
-                                        <td class="px-4 py-2.5">
+                                    <tr wire:key="row-{{ $p->id_allocation_proposal }}">
+                                        <td><strong>#{{ $p->id_allocation_proposal }}</strong></td>
+                                        <td>
                                             <div><strong>Lote #{{ $p->id_lote }}</strong></div>
-                                            <div class="text-slate-500 text-xs">{{ $p->lote->ubicacion ?? '' }}</div>
+                                            <div class="text-tinta-suave text-xs">{{ $p->lote->ubicacion ?? '' }}</div>
                                         </td>
-                                        <td class="px-4 py-2.5">
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">{{ $p->tipo_tarea }}</span>
+                                        <td>
+                                            <x-ui.badge variant="neutral">{{ $p->tipo_tarea }}</x-ui.badge>
                                             @if($p->id_lote_tarea)
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-200 text-slate-700">Tarea #{{ $p->id_lote_tarea }}</span>
+                                                <x-ui.badge variant="info">Tarea #{{ $p->id_lote_tarea }}</x-ui.badge>
                                             @endif
                                         </td>
-                                        <td class="px-4 py-2.5 text-xs">
+                                        <td class="text-xs text-tinta-suave">
                                             <div>Persona-día: <strong>{{ $p->estimated_person_days ?? 'N/A' }}</strong></div>
                                             <div>Máquina-día: <strong>{{ $p->estimated_machine_days ?? 'N/A' }}</strong></div>
                                             <div>Duración: <strong>{{ $p->estimated_duration_days ?? 'N/A' }}</strong></div>
                                         </td>
-                                        <td class="px-4 py-2.5">
+                                        <td>
                                             @php
-                                                $badge = match($p->status) {
-                                                    'applied' => 'bg-emerald-100 text-emerald-700',
-                                                    'confirmed' => 'bg-brand/10 text-brand',
-                                                    default => 'bg-amber-100 text-amber-700'
+                                                $statusVariant = match($p->status) {
+                                                    'applied' => 'success',
+                                                    'confirmed' => 'info',
+                                                    'closed' => 'neutral',
+                                                    default => 'warning',
                                                 };
                                             @endphp
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {{ $badge }}">{{ $p->status }}</span>
+                                            <x-ui.badge variant="{{ $statusVariant }}">{{ EstadoPropuesta::etiqueta($p->status) }}</x-ui.badge>
                                         </td>
-                                        <td class="px-4 py-2.5 text-xs text-slate-500">{{ $p->created_at }}</td>
-                                        <td class="px-4 py-2.5 text-center">
-                                            <button class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-brand bg-white text-brand rounded-lg text-xs font-medium hover:bg-brand/5 transition-colors" wire:click="seleccionar({{ $p->id_allocation_proposal }})">
-                                                👁️ Ver
-                                            </button>
+                                        <td class="text-xs text-tinta-suave">{{ $p->created_at }}</td>
+                                        <td class="text-center">
+                                            <x-ui.button variant="ghost" size="sm" icon="eye" wire:click="seleccionar({{ $p->id_allocation_proposal }})" title="Ver" />
                                         </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="7" class="text-center py-12 text-slate-400">
-                                            <div class="text-5xl mb-2">📥</div>
-                                            <p>No hay propuestas para los filtros seleccionados.</p>
+                                        <td colspan="7" class="text-center py-12 text-tinta-suave">
+                                            No hay propuestas para los filtros seleccionados.
                                         </td>
                                     </tr>
                                 @endforelse
                             </tbody>
                         </table>
-                    </div>
+                    </x-ui.table-container>
 
-                    <div class="flex items-center gap-3 bg-cyan-50 border border-cyan-200 text-cyan-800 rounded-xl px-5 py-3 text-sm mt-4">
-                        <span>ℹ️</span>
-                        <small>
-                            Estas propuestas se generan en base a histórico (persona-día / máquina-día). Podés confirmar y aplicar para cargar asignaciones del lote.
-                        </small>
-                    </div>
+                    <x-ui.alert variant="info" class="mt-4" dismissible="false">
+                        Estas propuestas se generan en base a histórico (persona-día / máquina-día). Podés confirmar y aplicar para cargar asignaciones del lote.
+                    </x-ui.alert>
                 </div>
-            </div>
+            </x-ui.card>
         </div>
 
         <div class="{{ !$mostrar_listado ? '' : 'hidden' }}">
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="bg-slate-50 border-b border-slate-200 px-6 py-4 flex justify-between items-center">
-                    <h5 class="text-lg font-semibold text-slate-800">📋 Detalle de Propuesta</h5>
+            <x-ui.card class="overflow-hidden">
+                <div class="bg-corteza-suave border-b border-arena px-6 py-4 flex justify-between items-center">
+                    <h5 class="text-lg font-semibold text-tinta flex items-center gap-2">
+                        <flux:icon.clipboard-document-list class="size-5" />
+                        Detalle de Propuesta
+                    </h5>
                     <div class="flex gap-2">
-                        <button class="inline-flex items-center gap-1.5 px-4 py-2 border border-slate-300 bg-white text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors" wire:click="volver">
-                            ← Volver
-                        </button>
+                        <x-ui.button variant="secondary" icon="arrow-left" wire:click="volver">
+                            Volver
+                        </x-ui.button>
                     </div>
                 </div>
 
                 <div class="p-6">
                     @if(!$selectedProposal)
-                        <div class="flex items-center gap-3 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl px-5 py-3 text-sm">
-                            <small>Seleccione una propuesta desde la pestaña "Propuestas".</small>
-                        </div>
+                        <x-ui.alert variant="warning" dismissible="false">
+                            Seleccione una propuesta desde la pestaña "Propuestas".
+                        </x-ui.alert>
                     @else
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <div class="border border-slate-200 rounded-lg p-4 bg-white">
+                            <x-ui.card class="p-4">
                                 <div class="flex justify-between">
                                     <div>
-                                        <div class="font-semibold">Propuesta #{{ $selectedProposal->id_allocation_proposal }}</div>
-                                        <div class="text-slate-500 text-xs">Lote #{{ $selectedProposal->id_lote }} - {{ $selectedProposal->lote->ubicacion ?? '' }}</div>
+                                        <div class="font-semibold text-tinta">Propuesta #{{ $selectedProposal->id_allocation_proposal }}</div>
+                                        <div class="text-tinta-suave text-xs">Lote #{{ $selectedProposal->id_lote }} - {{ $selectedProposal->lote->ubicacion ?? '' }}</div>
                                     </div>
                                     <div>
                                         @php
-                                            $badge = match($selectedProposal->status) {
-                                                'applied' => 'bg-emerald-100 text-emerald-700',
-                                                'confirmed' => 'bg-brand/10 text-brand',
-                                                default => 'bg-amber-100 text-amber-700'
+                                            $statusVariant = match($selectedProposal->status) {
+                                                'applied' => 'success',
+                                                'confirmed' => 'info',
+                                                'closed' => 'neutral',
+                                                default => 'warning',
                                             };
                                         @endphp
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {{ $badge }}">{{ $selectedProposal->status }}</span>
+                                        <x-ui.badge variant="{{ $statusVariant }}">{{ EstadoPropuesta::etiqueta($selectedProposal->status) }}</x-ui.badge>
                                     </div>
                                 </div>
 
-                                <hr class="border-slate-200 my-2">
-                                <div class="text-sm">
-                                    <div>Tarea: <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">{{ $selectedProposal->tipo_tarea }}</span></div>
-                                    <div>Especie: <strong>{{ $selectedProposal->especie ?? 'N/A' }}</strong></div>
-                                    <div>Superficie: <strong>{{ $selectedProposal->superficie_ha ?? 'N/A' }}</strong> ha</div>
+                                <hr class="border-arena my-2">
+                                <div class="text-sm text-tinta-suave">
+                                    <div>Tarea: <x-ui.badge variant="neutral">{{ $selectedProposal->tipo_tarea }}</x-ui.badge></div>
+                                    <div>Especie: <strong class="text-tinta">{{ $selectedProposal->especie ?? 'N/A' }}</strong></div>
+                                    <div>Superficie: <strong class="text-tinta">{{ $selectedProposal->superficie_ha ?? 'N/A' }}</strong> ha</div>
                                 </div>
-                            </div>
+                            </x-ui.card>
 
-                            <div class="border border-slate-200 rounded-lg p-4 bg-white">
-                                <div class="font-semibold mb-2">Estimación</div>
-                                <div class="grid grid-cols-2 gap-2 text-sm">
+                            <x-ui.card class="p-4">
+                                <div class="font-semibold text-tinta mb-2">Estimación</div>
+                                <div class="grid grid-cols-2 gap-2 text-sm text-tinta-suave">
                                     <div>Persona-día</div>
-                                    <div class="text-right"><strong>{{ $selectedProposal->estimated_person_days ?? 'N/A' }}</strong></div>
+                                    <div class="text-right"><strong class="text-tinta">{{ $selectedProposal->estimated_person_days ?? 'N/A' }}</strong></div>
                                     <div>Máquina-día</div>
-                                    <div class="text-right"><strong>{{ $selectedProposal->estimated_machine_days ?? 'N/A' }}</strong></div>
+                                    <div class="text-right"><strong class="text-tinta">{{ $selectedProposal->estimated_machine_days ?? 'N/A' }}</strong></div>
                                     <div>Duración (días)</div>
-                                    <div class="text-right"><strong>{{ $selectedProposal->estimated_duration_days ?? 'N/A' }}</strong></div>
+                                    <div class="text-right"><strong class="text-tinta">{{ $selectedProposal->estimated_duration_days ?? 'N/A' }}</strong></div>
                                 </div>
-                                <div class="text-slate-400 text-xs mt-2">
+                                <div class="text-tinta-suave text-xs mt-2">
                                     Fallback: {{ $selectedProposal->meta['fallback_used'] ?? 'N/A' }}
                                 </div>
-                            </div>
+                            </x-ui.card>
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div class="bg-white rounded-xl shadow-sm border border-slate-300 overflow-hidden">
-                                <div class="bg-slate-600 text-white px-6 py-4 flex justify-between items-center">
-                                    <strong>👥 Empleados sugeridos</strong>
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-white/20 text-white">{{ $selectedProposal->proposedEmployees->count() }}</span>
+                            <x-ui.card class="overflow-hidden border-arena">
+                                <div class="bg-tinta text-blanco px-6 py-4 flex justify-between items-center">
+                                    <strong class="flex items-center gap-2">
+                                        <flux:icon.users class="size-5" />
+                                        Empleados sugeridos
+                                    </strong>
+                                    <x-ui.badge variant="neutral" class="bg-blanco/20 text-blanco">{{ $selectedProposal->proposedEmployees->count() }}</x-ui.badge>
                                 </div>
                                 <div class="p-6">
                                     @if($selectedProposal->proposedEmployees->isEmpty())
-                                        <div class="text-slate-400 text-sm">Sin sugerencias (falta histórico/pivotes).</div>
+                                        <div class="text-tinta-suave text-sm">Sin sugerencias (falta histórico/pivotes).</div>
                                     @else
-                                        <div class="max-h-[320px] overflow-y-auto border border-slate-200 rounded-lg p-3">
+                                        <div class="max-h-[320px] overflow-y-auto border border-arena rounded-sm p-3">
                                             @foreach($selectedProposal->proposedEmployees as $row)
                                                 <div class="flex items-center gap-2 py-1" wire:key="emp-{{ $row->id_allocation_proposal_employee }}">
                                                     <input
-                                                        class="rounded border-slate-300 text-brand focus:ring-brand/20"
+                                                        class="rounded border-arena text-pino focus:ring-pino"
                                                         type="checkbox"
                                                         id="ape-{{ $row->id_allocation_proposal_employee }}"
                                                         wire:model.live="employeeSelected.{{ $row->id_allocation_proposal_employee }}"
                                                         @if($guardando) disabled @endif
                                                     >
-                                                    <label class="text-sm text-slate-700" for="ape-{{ $row->id_allocation_proposal_employee }}">
+                                                    <label class="text-sm text-tinta" for="ape-{{ $row->id_allocation_proposal_employee }}">
                                                         {{ $row->empleado->apellido ?? '' }}, {{ $row->empleado->nombre ?? '' }}
-                                                        <small class="text-slate-500">- {{ $row->rol_sugerido ?? ($row->empleado->rolLaboral->nombre ?? 'Sin rol') }}</small>
-                                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-200 text-slate-700 ml-1">score: {{ $row->score ?? 'N/A' }}</span>
+                                                        <small class="text-tinta-suave">- {{ $row->rol_sugerido ?? ($row->empleado->rolLaboral->nombre ?? 'Sin rol') }}</small>
+                                                        <x-ui.badge variant="neutral">score: {{ $row->score ?? 'N/A' }}</x-ui.badge>
                                                     </label>
                                                 </div>
                                             @endforeach
                                         </div>
                                     @endif
                                 </div>
-                            </div>
+                            </x-ui.card>
 
-                            <div class="bg-white rounded-xl shadow-sm border border-brand/30 overflow-hidden">
-                                <div class="bg-brand text-white px-6 py-4 flex justify-between items-center">
-                                    <strong>🚛 Maquinarias sugeridas</strong>
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-white/20 text-white">{{ $selectedProposal->proposedMaquinarias->count() }}</span>
+                            <x-ui.card class="overflow-hidden border-pino/30">
+                                <div class="bg-pino text-blanco px-6 py-4 flex justify-between items-center">
+                                    <strong class="flex items-center gap-2">
+                                        <flux:icon.truck class="size-5" />
+                                        Maquinarias sugeridas
+                                    </strong>
+                                    <x-ui.badge variant="neutral" class="bg-blanco/20 text-blanco">{{ $selectedProposal->proposedMaquinarias->count() }}</x-ui.badge>
                                 </div>
                                 <div class="p-6">
                                     @if($selectedProposal->proposedMaquinarias->isEmpty())
-                                        <div class="text-slate-400 text-sm">Sin sugerencias (falta histórico/pivotes).</div>
+                                        <div class="text-tinta-suave text-sm">Sin sugerencias (falta histórico/pivotes).</div>
                                     @else
-                                        <div class="max-h-[320px] overflow-y-auto border border-slate-200 rounded-lg p-3">
+                                        <div class="max-h-[320px] overflow-y-auto border border-arena rounded-sm p-3">
                                             @foreach($selectedProposal->proposedMaquinarias as $row)
                                                 <div class="flex items-center gap-2 py-1" wire:key="maq-{{ $row->id_allocation_proposal_maquinaria }}">
                                                     <input
-                                                        class="rounded border-slate-300 text-brand focus:ring-brand/20"
+                                                        class="rounded border-arena text-pino focus:ring-pino"
                                                         type="checkbox"
                                                         id="apm-{{ $row->id_allocation_proposal_maquinaria }}"
                                                         wire:model.live="maquinariaSelected.{{ $row->id_allocation_proposal_maquinaria }}"
                                                         @if($guardando) disabled @endif
                                                     >
-                                                    <label class="text-sm text-slate-700" for="apm-{{ $row->id_allocation_proposal_maquinaria }}">
+                                                    <label class="text-sm text-tinta" for="apm-{{ $row->id_allocation_proposal_maquinaria }}">
                                                         {{ $row->maquinaria->modelo ?? '' }}
-                                                        <small class="text-slate-500">- {{ $row->tipo_sugerido ?? ($row->maquinaria->tipoMaquinaria->nombre ?? 'N/A') }}</small>
-                                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-200 text-slate-700 ml-1">score: {{ $row->score ?? 'N/A' }}</span>
+                                                        <small class="text-tinta-suave">- {{ $row->tipo_sugerido ?? ($row->maquinaria->tipoMaquinaria->nombre ?? 'N/A') }}</small>
+                                                        <x-ui.badge variant="neutral">score: {{ $row->score ?? 'N/A' }}</x-ui.badge>
                                                     </label>
                                                 </div>
                                             @endforeach
                                         </div>
                                     @endif
                                 </div>
-                            </div>
+                            </x-ui.card>
 
-                            <div class="bg-white rounded-xl shadow-sm border border-emerald-300 overflow-hidden">
-                                <div class="bg-emerald-600 text-white px-6 py-4 flex justify-between items-center">
-                                    <strong>📦 Insumos (semana 1)</strong>
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-white/20 text-white">{{ $selectedProposal->proposedInsumos->count() }}</span>
+                            <x-ui.card class="overflow-hidden border-musgo/30">
+                                <div class="bg-musgo text-blanco px-6 py-4 flex justify-between items-center">
+                                    <strong class="flex items-center gap-2">
+                                        <flux:icon.cube class="size-5" />
+                                        Insumos (semana 1)
+                                    </strong>
+                                    <x-ui.badge variant="neutral" class="bg-blanco/20 text-blanco">{{ $selectedProposal->proposedInsumos->count() }}</x-ui.badge>
                                 </div>
                                 <div class="p-6">
                                     @if($selectedProposal->proposedInsumos->isEmpty())
-                                        <div class="text-slate-400 text-sm">Sin sugerencias.</div>
+                                        <div class="text-tinta-suave text-sm">Sin sugerencias.</div>
                                     @else
-                                        <div class="max-h-[320px] overflow-y-auto border border-slate-200 rounded-lg p-3">
+                                        <div class="max-h-[320px] overflow-y-auto border border-arena rounded-sm p-3">
                                             @foreach($selectedProposal->proposedInsumos as $row)
                                                 <div class="flex items-start gap-2 py-1" wire:key="insumo-{{ $row->id_allocation_proposal_insumo }}">
                                                     <div class="pt-0.5">
                                                         <input
-                                                            class="rounded border-slate-300 text-brand focus:ring-brand/20"
+                                                            class="rounded border-arena text-pino focus:ring-pino"
                                                             type="checkbox"
                                                             id="api-{{ $row->id_allocation_proposal_insumo }}"
                                                             wire:model.live="insumoSelected.{{ $row->id_allocation_proposal_insumo }}"
@@ -321,8 +337,8 @@
                                                         >
                                                     </div>
                                                     <label class="w-full text-sm" for="api-{{ $row->id_allocation_proposal_insumo }}">
-                                                        <div class="font-semibold text-slate-800">{{ $row->insumo->nombre ?? '' }}</div>
-                                                        <div class="text-xs text-slate-500">
+                                                        <div class="font-semibold text-tinta">{{ $row->insumo->nombre ?? '' }}</div>
+                                                        <div class="text-xs text-tinta-suave">
                                                             {{ $row->insumo->unidadMedida->nombre ?? '' }}
                                                             @if(!is_null($row->cantidad_semana_1))
                                                                 · cant. semana 1: <strong>{{ $row->cantidad_semana_1 }}</strong>
@@ -342,34 +358,31 @@
                                         </div>
                                     @endif
                                 </div>
-                            </div>
+                            </x-ui.card>
                         </div>
 
                         <div class="flex flex-wrap gap-2 mt-6">
                             @canany(['crear-propuestas-asignacion', 'editar-propuestas-asignacion'])
-                            <button class="inline-flex items-center gap-1.5 px-4 py-2.5 border border-slate-300 bg-white text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors" wire:click="guardarSeleccion" @if($guardando) disabled @endif>
-                                💾 Guardar selección
-                            </button>
+                            <x-ui.button variant="secondary" icon="check" wire:click="guardarSeleccion" :disabled="$guardando">
+                                Guardar selección
+                            </x-ui.button>
 
-                            <button class="inline-flex items-center gap-1.5 px-5 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-lg text-sm font-medium shadow-sm transition-colors" wire:click="confirmar" @if($guardando) disabled @endif>
-                                ✓ Confirmar
-                            </button>
+                            <x-ui.button variant="primary" icon="check-circle" wire:click="confirmar" :disabled="$guardando">
+                                Confirmar
+                            </x-ui.button>
 
-                            <button class="inline-flex items-center gap-1.5 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium shadow-sm transition-colors" wire:click="aplicar" @if($guardando) disabled @endif>
-                                📥 Aplicar al lote
-                            </button>
+                            <x-ui.button variant="primary" icon="archive-box-arrow-down" wire:click="aplicar" :disabled="$guardando">
+                                Aplicar al lote
+                            </x-ui.button>
                             @endcanany
                         </div>
 
-                        <div class="flex items-center gap-3 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl px-5 py-3 text-sm mt-4">
-                            <span>⚠</span>
-                            <small>
-                                "Aplicar" reemplaza las asignaciones actuales del lote por la selección de esta propuesta.
-                            </small>
-                        </div>
+                        <x-ui.alert variant="warning" class="mt-4" dismissible="false">
+                            "Aplicar" reemplaza las asignaciones actuales del lote por la selección de esta propuesta.
+                        </x-ui.alert>
                     @endif
                 </div>
-            </div>
+            </x-ui.card>
         </div>
     </div>
 </div>
