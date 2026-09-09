@@ -1,108 +1,213 @@
-<div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-    <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-bold text-slate-900">
-            📅 Programar Mantenimiento
-        </h1>
-    </div>
-
-    @if (session()->has('success'))
-        <div x-data="{ open: true }" x-show="open" x-transition
-            class="mb-6 flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-emerald-800 shadow-sm" role="alert">
-            <span class="text-emerald-600">✓</span>
-            <span class="flex-1 text-sm font-medium">{{ session('success') }}</span>
-            <button type="button" class="text-emerald-600 hover:text-emerald-800" @click="open = false">✕</button>
-        </div>
-    @endif
-    @if (session()->has('error'))
-        <div x-data="{ open: true }" x-show="open" x-transition
-            class="mb-6 flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-red-800 shadow-sm" role="alert">
-            <span class="text-red-600">⚠</span>
-            <span class="flex-1 text-sm font-medium">{{ session('error') }}</span>
-            <button type="button" class="text-red-600 hover:text-red-800" @click="open = false">✕</button>
-        </div>
-    @endif
-
-    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div class="p-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <div class="flex items-start gap-3 bg-cyan-50 border border-cyan-200 text-cyan-800 rounded-xl px-5 py-3 text-sm">
-                    <span class="text-2xl">ℹ️</span>
-                    <div>
-                        <strong>{{ $notificacion->titulo }}</strong>
-                        <p class="mt-1 text-xs">{{ $notificacion->mensaje }}</p>
-                    </div>
-                </div>
-                <div class="bg-slate-50 rounded-lg p-4">
-                    <h6 class="text-brand font-semibold mb-2">
-                        🔧 Detalles del Mantenimiento
-                    </h6>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div class="col-span-2">
-                            <small class="text-slate-500">Maquinaria:</small>
-                            <div class="font-semibold">{{ $mantenimiento->maquinaria->nombre ?? 'N/A' }}</div>
-                        </div>
-                        <div>
-                            <small class="text-slate-500">Tipo:</small>
-                            <div class="font-semibold">{{ $mantenimiento->tipoMantenimiento->nombre ?? 'N/A' }}</div>
-                        </div>
-                        <div>
-                            <small class="text-slate-500">Estado:</small>
-                            <div>
-                                @if($mantenimiento->estado === 'programado')
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-cyan-100 text-cyan-700">Programado</span>
-                                @elseif($mantenimiento->estado === 'en curso')
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">En Curso</span>
-                                @elseif($mantenimiento->estado === 'completado')
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">Completado</span>
-                                @else
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">{{ ucfirst($mantenimiento->estado) }}</span>
-                                @endif
-                            </div>
-                        </div>
-                        <div class="col-span-2">
-                            <small class="text-slate-500">Fecha de Inicio:</small>
-                            <div class="font-semibold">{{ \Carbon\Carbon::parse($mantenimiento->fecha_inicio)->format('d/m/Y') }}</div>
-                        </div>
-                    </div>
+<div class="w-full px-4 py-6 sm:px-6 lg:px-8">
+    <div class="mb-6">
+        @if ($notificacionId)
+            <div class="flex items-start gap-3">
+                <div>
+                    <h1 class="flex items-center gap-2 text-2xl font-bold text-tinta">
+                        <flux:icon.information-circle class="size-6" />
+                        Detalle de Mantenimiento por Notificacion
+                    </h1>
+                    <p class="text-sm text-tinta-suave mt-1">
+                        Esta orden ya fue generada automaticamente por una notificacion. Confirme la fecha para dejarla programada.
+                    </p>
                 </div>
             </div>
-            <hr class="border-slate-200 my-6">
-            <form wire:submit.prevent="guardarFecha">
+        @else
+            <h1 class="flex items-center gap-2 text-2xl font-bold text-tinta">
+                <flux:icon.calendar-date-range class="size-6" />
+                Programar Mantenimiento
+            </h1>
+            <p class="text-sm text-tinta-suave mt-1">
+                Programe una nueva orden de mantenimiento preventivo o correctivo.
+            </p>
+        @endif
+    </div>
+
+    @if (session()->has('message'))
+        <x-ui.alert variant="success" class="mb-6">
+            {{ session('message') }}
+        </x-ui.alert>
+    @endif
+    @if (session()->has('error'))
+        <x-ui.alert variant="danger" class="mb-6">
+            {{ session('error') }}
+        </x-ui.alert>
+    @endif
+
+    @if (! $notificacionId)
+        {{-- ALTA: formulario para programar una nueva orden --}}
+        <x-ui.card class="overflow-hidden">
+            <div class="bg-corteza-suave border-b border-arena px-6 py-4">
+                <h5 class="flex items-center gap-2 text-lg font-semibold text-tinta mb-0">
+                    <flux:icon.plus class="size-5" />
+                    Nueva Orden de Mantenimiento
+                </h5>
+            </div>
+            <div class="p-6">
+                <form wire:submit.prevent="programarOrden">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <label for="id_maquinaria" class="block text-sm font-semibold text-tinta mb-2">
+                                Maquinaria <span class="text-tierra">*</span>
+                            </label>
+                            <select id="id_maquinaria" wire:model="id_maquinaria" class="form-input @error('id_maquinaria') ring-2 ring-tierra @enderror">
+                                <option value="">Seleccione...</option>
+                                @foreach($maquinarias as $maquinaria)
+                                    <option value="{{ $maquinaria->id_maquinaria }}" wire:key="option-{{ $maquinaria->id_maquinaria }}">
+                                        {{ $maquinaria->modelo }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('id_maquinaria') <p class="mt-1 text-sm text-tierra">{{ $message }}</p> @enderror
+                            @php
+                                $maquinariaSeleccionada = $maquinarias?->firstWhere('id_maquinaria', $id_maquinaria);
+                            @endphp
+                            @if($maquinariaSeleccionada && $maquinariaSeleccionada->umbral_toneladas)
+                                <small class="text-tinta-suave text-xs mt-1 block">
+                                    <flux:icon.information-circle class="size-3 inline" />
+                                    Toneladas acumuladas: {{ number_format($maquinariaSeleccionada->toneladas_acumuladas ?? 0, 0) }} / {{ number_format($maquinariaSeleccionada->umbral_toneladas, 0) }} (umbral de mantenimiento)
+                                </small>
+                            @endif
+                        </div>
+                        <div>
+                            <label for="id_tipo_mantenimiento" class="block text-sm font-semibold text-tinta mb-2">
+                                Tipo de Mantenimiento <span class="text-tierra">*</span>
+                            </label>
+                            <select id="id_tipo_mantenimiento" wire:model="id_tipo_mantenimiento" class="form-input @error('id_tipo_mantenimiento') ring-2 ring-tierra @enderror">
+                                <option value="">Seleccione...</option>
+                                @foreach($tipos as $tipo)
+                                    <option value="{{ $tipo->id_tipo_mantenimiento }}" wire:key="option-{{ $tipo->id_tipo_mantenimiento }}">{{ $tipo->nombre }}</option>
+                                @endforeach
+                            </select>
+                            @error('id_tipo_mantenimiento') <p class="mt-1 text-sm text-tierra">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <label for="fechaProgramada" class="block text-sm font-semibold text-tinta mb-1.5 flex items-center gap-2">
+                                <flux:icon.calendar-date-range class="size-4" />
+                                Fecha Programada <span class="text-tierra">*</span>
+                            </label>
+                            <input
+                                type="date"
+                                id="fechaProgramada"
+                                class="form-input @error('fechaProgramada') border-tierra bg-tierra-suave @enderror"
+                                wire:model="fechaProgramada"
+                            >
+                            @error('fechaProgramada')
+                                <p class="text-tierra text-xs mt-1">{{ $message }}</p>
+                            @enderror
+                            <small class="text-tinta-suave text-xs mt-1 block">
+                                <flux:icon.information-circle class="size-3 inline" />
+                                Debe estar entre {{ \Carbon\Carbon::now()->format('d/m/Y') }} y {{ \Carbon\Carbon::now()->addDays(7)->format('d/m/Y') }}
+                            </small>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-tinta mb-2">Estado</label>
+                            <x-ui.badge variant="info">Programado</x-ui.badge>
+                            <small class="text-tinta-suave text-xs mt-1 block">
+                                La orden se creara en estado programado. Podra confirmarse desde el listado de mantenimientos.
+                            </small>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-2 justify-end">
+                        <a href="{{ route('mantenimientos.index') }}" class="inline-flex items-center gap-1.5 rounded-sm border border-arena bg-white px-4 py-2.5 text-sm font-semibold text-tinta hover:bg-corteza-suave">
+                            <flux:icon.x-mark class="size-4" />
+                            Cancelar
+                        </a>
+                        <x-ui.button type="submit" icon="calendar-date-range">
+                            Programar Orden
+                        </x-ui.button>
+                    </div>
+                </form>
+            </div>
+        </x-ui.card>
+    @else
+        {{-- DETALLE: confirmacion de orden generada por notificacion --}}
+        <x-ui.card class="overflow-hidden">
+            <div class="p-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                    <div>
-                        <label for="fechaProgramada" class="block text-sm font-semibold text-slate-700 mb-1.5">
-                            📅 Fecha Programada <span class="text-red-500">*</span>
-                        </label>
-                        <input
-                            type="date"
-                            id="fechaProgramada"
-                            class="w-full px-4 py-2.5 border rounded-lg text-sm transition-colors @error('fechaProgramada') border-red-400 bg-red-50 @else border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 @enderror"
-                            wire:model="fechaProgramada"
-                            min="{{ $fechaMinima }}"
-                            max="{{ $fechaMaxima }}"
-                        >
-                        @error('fechaProgramada')
-                            <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
-                        @enderror
-                        <small class="text-slate-500 text-xs mt-1 block">
-                            ℹ️
-                            La fecha debe estar dentro del rango permitido:
-                            <strong>{{ \Carbon\Carbon::parse($fechaMinima)->format('d/m/Y') }}</strong>
-                            a
-                            <strong>{{ \Carbon\Carbon::parse($fechaMaxima)->format('d/m/Y') }}</strong>
-                            (7 días desde la notificación)
-                        </small>
+                    <x-ui.alert variant="info" :dismissible="false">
+                        <strong>{{ $notificacion->titulo }}</strong>
+                        <p class="mt-1 text-xs">{{ $notificacion->mensaje }}</p>
+                    </x-ui.alert>
+                    <div class="bg-hueso rounded-sm p-4 border border-arena">
+                        <h6 class="text-pino font-semibold mb-2 flex items-center gap-2">
+                            <flux:icon.wrench class="size-4" />
+                            Detalles del Mantenimiento
+                        </h6>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="col-span-2">
+                                <small class="text-tinta-suave">Maquinaria:</small>
+                                <div class="font-semibold text-tinta">{{ $mantenimiento->maquinaria->modelo ?? 'N/A' }}</div>
+                            </div>
+                            <div>
+                                <small class="text-tinta-suave">Tipo:</small>
+                                <div class="font-semibold text-tinta">{{ $mantenimiento->tipoMantenimiento->nombre ?? 'N/A' }}</div>
+                            </div>
+                            <div>
+                                <small class="text-tinta-suave">Estado:</small>
+                                <div>
+                                    @if($mantenimiento->estado === 'programado')
+                                        <x-ui.badge variant="info">Programado</x-ui.badge>
+                                    @elseif($mantenimiento->estado === 'en curso')
+                                        <x-ui.badge variant="warning">En Curso</x-ui.badge>
+                                    @elseif($mantenimiento->estado === 'completado')
+                                        <x-ui.badge variant="success">Completado</x-ui.badge>
+                                    @else
+                                        <x-ui.badge variant="neutral">{{ ucfirst($mantenimiento->estado) }}</x-ui.badge>
+                                    @endif
+                                </div>
+                            </div>
+                            <div class="col-span-2">
+                                <small class="text-tinta-suave">Fecha de Inicio:</small>
+                                <div class="font-semibold text-tinta">{{ $mantenimiento->fecha_inicio ? \Carbon\Carbon::parse($mantenimiento->fecha_inicio)->format('d/m/Y') : 'N/A' }}</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="flex gap-2 justify-end">
-                    <a href="{{ route('dashboard') }}" class="inline-flex items-center gap-1.5 px-4 py-2.5 border border-slate-300 bg-white text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors">
-                        ← Cancelar
-                    </a>
-                    <button type="submit" class="inline-flex items-center gap-1.5 px-5 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-lg text-sm font-medium shadow-sm transition-colors">
-                        ✓ Confirmar y Programar
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
+                <hr class="border-arena my-6">
+                <form wire:submit.prevent="guardarFecha">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <label for="fechaProgramada" class="block text-sm font-semibold text-tinta mb-1.5 flex items-center gap-2">
+                                <flux:icon.calendar-date-range class="size-4" />
+                                Fecha Programada <span class="text-tierra">*</span>
+                            </label>
+                            <input
+                                type="date"
+                                id="fechaProgramada"
+                                class="form-input @error('fechaProgramada') border-tierra bg-tierra-suave @enderror"
+                                wire:model="fechaProgramada"
+                                min="{{ $fechaMinima }}"
+                                max="{{ $fechaMaxima }}"
+                            >
+                            @error('fechaProgramada')
+                                <p class="text-tierra text-xs mt-1">{{ $message }}</p>
+                            @enderror
+                            <small class="text-tinta-suave text-xs mt-1 block">
+                                <flux:icon.information-circle class="size-3 inline" />
+                                La fecha debe estar dentro del rango permitido:
+                                <strong>{{ \Carbon\Carbon::parse($fechaMinima)->format('d/m/Y') }}</strong>
+                                a
+                                <strong>{{ \Carbon\Carbon::parse($fechaMaxima)->format('d/m/Y') }}</strong>
+                                (7 dias desde la notificacion)
+                            </small>
+                        </div>
+                    </div>
+                    <div class="flex gap-2 justify-end">
+                        <a href="{{ route('mantenimientos.index') }}" class="inline-flex items-center gap-1.5 rounded-sm border border-arena bg-white px-4 py-2.5 text-sm font-semibold text-tinta hover:bg-corteza-suave">
+                            <flux:icon.x-mark class="size-4" />
+                            Cancelar
+                        </a>
+                        <x-ui.button type="submit" icon="check">
+                            Confirmar y Programar
+                        </x-ui.button>
+                    </div>
+                </form>
+            </div>
+        </x-ui.card>
+    @endif
 </div>

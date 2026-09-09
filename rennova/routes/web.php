@@ -111,9 +111,9 @@ Route::middleware(['auth'])->group(function () {
     // Notificaciones del Sistema
     Route::view('/notificaciones', 'notificaciones.index')->name('notificaciones.index');
 
-    // Programar Mantenimiento desde Notificación
-    Route::get('/programar-mantenimiento/{notificacionId}', function ($notificacionId) {
-        return view('programar-mantenimiento.index', ['notificacionId' => $notificacionId]);
+    // Programar Mantenimiento (alta de orden) o confirmar orden generada por notificacion
+    Route::get('/programar-mantenimiento/{notificacionId?}', function ($notificacionId = null) {
+        return view('programar-mantenimiento.index', ['notificacionId' => $notificacionId ?? null]);
     })->name('programar-mantenimiento');
 
     // Configuración de Kits de Mantenimiento Preventivo (UI original)
