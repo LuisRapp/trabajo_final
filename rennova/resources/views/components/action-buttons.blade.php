@@ -1,35 +1,29 @@
 @props([
     'editWireClick' => '',
     'deleteWireClick' => '',
-    'deleteMessage' => '¿Está seguro?',
+    'deleteMessage' => '¿Esta seguro?',
     'canEdit' => true,
     'canDelete' => true,
     'editRoute' => null,
 ])
 
-<div {{ $attributes->merge(['class' => 'flex gap-1 justify-center']) }}>
+<div {{ $attributes->merge(['class' => 'flex gap-1 justify-end']) }}>
     @if($canEdit)
         @if($editRoute)
-            <a href="{{ $editRoute }}" title="Editar" class="inline-flex items-center px-2 py-1 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded transition-colors border border-blue-200">
-                ✏️
-            </a>
+            <x-ui.button variant="secondary" size="sm" icon="pencil-square" href="{{ $editRoute }}" title="Editar" />
         @else
-            <button type="button"
-                wire:click="{{ $editWireClick }}"
-                title="Editar"
-                class="inline-flex items-center px-2 py-1 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded transition-colors border border-blue-200">
-                ✏️
-            </button>
+            <x-ui.button variant="secondary" size="sm" icon="pencil-square" wire:click="{{ $editWireClick }}" title="Editar" />
         @endif
     @endif
 
     @if($canDelete)
-        <button type="button"
+        <x-ui.button
+            variant="danger"
+            size="sm"
+            icon="trash"
             wire:click="{{ $deleteWireClick }}"
             wire:confirm="{{ $deleteMessage }}"
             title="Eliminar"
-            class="inline-flex items-center px-2 py-1 bg-red-50 text-red-700 hover:bg-red-100 rounded transition-colors border border-red-200">
-            🗑️
-        </button>
+        />
     @endif
 </div>

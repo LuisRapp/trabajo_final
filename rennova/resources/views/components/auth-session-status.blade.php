@@ -3,7 +3,7 @@
 ])
 
 @if ($status)
-    <div {{ $attributes->merge(['class' => 'font-medium text-sm text-green-600']) }}>
+    <x-ui.alert variant="success" {{ $attributes->merge(['class' => 'text-sm']) }}>
         {{ $status }}
-    </div>
+    </x-ui.alert>
 @endif

@@ -9,7 +9,7 @@
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet">
+    <link href="https://fonts.bunny.net/css?family=inter:400,500,600&display=swap" rel="stylesheet">
 
     <!-- Scripts & Styles (Tailwind CSS via Vite) -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -17,7 +17,7 @@
     <!-- Livewire Styles -->
     @livewireStyles
 </head>
-<body class="bg-slate-50 flex flex-col" style="height: 100vh;">
+<body class="bg-hueso flex h-screen flex-col">
     <div x-data="layoutState()" x-cloak>
         @include('partials.header')
 
@@ -28,28 +28,31 @@
             @include('partials.sidebar')
 
             <!-- Main Content + Footer -->
-            <div class="page-wrapper grow flex flex-col bg-slate-50" id="pageWrapper">
+            <div class="page-wrapper grow flex flex-col bg-hueso" id="pageWrapper">
                 <main class="main-content flex-1" id="mainContent">
                     <div class="flex-1">
                         @if(session('status'))
-                            <div class="max-w-7xl mx-auto px-4 py-2">
-                                <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl px-5 py-3 flex items-center justify-between" role="alert">
-                                    <span class="flex items-center gap-1.5"><flux:icon.check-circle class="size-4" /> {{ session('status') }}</span>
-                                    <button type="button" class="text-emerald-600 hover:text-emerald-800 ml-4" @click="$el.closest('[role=alert]').remove()">
-                                        &times;
-                                    </button>
-                                </div>
-                            </div>
+                            <x-ui.alert variant="success" class="mb-4">
+                                {{ session('status') }}
+                            </x-ui.alert>
                         @endif
+
                         @if(session('error'))
-                            <div class="max-w-7xl mx-auto px-4 py-2">
-                                <div class="bg-red-50 border border-red-200 text-red-800 rounded-xl px-5 py-3 flex items-center justify-between" role="alert">
-                                    <span class="flex items-center gap-1.5"><flux:icon.exclamation-triangle class="size-4" /> {{ session('error') }}</span>
-                                    <button type="button" class="text-red-600 hover:text-red-800 ml-4" @click="$el.closest('[role=alert]').remove()">
-                                        &times;
-                                    </button>
-                                </div>
-                            </div>
+                            <x-ui.alert variant="danger" class="mb-4">
+                                {{ session('error') }}
+                            </x-ui.alert>
+                        @endif
+
+                        @if(session('warning'))
+                            <x-ui.alert variant="warning" class="mb-4">
+                                {{ session('warning') }}
+                            </x-ui.alert>
+                        @endif
+
+                        @if(session('info'))
+                            <x-ui.alert variant="info" class="mb-4">
+                                {{ session('info') }}
+                            </x-ui.alert>
                         @endif
 
                         @if (isset($slot))
@@ -57,7 +60,6 @@
                         @else
                             @yield('content')
                         @endif
-
                     </div>
                 </main>
                 @include('partials.footer')

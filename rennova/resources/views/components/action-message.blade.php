@@ -7,8 +7,9 @@
     x-init="@this.on('{{ $on }}', () => { clearTimeout(timeout); shown = true; timeout = setTimeout(() => { shown = false }, 2000); })"
     x-show.transition.out.opacity.duration.1500ms="shown"
     x-transition:leave.opacity.duration.1500ms
-    style="display: none"
-    {{ $attributes->merge(['class' => 'text-sm']) }}
+    style="display: none;"
 >
-    {{ $slot->isEmpty() ? __('Saved.') : $slot }}
+    <x-ui.alert variant="success" dismissible="false" {{ $attributes->merge(['class' => 'inline-flex items-center py-1.5 px-2 text-xs']) }}>
+        {{ $slot->isEmpty() ? __('Saved.') : $slot }}
+    </x-ui.alert>
 </div>

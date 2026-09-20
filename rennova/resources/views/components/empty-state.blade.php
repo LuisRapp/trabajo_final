@@ -1,20 +1,33 @@
-@props(['colspan' => '1', 'message' => 'No hay registros', 'icon' => 'inbox'])
+@props([
+    'colspan' => null,
+    'message' => 'No hay registros',
+    'icon' => 'inbox',
+])
 
 @php
-$iconMap = [
-    'inbox' => '📭',
-    'archive' => '📦',
-    'list-ul' => '📋',
-    'person' => '👤',
-    'truck' => '🚛',
-    'exclamation-triangle' => '⚠️',
+$legacyIconMap = [
+    'inbox' => 'inbox',
+    'archive' => 'archive-box',
+    'list-ul' => 'list-bullet',
+    'person' => 'user',
+    'truck' => 'truck',
+    'exclamation-triangle' => 'exclamation-triangle',
 ];
-$emoji = $iconMap[$icon] ?? '📭';
+$resolvedIcon = $legacyIconMap[$icon] ?? $icon;
 @endphp
 
-<tr>
-    <td colspan="{{ $colspan }}" class="px-4 py-8 text-center">
-        <span class="text-3xl text-slate-300 block mb-2">{{ $emoji }}</span>
-        <p class="text-slate-500 font-medium">{{ $message }}</p>
-    </td>
-</tr>
+@if($colspan)
+    <tr>
+        <td colspan="{{ $colspan }}" class="text-center py-8">
+            <div class="inline-flex flex-col items-center justify-center gap-2 px-6 py-6">
+                <x-dynamic-component component="flux::icon.{{ $resolvedIcon }}" class="size-8 text-arena-oscura" />
+                <p class="text-tinta-suave text-sm font-medium">{{ $message }}</p>
+            </div>
+        </td>
+    </tr>
+@else
+    <x-ui.card class="flex flex-col items-center justify-center gap-2 px-6 py-8 text-center">
+        <x-dynamic-component component="flux::icon.{{ $resolvedIcon }}" class="size-10 text-arena-oscura" />
+        <p class="text-tinta-suave text-sm font-medium">{{ $message }}</p>
+    </x-ui.card>
+@endif
