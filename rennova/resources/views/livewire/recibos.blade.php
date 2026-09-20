@@ -1,145 +1,182 @@
-<div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+<div class="w-full">
     <div class="mb-6">
-        <h1 class="text-2xl font-bold text-slate-900">🧾 Recibos</h1>
+        <h1 class="text-2xl font-bold text-tinta flex items-center gap-2">
+            <flux:icon.document-text class="size-6" />
+            Recibos
+        </h1>
     </div>
 
     @if (session()->has('message'))
-        <div x-data="{ open: true }" x-show="open" x-transition
-            class="mb-6 flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-emerald-800 shadow-sm" role="alert">
-            <span class="text-emerald-600">✓</span>
-            <span class="flex-1 text-sm font-medium">{{ session('message') }}</span>
-            <button type="button" class="text-emerald-600 hover:text-emerald-800" @click="open = false">✕</button>
-        </div>
+        <x-ui.alert variant="success" class="mb-6">
+            {{ session('message') }}
+        </x-ui.alert>
     @endif
 
-    <x-tab-nav :tabs="[
-        ['value' => 'nuevo', 'label' => 'Nuevo Recibo', 'icon' => 'plus-circle', 'can' => auth()->user()->canAny(['crear-recibos', 'editar-recibos'])],
-        ['value' => 'listado', 'label' => 'Listado de Recibos', 'icon' => 'list-ul'],
-    ]" activeTab="{{ $tab_activo }}" tabProperty="tab_activo" />
+    <div class="flex border-b border-arena mb-6" role="tablist">
+        @canany(['crear-recibos', 'editar-recibos'])
+        <button type="button" role="tab"
+            wire:click="$set('tab_activo', 'nuevo')"
+            class="px-4 py-2.5 text-sm font-medium border-b-2 transition-colors {{ $tab_activo === 'nuevo' ? 'border-pino text-pino' : 'border-transparent text-tinta-suave hover:text-tinta' }}">
+            <flux:icon.plus class="size-4 inline mr-1" />
+            Nuevo Recibo
+        </button>
+        @endcanany
+        <button type="button" role="tab"
+            wire:click="$set('tab_activo', 'listado')"
+            class="px-4 py-2.5 text-sm font-medium border-b-2 transition-colors {{ $tab_activo === 'listado' ? 'border-pino text-pino' : 'border-transparent text-tinta-suave hover:text-tinta' }}">
+            <flux:icon.list-bullet class="size-4 inline mr-1" />
+            Listado de Recibos
+        </button>
+    </div>
 
     @if($tab_activo === 'nuevo')
         @canany(['crear-recibos', 'editar-recibos'])
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6">
-            <div class="bg-slate-50 border-b border-slate-200 px-6 py-4">
-                <h5 class="text-lg font-semibold text-slate-800">
-                    {{ $recibo_id ? '✏️ Editar Recibo' : '➕ Nuevo Recibo' }}
+        <x-ui.card class="overflow-hidden mb-6">
+            <div class="bg-corteza-suave border-b border-arena px-6 py-4">
+                <h5 class="text-lg font-semibold text-tinta flex items-center gap-2">
+                    @if($recibo_id)
+                        <flux:icon.pencil-square class="size-5" />
+                        Editar Recibo
+                    @else
+                        <flux:icon.plus class="size-5" />
+                        Nuevo Recibo
+                    @endif
                 </h5>
             </div>
             <div class="p-6">
                 <form wire:submit.prevent="guardar">
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                         <div class="md:col-span-2">
-                            <label for="id_empleado" class="block text-sm font-semibold text-slate-700 mb-1.5">Empleado <span class="text-red-500">*</span></label>
+                            <label for="id_empleado" class="block text-sm font-semibold text-tinta mb-1.5">Empleado <span class="text-tierra">*</span></label>
                             <select id="id_empleado" wire:model="id_empleado"
-                                class="w-full px-4 py-2.5 border rounded-lg text-sm transition-colors @error('id_empleado') border-red-400 bg-red-50 @else border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 @enderror">
+                                class="form-input @error('id_empleado') border-tierra bg-tierra-suave @enderror">
                                 <option value="">Seleccione...</option>
                                 @foreach($empleados as $emp)
                                     <option value="{{ $emp->id_empleado }}" wire:key="option-{{ $emp->id_empleado }}">{{ $emp->apellido }}, {{ $emp->nombre }}</option>
                                 @endforeach
                             </select>
-                            @error('id_empleado') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+                            @error('id_empleado') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
-                            <label for="fecha_emision" class="block text-sm font-semibold text-slate-700 mb-1.5">Fecha Emisión <span class="text-red-500">*</span></label>
+                            <label for="fecha_emision" class="block text-sm font-semibold text-tinta mb-1.5">Fecha Emisión <span class="text-tierra">*</span></label>
                             <input type="date" id="fecha_emision" wire:model="fecha_emision"
-                                class="w-full px-4 py-2.5 border rounded-lg text-sm transition-colors @error('fecha_emision') border-red-400 bg-red-50 @else border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 @enderror">
-                            @error('fecha_emision') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+                                class="form-input @error('fecha_emision') border-tierra bg-tierra-suave @enderror">
+                            @error('fecha_emision') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
-                            <label for="monto_bruto" class="block text-sm font-semibold text-slate-700 mb-1.5">Monto Bruto <span class="text-red-500">*</span></label>
+                            <label for="monto_bruto" class="block text-sm font-semibold text-tinta mb-1.5">Monto Bruto <span class="text-tierra">*</span></label>
                             <input type="number" id="monto_bruto" wire:model.live="monto_bruto" step="0.01"
-                                class="w-full px-4 py-2.5 border rounded-lg text-sm transition-colors @error('monto_bruto') border-red-400 bg-red-50 @else border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 @enderror"
+                                class="form-input @error('monto_bruto') border-tierra bg-tierra-suave @enderror"
                                 placeholder="0.00">
-                            @error('monto_bruto') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+                            @error('monto_bruto') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                         <div>
-                            <label for="descuentos" class="block text-sm font-semibold text-slate-700 mb-1.5">Descuentos</label>
+                            <label for="descuentos" class="block text-sm font-semibold text-tinta mb-1.5">Descuentos</label>
                             <input type="number" id="descuentos" wire:model.live="descuentos" step="0.01"
-                                class="w-full px-4 py-2.5 border rounded-lg text-sm transition-colors @error('descuentos') border-red-400 bg-red-50 @else border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 @enderror"
+                                class="form-input @error('descuentos') border-tierra bg-tierra-suave @enderror"
                                 placeholder="0.00" value="0">
-                            @error('descuentos') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+                            @error('descuentos') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
-                            <label for="monto" class="block text-sm font-semibold text-slate-700 mb-1.5">Monto Neto</label>
+                            <label for="monto" class="block text-sm font-semibold text-tinta mb-1.5">Monto Neto</label>
                             <input type="text" id="monto"
-                                class="w-full px-4 py-2.5 border border-slate-200 bg-slate-50 rounded-lg text-sm text-slate-600"
+                                class="form-input bg-corteza-suave text-tinta-suave border-arena"
                                 value="{{ isset($monto) ? '$' . number_format($monto, 2, ',', '.') : '' }}" readonly>
                         </div>
                         <div>
-                            <label for="observaciones" class="block text-sm font-semibold text-slate-700 mb-1.5">Observaciones</label>
+                            <label for="observaciones" class="block text-sm font-semibold text-tinta mb-1.5">Observaciones</label>
                             <textarea id="observaciones" wire:model="observaciones" rows="1"
-                                class="w-full px-4 py-2.5 border rounded-lg text-sm transition-colors @error('observaciones') border-red-400 bg-red-50 @else border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 @enderror"
+                                class="form-input @error('observaciones') border-tierra bg-tierra-suave @enderror"
                                 placeholder="Observaciones"></textarea>
-                            @error('observaciones') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+                            @error('observaciones') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
                     </div>
                     <div class="flex gap-2 justify-end">
                         @if ($recibo_id)
-                            <button type="button" wire:click="resetCampos"
-                                class="inline-flex items-center gap-1.5 px-4 py-2.5 border border-slate-300 bg-white text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors">
-                                ✕ Cancelar
-                            </button>
+                            <x-ui.button type="button" variant="secondary" icon="x-mark" wire:click="resetCampos">
+                                Cancelar
+                            </x-ui.button>
                         @endif
                         @canany(['crear-recibos', 'editar-recibos'])
-                        <button type="submit"
-                            class="inline-flex items-center gap-1.5 px-5 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-lg text-sm font-medium shadow-sm transition-colors">
-                            ✓ {{ $recibo_id ? 'Actualizar' : 'Guardar' }}
-                        </button>
+                        <x-ui.button type="submit" variant="primary" icon="check">
+                            {{ $recibo_id ? 'Actualizar' : 'Guardar' }}
+                        </x-ui.button>
                         @endcanany
                     </div>
                 </form>
             </div>
-        </div>
+        </x-ui.card>
         @endcanany
     @else
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <x-ui.card class="overflow-hidden">
             <div class="p-6">
-                <x-search-input placeholder="Buscar por empleado..." />
+                <div class="mb-6">
+                    <div class="flex items-center gap-2 px-3 py-2 border border-arena rounded-sm bg-corteza-suave">
+                        <flux:icon.magnifying-glass class="size-4 text-tinta-suave" />
+                        <input type="text"
+                            class="flex-1 bg-transparent border-0 focus:ring-0 focus:outline-none text-sm text-tinta placeholder:text-tinta-suave"
+                            placeholder="Buscar por empleado..."
+                            wire:model.live="busqueda">
+                    </div>
+                </div>
 
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
+                <x-ui.table-container>
+                    <table class="data-table">
                         <thead>
-                            <tr class="bg-slate-50 border-b border-slate-200">
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">ID</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Empleado</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Fecha</th>
-                                <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Bruto</th>
-                                <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Descuentos</th>
-                                <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Neto</th>
-                                <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Acciones</th>
+                            <tr>
+                                <th>ID</th>
+                                <th>Empleado</th>
+                                <th>Fecha</th>
+                                <th class="text-right">Bruto</th>
+                                <th class="text-right">Descuentos</th>
+                                <th class="text-right">Neto</th>
+                                <th class="text-right">Acciones</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-100">
+                        <tbody>
                             @forelse ($recibos as $recibo)
-                                <tr wire:key="row-{{ $recibo->id_recibo }}" class="hover:bg-slate-50 transition-colors">
-                                    <td class="px-4 py-2.5"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">{{ $recibo->id_recibo }}</span></td>
-                                    <td class="px-4 py-2.5 font-medium text-slate-800">{{ $recibo->empleado?->apellido }}, {{ $recibo->empleado?->nombre }}</td>
-                                    <td class="px-4 py-2.5 text-slate-600">{{ \Carbon\Carbon::parse($recibo->fecha_emision)->format('d/m/Y') }}</td>
-                                    <td class="px-4 py-2.5 text-right text-slate-600">${{ number_format($recibo->monto_bruto, 2, ',', '.') }}</td>
-                                    <td class="px-4 py-2.5 text-right text-slate-600">${{ number_format($recibo->descuentos ?? 0, 2, ',', '.') }}</td>
-                                    <td class="px-4 py-2.5 text-right font-semibold text-slate-800">${{ number_format($recibo->monto, 2, ',', '.') }}</td>
-                                    <td class="px-4 py-2.5 text-right">
-                                        <x-action-buttons
-                                            editWireClick="editar({{ $recibo->id_recibo }})"
-                                            deleteWireClick="eliminar({{ $recibo->id_recibo }})"
-                                            deleteMessage="¿Está seguro de eliminar este recibo?"
-                                            :canEdit="auth()->user()->can('editar-recibos')"
-                                            :canDelete="auth()->user()->can('eliminar-recibos')" />
+                                <tr wire:key="row-{{ $recibo->id_recibo }}">
+                                    <td><x-ui.badge variant="neutral">{{ $recibo->id_recibo }}</x-ui.badge></td>
+                                    <td class="font-medium text-tinta">{{ $recibo->empleado?->apellido }}, {{ $recibo->empleado?->nombre }}</td>
+                                    <td class="text-tinta-suave">{{ \Carbon\Carbon::parse($recibo->fecha_emision)->format('d/m/Y') }}</td>
+                                    <td class="text-right text-tinta-suave">${{ number_format($recibo->monto_bruto, 2, ',', '.') }}</td>
+                                    <td class="text-right text-tinta-suave">${{ number_format($recibo->descuentos ?? 0, 2, ',', '.') }}</td>
+                                    <td class="text-right font-semibold text-tinta">${{ number_format($recibo->monto, 2, ',', '.') }}</td>
+                                    <td class="text-right">
+                                        <div class="inline-flex rounded-sm shadow-xs">
+                                            @can('editar-recibos')
+                                            <x-ui.button variant="ghost" size="sm" icon="pencil-square"
+                                                wire:click="editar({{ $recibo->id_recibo }})"
+                                                title="Editar"
+                                                class="rounded-r-none border-r-0" />
+                                            @endcan
+                                            @can('eliminar-recibos')
+                                            <x-ui.button variant="ghost" size="sm" icon="trash"
+                                                wire:click="eliminar({{ $recibo->id_recibo }})"
+                                                wire:confirm="¿Está seguro de eliminar este recibo?"
+                                                title="Eliminar"
+                                                class="rounded-l-none" />
+                                            @endcan
+                                        </div>
                                     </td>
                                 </tr>
                             @empty
-                                <x-empty-state :colspan="7" message="No hay recibos registrados." />
+                                <tr>
+                                    <td colspan="7" class="text-center py-12 text-tinta-suave">
+                                        No hay recibos registrados.
+                                    </td>
+                                </tr>
                             @endforelse
                         </tbody>
                     </table>
-                </div>
+                </x-ui.table-container>
 
                 <div class="mt-4">
                     {{ $recibos->links() }}
                 </div>
             </div>
-        </div>
+        </x-ui.card>
     @endif
 </div>
