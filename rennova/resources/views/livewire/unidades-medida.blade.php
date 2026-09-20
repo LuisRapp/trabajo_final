@@ -1,104 +1,104 @@
-<div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+<div class="w-full py-6 px-4 sm:px-6 lg:px-8">
     <div class="mb-6">
-        <h1 class="text-2xl font-bold text-slate-900">📏 Unidades de Medida</h1>
+        <h1 class="text-2xl font-bold text-tinta">Unidades de Medida</h1>
     </div>
 
     @if (session()->has('message'))
-        <div class="mb-6 flex items-center gap-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl px-5 py-3 text-sm font-medium" role="alert">
-            <span class="text-emerald-600">✓</span> {{ session('message') }}
-        </div>
+        <x-ui.alert variant="success" class="mb-6">
+            {{ session('message') }}
+        </x-ui.alert>
     @endif
 
     <x-tab-nav :tabs="[
-        ['value' => 'nuevo', 'label' => 'Nueva Unidad', 'icon' => 'plus-circle', 'can' => auth()->user()->canAny(['crear-unidades-medida', 'editar-unidades-medida'])],
-        ['value' => 'listado', 'label' => 'Listado de Unidades', 'icon' => 'list-ul'],
+        ['value' => 'nuevo', 'label' => 'Nueva Unidad', 'icon' => 'plus', 'can' => auth()->user()->canAny(['crear-unidades-medida', 'editar-unidades-medida'])],
+        ['value' => 'listado', 'label' => 'Listado de Unidades', 'icon' => 'list-bullet'],
     ]" activeTab="{{ $tab_activo }}" tabProperty="tab_activo" />
 
     @if($tab_activo === 'nuevo')
         @canany(['crear-unidades-medida', 'editar-unidades-medida'])
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6">
-            <div class="bg-slate-50 border-b border-slate-200 px-6 py-4">
-                <h5 class="text-lg font-semibold text-slate-800">
-                    {{ $unidad_id ? '✏️ Editar Unidad' : '➕ Nueva Unidad' }}
-                </h5>
-            </div>
-            <div class="p-6">
-                <form wire:submit.prevent="guardar">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                        <div class="md:col-span-2">
-                            <label for="nombre" class="block text-sm font-semibold text-slate-700 mb-1.5">Nombre <span class="text-red-500">*</span></label>
-                            <input type="text" id="nombre" wire:model="nombre"
-                                class="w-full px-4 py-2.5 border rounded-lg text-sm transition-colors @error('nombre') border-red-400 bg-red-50 @else border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 @enderror"
-                                placeholder="Nombre de la unidad de medida">
-                            @error('nombre') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+            <x-ui.card class="mb-6 overflow-hidden">
+                <div class="px-4 py-3 border-b border-arena bg-hueso">
+                    <h5 class="text-sm font-semibold text-tinta">
+                        {{ $unidad_id ? 'Editar Unidad' : 'Nueva Unidad' }}
+                    </h5>
+                </div>
+                <div class="p-4">
+                    <form wire:submit.prevent="guardar">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            <div class="md:col-span-2">
+                                <label for="nombre" class="block text-xs font-semibold text-tinta mb-1.5">Nombre <span class="text-tierra">*</span></label>
+                                <input type="text" id="nombre" wire:model="nombre"
+                                    class="form-input @error('nombre') border-tierra bg-tierra-suave @enderror"
+                                    placeholder="Nombre de la unidad de medida">
+                                @error('nombre') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
+                            </div>
+                            <div>
+                                <label for="abreviatura" class="block text-xs font-semibold text-tinta mb-1.5">Abreviatura <span class="text-tierra">*</span></label>
+                                <input type="text" id="abreviatura" wire:model="abreviatura"
+                                    class="form-input @error('abreviatura') border-tierra bg-tierra-suave @enderror"
+                                    placeholder="Ej: kg, lt, m3">
+                                @error('abreviatura') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
+                            </div>
                         </div>
-                        <div>
-                            <label for="abreviatura" class="block text-sm font-semibold text-slate-700 mb-1.5">Abreviatura <span class="text-red-500">*</span></label>
-                            <input type="text" id="abreviatura" wire:model="abreviatura"
-                                class="w-full px-4 py-2.5 border rounded-lg text-sm transition-colors @error('abreviatura') border-red-400 bg-red-50 @else border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 @enderror"
-                                placeholder="Ej: kg, lt, m3">
-                            @error('abreviatura') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+                        <div class="flex gap-2 justify-end">
+                            @if ($unidad_id)
+                                <x-ui.button variant="secondary" icon="x-mark" wire:click="resetCampos">
+                                    Cancelar
+                                </x-ui.button>
+                            @endif
+                            @canany(['crear-unidades-medida', 'editar-unidades-medida'])
+                                <x-ui.button variant="primary" icon="check" type="submit">
+                                    {{ $unidad_id ? 'Actualizar' : 'Guardar' }}
+                                </x-ui.button>
+                            @endcanany
                         </div>
-                    </div>
-                    <div class="flex gap-2 justify-end">
-                        @if ($unidad_id)
-                            <button type="button" wire:click="resetCampos"
-                                class="inline-flex items-center gap-1.5 px-4 py-2.5 border border-slate-300 bg-white text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors">
-                                ✕ Cancelar
-                            </button>
-                        @endif
-                        @canany(['crear-unidades-medida', 'editar-unidades-medida'])
-                        <button type="submit"
-                            class="inline-flex items-center gap-1.5 px-5 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-lg text-sm font-medium shadow-sm transition-colors">
-                            ✓ {{ $unidad_id ? 'Actualizar' : 'Guardar' }}
-                        </button>
-                        @endcanany
-                    </div>
-                </form>
-            </div>
-        </div>
+                    </form>
+                </div>
+            </x-ui.card>
         @endcanany
     @else
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="p-6">
+        <x-ui.card>
+            <div class="p-4">
                 <x-search-input placeholder="Buscar por nombre o abreviatura..." />
 
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
+                <x-ui.table-container>
+                    <table class="data-table">
                         <thead>
-                            <tr class="bg-slate-50 border-b border-slate-200">
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">ID</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Nombre</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Abreviatura</th>
-                                <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Acciones</th>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre</th>
+                                <th>Abreviatura</th>
+                                <th class="text-right">Acciones</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-100">
+                        <tbody>
                             @forelse ($unidades as $unidad)
-                                <tr wire:key="row-{{ $unidad->id_unidad_medida }}" class="hover:bg-slate-50 transition-colors">
-                                    <td class="px-4 py-2.5"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">{{ $unidad->id_unidad_medida }}</span></td>
-                                    <td class="px-4 py-2.5 font-medium text-slate-800">{{ $unidad->nombre }}</td>
-                                    <td class="px-4 py-2.5"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">{{ $unidad->abreviatura }}</span></td>
-                                    <td class="px-4 py-2.5 text-right">
-                                        <x-action-buttons
-                                            editWireClick="editar({{ $unidad->id_unidad_medida }})"
-                                            deleteWireClick="eliminar({{ $unidad->id_unidad_medida }})"
-                                            deleteMessage="¿Está seguro de eliminar esta unidad?"
-                                            :canEdit="auth()->user()->can('editar-unidades-medida')"
-                                            :canDelete="auth()->user()->can('eliminar-unidades-medida')" />
+                                <tr wire:key="row-{{ $unidad->id_unidad_medida }}">
+                                    <td><x-ui.badge variant="neutral">{{ $unidad->id_unidad_medida }}</x-ui.badge></td>
+                                    <td class="font-medium text-tinta">{{ $unidad->nombre }}</td>
+                                    <td><x-ui.badge variant="info">{{ $unidad->abreviatura }}</x-ui.badge></td>
+                                    <td class="text-right">
+                                        <div class="flex gap-1 justify-end">
+                                            @can('editar-unidades-medida')
+                                                <x-ui.button variant="secondary" size="sm" icon="pencil-square" wire:click="editar({{ $unidad->id_unidad_medida }})" title="Editar" />
+                                            @endcan
+                                            @can('eliminar-unidades-medida')
+                                                <x-ui.button variant="danger" size="sm" icon="trash" wire:click="eliminar({{ $unidad->id_unidad_medida }})" wire:confirm="¿Esta seguro de eliminar esta unidad?" title="Eliminar" />
+                                            @endcan
+                                        </div>
                                     </td>
                                 </tr>
                             @empty
-                                <x-empty-state :colspan="4" message="No hay unidades registradas." />
+                                <x-empty-state :colspan="4" message="No hay unidades registradas." icon="scale" />
                             @endforelse
                         </tbody>
                     </table>
-                </div>
+                </x-ui.table-container>
 
                 <div class="mt-4">
                     {{ $unidades->links() }}
                 </div>
             </div>
-        </div>
+        </x-ui.card>
     @endif
 </div>

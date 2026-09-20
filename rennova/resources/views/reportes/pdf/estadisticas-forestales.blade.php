@@ -11,7 +11,7 @@
         * { box-sizing: border-box; }
         body {
             font-family: 'Helvetica', sans-serif;
-            color: #2c3e50;
+            color: #1c1917;
             line-height: 1.5;
             margin: 0;
         }
@@ -21,7 +21,7 @@
             left: 0px;
             right: 0px;
             height: 100px;
-            border-bottom: 3px solid #1a3d2f;
+            border-bottom: 3px solid #2f5233;
         }
         footer {
             position: fixed;
@@ -30,29 +30,29 @@
             right: 0px;
             height: 50px;
             font-size: 10px;
-            color: #7f8c8d;
+            color: #57534e;
             text-align: center;
-            border-top: 1px solid #eee;
+            border-top: 1px solid #d6d3cd;
             padding-top: 10px;
         }
         .pagenum:before { content: ""; }
         .title-report {
             font-size: 22px;
             font-weight: bold;
-            color: #1a3d2f;
+            color: #2f5233;
             text-transform: uppercase;
             margin: 0;
             letter-spacing: 1px;
         }
         .subtitle-report {
             font-size: 12px;
-            color: #7f8c8d;
+            color: #57534e;
             margin-top: 5px;
         }
         h3 {
             font-size: 16px;
-            color: #1a3d2f;
-            border-left: 5px solid #1a3d2f;
+            color: #2f5233;
+            border-left: 5px solid #2f5233;
             padding-left: 10px;
             margin-top: 30px;
             text-transform: uppercase;
@@ -63,17 +63,17 @@
             margin-top: 15px;
         }
         .table-data th {
-            background-color: #f8f9fa;
-            color: #1a3d2f;
+            background-color: #f7f6f3;
+            color: #2f5233;
             font-weight: bold;
             text-align: left;
             padding: 10px;
-            border-bottom: 2px solid #1a3d2f;
+            border-bottom: 2px solid #2f5233;
             font-size: 11px;
         }
         .table-data td {
             padding: 10px;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid #d6d3cd;
             font-size: 12px;
         }
         .kpi-container {
@@ -81,7 +81,7 @@
             width: 100%;
         }
         .kpi-card {
-            background: #f4f7f6;
+            background: #f3f0eb;
             padding: 15px;
             border-radius: 5px;
             text-align: center;
@@ -89,12 +89,12 @@
         .kpi-value {
             font-size: 18px;
             font-weight: bold;
-            color: #1a3d2f;
+            color: #2f5233;
             display: block;
         }
         .kpi-label {
             font-size: 10px;
-            color: #7f8c8d;
+            color: #57534e;
             text-transform: uppercase;
         }
     </style>
@@ -273,7 +273,7 @@
                     <td>{{ $item['hectareas'] ?? 0 }} Ha</td>
                     <td>{{ number_format($item['produccion'] ?? 0, 2) }} Tn</td>
                     <td>ARS {{ number_format($item['costo_promedio'] ?? 0, 2) }}</td>
-                    <td style="color: {{ ($item['rentabilidad'] ?? 0) >= 0 ? '#27ae60' : '#e74c3c' }}">
+                    <td style="color: {{ ($item['rentabilidad'] ?? 0) >= 0 ? '#3f6212' : '#991b1b' }}">
                         <strong>ARS {{ number_format($item['rentabilidad'] ?? 0, 2) }}</strong>
                     </td>
                 </tr>

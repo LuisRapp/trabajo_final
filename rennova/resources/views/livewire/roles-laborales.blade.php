@@ -1,101 +1,141 @@
-<div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+<div class="w-full">
     <div class="mb-6">
-        <h1 class="text-2xl font-bold text-slate-900">🪪 Roles Laborales</h1>
+        <h1 class="text-2xl font-bold text-tinta flex items-center gap-2">
+            <flux:icon.briefcase class="size-6" />
+            Roles Laborales
+        </h1>
     </div>
 
     @if (session()->has('message'))
-        <div class="mb-6 flex items-center gap-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl px-5 py-3 text-sm font-medium" role="alert">
-            <span class="text-emerald-600">✓</span> {{ session('message') }}
-        </div>
+        <x-ui.alert variant="success" class="mb-6">
+            {{ session('message') }}
+        </x-ui.alert>
     @endif
 
-    <x-tab-nav :tabs="[
-        ['value' => 'nuevo', 'label' => 'Nuevo Rol', 'icon' => 'plus-circle', 'can' => auth()->user()->canAny(['crear-roles-laborales', 'editar-roles-laborales'])],
-        ['value' => 'listado', 'label' => 'Listado de Roles', 'icon' => 'list-ul'],
-    ]" activeTab="{{ $tab_activo }}" tabProperty="tab_activo" />
+    <div class="flex border-b border-arena mb-6" role="tablist">
+        @canany(['crear-roles-laborales', 'editar-roles-laborales'])
+        <button type="button" role="tab"
+            wire:click="$set('tab_activo', 'nuevo')"
+            class="px-4 py-2.5 text-sm font-medium border-b-2 transition-colors {{ $tab_activo === 'nuevo' ? 'border-pino text-pino' : 'border-transparent text-tinta-suave hover:text-tinta' }}">
+            <flux:icon.plus class="size-4 inline mr-1" />
+            Nuevo Rol
+        </button>
+        @endcanany
+        <button type="button" role="tab"
+            wire:click="$set('tab_activo', 'listado')"
+            class="px-4 py-2.5 text-sm font-medium border-b-2 transition-colors {{ $tab_activo === 'listado' ? 'border-pino text-pino' : 'border-transparent text-tinta-suave hover:text-tinta' }}">
+            <flux:icon.list-bullet class="size-4 inline mr-1" />
+            Listado de Roles
+        </button>
+    </div>
 
     @if($tab_activo === 'nuevo')
         @canany(['crear-roles-laborales', 'editar-roles-laborales'])
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6">
-            <div class="bg-slate-50 border-b border-slate-200 px-6 py-4">
-                <h5 class="text-lg font-semibold text-slate-800">
-                    {{ $rol_id ? '✏️ Editar Rol' : '➕ Nuevo Rol' }}
+        <x-ui.card class="overflow-hidden mb-6">
+            <div class="bg-corteza-suave border-b border-arena px-6 py-4">
+                <h5 class="text-lg font-semibold text-tinta flex items-center gap-2">
+                    @if($rol_id)
+                        <flux:icon.pencil-square class="size-5" />
+                        Editar Rol
+                    @else
+                        <flux:icon.plus class="size-5" />
+                        Nuevo Rol
+                    @endif
                 </h5>
             </div>
             <div class="p-6">
                 <form wire:submit.prevent="guardar">
                     <div class="mb-6">
-                        <label for="nombre" class="block text-sm font-semibold text-slate-700 mb-1.5">Nombre del Rol <span class="text-red-500">*</span></label>
+                        <label for="nombre" class="block text-sm font-semibold text-tinta mb-1.5">Nombre del Rol <span class="text-tierra">*</span></label>
                         <input type="text" id="nombre" wire:model="nombre"
-                            class="w-full px-4 py-2.5 border rounded-lg text-sm transition-colors @error('nombre') border-red-400 bg-red-50 @else border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 @enderror"
+                            class="form-input @error('nombre') border-tierra bg-tierra-suave @enderror"
                             placeholder="Ej: Operario, Supervisor, Encargado">
-                        @error('nombre') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+                        @error('nombre') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
                     <div class="flex gap-2 justify-end">
                         @if ($rol_id)
-                            <button type="button" wire:click="resetCampos"
-                                class="inline-flex items-center gap-1.5 px-4 py-2.5 border border-slate-300 bg-white text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors">
-                                ✕ Cancelar
-                            </button>
+                            <x-ui.button type="button" variant="secondary" icon="x-mark" wire:click="resetCampos">
+                                Cancelar
+                            </x-ui.button>
                         @endif
                         @canany(['crear-roles-laborales', 'editar-roles-laborales'])
-                        <button type="submit"
-                            class="inline-flex items-center gap-1.5 px-5 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-lg text-sm font-medium shadow-sm transition-colors">
-                            ✓ {{ $rol_id ? 'Actualizar' : 'Guardar' }}
-                        </button>
+                        <x-ui.button type="submit" variant="primary" icon="check">
+                            {{ $rol_id ? 'Actualizar' : 'Guardar' }}
+                        </x-ui.button>
                         @endcanany
                     </div>
                 </form>
             </div>
-        </div>
+        </x-ui.card>
         @endcanany
     @else
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <x-ui.card class="overflow-hidden">
             <div class="p-6">
-                <x-search-input placeholder="Buscar por nombre..." />
+                <div class="mb-6">
+                    <div class="flex items-center gap-2 px-3 py-2 border border-arena rounded-sm bg-corteza-suave">
+                        <flux:icon.magnifying-glass class="size-4 text-tinta-suave" />
+                        <input type="text"
+                            class="flex-1 bg-transparent border-0 focus:ring-0 focus:outline-none text-sm text-tinta placeholder:text-tinta-suave"
+                            placeholder="Buscar por nombre..."
+                            wire:model.live="busqueda">
+                    </div>
+                </div>
 
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
+                <x-ui.table-container>
+                    <table class="data-table">
                         <thead>
-                            <tr class="bg-slate-50 border-b border-slate-200">
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">ID</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Nombre</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Estado</th>
-                                <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Acciones</th>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre</th>
+                                <th>Estado</th>
+                                <th class="text-right">Acciones</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-100">
+                        <tbody>
                             @forelse ($roles as $rol)
-                                <tr wire:key="row-{{ $rol->id_rol_laboral }}" class="hover:bg-slate-50 transition-colors">
-                                    <td class="px-4 py-2.5"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">{{ $rol->id_rol_laboral }}</span></td>
-                                    <td class="px-4 py-2.5 font-medium text-slate-800">{{ $rol->nombre }}</td>
-                                    <td class="px-4 py-2.5">
+                                <tr wire:key="row-{{ $rol->id_rol_laboral }}">
+                                    <td><x-ui.badge variant="neutral">{{ $rol->id_rol_laboral }}</x-ui.badge></td>
+                                    <td class="font-medium text-tinta">{{ $rol->nombre }}</td>
+                                    <td>
                                         @if($rol->trashed())
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Inactivo</span>
+                                            <x-ui.badge variant="neutral">Inactivo</x-ui.badge>
                                         @else
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700">Activo</span>
+                                            <x-ui.badge variant="success">Activo</x-ui.badge>
                                         @endif
                                     </td>
-                                    <td class="px-4 py-2.5 text-right">
-                                        <x-action-buttons
-                                            editWireClick="editar({{ $rol->id_rol_laboral }})"
-                                            deleteWireClick="eliminar({{ $rol->id_rol_laboral }})"
-                                            deleteMessage="¿Está seguro de eliminar este rol?"
-                                            :canEdit="auth()->user()->can('editar-roles-laborales')"
-                                            :canDelete="auth()->user()->can('eliminar-roles-laborales')" />
+                                    <td class="text-right">
+                                        <div class="inline-flex rounded-sm shadow-xs">
+                                            @can('editar-roles-laborales')
+                                            <x-ui.button variant="ghost" size="sm" icon="pencil-square"
+                                                wire:click="editar({{ $rol->id_rol_laboral }})"
+                                                title="Editar"
+                                                class="rounded-r-none border-r-0" />
+                                            @endcan
+                                            @can('eliminar-roles-laborales')
+                                            <x-ui.button variant="ghost" size="sm" icon="trash"
+                                                wire:click="eliminar({{ $rol->id_rol_laboral }})"
+                                                wire:confirm="¿Está seguro de eliminar este rol?"
+                                                title="Eliminar"
+                                                class="rounded-l-none" />
+                                            @endcan
+                                        </div>
                                     </td>
                                 </tr>
                             @empty
-                                <x-empty-state :colspan="4" message="No hay roles registrados." />
+                                <tr>
+                                    <td colspan="4" class="text-center py-12 text-tinta-suave">
+                                        No hay roles registrados.
+                                    </td>
+                                </tr>
                             @endforelse
                         </tbody>
                     </table>
-                </div>
+                </x-ui.table-container>
 
                 <div class="mt-4">
                     {{ $roles->links() }}
                 </div>
             </div>
-        </div>
+        </x-ui.card>
     @endif
 </div>

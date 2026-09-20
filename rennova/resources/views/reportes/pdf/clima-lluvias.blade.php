@@ -11,7 +11,7 @@
         * { box-sizing: border-box; }
         body {
             font-family: 'Helvetica', sans-serif;
-            color: #2c3e50;
+            color: #1c1917;
             line-height: 1.5;
             margin: 0;
         }
@@ -21,7 +21,7 @@
             left: 0px;
             right: 0px;
             height: 120px;
-            border-bottom: 3px solid #1a3d2f;
+            border-bottom: 3px solid #2f5233;
         }
         footer {
             position: fixed;
@@ -30,28 +30,28 @@
             right: 0px;
             height: 50px;
             font-size: 10px;
-            color: #7f8c8d;
+            color: #57534e;
             text-align: center;
-            border-top: 1px solid #eee;
+            border-top: 1px solid #d6d3cd;
             padding-top: 10px;
         }
         .title-report {
             font-size: 22px;
             font-weight: bold;
-            color: #1a3d2f;
+            color: #2f5233;
             text-transform: uppercase;
             margin: 0;
             letter-spacing: 1px;
         }
         .subtitle-report {
             font-size: 12px;
-            color: #7f8c8d;
+            color: #57534e;
             margin-top: 6px;
             display: block;
         }
         .meta-block {
             font-size: 11px;
-            color: #7f8c8d;
+            color: #57534e;
             margin-top: 4px;
             display: block;
         }
@@ -61,17 +61,17 @@
             margin-top: 15px;
         }
         .table-data th {
-            background-color: #f8f9fa;
-            color: #1a3d2f;
+            background-color: #f7f6f3;
+            color: #2f5233;
             font-weight: bold;
             text-align: left;
             padding: 10px;
-            border-bottom: 2px solid #1a3d2f;
+            border-bottom: 2px solid #2f5233;
             font-size: 11px;
         }
         .table-data td {
             padding: 10px;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid #d6d3cd;
             font-size: 12px;
         }
         .kpi-container {
@@ -79,7 +79,7 @@
             width: 100%;
         }
         .kpi-card {
-            background: #f4f7f6;
+            background: #f3f0eb;
             padding: 12px;
             border-radius: 5px;
             text-align: center;
@@ -87,19 +87,19 @@
         .kpi-value {
             font-size: 18px;
             font-weight: bold;
-            color: #1a3d2f;
+            color: #2f5233;
             display: block;
         }
         .kpi-label {
             font-size: 10px;
-            color: #7f8c8d;
+            color: #57534e;
             text-transform: uppercase;
         }
         .section-title {
             font-size: 14px;
-            color: #1a3d2f;
+            color: #2f5233;
             margin-top: 24px;
-            border-left: 4px solid #1a3d2f;
+            border-left: 4px solid #2f5233;
             padding-left: 8px;
             text-transform: uppercase;
         }
@@ -195,7 +195,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" style="text-align: center; color: #7f8c8d;">No hay registros de lluvia en el periodo seleccionado.</td>
+                        <td colspan="6" style="text-align: center; color: #57534e;">No hay registros de lluvia en el periodo seleccionado.</td>
                     </tr>
                 @endforelse
             </tbody>

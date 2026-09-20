@@ -1,104 +1,104 @@
-<div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+<div class="w-full py-6 px-4 sm:px-6 lg:px-8">
     <div class="mb-6">
-        <h1 class="text-2xl font-bold text-slate-900">🌲 Categorías de Madera</h1>
+        <h1 class="text-2xl font-bold text-tinta">Categorias de Madera</h1>
     </div>
 
     @if (session()->has('message'))
-        <div class="mb-6 flex items-center gap-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl px-5 py-3 text-sm font-medium" role="alert">
-            <span class="text-emerald-600">✓</span> {{ session('message') }}
-        </div>
+        <x-ui.alert variant="success" class="mb-6">
+            {{ session('message') }}
+        </x-ui.alert>
     @endif
 
     <x-tab-nav :tabs="[
-        ['value' => 'nuevo', 'label' => 'Nueva Categoría', 'icon' => 'plus-circle', 'can' => auth()->user()->canAny(['crear-categorias-madera', 'editar-categorias-madera'])],
-        ['value' => 'listado', 'label' => 'Listado de Categorías', 'icon' => 'list-ul'],
+        ['value' => 'nuevo', 'label' => 'Nueva Categoria', 'icon' => 'plus', 'can' => auth()->user()->canAny(['crear-categorias-madera', 'editar-categorias-madera'])],
+        ['value' => 'listado', 'label' => 'Listado de Categorias', 'icon' => 'list-bullet'],
     ]" activeTab="{{ $tab_activo }}" tabProperty="tab_activo" />
 
     @if($tab_activo === 'nuevo')
         @canany(['crear-categorias-madera', 'editar-categorias-madera'])
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6">
-            <div class="bg-slate-50 border-b border-slate-200 px-6 py-4">
-                <h5 class="text-lg font-semibold text-slate-800">
-                    {{ $categoria_id ? '✏️ Editar Categoría' : '➕ Nueva Categoría' }}
-                </h5>
-            </div>
-            <div class="p-6">
-                <form wire:submit.prevent="guardar">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                        <div>
-                            <label for="nombre" class="block text-sm font-semibold text-slate-700 mb-1.5">Nombre <span class="text-red-500">*</span></label>
-                            <input type="text" id="nombre" wire:model="nombre"
-                                class="w-full px-4 py-2.5 border rounded-lg text-sm transition-colors @error('nombre') border-red-400 bg-red-50 @else border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 @enderror"
-                                placeholder="Nombre de la categoría">
-                            @error('nombre') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+            <x-ui.card class="mb-6 overflow-hidden">
+                <div class="px-4 py-3 border-b border-arena bg-hueso">
+                    <h5 class="text-sm font-semibold text-tinta">
+                        {{ $categoria_id ? 'Editar Categoria' : 'Nueva Categoria' }}
+                    </h5>
+                </div>
+                <div class="p-4">
+                    <form wire:submit.prevent="guardar">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label for="nombre" class="block text-xs font-semibold text-tinta mb-1.5">Nombre <span class="text-tierra">*</span></label>
+                                <input type="text" id="nombre" wire:model="nombre"
+                                    class="form-input @error('nombre') border-tierra bg-tierra-suave @enderror"
+                                    placeholder="Nombre de la categoria">
+                                @error('nombre') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
+                            </div>
+                            <div>
+                                <label for="descripcion" class="block text-xs font-semibold text-tinta mb-1.5">Descripcion</label>
+                                <textarea id="descripcion" wire:model="descripcion" rows="1"
+                                    class="form-input @error('descripcion') border-tierra bg-tierra-suave @enderror"
+                                    placeholder="Descripcion de la categoria"></textarea>
+                                @error('descripcion') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
+                            </div>
                         </div>
-                        <div>
-                            <label for="descripcion" class="block text-sm font-semibold text-slate-700 mb-1.5">Descripción</label>
-                            <textarea id="descripcion" wire:model="descripcion" rows="1"
-                                class="w-full px-4 py-2.5 border rounded-lg text-sm transition-colors @error('descripcion') border-red-400 bg-red-50 @else border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 @enderror"
-                                placeholder="Descripción de la categoría"></textarea>
-                            @error('descripcion') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+                        <div class="flex gap-2 justify-end">
+                            @if ($categoria_id)
+                                <x-ui.button variant="secondary" icon="x-mark" wire:click="resetCampos">
+                                    Cancelar
+                                </x-ui.button>
+                            @endif
+                            @canany(['crear-categorias-madera', 'editar-categorias-madera'])
+                                <x-ui.button variant="primary" icon="check" type="submit">
+                                    {{ $categoria_id ? 'Actualizar' : 'Guardar' }}
+                                </x-ui.button>
+                            @endcanany
                         </div>
-                    </div>
-                    <div class="flex gap-2 justify-end">
-                        @if ($categoria_id)
-                            <button type="button" wire:click="resetCampos"
-                                class="inline-flex items-center gap-1.5 px-4 py-2.5 border border-slate-300 bg-white text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors">
-                                ✕ Cancelar
-                            </button>
-                        @endif
-                        @canany(['crear-categorias-madera', 'editar-categorias-madera'])
-                        <button type="submit"
-                            class="inline-flex items-center gap-1.5 px-5 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-lg text-sm font-medium shadow-sm transition-colors">
-                            ✓ {{ $categoria_id ? 'Actualizar' : 'Guardar' }}
-                        </button>
-                        @endcanany
-                    </div>
-                </form>
-            </div>
-        </div>
+                    </form>
+                </div>
+            </x-ui.card>
         @endcanany
     @else
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="p-6">
-                <x-search-input placeholder="Buscar por nombre o descripción..." />
+        <x-ui.card>
+            <div class="p-4">
+                <x-search-input placeholder="Buscar por nombre o descripcion..." />
 
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
+                <x-ui.table-container>
+                    <table class="data-table">
                         <thead>
-                            <tr class="bg-slate-50 border-b border-slate-200">
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">ID</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Nombre</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Descripción</th>
-                                <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Acciones</th>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre</th>
+                                <th>Descripcion</th>
+                                <th class="text-right">Acciones</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-100">
+                        <tbody>
                             @forelse ($categorias as $categoria)
-                                <tr wire:key="row-{{ $categoria->id_categoria_madera }}" class="hover:bg-slate-50 transition-colors">
-                                    <td class="px-4 py-2.5"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">{{ $categoria->id_categoria_madera }}</span></td>
-                                    <td class="px-4 py-2.5 font-medium text-slate-800">{{ $categoria->nombre }}</td>
-                                    <td class="px-4 py-2.5 text-slate-500">{{ $categoria->descripcion ?? '-' }}</td>
-                                    <td class="px-4 py-2.5 text-right">
-                                        <x-action-buttons
-                                            editWireClick="editar({{ $categoria->id_categoria_madera }})"
-                                            deleteWireClick="eliminar({{ $categoria->id_categoria_madera }})"
-                                            deleteMessage="¿Está seguro de eliminar esta categoría?"
-                                            :canEdit="auth()->user()->can('editar-categorias-madera')"
-                                            :canDelete="auth()->user()->can('eliminar-categorias-madera')" />
+                                <tr wire:key="row-{{ $categoria->id_categoria_madera }}">
+                                    <td><x-ui.badge variant="neutral">{{ $categoria->id_categoria_madera }}</x-ui.badge></td>
+                                    <td class="font-medium text-tinta">{{ $categoria->nombre }}</td>
+                                    <td class="text-tinta-suave">{{ $categoria->descripcion ?? '-' }}</td>
+                                    <td class="text-right">
+                                        <div class="flex gap-1 justify-end">
+                                            @can('editar-categorias-madera')
+                                                <x-ui.button variant="secondary" size="sm" icon="pencil-square" wire:click="editar({{ $categoria->id_categoria_madera }})" title="Editar" />
+                                            @endcan
+                                            @can('eliminar-categorias-madera')
+                                                <x-ui.button variant="danger" size="sm" icon="trash" wire:click="eliminar({{ $categoria->id_categoria_madera }})" wire:confirm="¿Esta seguro de eliminar esta categoria?" title="Eliminar" />
+                                            @endcan
+                                        </div>
                                     </td>
                                 </tr>
                             @empty
-                                <x-empty-state :colspan="4" message="No hay categorías registradas." />
+                                <x-empty-state :colspan="4" message="No hay categorias registradas." icon="tag" />
                             @endforelse
                         </tbody>
                     </table>
-                </div>
+                </x-ui.table-container>
 
                 <div class="mt-4">
                     {{ $categorias->links() }}
                 </div>
             </div>
-        </div>
+        </x-ui.card>
     @endif
 </div>

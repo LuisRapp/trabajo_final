@@ -1,36 +1,41 @@
-<div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-    <div class="flex justify-between items-center mb-4">
-        <h1 class="text-2xl font-bold text-slate-900">📄 Auditorías del Sistema</h1>
+<div class="w-full py-6 px-4 sm:px-6 lg:px-8">
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-tinta flex items-center gap-2">
+            <flux:icon.clipboard-document-list class="size-6 text-pino" />
+            Auditorías del Sistema
+        </h1>
     </div>
 
-    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div class="bg-slate-600 text-white px-6 py-4">
+    <x-ui.card class="overflow-hidden">
+        <div class="bg-corteza-suave border-b border-arena px-6 py-4">
             <div class="flex items-center justify-between">
-                <div>
-                    <strong>🕐 Registro de Cambios</strong>
-                </div>
-                <div>
-                    <button type="button" class="inline-flex items-center gap-1.5 px-4 py-2 bg-white/20 text-white rounded-lg text-sm font-medium hover:bg-white/30 transition-colors" wire:click="toggleFiltros" aria-controls="filtrosAuditoria" aria-expanded="{{ $mostrarFiltros ? 'true' : 'false' }}">
-                        🔍 Filtros
-                    </button>
-                </div>
+                <h2 class="text-sm font-semibold text-tinta flex items-center gap-2">
+                    <flux:icon.clock class="size-4" />
+                    Registro de Cambios
+                </h2>
+                <x-ui.button type="button" variant="secondary" size="sm" icon="magnifying-glass"
+                    wire:click="toggleFiltros" aria-controls="filtrosAuditoria" aria-expanded="{{ $mostrarFiltros ? 'true' : 'false' }}">
+                    Filtros
+                </x-ui.button>
             </div>
         </div>
         <div class="p-6">
             <!-- Filtros Colapsables -->
             @if($mostrarFiltros)
             <div id="filtrosAuditoria">
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 pb-4 border-b border-slate-200">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 pb-4 border-b border-arena">
                     <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Buscar</label>
-                        <input type="text" wire:model.live.debounce.400ms="busqueda"
-                            class="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20"
-                            placeholder="URL, IP o tag...">
+                        <label class="block text-xs font-semibold text-tinta mb-1.5">Buscar</label>
+                        <div class="flex items-center gap-2 px-3 py-2 border border-arena rounded-sm bg-white">
+                            <flux:icon.magnifying-glass class="size-4 text-tinta-suave" />
+                            <input type="text" wire:model.live.debounce.400ms="busqueda"
+                                class="flex-1 bg-transparent border-0 focus:ring-0 focus:outline-none text-sm text-tinta placeholder:text-tinta-suave"
+                                placeholder="URL, IP o tag...">
+                        </div>
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Modelo</label>
-                        <select wire:model.live="filtroModelo"
-                            class="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20">
+                        <label class="block text-xs font-semibold text-tinta mb-1.5">Modelo</label>
+                        <select wire:model.live="filtroModelo" class="form-input">
                             <option value="">Todos los modelos</option>
                             @foreach($modelos as $modelo)
                                 <option value="{{ $modelo['value'] }}" wire:key="option-{{ $modelo['value'] }}">{{ $modelo['label'] }}</option>
@@ -38,9 +43,8 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Evento</label>
-                        <select wire:model.live="filtroEvento"
-                            class="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20">
+                        <label class="block text-xs font-semibold text-tinta mb-1.5">Evento</label>
+                        <select wire:model.live="filtroEvento" class="form-input">
                             <option value="">Todos</option>
                             <option value="created">Creado</option>
                             <option value="updated">Actualizado</option>
@@ -48,9 +52,8 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Usuario</label>
-                        <select wire:model.live="filtroUsuario"
-                            class="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20">
+                        <label class="block text-xs font-semibold text-tinta mb-1.5">Usuario</label>
+                        <select wire:model.live="filtroUsuario" class="form-input">
                             <option value="">Todos los usuarios</option>
                             @foreach($usuarios as $usuario)
                                 <option value="{{ $usuario['id'] }}" wire:key="option-{{ $usuario['id'] }}">{{ $usuario['nombre'] }}</option>
@@ -60,155 +63,161 @@
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                     <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Desde</label>
-                        <input type="date" wire:model.live="filtroFechaDesde"
-                            class="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20">
+                        <label class="block text-xs font-semibold text-tinta mb-1.5">Desde</label>
+                        <input type="date" wire:model.live="filtroFechaDesde" class="form-input">
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Hasta</label>
-                        <input type="date" wire:model.live="filtroFechaHasta"
-                            class="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20">
+                        <label class="block text-xs font-semibold text-tinta mb-1.5">Hasta</label>
+                        <input type="date" wire:model.live="filtroFechaHasta" class="form-input">
                     </div>
                     <div class="flex items-end">
-                        <button type="button" wire:click="limpiarFiltros"
-                            class="inline-flex items-center gap-1.5 px-4 py-2.5 border border-slate-300 bg-white text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors w-full justify-center">
-                            ✕ Limpiar
-                        </button>
+                        <x-ui.button type="button" variant="secondary" size="sm" icon="arrow-uturn-left"
+                            wire:click="limpiarFiltros" class="w-full justify-center">
+                            Limpiar
+                        </x-ui.button>
                     </div>
                 </div>
             </div>
             @endif
 
             <!-- Tabla de Auditorías -->
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm">
+            <x-ui.table-container>
+                <table class="data-table">
                     <thead>
-                        <tr class="bg-slate-50 border-b border-slate-200">
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">ID</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Modelo / Registro</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Evento</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Usuario</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Fecha</th>
-                            <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Acciones</th>
+                        <tr>
+                            <th>ID</th>
+                            <th>Modelo / Registro</th>
+                            <th>Evento</th>
+                            <th>Usuario</th>
+                            <th>Fecha</th>
+                            <th class="text-center">Acciones</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100">
+                    <tbody>
                         @forelse($auditorias as $auditoria)
-                            <tr wire:key="row-{{ $auditoria->id }}" class="hover:bg-slate-50 transition-colors">
-                                <td class="px-4 py-2.5"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">#{{ $auditoria->id }}</span></td>
-                                <td class="px-4 py-2.5">
-                                    <strong>{{ class_basename($auditoria->auditable_type) }}</strong><br>
-                                    <small class="text-slate-500">ID: {{ $auditoria->auditable_id }}</small>
+                            <tr wire:key="row-{{ $auditoria->id }}">
+                                <td><x-ui.badge variant="neutral">#{{ $auditoria->id }}</x-ui.badge></td>
+                                <td>
+                                    <strong class="text-tinta">{{ class_basename($auditoria->auditable_type) }}</strong><br>
+                                    <small class="text-tinta-suave">ID: {{ $auditoria->auditable_id }}</small>
                                 </td>
-                                <td class="px-4 py-2.5">
+                                <td>
                                     @if($auditoria->event === 'created')
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">➕ Creado</span>
+                                        <x-ui.badge variant="success">Creado</x-ui.badge>
                                     @elseif($auditoria->event === 'updated')
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-brand/10 text-brand">✏️ Actualizado</span>
+                                        <x-ui.badge variant="info">Actualizado</x-ui.badge>
                                     @elseif($auditoria->event === 'deleted')
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">🗑️ Eliminado</span>
+                                        <x-ui.badge variant="danger">Eliminado</x-ui.badge>
                                     @else
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">{{ ucfirst($auditoria->event) }}</span>
+                                        <x-ui.badge variant="neutral">{{ ucfirst($auditoria->event) }}</x-ui.badge>
                                     @endif
                                 </td>
-                                <td class="px-4 py-2.5">
+                                <td>
                                     @if($auditoria->user)
-                                        <span class="text-brand">👤</span> {{ $auditoria->user->name }}<br>
-                                        <small class="text-slate-500">{{ $auditoria->ip_address ?? 'N/A' }}</small>
+                                        <span class="inline-flex items-center gap-1 text-tinta">
+                                            <flux:icon.user class="size-4 text-pino" />
+                                            {{ $auditoria->user->name }}
+                                        </span><br>
+                                        <small class="text-tinta-suave">{{ $auditoria->ip_address ?? 'N/A' }}</small>
                                     @else
-                                        <span class="text-slate-500">🤖 Sistema</span><br>
-                                        <small class="text-slate-500">{{ $auditoria->ip_address ?? 'N/A' }}</small>
+                                        <span class="inline-flex items-center gap-1 text-tinta-suave">
+                                            <flux:icon.computer-desktop class="size-4" />
+                                            Sistema
+                                        </span><br>
+                                        <small class="text-tinta-suave">{{ $auditoria->ip_address ?? 'N/A' }}</small>
                                     @endif
                                 </td>
-                                <td class="px-4 py-2.5">
+                                <td>
                                     {{ $auditoria->created_at->format('d/m/Y H:i') }}<br>
-                                    <small class="text-slate-500">{{ $auditoria->created_at->diffForHumans() }}</small>
+                                    <small class="text-tinta-suave">{{ $auditoria->created_at->diffForHumans() }}</small>
                                 </td>
-                                <td class="px-4 py-2.5 text-center">
-                                    <button type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand hover:bg-brand-hover text-white rounded-lg text-xs font-medium shadow-sm transition-colors"
+                                <td class="text-center">
+                                    <x-ui.button type="button" size="sm" icon="eye"
                                         wire:click="$set('modalDetalle', {{ $auditoria->id }})">
-                                        👁️ Ver
-                                    </button>
+                                        Ver
+                                    </x-ui.button>
                                 </td>
                             </tr>
                         @empty
-                            <tr>
-                                <td colspan="6" class="text-center py-12 text-slate-400">
-                                    <div class="text-5xl mb-2">📥</div>
-                                    <p>No hay auditorías registradas con los filtros aplicados.</p>
-                                </td>
-                            </tr>
+                            <x-empty-state :colspan="6" message="No hay auditorías registradas con los filtros aplicados." icon="document-text" />
                         @endforelse
                     </tbody>
                 </table>
-            </div>
+            </x-ui.table-container>
         </div>
-        <div class="px-6 py-4 bg-slate-50 border-t border-slate-200">
+        <div class="px-6 py-4 bg-corteza-suave border-t border-arena">
             {{ $auditorias->links() }}
         </div>
-    </div>
+    </x-ui.card>
 
     <!-- Modales de Detalles -->
     @foreach($auditorias as $auditoria)
         @if(isset($modalDetalle) && $modalDetalle == $auditoria->id)
         <div class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center" wire:key="modal-{{ $auditoria->id }}">
-            <div class="bg-white rounded-xl shadow-xl max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-                <div class="bg-slate-50 border-b border-slate-200 px-6 py-4 rounded-t-xl flex justify-between items-center">
-                    <h5 class="text-lg font-semibold text-slate-800">
-                        ℹ️ Detalles de Auditoría #{{ $auditoria->id }}
+            <div class="bg-white rounded-sm border border-arena shadow-xl max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+                <div class="bg-corteza-suave border-b border-arena px-6 py-4 flex justify-between items-center">
+                    <h5 class="text-lg font-semibold text-tinta flex items-center gap-2">
+                        <flux:icon.information-circle class="size-5 text-pino" />
+                        Detalles de Auditoría #{{ $auditoria->id }}
                     </h5>
-                    <button type="button" class="text-slate-400 hover:text-slate-600" wire:click="$set('modalDetalle', null)">✕</button>
+                    <button type="button" class="text-tinta-suave hover:text-tinta" wire:click="$set('modalDetalle', null)">
+                        <flux:icon.x-mark class="size-5" />
+                    </button>
                 </div>
                 <div class="p-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 pb-4 border-b border-slate-200">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 pb-4 border-b border-arena">
                         <div>
-                            <p class="mb-2"><strong>Modelo:</strong> {{ class_basename($auditoria->auditable_type) }}</p>
-                            <p class="mb-2"><strong>ID del Registro:</strong> #{{ $auditoria->auditable_id }}</p>
-                            <p><strong>Evento:</strong>
+                            <p class="mb-2 text-sm"><strong class="text-tinta">Modelo:</strong> {{ class_basename($auditoria->auditable_type) }}</p>
+                            <p class="mb-2 text-sm"><strong class="text-tinta">ID del Registro:</strong> #{{ $auditoria->auditable_id }}</p>
+                            <p class="text-sm"><strong class="text-tinta">Evento:</strong>
                                 @if($auditoria->event === 'created')
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">Creado</span>
+                                    <x-ui.badge variant="success">Creado</x-ui.badge>
                                 @elseif($auditoria->event === 'updated')
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-brand/10 text-brand">Actualizado</span>
+                                    <x-ui.badge variant="info">Actualizado</x-ui.badge>
                                 @elseif($auditoria->event === 'deleted')
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">Eliminado</span>
+                                    <x-ui.badge variant="danger">Eliminado</x-ui.badge>
                                 @endif
                             </p>
                         </div>
                         <div>
-                            <p class="mb-2"><strong>Usuario:</strong> {{ $auditoria->user->name ?? 'Sistema' }}</p>
-                            <p class="mb-2"><strong>IP:</strong> {{ $auditoria->ip_address ?? 'N/A' }}</p>
-                            <p><strong>Fecha:</strong> {{ $auditoria->created_at->format('d/m/Y H:i:s') }}</p>
+                            <p class="mb-2 text-sm"><strong class="text-tinta">Usuario:</strong> {{ $auditoria->user->name ?? 'Sistema' }}</p>
+                            <p class="mb-2 text-sm"><strong class="text-tinta">IP:</strong> {{ $auditoria->ip_address ?? 'N/A' }}</p>
+                            <p class="text-sm"><strong class="text-tinta">Fecha:</strong> {{ $auditoria->created_at->format('d/m/Y H:i:s') }}</p>
                         </div>
                     </div>
 
                     @if($auditoria->url)
                         <div class="mb-4">
-                            <strong>URL:</strong> <code class="block bg-slate-100 p-3 rounded-lg mt-1 text-sm">{{ $auditoria->url }}</code>
+                            <strong class="text-sm text-tinta">URL:</strong>
+                            <code class="block bg-corteza-suave p-3 rounded-sm mt-1 text-sm text-tinta break-all">{{ $auditoria->url }}</code>
                         </div>
                     @endif
 
                     @if($auditoria->event === 'updated' && $auditoria->old_values && $auditoria->new_values)
-                        <h6 class="mb-3 font-semibold text-slate-800">↔️ Cambios Realizados</h6>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-sm border border-slate-200 rounded-lg">
+                        <h6 class="mb-3 text-sm font-semibold text-tinta flex items-center gap-2">
+                            <flux:icon.arrow-right class="size-4 text-pino" />
+                            Cambios Realizados
+                        </h6>
+                        <x-ui.table-container>
+                            <table class="data-table">
                                 <thead>
-                                    <tr class="bg-slate-50 border-b border-slate-200">
-                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider w-[30%]">Campo</th>
-                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider w-[35%]">Valor Anterior</th>
-                                        <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider w-[35%]">Valor Nuevo</th>
+                                    <tr>
+                                        <th style="width: 30%;">Campo</th>
+                                        <th style="width: 35%;">Valor Anterior</th>
+                                        <th style="width: 35%;">Valor Nuevo</th>
                                     </tr>
                                 </thead>
-                                <tbody class="divide-y divide-slate-100">
+                                <tbody>
                                     @foreach($auditoria->new_values as $campo => $valorNuevo)
                                         @if(isset($auditoria->old_values[$campo]) && $auditoria->old_values[$campo] != $valorNuevo)
                                             <tr wire:key="field-{{ $campo }}">
-                                                <td class="px-4 py-2.5"><strong>{{ $campo }}</strong></td>
-                                                <td class="px-4 py-2.5">
+                                                <td><strong>{{ $campo }}</strong></td>
+                                                <td>
                                                     <div class="break-all">
                                                         {{ is_array($auditoria->old_values[$campo]) ? json_encode($auditoria->old_values[$campo], JSON_UNESCAPED_UNICODE) : ($auditoria->old_values[$campo] ?? 'null') }}
                                                     </div>
                                                 </td>
-                                                <td class="px-4 py-2.5">
+                                                <td>
                                                     <div class="break-all">
                                                         {{ is_array($valorNuevo) ? json_encode($valorNuevo, JSON_UNESCAPED_UNICODE) : ($valorNuevo ?? 'null') }}
                                                     </div>
@@ -218,24 +227,29 @@
                                     @endforeach
                                 </tbody>
                             </table>
-                        </div>
+                        </x-ui.table-container>
                     @elseif($auditoria->event === 'created' && $auditoria->new_values)
-                        <h6 class="mb-3 font-semibold text-slate-800">➕ Datos Creados</h6>
-                        <div class="bg-slate-100 p-4 rounded-lg">
-                            <pre class="text-sm max-h-[400px] overflow-y-auto"><code>{{ json_encode($auditoria->new_values, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</code></pre>
+                        <h6 class="mb-3 text-sm font-semibold text-tinta flex items-center gap-2">
+                            <flux:icon.arrow-right class="size-4 text-pino" />
+                            Datos Creados
+                        </h6>
+                        <div class="bg-corteza-suave p-4 rounded-sm">
+                            <pre class="text-sm max-h-[400px] overflow-y-auto text-tinta"><code>{{ json_encode($auditoria->new_values, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</code></pre>
                         </div>
                     @elseif($auditoria->event === 'deleted' && $auditoria->old_values)
-                        <h6 class="mb-3 font-semibold text-slate-800">🗑️ Datos Eliminados</h6>
-                        <div class="bg-slate-100 p-4 rounded-lg">
-                            <pre class="text-sm max-h-[400px] overflow-y-auto"><code>{{ json_encode($auditoria->old_values, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</code></pre>
+                        <h6 class="mb-3 text-sm font-semibold text-tinta flex items-center gap-2">
+                            <flux:icon.arrow-right class="size-4 text-pino" />
+                            Datos Eliminados
+                        </h6>
+                        <div class="bg-corteza-suave p-4 rounded-sm">
+                            <pre class="text-sm max-h-[400px] overflow-y-auto text-tinta"><code>{{ json_encode($auditoria->old_values, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</code></pre>
                         </div>
                     @endif
                 </div>
-                <div class="flex justify-end gap-2 px-6 py-4 bg-slate-50 border-t border-slate-200 rounded-b-xl">
-                    <button type="button" class="inline-flex items-center gap-1.5 px-4 py-2.5 border border-slate-300 bg-white text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors"
-                        wire:click="$set('modalDetalle', null)">
-                        ✕ Cerrar
-                    </button>
+                <div class="flex justify-end gap-2 px-6 py-4 bg-corteza-suave border-t border-arena">
+                    <x-ui.button type="button" variant="secondary" icon="x-mark" wire:click="$set('modalDetalle', null)">
+                        Cerrar
+                    </x-ui.button>
                 </div>
             </div>
         </div>
