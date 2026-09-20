@@ -52,9 +52,9 @@
                         </div>
 
                         @error('code')
-                            <flux:text color="red">
+                            <span class="text-sm text-tierra">
                                 {{ $message }}
-                            </flux:text>
+                            </span>
                         @enderror
                     </div>
 
@@ -71,19 +71,19 @@
                         </div>
 
                         @error('recovery_code')
-                            <flux:text color="red">
+                            <span class="text-sm text-tierra">
                                 {{ $message }}
-                            </flux:text>
+                            </span>
                         @enderror
                     </div>
 
-                    <flux:button
+                    <x-ui.button
                         variant="primary"
                         type="submit"
                         class="w-full"
                     >
                         {{ __('Continue') }}
-                    </flux:button>
+                    </x-ui.button>
                 </div>
 
                 <div class="mt-5 space-x-0.5 text-sm leading-5 text-center">

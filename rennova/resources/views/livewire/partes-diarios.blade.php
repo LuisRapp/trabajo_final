@@ -1,5 +1,5 @@
 <div
-    class="max-w-7xl mx-auto px-4 py-6 relative"
+    class="w-full relative"
     x-data="{
         paso: 1,
         maxPaso: 1,
@@ -12,7 +12,10 @@
     }"
 >
     <div class="flex justify-between items-center mb-6">
-        <h1 class="text-3xl font-bold">📋 Partes Diarios</h1>
+        <h1 class="text-2xl font-bold text-tinta flex items-center gap-2">
+            <flux:icon.clipboard-document-check class="size-6" />
+            Partes Diarios
+        </h1>
     </div>
 
     <x-flash-messages />
@@ -21,13 +24,15 @@
     <div class="mb-6 flex gap-0">
         @canany(['crear-partes-diarios', 'editar-partes-diarios'])
         <button type="button" wire:click="$set('tab_activo','nuevo')"
-            class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border border-r-0 rounded-l-lg transition-all {{ $tab_activo === 'nuevo' ? 'text-white bg-brand border-brand' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}">
-            ➕ Nuevo Parte Diario
+            class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border border-r-0 rounded-l-sm transition-all {{ $tab_activo === 'nuevo' ? 'text-blanco bg-pino border-pino' : 'bg-blanco text-tinta border-arena hover:bg-corteza-suave' }}">
+            <flux:icon.plus class="size-4" />
+            Nuevo Parte Diario
         </button>
         @endcanany
         <button type="button" wire:click="$set('tab_activo','listado')"
-            class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border rounded-r-lg transition-all {{ $tab_activo === 'listado' ? 'text-white bg-brand border-brand' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}">
-            📋 Listado de Partes Diarios
+            class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border rounded-r-sm transition-all {{ $tab_activo === 'listado' ? 'text-blanco bg-pino border-pino' : 'bg-blanco text-tinta border-arena hover:bg-corteza-suave' }}">
+            <flux:icon.list-bullet class="size-4" />
+            Listado de Partes Diarios
         </button>
     </div>
 
@@ -37,75 +42,81 @@
 
         <!-- Stepper Header -->
         <div class="mb-6">
-            <div class="flex items-center justify-between max-w-xl mx-auto">
+            <div class="flex items-center justify-between max-w-xl">
                 <div class="flex items-center gap-2">
-                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors"
-                        :class="paso >= 1 ? 'bg-green-600 text-white' : 'bg-slate-200 text-slate-500'">
-                        <span x-show="paso > 1">✓</span>
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors border-2"
+                        :class="paso >= 1 ? 'bg-pino text-blanco border-pino' : 'bg-blanco text-tinta-suave border-arena'">
+                        <span x-show="paso > 1"><flux:icon.check class="size-4" /></span>
                         <span x-show="paso <= 1">1</span>
                     </div>
-                    <span class="text-sm font-medium hidden sm:inline" :class="paso === 1 ? 'text-green-700' : 'text-slate-500'">Datos</span>
+                    <span class="text-sm font-medium hidden sm:inline" :class="paso === 1 ? 'text-pino' : 'text-tinta-suave'">Datos</span>
                 </div>
-                <div class="flex-1 h-0.5 mx-3" :class="paso > 1 ? 'bg-green-400' : 'bg-slate-200'"></div>
+                <div class="flex-1 h-0.5 mx-3" :class="paso > 1 ? 'bg-pino' : 'bg-arena'"></div>
                 <div class="flex items-center gap-2">
-                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors"
-                        :class="paso >= 2 ? 'bg-green-600 text-white' : 'bg-slate-200 text-slate-500'">
-                        <span x-show="paso > 2">✓</span>
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors border-2"
+                        :class="paso >= 2 ? 'bg-pino text-blanco border-pino' : 'bg-blanco text-tinta-suave border-arena'">
+                        <span x-show="paso > 2"><flux:icon.check class="size-4" /></span>
                         <span x-show="paso <= 2">2</span>
                     </div>
-                    <span class="text-sm font-medium hidden sm:inline" :class="paso === 2 ? 'text-green-700' : 'text-slate-500'">Producción</span>
+                    <span class="text-sm font-medium hidden sm:inline" :class="paso === 2 ? 'text-pino' : 'text-tinta-suave'">Producción</span>
                 </div>
-                <div class="flex-1 h-0.5 mx-3" :class="paso > 2 ? 'bg-green-400' : 'bg-slate-200'"></div>
+                <div class="flex-1 h-0.5 mx-3" :class="paso > 2 ? 'bg-pino' : 'bg-arena'"></div>
                 <div class="flex items-center gap-2">
-                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors"
-                        :class="paso >= 3 ? 'bg-green-600 text-white' : 'bg-slate-200 text-slate-500'">
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors border-2"
+                        :class="paso >= 3 ? 'bg-pino text-blanco border-pino' : 'bg-blanco text-tinta-suave border-arena'">
                         <span>3</span>
                     </div>
-                    <span class="text-sm font-medium hidden sm:inline" :class="paso === 3 ? 'text-green-700' : 'text-slate-500'">Insumos</span>
+                    <span class="text-sm font-medium hidden sm:inline" :class="paso === 3 ? 'text-pino' : 'text-tinta-suave'">Insumos</span>
                 </div>
             </div>
         </div>
 
         <div id="nuevo-parte" role="tabpanel" aria-labelledby="nuevo-tab" class="tab-pane-content">
-            
+
             <!-- SECCIÓN 1: Datos Maestros -->
             <div x-show="paso === 1" x-transition>
-            <div class="bg-white rounded-lg shadow-md mb-6 overflow-hidden border border-slate-200">
-                <div class="bg-slate-100 px-6 py-4 border-b border-slate-200">
-                    <h5 class="text-lg font-semibold text-slate-900 mb-0">
-                        {{ $parte_id ? '✏️ Modificar Parte Diario' : '➕ Nuevo Parte Diario' }}
+            <x-ui.card class="mb-5 overflow-hidden">
+                <div class="bg-corteza-suave px-6 py-4 border-b border-arena">
+                    <h5 class="text-lg font-semibold text-tinta mb-0 flex items-center gap-2">
+                        @if($parte_id)
+                            <flux:icon.pencil-square class="size-5" />
+                            Modificar Parte Diario
+                        @else
+                            <flux:icon.plus class="size-5" />
+                            Nuevo Parte Diario
+                        @endif
                     </h5>
                 </div>
                 <div class="p-6">
                     <!-- Fila 1: Fecha, Lote, Tarea, Día Caído -->
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                         <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">Fecha <span class="text-red-500">*</span></label>
-                            <input type="date" 
-                                   wire:model="fecha" 
-                                   max="{{ date('Y-m-d') }}" 
+                            <label class="block text-sm font-semibold text-tinta mb-2">Fecha <span class="text-tierra">*</span></label>
+                            <input type="date"
+                                   wire:model="fecha"
+                                   max="{{ date('Y-m-d') }}"
                                    min="{{ date('Y-m-d', strtotime('-7 days')) }}"
-                                   class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 focus:outline-none @error('fecha') ring-2 ring-red-500 @enderror">
-                            @error('fecha') <div class="text-red-600 text-sm mt-1">{{ $message }}</div> @enderror
+                                   class="form-input @error('fecha') ring-2 ring-tierra @enderror">
+                            @error('fecha') <div class="text-tierra text-sm mt-1">{{ $message }}</div> @enderror
                         </div>
 
                         <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">Lote <span class="text-red-500">*</span></label>
-                            <select wire:model.live="id_lote" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 focus:outline-none @error('id_lote') ring-2 ring-red-500 @enderror">
+                            <label class="block text-sm font-semibold text-tinta mb-2">Lote <span class="text-tierra">*</span></label>
+                            <select wire:model.live="id_lote" class="form-input @error('id_lote') ring-2 ring-tierra @enderror">
                                 <option value="">Seleccione un lote...</option>
                                 @foreach($this->lotes as $lote)
                                     <option value="{{ $lote->id_lote }}" wire:key="option-{{ $lote->id_lote }}">{{ $lote->propietario }} - {{ $lote->ubicacion }}</option>
                                 @endforeach
                             </select>
-                            @error('id_lote') <div class="text-red-600 text-sm mt-1">{{ $message }}</div> @enderror
-                            <div wire:loading wire:target="id_lote" class="text-slate-600 text-sm mt-1">
-                                <svg class="inline-block w-4 h-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Cargando maquinarias y empleados...
+                            @error('id_lote') <div class="text-tierra text-sm mt-1">{{ $message }}</div> @enderror
+                            <div wire:loading wire:target="id_lote" class="text-tinta-suave text-sm mt-1">
+                                <flux:icon.arrow-path class="inline-block size-4 animate-spin" /> Cargando maquinarias y empleados...
                             </div>
                         </div>
 
                         <div class="md:col-span-2">
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">Tarea del lote <span class="text-red-500">*</span></label>
-                            <select wire:model.live="id_lote_tarea" wire:key="lote-tareas-{{ $id_lote }}" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 focus:outline-none @error('id_lote_tarea') ring-2 ring-red-500 @enderror">
+                            <label class="block text-sm font-semibold text-tinta mb-2">Tarea del lote <span class="text-tierra">*</span></label>
+                            <select wire:model.live="id_lote_tarea" wire:key="lote-tareas-{{ $id_lote }}" class="form-input @error('id_lote_tarea') ring-2 ring-tierra @enderror">
                                 <option value="">Seleccione una tarea...</option>
                                 @foreach($this->loteTareas as $tarea)
                                     <option value="{{ $tarea->id_lote_tarea }}" wire:key="option-{{ $tarea->id_lote_tarea }}">
@@ -113,32 +124,31 @@
                                     </option>
                                 @endforeach
                             </select>
-                            @error('id_lote_tarea') <div class="text-red-600 text-sm mt-1">{{ $message }}</div> @enderror
+                            @error('id_lote_tarea') <div class="text-tierra text-sm mt-1">{{ $message }}</div> @enderror
                             @if(!$id_lote)
-                                <div class="text-slate-500 text-sm mt-2">Seleccioná un lote para cargar las tareas.</div>
+                                <div class="text-tinta-suave text-sm mt-2">Seleccioná un lote para cargar las tareas.</div>
                             @elseif($this->loteTareas->isEmpty())
-                                <div class="text-slate-500 text-sm mt-2">Este lote no tiene tareas cargadas.</div>
+                                <div class="text-tinta-suave text-sm mt-2">Este lote no tiene tareas cargadas.</div>
                             @endif
 
                             @if($id_lote && $this->loteTareas->isEmpty())
-                                <div class="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3" wire:key="tarea-rapida-{{ $id_lote }}">
+                                <div class="mt-3 rounded-sm border border-arena bg-corteza-suave p-3" wire:key="tarea-rapida-{{ $id_lote }}">
                                     <div class="flex items-center justify-between">
-                                        <div class="text-sm font-semibold text-slate-800">No hay tareas para este lote</div>
-                                        <button type="button" wire:click="$set('mostrarModalTareaRapida', true)"
-                                            class="inline-flex items-center gap-1.5 px-3 py-2 bg-green-700 text-white rounded-lg text-sm font-semibold hover:bg-green-800 transition-colors">
-                                            ➕ Crear tarea
-                                        </button>
+                                        <div class="text-sm font-semibold text-tinta">No hay tareas para este lote</div>
+                                        <x-ui.button variant="primary" size="sm" icon="plus" wire:click="$set('mostrarModalTareaRapida', true)">
+                                            Crear tarea
+                                        </x-ui.button>
                                     </div>
                                 </div>
                             @endif
                         </div>
 
                         <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">Día Caído</label>
+                            <label class="block text-sm font-semibold text-tinta mb-2">Día Caído</label>
                             <div class="flex items-center mt-2">
-                                <input type="checkbox" id="diaCaidoSwitch" wire:model.live="es_dia_caido" class="w-5 h-5 rounded border-slate-300 text-green-600 focus:ring-green-600">
+                                <input type="checkbox" id="diaCaidoSwitch" wire:model.live="es_dia_caido" class="w-5 h-5 rounded border-arena text-pino focus:ring-pino">
                                 <label for="diaCaidoSwitch" class="ml-2">
-                                    <span class="inline-block px-3 py-1 rounded text-sm font-medium {{ $es_dia_caido ? 'bg-yellow-100 text-yellow-800' : 'bg-slate-200 text-slate-800' }}">
+                                    <span class="inline-block px-3 py-1 rounded-sm text-sm font-medium {{ $es_dia_caido ? 'bg-resina-suave text-resina' : 'bg-corteza-suave text-tinta' }}">
                                         {{ $es_dia_caido ? 'SÍ - Jornal' : 'NO - Destajo' }}
                                     </span>
                                 </label>
@@ -152,29 +162,25 @@
                             $estadoLabel = $estado === 'INACTIVO'
                                 ? 'No operativo'
                                 : ($estado === 'OPERATIVO_CONDICIONAL' ? 'Operativo condicional' : 'Operativo');
-                            $estadoClass = $estado === 'INACTIVO'
-                                ? 'bg-rose-100 text-rose-800'
-                                : ($estado === 'OPERATIVO_CONDICIONAL' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800');
+                            $estadoVariant = $estado === 'INACTIVO'
+                                ? 'danger'
+                                : ($estado === 'OPERATIVO_CONDICIONAL' ? 'warning' : 'success');
                         @endphp
                         <div class="mb-6">
-                            <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                            <div class="rounded-sm border border-arena bg-corteza-suave p-4">
                                 <div class="flex flex-wrap items-center gap-3">
-                                    <span class="inline-flex items-center px-3 py-1 rounded text-xs font-semibold {{ $estadoClass }}">
+                                    <x-ui.badge variant="{{ $estadoVariant }}">
                                         Estado pronostico: {{ $estadoLabel }}
-                                    </span>
+                                    </x-ui.badge>
                                     @if($clima_es_fin_de_semana)
-                                        <span class="inline-flex items-center px-3 py-1 rounded text-xs font-semibold bg-slate-200 text-slate-700">
-                                            Fin de semana
-                                        </span>
+                                        <x-ui.badge variant="neutral">Fin de semana</x-ui.badge>
                                     @endif
                                     @if($clima_fuente === 'fallback')
-                                        <span class="inline-flex items-center px-3 py-1 rounded text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-                                            Fallback: sin datos de API
-                                        </span>
+                                        <x-ui.badge variant="warning">Fallback: sin datos de API</x-ui.badge>
                                     @endif
                                 </div>
                                 @if($clima_razon)
-                                    <p class="text-sm text-slate-600 mt-2">Motivo: {{ $clima_razon }}</p>
+                                    <p class="text-sm text-tinta-suave mt-2">Motivo: {{ $clima_razon }}</p>
                                 @endif
                             </div>
                         </div>
@@ -184,19 +190,20 @@
                     <!-- Fila 2: Observaciones -->
                     <div class="grid grid-cols-1 gap-4">
                         <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">Observaciones</label>
-                            <textarea wire:model="observaciones" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 focus:outline-none" rows="2" placeholder="Observaciones adicionales"></textarea>
+                            <label class="block text-sm font-semibold text-tinta mb-2">Observaciones</label>
+                            <textarea wire:model="observaciones" class="form-input" rows="2" placeholder="Observaciones adicionales"></textarea>
                         </div>
                     </div>
                 </div>
-            </div>
+            </x-ui.card>
 
             <!-- Nav: Siguiente from Step 1 -->
             <div class="flex justify-end gap-3 mb-6" x-show="paso === 1">
-                <button type="button" @click="if(await $wire.validarPaso1()) { paso = 2; maxPaso = Math.max(maxPaso, 2); }"
-                    class="px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors">
-                    Siguiente →
-                </button>
+                <x-ui.button variant="primary" icon="arrow-right"
+                    type="button"
+                    @click="if(await $wire.validarPaso1()) { paso = 2; maxPaso = Math.max(maxPaso, 2); }">
+                    Siguiente
+                </x-ui.button>
             </div>
             </div>
 
@@ -224,14 +231,12 @@
 
             <!-- Nav: Volver + Siguiente from Step 2 -->
             <div class="flex justify-between gap-3 mb-6" x-show="paso === 2">
-                <button type="button" @click="paso = 1"
-                    class="px-6 py-3 border border-slate-300 text-slate-700 rounded-lg font-semibold hover:bg-slate-50 transition-colors">
-                    ← Volver
-                </button>
-                <button type="button" @click="paso = 3; maxPaso = Math.max(maxPaso, 3);"
-                    class="px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors">
-                    Siguiente →
-                </button>
+                <x-ui.button variant="secondary" icon="arrow-left" type="button" @click="paso = 1">
+                    Volver
+                </x-ui.button>
+                <x-ui.button variant="primary" icon="arrow-right" type="button" @click="paso = 3; maxPaso = Math.max(maxPaso, 3);">
+                    Siguiente
+                </x-ui.button>
             </div>
 
             <!-- SECCIÓN 4: Movimientos de Insumos — Child Component -->
@@ -240,19 +245,13 @@
                 @if(count($cargas) > 0 || count($jornales) > 0 || count($movimientos) > 0)
                     <div class="mb-4 flex flex-wrap gap-3">
                         @if(count($cargas) > 0)
-                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
-                                {{ count($cargas) }} carga(s) · {{ number_format($total_toneladas, 2) }} ton
-                            </span>
+                            <x-ui.badge variant="info">{{ count($cargas) }} carga(s) · {{ number_format($total_toneladas, 2) }} ton</x-ui.badge>
                         @endif
                         @if(count($jornales) > 0)
-                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700">
-                                {{ count($jornales) }} jornal(es)
-                            </span>
+                            <x-ui.badge variant="warning">{{ count($jornales) }} jornal(es)</x-ui.badge>
                         @endif
                         @if(count($movimientos) > 0)
-                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
-                                {{ count($movimientos) }} movimiento(s)
-                            </span>
+                            <x-ui.badge variant="success">{{ count($movimientos) }} movimiento(s)</x-ui.badge>
                         @endif
                     </div>
                 @endif
@@ -269,8 +268,8 @@
                     <flux:heading size="lg">Crear Tarea Rápida</flux:heading>
 
                     <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-2">Tipo <span class="text-red-500">*</span></label>
-                        <select wire:model.live="nueva_tarea_tipo_tarea" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 focus:outline-none">
+                        <label class="block text-sm font-semibold text-tinta mb-2">Tipo <span class="text-tierra">*</span></label>
+                        <select wire:model.live="nueva_tarea_tipo_tarea" class="form-input">
                             <option value="">Seleccione...</option>
                             @foreach($this->taskTypes as $taskType)
                                 <option value="{{ $taskType->value }}" wire:key="option-{{ $taskType->value }}">{{ $taskType->label() }}</option>
@@ -279,56 +278,56 @@
                     </div>
 
                     <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-2">Superficie (ha)</label>
+                        <label class="block text-sm font-semibold text-tinta mb-2">Superficie (ha)</label>
                         <input type="number" wire:model.live="nueva_tarea_superficie_afectada_ha" step="0.01" min="0"
-                            class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 focus:outline-none"
+                            class="form-input"
                             placeholder="(opcional)">
                     </div>
 
                     <div class="flex gap-3 justify-end pt-2">
-                        <flux:button variant="outline" wire:click="$set('mostrarModalTareaRapida', false)">Cancelar</flux:button>
-                        <flux:button variant="primary" wire:click="crearTareaRapida" :disabled="!$nueva_tarea_tipo_tarea">
+                        <x-ui.button variant="secondary" wire:click="$set('mostrarModalTareaRapida', false)">Cancelar</x-ui.button>
+                        <x-ui.button variant="primary" wire:click="crearTareaRapida" :disabled="!$nueva_tarea_tipo_tarea">
                             Crear
-                        </flux:button>
+                        </x-ui.button>
                     </div>
                 </div>
             </flux:modal>
 
             <!-- BOTÓN GUARDAR -->
-            <div class="bg-white rounded-lg shadow-md overflow-hidden border border-slate-200">
+            <x-ui.card class="overflow-hidden">
                 <div class="p-6">
                     <div class="flex justify-between gap-3">
-                        <button type="button" @click="paso = 2"
-                            class="px-6 py-3 border border-slate-300 text-slate-700 rounded-lg font-semibold hover:bg-slate-50 transition-colors">
-                            ← Volver
-                        </button>
+                        <x-ui.button variant="secondary" icon="arrow-left" type="button" @click="paso = 2">
+                            Volver
+                        </x-ui.button>
                         <div class="flex gap-3">
-                            <button type="button" wire:click.prevent="cancelarEdicion" class="px-8 py-3 bg-slate-200 text-slate-700 rounded-lg font-semibold hover:bg-slate-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" wire:loading.attr="disabled">
-                                ✕ Cancelar
-                            </button>
+                            <x-ui.button variant="secondary" icon="x-mark" type="button" wire:click.prevent="cancelarEdicion" wire:loading.attr="disabled">
+                                Cancelar
+                            </x-ui.button>
                             @canany(['crear-partes-diarios', 'editar-partes-diarios'])
-                            <button
-    type="button"
-    @click.prevent="
-        if (!esDiaCaido && requiereOverride && !overrideConfirmado) {
-            modalError = '';
-            openOverrideModal = true;
-        } else {
-            $wire.guardar();
-        }
-    "
-    class="px-8 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-    wire:loading.attr="disabled"
-    wire:target="guardar"
->
-    <span wire:loading.remove wire:target="guardar">✓ Guardar Parte Diario</span>
-    <span wire:loading wire:target="guardar"><svg class="inline-block w-4 h-4 animate-spin mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Guardando...</span>
-</button>
+                            <x-ui.button
+                                variant="primary"
+                                icon="check"
+                                type="button"
+                                @click.prevent="
+                                    if (!esDiaCaido && requiereOverride && !overrideConfirmado) {
+                                        modalError = '';
+                                        openOverrideModal = true;
+                                    } else {
+                                        $wire.guardar();
+                                    }
+                                "
+                                wire:loading.attr="disabled"
+                                wire:target="guardar"
+                            >
+                                <span wire:loading.remove wire:target="guardar">Guardar Parte Diario</span>
+                                <span wire:loading wire:target="guardar"><flux:icon.arrow-path class="inline-block size-4 animate-spin mr-2" />Guardando...</span>
+                            </x-ui.button>
                             @endcanany
                         </div>
                     </div>
                 </div>
-            </div>
+            </x-ui.card>
             </div>
         </div>
         @endcanany
@@ -340,4 +339,3 @@
         @include('livewire.partials.partes-listado')
     @endif
 </div>
-
