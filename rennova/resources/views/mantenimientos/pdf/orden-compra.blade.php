@@ -11,7 +11,7 @@
         body {
             margin: 0;
             font-family: Helvetica, Arial, sans-serif;
-            color: #1f2937;
+            color: #1c1917;
             font-size: 14px;
             line-height: 1.55;
         }
@@ -21,7 +21,7 @@
             left: 0;
             right: 0;
             height: 95px;
-            border-bottom: 2px solid #1a3d2f;
+            border-bottom: 2px solid #2f5233;
         }
         footer {
             position: fixed;
@@ -29,8 +29,8 @@
             left: 0;
             right: 0;
             height: 35px;
-            border-top: 1px solid #e5ebea;
-            color: #6b7280;
+            border-top: 1px solid #d6d3cd;
+            color: #57534e;
             text-align: center;
             font-size: 10px;
             padding-top: 8px;
@@ -39,43 +39,43 @@
             margin: 0;
             font-size: 20px;
             letter-spacing: .6px;
-            color: #1a3d2f;
+            color: #2f5233;
             font-weight: 700;
             text-transform: uppercase;
         }
         .doc-subtitle {
             margin-top: 4px;
-            color: #6b7280;
+            color: #57534e;
             font-size: 13px;
         }
         .section-title {
             margin: 18px 0 8px;
             font-size: 16px;
-            color: #1a3d2f;
+            color: #2f5233;
             font-weight: 700;
             text-transform: uppercase;
         }
         .order-summary {
-            border: 1px solid #dbe5e1;
-            background: #f8faf9;
+            border: 1px solid #d6d3cd;
+            background: #f7f6f3;
             padding: 10px 12px;
         }
         .order-title {
             margin: 0;
             font-size: 22px;
             font-weight: 700;
-            color: #1a3d2f;
+            color: #2f5233;
             text-transform: uppercase;
         }
         .order-subtitle {
             margin-top: 6px;
             font-size: 16px;
-            color: #374151;
+            color: #1c1917;
         }
         .order-status {
             margin-top: 4px;
             font-size: 16px;
-            color: #1f2937;
+            color: #1c1917;
             font-weight: 700;
         }
         table {
@@ -84,13 +84,13 @@
         }
         .table-items td,
         .table-items th {
-            border: 1px solid #dbe5e1;
+            border: 1px solid #d6d3cd;
             padding: 10px;
             vertical-align: top;
         }
         .table-items th {
-            background: #f3f6f5;
-            color: #1a3d2f;
+            background: #f3f0eb;
+            color: #2f5233;
             font-size: 13px;
             text-align: left;
             font-weight: 700;
@@ -163,7 +163,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="4" style="text-align:center;color:#6b7280;">No hay faltantes registrados.</td>
+                        <td colspan="4" style="text-align:center;color:#57534e;">No hay faltantes registrados.</td>
                     </tr>
                 @endforelse
             </tbody>

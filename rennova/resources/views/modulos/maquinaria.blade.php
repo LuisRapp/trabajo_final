@@ -1,98 +1,92 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-7xl mx-auto px-4 py-6">
-    <div class="text-center mb-8">
-        <h1 class="text-2xl font-bold text-slate-700 flex items-center justify-center gap-2 mb-2">
+<div class="w-full px-4 py-6">
+    <div class="mb-8">
+        <h1 class="flex items-center gap-2 text-2xl font-bold text-tinta">
             <flux:icon.truck class="size-6" />
-            Gestión de Maquinaria
+            Gestion de Maquinaria
         </h1>
-        <p class="text-slate-500">Administra tu flota de maquinaria, mantenimientos y costos operativos</p>
+        <p class="text-tinta-suave mt-1">Administra tu flota de maquinaria, mantenimientos y costos operativos</p>
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-        <!-- Maquinarias -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         @can('ver-maquinarias')
-        <div class="bg-white rounded-xl border border-slate-200 p-6 text-center shadow-sm hover:shadow-md transition-shadow">
-            <div class="text-brand mb-4">
+        <x-ui.card class="p-6 text-center">
+            <div class="text-pino mb-4 flex justify-center">
                 <flux:icon.truck class="size-12" />
             </div>
-            <h3 class="text-base font-bold text-slate-800 mb-4">Maquinarias</h3>
+            <h3 class="text-base font-bold text-tinta mb-4">Maquinarias</h3>
             <a href="{{ route('maquinarias.index') }}"
-                class="inline-flex items-center justify-center w-full rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-hover transition-colors">
+                class="btn-primary inline-flex w-full items-center justify-center">
                 Gestionar
             </a>
-        </div>
+        </x-ui.card>
         @endcan
 
-        <!-- Mantenimientos -->
         @can('ver-mantenimientos')
-        <div class="bg-white rounded-xl border border-slate-200 p-6 text-center shadow-sm hover:shadow-md transition-shadow">
-            <div class="text-brand mb-4">
+        <x-ui.card class="p-6 text-center">
+            <div class="text-pino mb-4 flex justify-center">
                 <flux:icon.wrench class="size-12" />
             </div>
-            <h3 class="text-base font-bold text-slate-800 mb-4">Mantenimientos</h3>
+            <h3 class="text-base font-bold text-tinta mb-4">Mantenimientos</h3>
             <a href="{{ route('mantenimientos.index') }}"
-                class="inline-flex items-center justify-center w-full rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-hover transition-colors">
+                class="btn-primary inline-flex w-full items-center justify-center">
                 Gestionar
             </a>
-        </div>
+        </x-ui.card>
         @endcan
 
-        <!-- Kits -->
         @can('ver-kits-mantenimiento')
-        <div class="bg-white rounded-xl border border-slate-200 p-6 text-center shadow-sm hover:shadow-md transition-shadow">
-            <div class="text-brand mb-4">
+        <x-ui.card class="p-6 text-center">
+            <div class="text-pino mb-4 flex justify-center">
                 <flux:icon.cog class="size-12" />
             </div>
-            <h3 class="text-base font-bold text-slate-800 mb-4">Kits de Mantenimiento</h3>
+            <h3 class="text-base font-bold text-tinta mb-4">Kits de Mantenimiento</h3>
             <a href="{{ route('kits-mantenimiento.index') }}"
-                class="inline-flex items-center justify-center w-full rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-hover transition-colors">
+                class="btn-primary inline-flex w-full items-center justify-center">
                 Gestionar
             </a>
-        </div>
+        </x-ui.card>
         @endcan
 
-        <!-- Costos -->
         @can('ver-historico-costos-maquinarias')
-        <div class="bg-white rounded-xl border border-slate-200 p-6 text-center shadow-sm hover:shadow-md transition-shadow">
-            <div class="text-brand mb-4">
+        <x-ui.card class="p-6 text-center">
+            <div class="text-pino mb-4 flex justify-center">
                 <flux:icon.chart-bar class="size-12" />
             </div>
-            <h3 class="text-base font-bold text-slate-800 mb-4">Costos de Maquinaria</h3>
+            <h3 class="text-base font-bold text-tinta mb-4">Costos de Maquinaria</h3>
             <a href="{{ route('historico-costos-maquinarias.index') }}"
-                class="inline-flex items-center justify-center w-full rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-hover transition-colors">
-                Ver Histórico
+                class="btn-primary inline-flex w-full items-center justify-center">
+                Ver Historico
             </a>
-        </div>
+        </x-ui.card>
         @endcan
 
-        <!-- Tipos -->
         @can('ver-tipos-maquinaria')
-        <div class="bg-white rounded-xl border border-slate-200 p-6 text-center shadow-sm hover:shadow-md transition-shadow">
-            <div class="text-brand mb-4">
+        <x-ui.card class="p-6 text-center">
+            <div class="text-pino mb-4 flex justify-center">
                 <flux:icon.cog-6-tooth class="size-12" />
             </div>
-            <h3 class="text-base font-bold text-slate-800 mb-4">Tipos de Maquinaria</h3>
+            <h3 class="text-base font-bold text-tinta mb-4">Tipos de Maquinaria</h3>
             <a href="{{ route('tipos-maquinaria.index') }}"
-                class="inline-flex items-center justify-center w-full rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-hover transition-colors">
+                class="btn-primary inline-flex w-full items-center justify-center">
                 Gestionar
             </a>
-        </div>
+        </x-ui.card>
         @endcan
 
-        <!-- Notificaciones -->
         @can('configurar-notificaciones-mantenimiento')
-        <div class="bg-white rounded-xl border border-slate-200 p-6 text-center shadow-sm hover:shadow-md transition-shadow">
-            <div class="text-brand mb-4">
+        <x-ui.card class="p-6 text-center">
+            <div class="text-pino mb-4 flex justify-center">
                 <flux:icon.bell class="size-12" />
             </div>
-            <h3 class="text-base font-bold text-slate-800 mb-4">Configuración de Notificaciones</h3>
+            <h3 class="text-base font-bold text-tinta mb-4">Configuracion de Notificaciones</h3>
             <a href="{{ route('configuracion-notificaciones.index') }}"
-                class="inline-flex items-center justify-center w-full rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-hover transition-colors">
+                class="btn-primary inline-flex w-full items-center justify-center">
                 Configurar
             </a>
-        </div>
+        </x-ui.card>
         @endcan
     </div>
 </div>

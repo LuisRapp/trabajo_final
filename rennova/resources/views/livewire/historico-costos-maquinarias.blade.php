@@ -1,130 +1,156 @@
-<div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+<div class="w-full px-4 py-6 sm:px-6 lg:px-8">
     <div class="mb-6">
-        <h1 class="text-2xl font-bold text-slate-900">💵 Histórico de Costos de Maquinarias</h1>
+        <h1 class="flex items-center gap-2 text-2xl font-bold text-tinta">
+            <flux:icon.chart-bar class="size-6" />
+            Historico de Costos de Maquinarias
+        </h1>
     </div>
 
     @if (session()->has('message'))
-        <div x-data="{ open: true }" x-show="open" x-transition
-            class="mb-6 flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-emerald-800 shadow-sm" role="alert">
-            <span class="text-emerald-600">✓</span>
-            <span class="flex-1 text-sm font-medium">{{ session('message') }}</span>
-            <button type="button" class="text-emerald-600 hover:text-emerald-800" @click="open = false">✕</button>
-        </div>
+        <x-ui.alert variant="success" class="mb-6">
+            {{ session('message') }}
+        </x-ui.alert>
     @endif
 
-    <x-tab-nav :tabs="[
-        ['value' => 'nuevo', 'label' => 'Nuevo Histórico', 'icon' => 'plus-circle', 'can' => auth()->user()->canAny(['crear-historico-costos-maquinarias', 'editar-historico-costos-maquinarias'])],
-        ['value' => 'listado', 'label' => 'Listado de Históricos', 'icon' => 'list-ul'],
-    ]" activeTab="{{ $tab_activo }}" tabProperty="tab_activo" />
+    <div class="mb-6 flex gap-0">
+        @canany(['crear-historico-costos-maquinarias', 'editar-historico-costos-maquinarias'])
+        <button type="button" wire:click="$set('tab_activo','nuevo')"
+            class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border border-r-0 rounded-l-sm transition-all {{ $tab_activo === 'nuevo' ? 'bg-pino text-white border-pino' : 'bg-white text-tinta-suave border-arena hover:bg-corteza-suave' }}">
+            <flux:icon.plus class="size-4" />
+            Nuevo Historico
+        </button>
+        @endcanany
+        <button type="button" wire:click="$set('tab_activo','listado')"
+            class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border rounded-r-sm transition-all {{ $tab_activo === 'listado' ? 'bg-pino text-white border-pino' : 'bg-white text-tinta-suave border-arena hover:bg-corteza-suave' }} {{ !auth()->user()->canAny(['crear-historico-costos-maquinarias', 'editar-historico-costos-maquinarias']) ? 'rounded-l-sm' : '' }}">
+            <flux:icon.list-bullet class="size-4" />
+            Listado de Historicos
+        </button>
+    </div>
 
     @if($tab_activo === 'nuevo')
         @canany(['crear-historico-costos-maquinarias', 'editar-historico-costos-maquinarias'])
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6">
-            <div class="bg-slate-50 border-b border-slate-200 px-6 py-4">
-                <h5 class="text-lg font-semibold text-slate-800">
-                    {{ $historico_id ? '✏️ Editar Histórico' : '➕ Nuevo Histórico' }}
+        <x-ui.card class="mb-6 overflow-hidden">
+            <div class="bg-corteza-suave border-b border-arena px-6 py-4">
+                <h5 class="text-lg font-semibold text-tinta">
+                    @if($historico_id)
+                        <flux:icon.pencil-square class="size-5 inline" />
+                        Editar Historico
+                    @else
+                        <flux:icon.plus class="size-5 inline" />
+                        Nuevo Historico
+                    @endif
                 </h5>
             </div>
             <div class="p-6">
                 <form wire:submit.prevent="guardar">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                         <div>
-                            <label for="id_maquinaria" class="block text-sm font-semibold text-slate-700 mb-1.5">Maquinaria <span class="text-red-500">*</span></label>
+                            <label for="id_maquinaria" class="block text-sm font-semibold text-tinta mb-1.5">Maquinaria <span class="text-tierra">*</span></label>
                             <select id="id_maquinaria" wire:model="id_maquinaria"
-                                class="w-full px-4 py-2.5 border rounded-lg text-sm transition-colors @error('id_maquinaria') border-red-400 bg-red-50 @else border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 @enderror">
+                                class="form-input @error('id_maquinaria') border-tierra bg-tierra-suave @enderror">
                                 <option value="">Seleccione...</option>
                                 @foreach($maquinarias as $maq)
                                     <option value="{{ $maq->id_maquinaria }}" wire:key="option-{{ $maq->id_maquinaria }}">{{ $maq->modelo }}</option>
                                 @endforeach
                             </select>
-                            @error('id_maquinaria') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+                            @error('id_maquinaria') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
-                            <label for="costo_por_tonelada" class="block text-sm font-semibold text-slate-700 mb-1.5">Costo por Tonelada <span class="text-red-500">*</span></label>
+                            <label for="costo_por_tonelada" class="block text-sm font-semibold text-tinta mb-1.5">Costo por Tonelada <span class="text-tierra">*</span></label>
                             <input type="number" id="costo_por_tonelada" wire:model="costo_por_tonelada" step="0.01"
-                                class="w-full px-4 py-2.5 border rounded-lg text-sm transition-colors @error('costo_por_tonelada') border-red-400 bg-red-50 @else border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 @enderror"
+                                class="form-input @error('costo_por_tonelada') border-tierra bg-tierra-suave @enderror"
                                 placeholder="0.00">
-                            @error('costo_por_tonelada') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+                            @error('costo_por_tonelada') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                         <div>
-                            <label for="fecha_inicio_vigencia" class="block text-sm font-semibold text-slate-700 mb-1.5">Fecha Inicio Vigencia <span class="text-red-500">*</span></label>
+                            <label for="fecha_inicio_vigencia" class="block text-sm font-semibold text-tinta mb-1.5">Fecha Inicio Vigencia <span class="text-tierra">*</span></label>
                             <input type="date" id="fecha_inicio_vigencia" wire:model="fecha_inicio_vigencia"
-                                class="w-full px-4 py-2.5 border rounded-lg text-sm transition-colors @error('fecha_inicio_vigencia') border-red-400 bg-red-50 @else border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 @enderror">
-                            @error('fecha_inicio_vigencia') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+                                class="form-input @error('fecha_inicio_vigencia') border-tierra bg-tierra-suave @enderror">
+                            @error('fecha_inicio_vigencia') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
-                            <label for="fecha_fin_vigencia" class="block text-sm font-semibold text-slate-700 mb-1.5">Fecha Fin Vigencia</label>
+                            <label for="fecha_fin_vigencia" class="block text-sm font-semibold text-tinta mb-1.5">Fecha Fin Vigencia</label>
                             <input type="date" id="fecha_fin_vigencia" wire:model="fecha_fin_vigencia"
-                                class="w-full px-4 py-2.5 border rounded-lg text-sm transition-colors @error('fecha_fin_vigencia') border-red-400 bg-red-50 @else border-slate-300 focus:border-brand focus:ring-2 focus:ring-brand/20 @enderror">
-                            @error('fecha_fin_vigencia') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
-                            <small class="text-slate-500 text-xs mt-1 block">Opcional — dejar en blanco si está vigente actualmente</small>
+                                class="form-input @error('fecha_fin_vigencia') border-tierra bg-tierra-suave @enderror">
+                            @error('fecha_fin_vigencia') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
+                            <small class="text-tinta-suave text-xs mt-1 block">Opcional — dejar en blanco si esta vigente actualmente</small>
                         </div>
                     </div>
                     <div class="flex gap-2 justify-end">
                         @if ($historico_id)
-                            <button type="button" wire:click="resetCampos"
-                                class="inline-flex items-center gap-1.5 px-4 py-2.5 border border-slate-300 bg-white text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors">
-                                ✕ Cancelar
-                            </button>
+                            <x-ui.button type="button" variant="secondary" icon="x-mark" wire:click="resetCampos">
+                                Cancelar
+                            </x-ui.button>
                         @endif
                         @canany(['crear-historico-costos-maquinarias', 'editar-historico-costos-maquinarias'])
-                        <button type="submit"
-                            class="inline-flex items-center gap-1.5 px-5 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-lg text-sm font-medium shadow-sm transition-colors">
-                            ✓ {{ $historico_id ? 'Actualizar' : 'Guardar' }}
-                        </button>
+                        <x-ui.button type="submit" icon="check">
+                            {{ $historico_id ? 'Actualizar' : 'Guardar' }}
+                        </x-ui.button>
                         @endcanany
                     </div>
                 </form>
             </div>
-        </div>
+        </x-ui.card>
         @endcanany
     @else
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <x-ui.card>
             <div class="p-6">
-                <x-search-input placeholder="Buscar por modelo de maquinaria..." />
+                <div class="mb-6">
+                    <div class="flex items-center gap-2 px-4 py-2.5 border border-arena rounded-sm bg-hueso">
+                        <flux:icon.magnifying-glass class="size-4 text-arena-oscura" />
+                        <input type="text" wire:model.live="busqueda" placeholder="Buscar por modelo de maquinaria..."
+                            class="flex-1 bg-transparent border-0 focus:ring-0 focus:outline-none text-sm text-tinta placeholder-arena-oscura">
+                    </div>
+                </div>
 
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
+                <x-ui.table-container>
+                    <table class="data-table">
                         <thead>
-                            <tr class="bg-slate-50 border-b border-slate-200">
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">ID</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Maquinaria</th>
-                                <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Costo/Ton</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Inicio Vig.</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Fin Vig.</th>
-                                <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Acciones</th>
+                            <tr>
+                                <th>ID</th>
+                                <th>Maquinaria</th>
+                                <th class="text-right">Costo/Ton</th>
+                                <th>Inicio Vig.</th>
+                                <th>Fin Vig.</th>
+                                <th class="text-right">Acciones</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-100">
+                        <tbody>
                             @forelse ($historicos as $historico)
-                                <tr wire:key="row-{{ $historico->id_costo }}" class="hover:bg-slate-50 transition-colors">
-                                    <td class="px-4 py-2.5"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">{{ $historico->id_costo }}</span></td>
-                                    <td class="px-4 py-2.5 font-medium text-slate-800">{{ $historico->maquinaria->modelo ?? 'N/A' }}</td>
-                                    <td class="px-4 py-2.5 text-right text-slate-600">${{ number_format($historico->costo_por_tonelada, 2, ',', '.') }}</td>
-                                    <td class="px-4 py-2.5 text-slate-600">{{ $historico->fecha_inicio_vigencia ? \Carbon\Carbon::parse($historico->fecha_inicio_vigencia)->format('d/m/Y') : '-' }}</td>
-                                    <td class="px-4 py-2.5 text-slate-600">{{ $historico->fecha_fin_vigencia ? \Carbon\Carbon::parse($historico->fecha_fin_vigencia)->format('d/m/Y') : 'Vigente' }}</td>
-                                    <td class="px-4 py-2.5 text-right">
-                                        <x-action-buttons
-                                            editWireClick="editar({{ $historico->id_costo }})"
-                                            deleteWireClick="eliminar({{ $historico->id_costo }})"
-                                            deleteMessage="¿Eliminar este histórico?"
-                                            :canEdit="auth()->user()->can('editar-historico-costos-maquinarias')"
-                                            :canDelete="auth()->user()->can('eliminar-historico-costos-maquinarias')" />
+                                <tr wire:key="row-{{ $historico->id_costo }}">
+                                    <td><x-ui.badge variant="neutral">{{ $historico->id_costo }}</x-ui.badge></td>
+                                    <td class="font-medium text-tinta">{{ $historico->maquinaria->modelo ?? 'N/A' }}</td>
+                                    <td class="text-right text-tinta-suave">${{ number_format($historico->costo_por_tonelada, 2, ',', '.') }}</td>
+                                    <td class="text-tinta-suave">{{ $historico->fecha_inicio_vigencia ? \Carbon\Carbon::parse($historico->fecha_inicio_vigencia)->format('d/m/Y') : '-' }}</td>
+                                    <td class="text-tinta-suave">{{ $historico->fecha_fin_vigencia ? \Carbon\Carbon::parse($historico->fecha_fin_vigencia)->format('d/m/Y') : 'Vigente' }}</td>
+                                    <td class="text-right">
+                                        <div class="flex gap-1 justify-end">
+                                            @can('editar-historico-costos-maquinarias')
+                                                <x-ui.button size="sm" variant="secondary" icon="pencil-square" wire:click="editar({{ $historico->id_costo }})" title="Editar" />
+                                            @endcan
+                                            @can('eliminar-historico-costos-maquinarias')
+                                                <x-ui.button size="sm" variant="danger" icon="trash" wire:click="eliminar({{ $historico->id_costo }})" wire:confirm="¿Eliminar este historico?" title="Eliminar" />
+                                            @endcan
+                                        </div>
                                     </td>
                                 </tr>
                             @empty
-                                <x-empty-state :colspan="6" message="No hay históricos registrados." />
+                                <tr>
+                                    <td colspan="6" class="text-center py-8 text-tinta-suave">
+                                        No hay historicos registrados.
+                                    </td>
+                                </tr>
                             @endforelse
                         </tbody>
                     </table>
-                </div>
+                </x-ui.table-container>
 
                 <div class="mt-4">
                     {{ $historicos->links() }}
                 </div>
             </div>
-        </div>
+        </x-ui.card>
     @endif
 </div>

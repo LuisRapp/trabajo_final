@@ -1,360 +1,355 @@
-<div x-data="{ 
+<div x-data="{
     currentPageInsumos: 1,
     currentPageHistorial: 1,
     itemsPerPage: 5
-}" class="mx-auto max-w-7xl px-4 py-8">
-    <div class="mb-8 flex items-center justify-between">
-        <h1 class="flex items-center gap-2 text-3xl font-bold text-slate-800">
-            🔧 Kits de Mantenimiento Preventivo
+}" class="w-full px-4 py-6 sm:px-6 lg:px-8">
+    <div class="mb-6 flex items-center justify-between">
+        <h1 class="flex items-center gap-2 text-2xl font-bold text-tinta">
+            <flux:icon.wrench-screwdriver class="size-6" />
+            Kits de Mantenimiento Preventivo
         </h1>
     </div>
 
     @if (session()->has('message'))
-        <div x-data="{ open: true }" x-show="open" x-transition
-            class="mb-6 flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-4 text-green-700 shadow-sm" role="alert">
-            ✅
-            <span class="flex-1 font-medium">{{ session('message') }}</span>
-            <button type="button" class="text-green-600 hover:text-green-800" @click="open = false">
-                ✕
-            </button>
-        </div>
+        <x-ui.alert variant="success" class="mb-6">
+            {{ session('message') }}
+        </x-ui.alert>
     @endif
 
     @if (session()->has('error'))
-        <div x-data="{ open: true }" x-show="open" x-transition
-            class="mb-6 flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700 shadow-sm" role="alert">
-            ⚠️
-            <span class="flex-1 font-medium">{{ session('error') }}</span>
-            <button type="button" class="text-red-600 hover:text-red-800" @click="open = false">
-                ✕
-            </button>
-        </div>
+        <x-ui.alert variant="danger" class="mb-6">
+            {{ session('error') }}
+        </x-ui.alert>
     @endif
 
-    <!-- Tabs Navigation -->
     <div class="mb-6 flex gap-0">
         <button type="button" wire:click="$set('activeTab','nuevo')"
-            class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border border-r-0 rounded-l-lg transition-all {{ $activeTab === 'nuevo' ? 'text-white bg-brand border-brand' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}">
-            {{ $editando_kit ? '✏️' : '➕' }} {{ $editando_kit ? 'Editar Kit' : 'Nuevo Kit' }}
+            class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border border-r-0 rounded-l-sm transition-all {{ $activeTab === 'nuevo' ? 'text-white bg-pino border-pino' : 'bg-white text-tinta-suave border-arena hover:bg-corteza-suave' }}">
+            @if($editando_kit)
+                <flux:icon.pencil-square class="size-4" />
+                Editar Kit
+            @else
+                <flux:icon.plus class="size-4" />
+                Nuevo Kit
+            @endif
         </button>
         <button type="button" wire:click="$set('activeTab','listado')"
-            class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border rounded-r-lg transition-all {{ $activeTab === 'listado' ? 'text-white bg-brand border-brand' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}">
-            📋 Listado de Kits
+            class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border rounded-r-sm transition-all {{ $activeTab === 'listado' ? 'text-white bg-pino border-pino' : 'bg-white text-tinta-suave border-arena hover:bg-corteza-suave' }}">
+            <flux:icon.list-bullet class="size-4" />
+            Listado de Kits
         </button>
     </div>
 
     <div class="grid grid-cols-1 gap-6">
-        <!-- Tab 1: Nuevo/Editar Kit -->
         @if($activeTab === 'nuevo')
-            <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
-                <div class="bg-slate-100 border-b border-slate-200 px-6 py-4">
-                    <h5 class="flex items-center gap-2 text-lg font-semibold text-slate-800 mb-0">
-                        {{ $editando_kit ? '✏️' : '➕' }} 
-                        {{ $editando_kit ? 'Editar Kit' : 'Configurar Kit' }}
+            <x-ui.card class="overflow-hidden">
+                <div class="bg-corteza-suave border-b border-arena px-6 py-4">
+                    <h5 class="flex items-center gap-2 text-lg font-semibold text-tinta mb-0">
+                        @if($editando_kit)
+                            <flux:icon.pencil-square class="size-5" />
+                            Editar Kit
+                        @else
+                            <flux:icon.plus class="size-5" />
+                            Configurar Kit
+                        @endif
                     </h5>
                 </div>
                 <div class="p-6">
-                    <!-- Selector de Maquinaria -->
                     <div class="mb-6">
-                        <label for="maquinaria_select" class="block text-sm font-semibold text-slate-700 mb-2">
-                            🚛 Maquinaria <span class="text-red-500">*</span>
+                        <label for="maquinaria_select" class="block text-sm font-semibold text-tinta mb-2">
+                            <flux:icon.truck class="size-4 inline mr-1" />
+                            Maquinaria <span class="text-tierra">*</span>
                         </label>
-                        <select wire:model.live="maquinaria_seleccionada" id="maquinaria_select" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('maquinaria_seleccionada') ring-2 ring-red-500 @enderror" @if($editando_kit) disabled @endif>
+                        <select wire:model.live="maquinaria_seleccionada" id="maquinaria_select" class="form-input @error('maquinaria_seleccionada') ring-2 ring-tierra @enderror" @if($editando_kit) disabled @endif>
                             <option value="">Seleccione una maquinaria</option>
                             @foreach ($maquinarias as $maq)
                                 <option value="{{ $maq->id_maquinaria }}" wire:key="option-{{ $maq->id_maquinaria }}">{{ $maq->modelo }} ({{ $maq->tipoMaquinaria ? $maq->tipoMaquinaria->nombre : 'Sin tipo' }})</option>
                             @endforeach
                         </select>
-                        @error('maquinaria_seleccionada') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
+                        @error('maquinaria_seleccionada') <p class="mt-1 text-sm text-tierra">{{ $message }}</p> @enderror
                     </div>
 
                     @if(!$maquinaria_seleccionada)
-                        <div class="flex flex-col items-center justify-center py-12 rounded-lg bg-blue-50 border border-blue-200">
-                            <span class="text-4xl text-blue-600 mb-3">⬆️</span>
-                            <p class="text-blue-700 font-medium">Seleccione una maquinaria para configurar su kit de mantenimiento preventivo</p>
+                        <div class="flex flex-col items-center justify-center py-12 rounded-sm bg-pino-suave border border-pino/30">
+                            <flux:icon.arrow-up class="size-10 text-pino mb-3" />
+                            <p class="text-pino font-medium">Seleccione una maquinaria para configurar su kit de mantenimiento preventivo</p>
                         </div>
                     @else
-                        <!-- Acciones -->
                         <div class="flex gap-2 mb-6">
-                            <button wire:click="abrirModalAgregar" type="button" class="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-colors font-medium text-sm bg-brand hover:bg-brand-hover">
-                                ➕ Agregar Insumo
-                            </button>
+                            <x-ui.button type="button" icon="plus" wire:click="abrirModalAgregar">
+                                Agregar Insumo
+                            </x-ui.button>
                             @if($editando_kit)
-                                <button wire:click="limpiarKit" type="button" class="inline-flex items-center gap-2 px-4 py-2 bg-slate-600 text-white hover:bg-slate-700 rounded-lg transition-colors font-medium text-sm">
-                                    ✕ Cancelar Edición
-                                </button>
+                                <x-ui.button type="button" variant="secondary" icon="x-mark" wire:click="limpiarKit">
+                                    Cancelar Edicion
+                                </x-ui.button>
                             @else
                                 @if($items_count > 0)
-                                    <button wire:click="registrarKit" type="button" class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white hover:bg-green-700 rounded-lg transition-colors font-medium text-sm">
-                                        ✓ Registrar Kit
-                                    </button>
-                                    <button wire:click="limpiarKit" type="button" class="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white hover:bg-red-700 rounded-lg transition-colors font-medium text-sm">
-                                        🗑️ Limpiar Todo
-                                    </button>
+                                    <x-ui.button type="button" icon="check" wire:click="registrarKit">
+                                        Registrar Kit
+                                    </x-ui.button>
+                                    <x-ui.button type="button" variant="danger" icon="trash" wire:click="limpiarKit">
+                                        Limpiar Todo
+                                    </x-ui.button>
                                 @endif
                             @endif
                         </div>
 
                         @if($kit_modificado && !$editando_kit && $items_count > 0)
-                            <div class="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-700">
-                                ⚠️
-                                Hay cambios sin guardar. Haz clic en <strong>Registrar Kit</strong> para confirmar.
-                            </div>
+                            <x-ui.alert variant="warning" class="mb-6" :dismissible="false">
+                                Hay cambios sin guardar. Haga clic en <strong>Registrar Kit</strong> para confirmar.
+                            </x-ui.alert>
                         @endif
 
-                        <!-- Insumos Table with Pagination -->
                         <div class="mb-6">
-                            <h6 class="mb-4 font-semibold text-slate-700 flex items-center gap-2">
-                                📋 Insumos del Kit
+                            <h6 class="mb-4 font-semibold text-tinta flex items-center gap-2">
+                                <flux:icon.list-bullet class="size-4" />
+                                Insumos del Kit
                                 @if($items_count > 0)
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">{{ $items_count }}</span>
+                                    <x-ui.badge variant="info">{{ $items_count }}</x-ui.badge>
                                 @endif
                             </h6>
 
                             @if(count($items) > 0)
-                                <div class="overflow-x-auto">
-                                    <table class="w-full">
+                                <x-ui.table-container>
+                                    <table class="data-table">
                                         <thead>
-                                            <tr class="border-b border-slate-200 bg-slate-50">
-                                                <th class="px-3 py-3 text-left text-xs font-semibold uppercase text-slate-600" style="width: 8%;">ID</th>
-                                                <th class="px-3 py-3 text-left text-xs font-semibold uppercase text-slate-600" style="width: 30%;">Insumo</th>
-                                                <th class="px-3 py-3 text-left text-xs font-semibold uppercase text-slate-600" style="width: 15%;">Cantidad</th>
-                                                <th class="px-3 py-3 text-left text-xs font-semibold uppercase text-slate-600" style="width: 15%;">Stock</th>
-                                                <th class="px-3 py-3 text-left text-xs font-semibold uppercase text-slate-600" style="width: 15%;">Tipo</th>
-                                                <th class="px-3 py-3 text-center text-xs font-semibold uppercase text-slate-600" style="width: 17%;">Acciones</th>
+                                            <tr>
+                                                <th style="width: 8%;">ID</th>
+                                                <th style="width: 30%;">Insumo</th>
+                                                <th style="width: 15%;">Cantidad</th>
+                                                <th style="width: 15%;">Stock</th>
+                                                <th style="width: 15%;">Tipo</th>
+                                                <th style="width: 17%;" class="text-center">Acciones</th>
                                             </tr>
                                         </thead>
-                                        <tbody class="divide-y divide-slate-200">
+                                        <tbody>
                                             @foreach($items as $item)
                                                 @php
                                                     $ins = optional($item->insumo);
                                                     $stock = is_numeric($ins->stock ?? null) ? $ins->stock : 0;
                                                 @endphp
-                                                <tr class="hover:bg-slate-50 transition-colors" wire:key="row-{{ $item->id_kit ?? $item->id }}">
-                                                    <td class="px-3 py-3"><span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">{{ $item->id_kit ?? $item->id }}</span></td>
-                                                    <td class="px-3 py-3 font-semibold text-slate-800">{{ $ins->nombre ?? '—' }}</td>
-                                                    <td class="px-3 py-3 text-slate-600">{{ number_format($item->cantidad_requerida, 2) }}</td>
-                                                    <td class="px-3 py-3">
-                                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold {{ ($stock >= $item->cantidad_requerida) ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200' }}">{{ number_format($stock, 2) }}</span>
+                                                <tr wire:key="row-{{ $item->id_kit ?? $item->id }}">
+                                                    <td><x-ui.badge variant="neutral">{{ $item->id_kit ?? $item->id }}</x-ui.badge></td>
+                                                    <td class="font-semibold text-tinta">{{ $ins->nombre ?? '—' }}</td>
+                                                    <td class="text-tinta-suave">{{ number_format($item->cantidad_requerida, 2) }}</td>
+                                                    <td>
+                                                        <x-ui.badge variant="{{ ($stock >= $item->cantidad_requerida) ? 'success' : 'danger' }}">{{ number_format($stock, 2) }}</x-ui.badge>
                                                         @if($stock < $item->cantidad_requerida)
-                                                            <br><small class="text-red-600 text-xs">Faltan {{ number_format($item->cantidad_requerida - $stock, 2) }}</small>
+                                                            <br><small class="text-tierra text-xs">Faltan {{ number_format($item->cantidad_requerida - $stock, 2) }}</small>
                                                         @endif
                                                     </td>
-                                                    <td class="px-3 py-3">
-                                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold {{ $item->es_obligatorio ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-slate-100 text-slate-600 border border-slate-200' }}">
+                                                    <td>
+                                                        <x-ui.badge variant="{{ $item->es_obligatorio ? 'danger' : 'neutral' }}">
                                                             {{ $item->es_obligatorio ? 'Obligatorio' : 'Opcional' }}
-                                                        </span>
+                                                        </x-ui.badge>
                                                     </td>
-                                                    <td class="px-3 py-3 text-center">
+                                                    <td class="text-center">
                                                         <div class="flex gap-1 justify-center">
-                                                            <button wire:click="abrirModalEditar({{ $item->id_kit ?? $item->id }})" type="button" class="inline-flex items-center px-2 py-1 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded transition-colors border border-blue-200" title="Editar">
-                                                                ✏️
-                                                            </button>
-                                                            <button wire:click="eliminar({{ $item->id_kit ?? $item->id }})" type="button" class="inline-flex items-center px-2 py-1 bg-red-50 text-red-700 hover:bg-red-100 rounded transition-colors border border-red-200" onclick="return confirm('¿Dar de baja este insumo del kit?')" title="Dar de baja">
-                                                                🗑️
-                                                            </button>
+                                                            <x-ui.button size="sm" variant="secondary" icon="pencil-square" wire:click="abrirModalEditar({{ $item->id_kit ?? $item->id }})" title="Editar" />
+                                                            <x-ui.button size="sm" variant="danger" icon="trash" wire:click="eliminar({{ $item->id_kit ?? $item->id }})" wire:confirm="¿Dar de baja este insumo del kit?" title="Dar de baja" />
                                                         </div>
                                                     </td>
                                                 </tr>
                                             @endforeach
                                         </tbody>
                                     </table>
-                                </div>
+                                </x-ui.table-container>
                             @else
-                                <div class="text-center py-8 rounded-lg bg-slate-50 border border-slate-200">
-                                    <span class="text-3xl text-slate-300 mb-2">📭</span>
-                                    <p class="text-slate-600 font-medium mb-3">No hay insumos configurados para este kit</p>
-                                    <button wire:click="abrirModalAgregar" type="button" class="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-colors font-medium text-sm bg-brand hover:bg-brand-hover">
-                                        ➕ Agregar Primer Insumo
-                                    </button>
+                                <div class="text-center py-8 rounded-sm bg-hueso border border-arena">
+                                    <p class="text-tinta-suave font-medium mb-3">No hay insumos configurados para este kit</p>
+                                    <x-ui.button type="button" icon="plus" wire:click="abrirModalAgregar">
+                                        Agregar Primer Insumo
+                                    </x-ui.button>
                                 </div>
                             @endif
 
                             @if($items_count > 0)
-                                <div class="mt-6 rounded-lg bg-slate-50 border border-slate-200 p-4">
+                                <div class="mt-6 rounded-sm bg-hueso border border-arena p-4">
                                     <div class="grid grid-cols-4 gap-4 text-center">
                                         <div>
-                                            <strong class="block text-slate-600 text-xs mb-1">Total Insumos</strong>
-                                            <span class="text-xl font-semibold text-slate-800">{{ $items_count }}</span>
+                                            <strong class="block text-tinta-suave text-xs mb-1">Total Insumos</strong>
+                                            <span class="text-xl font-semibold text-tinta">{{ $items_count }}</span>
                                         </div>
                                         <div>
-                                            <strong class="block text-slate-600 text-xs mb-1">Obligatorios</strong>
-                                            <span class="text-xl font-semibold text-red-600">{{ $items_obligatorios }}</span>
+                                            <strong class="block text-tinta-suave text-xs mb-1">Obligatorios</strong>
+                                            <span class="text-xl font-semibold text-tierra">{{ $items_obligatorios }}</span>
                                         </div>
                                         <div>
-                                            <strong class="block text-slate-600 text-xs mb-1">Opcionales</strong>
-                                            <span class="text-xl font-semibold text-slate-600">{{ $items_opcionales }}</span>
+                                            <strong class="block text-tinta-suave text-xs mb-1">Opcionales</strong>
+                                            <span class="text-xl font-semibold text-tinta-suave">{{ $items_opcionales }}</span>
                                         </div>
                                         <div>
-                                            <strong class="block text-slate-600 text-xs mb-1">Stock OK</strong>
-                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold {{ ($items_con_stock === $items_count) ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700' }}">{{ $items_con_stock }}/{{ $items_count }}</span>
+                                            <strong class="block text-tinta-suave text-xs mb-1">Stock OK</strong>
+                                            <x-ui.badge variant="{{ ($items_con_stock === $items_count) ? 'success' : 'warning' }}">{{ $items_con_stock }}/{{ $items_count }}</x-ui.badge>
                                         </div>
                                     </div>
                                 </div>
                             @endif
                         </div>
 
-                        <!-- Historial Bajas Table -->
-                        <div class="border-t border-slate-200 pt-6">
-                            <h6 class="mb-4 font-semibold text-slate-700 flex items-center gap-2">
-                                📦 Historial de Bajas
+                        <div class="border-t border-arena pt-6">
+                            <h6 class="mb-4 font-semibold text-tinta flex items-center gap-2">
+                                <flux:icon.archive-box class="size-4" />
+                                Historial de Bajas
                             </h6>
 
                             @if($historial->count() > 0)
-                                <div class="overflow-x-auto">
-                                    <table class="w-full">
+                                <x-ui.table-container>
+                                    <table class="data-table">
                                         <thead>
-                                            <tr class="border-b border-slate-200 bg-slate-50">
-                                                <th class="px-3 py-3 text-left text-xs font-semibold uppercase text-slate-600" style="width: 8%;">ID</th>
-                                                <th class="px-3 py-3 text-left text-xs font-semibold uppercase text-slate-600" style="width: 35%;">Insumo</th>
-                                                <th class="px-3 py-3 text-left text-xs font-semibold uppercase text-slate-600" style="width: 15%;">Cantidad</th>
-                                                <th class="px-3 py-3 text-left text-xs font-semibold uppercase text-slate-600" style="width: 20%;">Fecha de Baja</th>
-                                                <th class="px-3 py-3 text-center text-xs font-semibold uppercase text-slate-600" style="width: 22%;">Acciones</th>
+                                            <tr>
+                                                <th style="width: 8%;">ID</th>
+                                                <th style="width: 35%;">Insumo</th>
+                                                <th style="width: 15%;">Cantidad</th>
+                                                <th style="width: 20%;">Fecha de Baja</th>
+                                                <th style="width: 22%;" class="text-center">Acciones</th>
                                             </tr>
                                         </thead>
-                                        <tbody class="divide-y divide-slate-200">
+                                        <tbody>
                                             @foreach($historial as $item)
-                                                <tr class="bg-amber-50 hover:bg-amber-100 transition-colors" wire:key="row-{{ $item->id_kit ?? $item->id }}">
-                                                    <td class="px-3 py-3"><span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">{{ $item->id_kit ?? $item->id }}</span></td>
-                                                    <td class="px-3 py-3">
-                                                        <strong class="text-slate-800">{{ optional($item->insumo)->nombre ?? '—' }}</strong>
+                                                <tr class="bg-resina-suave hover:bg-resina-suave/80" wire:key="row-{{ $item->id_kit ?? $item->id }}">
+                                                    <td><x-ui.badge variant="neutral">{{ $item->id_kit ?? $item->id }}</x-ui.badge></td>
+                                                    <td>
+                                                        <strong class="text-tinta">{{ optional($item->insumo)->nombre ?? '—' }}</strong>
                                                         @if($item->es_obligatorio)
-                                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700 ml-2 border border-red-200">Obligatorio</span>
+                                                            <x-ui.badge variant="danger" class="ml-2">Obligatorio</x-ui.badge>
                                                         @endif
                                                     </td>
-                                                    <td class="px-3 py-3 text-slate-600">{{ number_format($item->cantidad_requerida, 2) }}</td>
-                                                    <td class="px-3 py-3 text-slate-600">
-                                                        <span class="text-slate-400">🕐</span>
+                                                    <td class="text-tinta-suave">{{ number_format($item->cantidad_requerida, 2) }}</td>
+                                                    <td class="text-tinta-suave">
+                                                        <flux:icon.clock class="size-3 inline text-arena-oscura" />
                                                         <small class="text-xs">{{ $item->deleted_at ? $item->deleted_at->format('d/m/Y H:i') : '—' }}</small>
                                                     </td>
-                                                    <td class="px-3 py-3 text-center">
-                                                        <button wire:click="restaurar({{ $item->id_kit ?? $item->id }})" type="button" class="inline-flex items-center gap-2 px-3 py-1 bg-green-600 text-white hover:bg-green-700 rounded text-sm transition-colors" title="Restaurar">
-                                                            ↩️ Restaurar
-                                                        </button>
+                                                    <td class="text-center">
+                                                        <x-ui.button type="button" size="sm" icon="arrow-uturn-left" wire:click="restaurar({{ $item->id_kit ?? $item->id }})" title="Restaurar">
+                                                            Restaurar
+                                                        </x-ui.button>
                                                     </td>
                                                 </tr>
                                             @endforeach
                                         </tbody>
                                     </table>
-                                </div>
+                                </x-ui.table-container>
                             @else
-                                <div class="text-center py-8 rounded-lg bg-slate-50 border border-slate-200">
-                                    <span class="text-3xl text-slate-300 mb-2">📦</span>
-                                    <p class="text-slate-600 font-medium">No hay bajas registradas para este kit</p>
+                                <div class="text-center py-8 rounded-sm bg-hueso border border-arena">
+                                    <p class="text-tinta-suave font-medium">No hay bajas registradas para este kit</p>
                                 </div>
                             @endif
                         </div>
                     @endif
                 </div>
-            </div>
+            </x-ui.card>
         @endif
 
-        <!-- Tab 2: Listado de Kits -->
         @if($activeTab === 'listado')
-            <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
-                <div class="bg-slate-100 border-b border-slate-200 px-6 py-4">
-                    <h5 class="flex items-center gap-2 text-lg font-semibold text-slate-800 mb-0">
-                        📋 Kits Registrados por Maquinaria
+            <x-ui.card class="overflow-hidden">
+                <div class="bg-corteza-suave border-b border-arena px-6 py-4">
+                    <h5 class="flex items-center gap-2 text-lg font-semibold text-tinta mb-0">
+                        <flux:icon.list-bullet class="size-5" />
+                        Kits Registrados por Maquinaria
                     </h5>
                 </div>
                 <div class="p-6">
                     @if(count($kits_registrados) > 0)
                         <div class="space-y-4">
                             @foreach($kits_registrados as $maqId => $kit)
-                                <div class="rounded-lg border border-slate-200 overflow-hidden" wire:key="card-{{ $maqId }}">
-                                    <div class="flex items-center justify-between bg-slate-50 border-b border-slate-200 px-6 py-4">
+                                <x-ui.card class="overflow-hidden" wire:key="card-{{ $maqId }}">
+                                    <div class="flex items-center justify-between bg-hueso border-b border-arena px-6 py-4">
                                         <div>
-                                            <h6 class="mb-1 font-semibold text-slate-800 flex items-center gap-2">
-                                                <span class="text-blue-600">⚙️</span> 
-                                                <strong>{{ optional($kit['maquinaria'])->modelo }}</strong> 
-                                                <span class="text-slate-500">({{ optional(optional($kit['maquinaria'])->tipoMaquinaria)->nombre }})</span>
+                                            <h6 class="mb-1 font-semibold text-tinta flex items-center gap-2">
+                                                <flux:icon.cog class="size-4 text-pino" />
+                                                <strong>{{ optional($kit['maquinaria'])->modelo }}</strong>
+                                                <span class="text-tinta-suave">({{ optional(optional($kit['maquinaria'])->tipoMaquinaria)->nombre }})</span>
                                             </h6>
-                                            <small class="text-slate-500">ID: {{ optional($kit['maquinaria'])->id_maquinaria }}</small>
+                                            <small class="text-tinta-suave">ID: {{ optional($kit['maquinaria'])->id_maquinaria }}</small>
                                         </div>
                                         <div class="flex gap-2">
-                                            <button wire:click="editarKit({{ $maqId }})" type="button" class="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded text-sm transition-colors border border-blue-200" title="Editar kit">
-                                                ✏️ Editar
-                                            </button>
-                                            <button wire:click="eliminarKit({{ $maqId }})" type="button" class="inline-flex items-center gap-2 px-3 py-1 bg-red-50 text-red-700 hover:bg-red-100 rounded text-sm transition-colors border border-red-200" onclick="return confirm('¿Está seguro de eliminar este kit completo?')" title="Eliminar kit">
-                                                🗑️
-                                            </button>
+                                            <x-ui.button type="button" size="sm" variant="secondary" icon="pencil-square" wire:click="editarKit({{ $maqId }})" title="Editar kit">
+                                                Editar
+                                            </x-ui.button>
+                                            <x-ui.button type="button" size="sm" variant="danger" icon="trash" wire:click="eliminarKit({{ $maqId }})" wire:confirm="¿Esta seguro de eliminar este kit completo?" title="Eliminar kit" />
                                         </div>
                                     </div>
                                     <div class="px-6 py-4">
                                         <div class="mb-4 flex gap-2">
-                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">{{ $kit['total_items'] }} Insumos</span>
-                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">{{ $kit['obligatorios'] }} Obligatorios</span>
-                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">{{ $kit['opcionales'] }} Opcionales</span>
+                                            <x-ui.badge variant="info">{{ $kit['total_items'] }} Insumos</x-ui.badge>
+                                            <x-ui.badge variant="danger">{{ $kit['obligatorios'] }} Obligatorios</x-ui.badge>
+                                            <x-ui.badge variant="neutral">{{ $kit['opcionales'] }} Opcionales</x-ui.badge>
                                         </div>
-                                        <div class="overflow-x-auto">
-                                            <table class="w-full text-sm">
+                                        <x-ui.table-container>
+                                            <table class="data-table">
                                                 <thead>
-                                                    <tr class="border-b border-slate-200 bg-slate-50">
-                                                        <th class="px-3 py-2 text-left font-semibold text-slate-600">Insumo</th>
-                                                        <th class="px-3 py-2 text-left font-semibold text-slate-600">Cantidad</th>
-                                                        <th class="px-3 py-2 text-left font-semibold text-slate-600">Stock</th>
-                                                        <th class="px-3 py-2 text-left font-semibold text-slate-600">Tipo</th>
+                                                    <tr>
+                                                        <th>Insumo</th>
+                                                        <th>Cantidad</th>
+                                                        <th>Stock</th>
+                                                        <th>Tipo</th>
                                                     </tr>
                                                 </thead>
-                                                <tbody class="divide-y divide-slate-200">
+                                                <tbody>
                                                     @foreach($kit['items'] as $item)
                                                         @php
                                                             $ins = optional($item->insumo);
                                                             $stock = is_numeric($ins->stock ?? null) ? $ins->stock : 0;
                                                         @endphp
-                                                        <tr class="hover:bg-slate-50" wire:key="row-{{ $item->id_kit ?? $item->id }}">
-                                                            <td class="px-3 py-2 font-semibold text-slate-700">{{ $ins->nombre }}</td>
-                                                            <td class="px-3 py-2 text-slate-600">{{ number_format($item->cantidad_requerida, 2) }}</td>
-                                                            <td class="px-3 py-2">
-                                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold {{ ($stock >= $item->cantidad_requerida) ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200' }}">
+                                                        <tr wire:key="row-{{ $item->id_kit ?? $item->id }}">
+                                                            <td class="font-semibold text-tinta">{{ $ins->nombre }}</td>
+                                                            <td class="text-tinta-suave">{{ number_format($item->cantidad_requerida, 2) }}</td>
+                                                            <td>
+                                                                <x-ui.badge variant="{{ ($stock >= $item->cantidad_requerida) ? 'success' : 'danger' }}">
                                                                     {{ number_format($stock, 2) }}
-                                                                </span>
+                                                                </x-ui.badge>
                                                             </td>
-                                                            <td class="px-3 py-2">
-                                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold {{ $item->es_obligatorio ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-slate-100 text-slate-600 border border-slate-200' }}">
+                                                            <td>
+                                                                <x-ui.badge variant="{{ $item->es_obligatorio ? 'danger' : 'neutral' }}">
                                                                     {{ $item->es_obligatorio ? 'Obligatorio' : 'Opcional' }}
-                                                                </span>
+                                                                </x-ui.badge>
                                                             </td>
                                                         </tr>
                                                     @endforeach
                                                 </tbody>
                                             </table>
-                                        </div>
+                                        </x-ui.table-container>
                                     </div>
-                                </div>
+                                </x-ui.card>
                             @endforeach
                         </div>
                     @else
-                        <div class="text-center py-12 rounded-lg bg-slate-50 border border-slate-200">
-                            <span class="text-4xl text-slate-300 mb-3">📭</span>
-                            <p class="text-slate-600 font-medium mb-4">No hay kits registrados aún</p>
-                            <button class="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-colors font-medium text-sm bg-brand hover:bg-brand-hover" wire:click="$set('activeTab','nuevo')">
-                                ➕ Crear Primer Kit
-                            </button>
+                        <div class="text-center py-12 rounded-sm bg-hueso border border-arena">
+                            <p class="text-tinta-suave font-medium mb-4">No hay kits registrados aun</p>
+                            <x-ui.button type="button" icon="plus" wire:click="$set('activeTab','nuevo')">
+                                Crear Primer Kit
+                            </x-ui.button>
                         </div>
                     @endif
                 </div>
-            </div>
+            </x-ui.card>
         @endif
     </div>
 
-    <!-- Modal: Agregar/Editar Insumo -->
     @if($modal_item)
         <div class="fixed inset-0 z-50 flex items-start justify-center bg-black/40 p-4 py-8" style="overflow-y: auto;">
-            <div class="w-full max-w-md rounded-lg bg-white shadow-2xl">
-                <div class="flex items-center justify-between border-b px-6 py-4 bg-brand text-white">
+            <div class="w-full max-w-md rounded-sm bg-white shadow-2xl border border-arena">
+                <div class="flex items-center justify-between border-b border-arena px-6 py-4 bg-pino text-white">
                     <h5 class="font-semibold flex items-center gap-2">
-                        {{ $item_id ? '✏️' : '➕' }}
-                        {{ $item_id ? 'Editar' : 'Agregar' }} Insumo al Kit
+                        @if($item_id)
+                            <flux:icon.pencil-square class="size-5" />
+                            Editar
+                        @else
+                            <flux:icon.plus class="size-5" />
+                            Agregar
+                        @endif
+                        Insumo al Kit
                     </h5>
-                    <button type="button" wire:click="cerrarModal" class="text-white hover:text-gray-200">
-                        ✕
+                    <button type="button" wire:click="cerrarModal" class="text-white hover:text-corteza-suave">
+                        <flux:icon.x-mark class="size-5" />
                     </button>
                 </div>
                 <div class="p-6">
                     <div class="mb-4">
-                        <label class="block text-sm font-semibold text-slate-700 mb-2">Insumo <span class="text-red-500">*</span></label>
-                        <select wire:model="insumo_id" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('insumo_id') ring-2 ring-red-500 @enderror">
+                        <label class="block text-sm font-semibold text-tinta mb-2">Insumo <span class="text-tierra">*</span></label>
+                        <select wire:model="insumo_id" class="form-input @error('insumo_id') ring-2 ring-tierra @enderror">
                             <option value="">Seleccionar insumo...</option>
                             @foreach($insumos as $insumo)
                                 <option value="{{ $insumo->id_insumo }}" wire:key="option-{{ $insumo->id_insumo }}">
@@ -362,28 +357,28 @@
                                 </option>
                             @endforeach
                         </select>
-                        @error('insumo_id') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
+                        @error('insumo_id') <p class="mt-1 text-sm text-tierra">{{ $message }}</p> @enderror
                     </div>
                     <div class="mb-4">
-                        <label class="block text-sm font-semibold text-slate-700 mb-2">Cantidad Requerida <span class="text-red-500">*</span></label>
-                        <input type="number" wire:model="cantidad_requerida" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:border-green-700 focus:ring-2 focus:ring-green-600 transition-colors @error('cantidad_requerida') ring-2 ring-red-500 @enderror" step="0.1" min="0.01" placeholder="Ej: 10.00">
-                        @error('cantidad_requerida') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
+                        <label class="block text-sm font-semibold text-tinta mb-2">Cantidad Requerida <span class="text-tierra">*</span></label>
+                        <input type="number" wire:model="cantidad_requerida" class="form-input @error('cantidad_requerida') ring-2 ring-tierra @enderror" step="0.1" min="0.01" placeholder="Ej: 10.00">
+                        @error('cantidad_requerida') <p class="mt-1 text-sm text-tierra">{{ $message }}</p> @enderror
                     </div>
                     <div class="mb-4">
                         <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" wire:model="es_obligatorio" class="w-4 h-4 rounded">
-                            <span class="text-sm font-semibold text-slate-700">¿Es obligatorio?</span>
+                            <input type="checkbox" wire:model="es_obligatorio" class="w-4 h-4 rounded border-arena text-pino focus:ring-pino/20">
+                            <span class="text-sm font-semibold text-tinta">¿Es obligatorio?</span>
                         </label>
-                        <small class="text-slate-500 text-xs mt-1 block">Los insumos obligatorios deben estar disponibles para aprobar el mantenimiento</small>
+                        <small class="text-tinta-suave text-xs mt-1 block">Los insumos obligatorios deben estar disponibles para aprobar el mantenimiento</small>
                     </div>
                 </div>
-                <div class="flex gap-2 justify-end border-t px-6 py-4 bg-slate-50">
-                    <button type="button" wire:click="cerrarModal" class="inline-flex items-center gap-2 px-4 py-2 bg-slate-600 text-white hover:bg-slate-700 rounded-lg transition-colors font-medium text-sm">
+                <div class="flex gap-2 justify-end border-t border-arena px-6 py-4 bg-corteza-suave">
+                    <x-ui.button type="button" variant="secondary" wire:click="cerrarModal">
                         Cancelar
-                    </button>
-                    <button type="button" wire:click="guardar" class="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-colors font-medium text-sm bg-brand hover:bg-brand-hover">
-                        💾 {{ $item_id ? 'Actualizar' : 'Agregar' }}
-                    </button>
+                    </x-ui.button>
+                    <x-ui.button type="button" icon="check" wire:click="guardar">
+                        {{ $item_id ? 'Actualizar' : 'Agregar' }}
+                    </x-ui.button>
                 </div>
             </div>
         </div>

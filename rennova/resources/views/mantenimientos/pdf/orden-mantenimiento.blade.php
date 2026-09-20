@@ -11,7 +11,7 @@
         body {
             margin: 0;
             font-family: Helvetica, Arial, sans-serif;
-            color: #1f2937;
+            color: #1c1917;
             font-size: 12px;
             line-height: 1.45;
         }
@@ -21,7 +21,7 @@
             left: 0;
             right: 0;
             height: 95px;
-            border-bottom: 2px solid #1a3d2f;
+            border-bottom: 2px solid #2f5233;
         }
         footer {
             position: fixed;
@@ -29,8 +29,8 @@
             left: 0;
             right: 0;
             height: 35px;
-            border-top: 1px solid #e5ebea;
-            color: #6b7280;
+            border-top: 1px solid #d6d3cd;
+            color: #57534e;
             text-align: center;
             font-size: 10px;
             padding-top: 8px;
@@ -39,19 +39,19 @@
             margin: 0;
             font-size: 18px;
             letter-spacing: .6px;
-            color: #1a3d2f;
+            color: #2f5233;
             font-weight: 700;
             text-transform: uppercase;
         }
         .doc-subtitle {
             margin-top: 4px;
-            color: #6b7280;
+            color: #57534e;
             font-size: 11px;
         }
         .section-title {
             margin: 18px 0 8px;
             font-size: 13px;
-            color: #1a3d2f;
+            color: #2f5233;
             font-weight: 700;
             text-transform: uppercase;
         }
@@ -63,23 +63,23 @@
         .table-order th,
         .table-personal td,
         .table-personal th {
-            border: 1px solid #dbe5e1;
+            border: 1px solid #d6d3cd;
             padding: 8px;
             vertical-align: top;
         }
         .table-order th,
         .table-personal th {
-            background: #f3f6f5;
-            color: #1a3d2f;
+            background: #f3f0eb;
+            color: #2f5233;
             font-size: 11px;
             text-align: left;
             font-weight: 700;
         }
         .label {
             width: 34%;
-            background: #f8faf9;
+            background: #f7f6f3;
             font-weight: 700;
-            color: #374151;
+            color: #1c1917;
         }
     </style>
 </head>
@@ -160,7 +160,7 @@
                     </tr>
                 @else
                     <tr>
-                        <td colspan="3" style="text-align:center;color:#6b7280;">No hay personal asignado.</td>
+                        <td colspan="3" style="text-align:center;color:#57534e;">No hay personal asignado.</td>
                     </tr>
                 @endif
             </tbody>
