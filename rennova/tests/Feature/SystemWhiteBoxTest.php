@@ -517,7 +517,7 @@ class SystemWhiteBoxTest extends TestCase
             'estado' => 'programado',
         ]);
 
-        $service = new MantenimientoService;
+        $service = app(MantenimientoService::class);
         $resultado = $service->verificarStockParaAprobacion($mantenimiento->id_mantenimiento);
 
         $this->assertTrue($resultado['puede_aprobar']);
@@ -579,7 +579,7 @@ class SystemWhiteBoxTest extends TestCase
             'estado' => 'en curso',
         ]);
 
-        $service = new MantenimientoService;
+        $service = app(MantenimientoService::class);
         $resultado = $service->completarMantenimiento(
             $mantenimiento->id_mantenimiento,
             [

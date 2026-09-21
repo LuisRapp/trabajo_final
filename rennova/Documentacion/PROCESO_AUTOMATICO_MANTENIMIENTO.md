@@ -1,6 +1,6 @@
 #  Proceso Automatico de Mantenimiento de Maquinaria
 
-Ultima actualizacion: 8 de febrero de 2026.
+Ultima actualizacion: 20 de septiembre de 2026.
 
 ##  Descripción General
 
@@ -55,27 +55,30 @@ public function handle(CargaRegistrada $event): void
 
 ---
 
-### **Fase 2: Verificación Automática Nocturna**
+### **Fase 2: Verificación Automática Diaria**
 
-#### Todos los días a las 2:00 AM
+#### Todos los días a las 06:30 (después de la sincronización climática de las 06:00)
 
 El comando `CheckMantenimientoUmbrales` se ejecuta automáticamente:
 
 ```
-Comando ejecuta a las 2:00 AM
+Comando ejecuta a las 06:30
           ↓
 Recorre todas las maquinarias operativas
           ↓
 Para cada maquinaria:
   1. Calcula: toneladas_acumuladas - último_snapshot
-  2. ¿Supera el umbral configurado?
-          ↓ SÍ
-  3. Crea orden de mantenimiento (estado: "programado")
-  4. Verifica stock del kit preventivo (por maquinaria, fallback por tipo)
-  5. Envia notificaciones:
-     - Email a usuarios configurados
-     - Notificación interna (con fecha límite de 7 días)
-     - Si falta stock: Email adicional de advertencia
+  2. ¿Supera el umbral configurado? / ¿Ya tiene orden abierta?
+          ↓ Supera y no hay orden abierta
+  3. Resuelve fecha programada evitando la ventana de lluvia (72h)
+     usando los datos del proceso climático (fallback: mañana)
+  4. En transacción: crea orden de mantenimiento (estado: "programado")
+  5. Asigna personal disponible automáticamente (rol mantenimiento →
+     administrativo → cualquier empleado disponible)
+  6. Verifica stock del kit preventivo (por maquinaria, fallback por tipo)
+     → si falta stock: crea propuesta de compra de insumos
+  7. Crea notificación interna (umbral_alcanzado, límite 7 días)
+  8. Después del commit: email con PDFs de orden/compra (con reintentos)
 ```
 
 **Archivo del comando:**
@@ -90,21 +93,25 @@ $ultimoMantenimiento = Mantenimiento::where('id_maquinaria', $maquinaria->id_maq
     ->first();
 
 // Calcular toneladas desde el último mantenimiento
-$toneladasDesdeUltimo = $ultimoMantenimiento 
+$toneladasDesdeUltimo = $ultimoMantenimiento
     ? ($maquinaria->toneladas_acumuladas - $ultimoMantenimiento->toneladas_snapshot)
     : $maquinaria->toneladas_acumuladas;
 
 // Verificar si supera el umbral
 if ($toneladasDesdeUltimo >= $maquinaria->umbral_toneladas) {
+    // Resuelve la fecha evitando lluvia (usa datos del proceso climático)
+    $programacion = $this->resolverFechaProgramadaPorClima($maquinaria);
+
     // Crear orden de mantenimiento automáticamente
     $mantenimiento = Mantenimiento::create([
         'id_maquinaria' => $maquinaria->id_maquinaria,
         'id_tipo_mantenimiento' => $tipoPreventivo->id_tipo_mantenimiento,
-        'fecha_inicio' => now()->toDateString(),
+        'fecha_inicio' => $programacion['fecha_programada']->toDateString(),
+        'fecha_programada' => $programacion['fecha_programada']->toDateString(),
         'estado' => 'programado'
     ]);
-    
-    // Enviar notificaciones...
+
+    // Asignar personal, detectar stock del kit, proponer compra y notificar...
 }
 ```
 
@@ -118,7 +125,7 @@ El comando está programado en [`routes/console.php`](../routes/console.php):
 
 ```php
 Schedule::command('mantenimiento:check-umbrales')
-    ->dailyAt('02:00')
+    ->dailyAt('06:30')
     ->withoutOverlapping(10)
     ->onFailure(function () {
         \Log::error('Tarea de mantenimiento fallida: mantenimiento:check-umbrales');
@@ -190,23 +197,14 @@ El sistema genera **dos tipos de notificaciones**:
 ### **Ejecución Manual del Comando**
 
 ```bash
-# Ejecutar verificación inmediatamente (sin esperar a las 2:00 AM)
+# Ejecutar verificación inmediatamente (sin esperar a las 06:30)
 php artisan mantenimiento:check-umbrales
+
+# Ejecutar solo para una maquinaria
+php artisan mantenimiento:check-umbrales --maquinaria=1
 
 # Ver resumen de ejecución
 php artisan mantenimiento:check-umbrales -v
-```
-
-### **Simulación para Pruebas/Demos**
-
-```bash
-# Simular que una maquinaria superó el umbral y crear orden inmediatamente
-php artisan mantenimiento:check-umbrales --maquinaria=1 --simular
-
-# Esto fuerza:
-# 1. Aumenta las toneladas_acumuladas sobre el umbral
-# 2. Crea la orden de mantenimiento
-# 3. Envía todas las notificaciones
 ```
 
 ### **Verificar Tareas Programadas**
@@ -248,7 +246,7 @@ configuracion_notificaciones_mantenimiento
 
 Campos:
 - `user_id`: Usuario que recibirá las notificaciones
-- `tipo_notificacion`: `'umbral'` o `'stock'`
+- `tipo_notificacion`: `'umbral'` (órdenes generadas), `'recordatorio'` (recordatorios y vencidos) o `'stock'` (faltantes de kit)
 
 ### **Notificación de Umbral Alcanzado**
 
@@ -282,15 +280,17 @@ Si al verificar el kit preventivo falta stock:
    - `toneladas_acumuladas`: 15 → 105 toneladas
    - Umbral: 100 toneladas
 
-3. **Día 16 - 2:00 AM (Verificación Automática):**
-   ```
-    Comando ejecuta
-    Detecta: 105 >= 100
-    Crea orden #1234 (estado: programado)
-    Verifica kit preventivo
-    Envía email a supervisor@empresa.com
-    Crea notificación interna (límite: 23/01/2026)
-   ```
+3. **Día 16 - 06:30 (Verificación Automática):**
+    ```
+     Comando ejecuta
+     Detecta: 105 >= 100
+     Resuelve fecha programada fuera de la ventana de lluvia
+     Crea orden #1234 (estado: programado)
+     Asigna personal disponible
+     Verifica kit preventivo (propone compra si falta stock)
+     Envía email a supervisor@empresa.com
+     Crea notificación interna (límite: 23/01/2026)
+    ```
 
 4. **Día 16 - 8:00 AM (Usuario revisa):**
    - Ve notificación en el sistema
@@ -400,4 +400,4 @@ Para más información sobre el sistema de mantenimiento automático, consultar:
 
 ---
 
-**Última actualización:** 29 de enero de 2026
+**Última actualización:** 20 de septiembre de 2026

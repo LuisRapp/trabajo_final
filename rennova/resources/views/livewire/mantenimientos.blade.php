@@ -4,11 +4,6 @@
             <flux:icon.wrench class="size-6" />
             Mantenimientos
         </h1>
-        <div class="flex items-center gap-2">
-            <x-ui.button type="button" variant="secondary" size="sm" icon="play" wire:click="ejecutarFlujoPresentacion">
-                Ejecutar flujo presentacion
-            </x-ui.button>
-        </div>
     </div>
 
     @if (session()->has('message'))
@@ -60,7 +55,7 @@
                 @elseif($id_maquinaria && $id_tipo_mantenimiento)
                     @php
                         $tipoSeleccionado = $tipos->firstWhere('id_tipo_mantenimiento', $id_tipo_mantenimiento);
-                        $esPreventivo = $tipoSeleccionado && str_contains(strtolower($tipoSeleccionado->nombre), 'preventivo');
+                        $esPreventivo = $tipoSeleccionado && $this->esTipoPreventivo($tipoSeleccionado);
                     @endphp
                     @if($esPreventivo)
                         <x-ui.alert variant="warning" class="mb-6" :dismissible="false">
@@ -100,7 +95,7 @@
                                 @php
                                     $tipoSeleccionado = $tipos->firstWhere('id_tipo_mantenimiento', $id_tipo_mantenimiento);
                                 @endphp
-                                @if($tipoSeleccionado && str_contains(strtolower($tipoSeleccionado->nombre), 'preventivo'))
+                                @if($tipoSeleccionado && $this->esTipoPreventivo($tipoSeleccionado))
                                     <small class="text-pino text-xs mt-1 block">
                                         <flux:icon.information-circle class="size-3 inline" />
                                         Se utilizara el kit de mantenimiento preventivo

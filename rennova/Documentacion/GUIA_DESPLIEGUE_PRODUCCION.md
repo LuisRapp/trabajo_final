@@ -88,6 +88,23 @@ docker-compose restart
    - **Repetir:** Cada 1 minuto
    - **Duración:** Indefinida
 
+#### Worker de Cola (OBLIGATORIO para las propuestas de asignación)
+
+Las propuestas de asignación automática se ejecutan como jobs en cola
+(disparados por cambios de estado del lote y por la planificación de tareas).
+**Sin un worker corriendo, ese proceso no se ejecuta** y los jobs quedan pendientes.
+
+```bash
+# Verificar que no haya jobs atascados
+php artisan queue:failed
+
+# Worker en producción (mantener corriendo con systemd, supervisor o nohup)
+php artisan queue:work --queue=default --daemon
+```
+
+El estado de la cola (pendientes y fallidos) se puede monitorear en la pantalla
+**Estado de procesos** (Administración → Estado de procesos).
+
 ### 4. Configurar Variables de Entorno
 
 ```bash
@@ -342,7 +359,7 @@ php artisan queue:work --queue=default --daemon &
 ```php
 // routes/console.php
 Schedule::command('mantenimiento:check-umbrales')
-    ->dailyAt('02:00')
+    ->dailyAt('06:30')
     ->timeout(300) // 5 minutos máximo
 ```
 

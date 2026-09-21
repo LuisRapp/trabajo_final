@@ -273,6 +273,9 @@
                 @can('gestionar-usuarios')
                 <a href="{{ route('usuarios.index') }}" class="sidebar-link {{ $esActiva('usuarios.*') ? 'active' : '' }}"><span class="inline-flex items-center gap-1.5"><flux:icon.user-group class="size-3.5" /> Usuarios</span></a>
                 @endcan
+                @can('gestionar-usuarios')
+                <a href="{{ route('estado-procesos.index') }}" class="sidebar-link {{ $esActiva('estado-procesos.*') ? 'active' : '' }}"><span class="inline-flex items-center gap-1.5"><flux:icon.queue-list class="size-3.5" /> Estado de procesos</span></a>
+                @endcan
                 @can('gestionar-permisos')
                 <a href="{{ route('roles-permisos.index') }}" class="sidebar-link {{ $esActiva('roles-permisos.*') ? 'active' : '' }}"><span class="inline-flex items-center gap-1.5"><flux:icon.lock-closed class="size-3.5" /> Roles y permisos</span></a>
                 @endcan

@@ -274,21 +274,22 @@ class MantenimientosTest extends TestCase
         ]);
     }
 
-    public function test_mantenimiento_programado_con_fecha_pasada_se_marca_vencido_al_render(): void
+    public function test_mantenimiento_programado_con_fecha_pasada_no_muta_estado_al_render(): void
     {
-        Mantenimiento::factory()->create([
+        $mantenimiento = Mantenimiento::factory()->create([
             'estado' => 'programado',
             'fecha_programada' => now()->subDays(5)->toDateString(),
         ]);
 
-        $component = Livewire::actingAs($this->usuario)
+        Livewire::actingAs($this->usuario)
             ->test(Mantenimientos::class);
 
-        $mantenimientos = $component->get('mantenimientos');
-        $vencido = $mantenimientos->first();
-
-        $this->assertNotNull($vencido);
-        $this->assertEquals('vencido', $vencido->estado);
+        // El marcado de vencidos lo realiza el proceso programado
+        // (mantenimiento:check-programados), no el listado.
+        $this->assertDatabaseHas('mantenimientos', [
+            'id_mantenimiento' => $mantenimiento->id_mantenimiento,
+            'estado' => 'programado',
+        ]);
     }
 
     // =========================================================================

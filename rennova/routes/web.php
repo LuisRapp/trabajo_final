@@ -131,6 +131,11 @@ Route::middleware(['auth'])->group(function () {
     // Auditorías
     Route::view('/auditorias', 'auditorias.index')->name('auditorias.index');
 
+    // Estado de procesos automatizados (monitoreo: clima, cola, tareas programadas)
+    Route::view('/estado-procesos', 'estado-procesos.index')
+        ->middleware(['permission:gestionar-usuarios'])
+        ->name('estado-procesos.index');
+
     // Reportes - Estadísticas Forestales
     Route::get('/reportes/estadisticas-forestales', [ReporteController::class, 'estadisticasForestales'])->name('reportes.estadisticas-forestales');
     Route::get('/reportes/estadisticas-forestales/pdf', [ReporteController::class, 'estadisticasForestalesPdf'])->name('reportes.estadisticas-forestales.pdf');

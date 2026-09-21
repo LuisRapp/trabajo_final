@@ -3,8 +3,8 @@
 namespace App\Http\Livewire;
 
 use App\Http\Livewire\Traits\MensajesErrorUsuario;
+use App\Models\TipoMantenimiento;
 use App\Services\MantenimientoService;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
@@ -102,6 +102,15 @@ class Mantenimientos extends Component
             ->obtenerKitPreventivoParaMaquinaria((int) $this->id_maquinaria, (int) $this->id_tipo_mantenimiento);
     }
 
+    /**
+     * Delegado de la regla de dominio: si el tipo seleccionado es preventivo.
+     * La vista lo usa para mostrar el bloque de kit preventivo.
+     */
+    public function esTipoPreventivo(TipoMantenimiento $tipo): bool
+    {
+        return app(MantenimientoService::class)->esTipoPreventivo($tipo);
+    }
+
     public function render()
     {
         $this->cargarMantenimientos();
@@ -178,34 +187,6 @@ class Mantenimientos extends Component
         $this->fecha_inicio = date('Y-m-d');
         $this->estado = 'programado';
         $this->kitPreventivo = [];
-    }
-
-    public function ejecutarFlujoPresentacion()
-    {
-        try {
-            $params = [
-                '--forzar-flujo' => true,
-                '--simular' => true,
-            ];
-
-            if (! empty($this->id_maquinaria)) {
-                $params['--maquinaria'] = (int) $this->id_maquinaria;
-            }
-
-            $exitCode = Artisan::call('mantenimiento:check-umbrales', $params);
-
-            $mensaje = $exitCode === 0
-                ? 'Flujo de presentacion ejecutado correctamente (orden, asignacion y compra si aplica).'
-                : 'El flujo de presentacion finalizo con advertencias. Revisar logs.';
-            session()->flash('message', $mensaje);
-        } catch (\Throwable $e) {
-            session()->flash('error', $this->mensajeErrorUsuario($e, 'ejecutar el flujo'));
-        }
-    }
-
-    public function ejecutarDemo()
-    {
-        $this->ejecutarFlujoPresentacion();
     }
 
     public function abrirModalCompletar($id)

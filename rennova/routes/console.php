@@ -10,9 +10,9 @@ Artisan::command('inspire', function () {
 
 // ========== TAREAS PROGRAMADAS (SCHEDULER) ==========
 
-// Verificación de umbrales de mantenimiento - Diariamente a las 2:00 AM
+// Verificación de umbrales de mantenimiento - Diariamente a las 06:30 (después de clima:analizar de las 06:00)
 Schedule::command('mantenimiento:check-umbrales')
-    ->dailyAt('06:00')
+    ->dailyAt('06:30')
     ->withoutOverlapping(10)
     ->onFailure(function () {
         \Log::error('Tarea de mantenimiento fallida: mantenimiento:check-umbrales');
@@ -56,4 +56,10 @@ Schedule::command('clima:real')
 // Verificación de mantenimientos programados - Cada 4 horas
 Schedule::command('mantenimiento:check-programados')
     ->everyFourHours()
-    ->withoutOverlapping(5);
+    ->withoutOverlapping(5)
+    ->onFailure(function () {
+        \Log::error('Tarea de mantenimientos programados fallida: mantenimiento:check-programados');
+    })
+    ->onSuccess(function () {
+        \Log::info('Tarea de mantenimientos programados completada: mantenimiento:check-programados');
+    });
