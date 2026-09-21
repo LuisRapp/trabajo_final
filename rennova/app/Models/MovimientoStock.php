@@ -53,7 +53,7 @@ class MovimientoStock extends Model implements Auditable
     }
 
     /**
-     * Filter movements linked to a specific parte diario (direct or by fallback matching).
+     * Filtra movimientos vinculados a un parte diario específico (directo o por coincidencia de fallback).
      */
     public function scopeDelParteDiario($query, int $parteDiarioId, ?string $fecha = null): void
     {

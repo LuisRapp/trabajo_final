@@ -10,14 +10,14 @@ use Illuminate\Console\Command;
 class SincronizarClimaReal extends Command
 {
     /**
-     * The name and signature of the console command.
+     * Nombre y firma del comando de consola.
      *
      * @var string
      */
     protected $signature = 'clima:real {--fecha= : Fecha YYYY-MM-DD (opcional, por defecto ayer)} {--lote= : ID del lote a analizar (opcional)}';
 
     /**
-     * The console command description.
+     * Descripción del comando de consola.
      *
      * @var string
      */
@@ -32,7 +32,7 @@ class SincronizarClimaReal extends Command
     }
 
     /**
-     * Execute the console command.
+     * Ejecutar el comando de consola.
      */
     public function handle(): int
     {

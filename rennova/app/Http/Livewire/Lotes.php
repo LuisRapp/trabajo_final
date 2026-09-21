@@ -176,11 +176,31 @@ class Lotes extends Component
     public function finalizarLote($id)
     {
         try {
-            AsignacionLoteService::finalizar((int) $id);
-            session()->flash('message', 'Lote finalizado correctamente. Los recursos han sido liberados.');
+            $finalizado = app(AsignacionLoteService::class)->finalizar((int) $id, $this->datosSolicitud());
+
+            if ($finalizado) {
+                session()->flash('message', 'Lote finalizado correctamente. Los recursos han sido liberados.');
+            } else {
+                session()->flash('error', 'El lote ya está finalizado.');
+            }
         } catch (\Throwable $e) {
             session()->flash('error', $this->mensajeErrorUsuario($e, 'finalizar el lote'));
         }
+    }
+
+    /**
+     * Contexto del request para el registro de auditoría.
+     *
+     * @return array{user_id: ?int, ip_address: ?string, user_agent: ?string, url: ?string}
+     */
+    private function datosSolicitud(): array
+    {
+        return [
+            'user_id' => auth()->id(),
+            'ip_address' => request()->ip(),
+            'user_agent' => request()->userAgent(),
+            'url' => request()->fullUrl(),
+        ];
     }
 
     public function render()

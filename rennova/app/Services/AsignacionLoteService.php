@@ -5,21 +5,22 @@ namespace App\Services;
 use App\Models\Empleado;
 use App\Models\Lote;
 use App\Models\Maquinaria;
+use App\Models\PropuestaAsignacion;
 use Illuminate\Support\Facades\DB;
 use OwenIt\Auditing\Models\Audit;
 
 class AsignacionLoteService
 {
     /**
-     * Assign employees and machinery to a lot.
+     * Asigna empleados y maquinarias a un lote.
      *
-     * Synchronizes the many-to-many relationships and registers audit
-     * records for attached and detached resources, all within a transaction.
+     * Sincroniza las relaciones de muchos a muchos y registra auditoría
+     * de recursos adjuntados y desvinculados, todo dentro de una transacción.
      *
-     * @param  int  $loteId  The lot ID to assign resources to
-     * @param  array<int>  $empleadosIds  Employee IDs to assign
-     * @param  array<int>  $maquinariasIds  Machinery IDs to assign
-     * @param  array  $requestData  Request context: user_id, ip_address, user_agent, url
+     * @param  int  $loteId  Identificador del lote al cual asignar recursos
+     * @param  array<int>  $empleadosIds  Identificadores de empleados a asignar
+     * @param  array<int>  $maquinariasIds  Identificadores de maquinarias a asignar
+     * @param  array  $requestData  Contexto del request: user_id, ip_address, user_agent, url
      * @return array{empleados_adjuntados: array<int>, empleados_desvinculados: array<int>, maquinarias_adjuntadas: array<int>, maquinarias_desvinculadas: array<int>}
      */
     public function asignarRecursos(int $loteId, array $empleadosIds, array $maquinariasIds, array $requestData): array
@@ -54,12 +55,12 @@ class AsignacionLoteService
     }
 
     /**
-     * Remove all resource assignments from a lot.
+     * Elimina todas las asignaciones de recursos de un lote.
      *
-     * Detaches all employees and machinery, recording audit entries.
+     * Desvincula todos los empleados y maquinarias, registrando auditoría.
      *
-     * @param  int  $loteId  The lot ID to clear assignments from
-     * @param  array  $requestData  Request context: user_id, ip_address, user_agent, url
+     * @param  int  $loteId  Identificador del lote del cual limpiar asignaciones
+     * @param  array  $requestData  Contexto del request: user_id, ip_address, user_agent, url
      */
     public function eliminarAsignaciones(int $loteId, array $requestData): void
     {
@@ -78,63 +79,49 @@ class AsignacionLoteService
     }
 
     /**
-     * Mark a lot as finished and release its resources.
+     * Finaliza un lote: marca el estado 'cerrado', libera sus recursos
+     * (desvincula empleados y maquinarias con registro de auditoría) y
+     * cierra las propuestas de asignación del lote.
      *
-     * Sets estado='terminado', detaches all employees and machinery,
-     * and records audit entries, all within a transaction.
+     * Regla única del dominio para el cierre de lotes: todo cierre pasa por
+     * este método, sin importar la pantalla de origen. Si el lote ya está
+     * cerrado no opera y devuelve false.
      *
-     * @param  int  $loteId  The lot ID to liberate
-     * @param  array  $requestData  Request context: user_id, ip_address, user_agent, url
+     * @param  int  $loteId  Identificador del lote a finalizar
+     * @param  array  $requestData  Contexto del request: user_id, ip_address, user_agent, url
+     * @return bool True si el lote se finalizó; false si ya estaba cerrado
      */
-    public function liberarRecursos(int $loteId, array $requestData): void
+    public function finalizar(int $loteId, array $requestData): bool
     {
-        DB::transaction(function () use ($loteId, $requestData) {
+        return DB::transaction(function () use ($loteId, $requestData) {
             $lote = Lote::findOrFail($loteId);
+
+            if ($lote->estado === 'cerrado') {
+                return false;
+            }
 
             $empleadosActuales = $lote->empleados()->pluck('empleados.id_empleado')->toArray();
             $maquinariasActuales = $lote->maquinarias()->pluck('maquinarias.id_maquinaria')->toArray();
 
-            $lote->estado = 'terminado';
-            $lote->save();
+            $lote->update(['estado' => 'cerrado']);
 
             $lote->empleados()->detach();
             $lote->maquinarias()->detach();
 
             $this->registrarAuditoriaDesvinculados($lote, 'empleados', $empleadosActuales, $requestData);
             $this->registrarAuditoriaDesvinculados($lote, 'maquinarias', $maquinariasActuales, $requestData);
-        });
-    }
 
-    /**
-     * Finalize a lot: release resources and close proposals.
-     *
-     * Sets estado='cerrado', removes pivot records, and closes all
-     * allocation proposals for the lot.
-     */
-    public static function finalizar(int $loteId): void
-    {
-        DB::transaction(function () use ($loteId) {
-            $lote = Lote::findOrFail($loteId);
-
-            $lote->update(['estado' => 'cerrado']);
-
-            DB::table('lote_empleado')
-                ->where('id_lote', $loteId)
-                ->delete();
-
-            DB::table('lote_maquinaria')
-                ->where('id_lote', $loteId)
-                ->delete();
-
-            DB::table('allocation_proposals')
+            PropuestaAsignacion::query()
                 ->where('id_lote', $loteId)
                 ->whereNull('deleted_at')
                 ->update(['status' => 'closed']);
+
+            return true;
         });
     }
 
     /**
-     * Register audit records for attached resources.
+     * Registra auditoría de los recursos adjuntados.
      */
     private function registrarAuditoriaAdjuntos(Lote $lote, string $relacion, array $ids, array $requestData): void
     {
@@ -172,7 +159,7 @@ class AsignacionLoteService
     }
 
     /**
-     * Register audit records for detached resources.
+     * Registra auditoría de los recursos desvinculados.
      */
     private function registrarAuditoriaDesvinculados(Lote $lote, string $relacion, array $ids, array $requestData): void
     {

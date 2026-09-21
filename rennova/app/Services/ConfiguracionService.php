@@ -7,11 +7,11 @@ use App\Models\ConfiguracionSistema;
 class ConfiguracionService
 {
     /**
-     * Get a configuration value by its key.
+     * Obtiene un valor de configuración por su clave.
      *
-     * @param  string  $clave  The configuration key to look up
-     * @param  mixed  $default  Value to return if the key does not exist
-     * @return mixed The configuration value, or $default if not found
+     * @param  string  $clave  Clave de configuración a buscar
+     * @param  mixed  $default  Valor a devolver si la clave no existe
+     * @return mixed Valor de configuración, o $default si no se encuentra
      */
     public static function obtener(string $clave, $default = null)
     {
@@ -21,13 +21,13 @@ class ConfiguracionService
     }
 
     /**
-     * Create or update a configuration entry.
+     * Crea o actualiza una entrada de configuración.
      *
-     * @param  string  $clave  Unique configuration key
-     * @param  mixed  $valor  The value to store
-     * @param  string|null  $descripcion  Optional human-readable description
-     * @param  string  $tipo  Value type hint (default: 'string')
-     * @return \App\Models\ConfiguracionSistema The created or updated model
+     * @param  string  $clave  Clave única de configuración
+     * @param  mixed  $valor  Valor a almacenar
+     * @param  string|null  $descripcion  Descripción legible opcional
+     * @param  string  $tipo  Pista de tipo de valor (por defecto: 'string')
+     * @return \App\Models\ConfiguracionSistema Modelo creado o actualizado
      */
     public static function establecer(string $clave, $valor, ?string $descripcion = null, string $tipo = 'string')
     {

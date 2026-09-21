@@ -102,12 +102,12 @@
     @php
         $logoPath = public_path('images/logo_rennova.png');
         $mostrarLogo = is_file($logoPath) && extension_loaded('gd');
-        $estadoRaw = strtolower((string) ($proposal->status ?? 'pending'));
+        $estadoRaw = strtolower((string) ($proposal->status ?? 'pendiente'));
         $estado = match ($estadoRaw) {
-            'pending' => 'Pendiente',
-            'sent' => 'Enviada',
-            'approved' => 'Aprobada',
-            'rejected' => 'Rechazada',
+            'pendiente' => 'Pendiente',
+            'enviada' => 'Enviada',
+            'aprobada' => 'Aprobada',
+            'rechazada' => 'Rechazada',
             default => ucfirst($estadoRaw),
         };
     @endphp
@@ -136,7 +136,7 @@
     <main>
         <h2 class="section-title">Datos de la orden</h2>
         <div class="order-summary">
-            <p class="order-title">Orden de compra #{{ $proposal->id_mantenimiento_purchase_proposal }}</p>
+            <p class="order-title">Orden de compra #{{ $proposal->id_propuesta_compra_mantenimiento }}</p>
             <div class="order-subtitle">Mantenimiento #{{ $proposal->id_mantenimiento }}</div>
             <div class="order-status">Estado: {{ $estado }}</div>
             <div class="order-subtitle">Maquinaria: {{ $proposal->maquinaria->modelo ?? 'N/A' }}</div>

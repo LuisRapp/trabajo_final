@@ -393,6 +393,28 @@ class LotesTest extends TestCase
         ]);
     }
 
+    public function test_finalizar_lote_ya_cerrado_no_toca_propuestas_ni_recursos(): void
+    {
+        $lote = Lote::factory()->cerrado()->create();
+        $empleado = Empleado::factory()->create();
+        $lote->empleados()->attach($empleado->id_empleado);
+        $proposal = PropuestaAsignacion::factory()->draft()->create(['id_lote' => $lote->id_lote]);
+
+        Livewire::actingAs($this->usuario)
+            ->test(Lotes::class)
+            ->call('finalizarLote', $lote->id_lote);
+
+        // El guard del servicio no opera sobre un lote ya cerrado
+        $this->assertDatabaseHas('allocation_proposals', [
+            'id_allocation_proposal' => $proposal->id_allocation_proposal,
+            'status' => 'draft',
+        ]);
+        $this->assertDatabaseHas('lote_empleado', [
+            'id_lote' => $lote->id_lote,
+            'id_empleado' => $empleado->id_empleado,
+        ]);
+    }
+
     public function test_finalizar_lote_releases_pivot_resources(): void
     {
         $lote = Lote::factory()->enProceso()->create();

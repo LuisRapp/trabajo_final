@@ -9,9 +9,9 @@ class PropuestaCompraMantenimiento extends Model
 {
     use HasFactory;
 
-    protected $table = 'mantenimiento_purchase_proposals';
+    protected $table = 'propuestas_compra_mantenimiento';
 
-    protected $primaryKey = 'id_mantenimiento_purchase_proposal';
+    protected $primaryKey = 'id_propuesta_compra_mantenimiento';
 
     protected $fillable = [
         'id_mantenimiento',
@@ -36,6 +36,6 @@ class PropuestaCompraMantenimiento extends Model
 
     public function insumos()
     {
-        return $this->hasMany(PropuestaCompraMantenimientoInsumo::class, 'id_mantenimiento_purchase_proposal');
+        return $this->hasMany(PropuestaCompraMantenimientoInsumo::class, 'id_propuesta_compra_mantenimiento');
     }
 }

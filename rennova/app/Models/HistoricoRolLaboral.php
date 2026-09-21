@@ -28,7 +28,7 @@ class HistoricoRolLaboral extends Model implements Auditable
     }
 
     /**
-     * Filter to records active on a given date.
+     * Filtra los registros vigentes en una fecha dada.
      */
     public function scopeVigenteEnFecha($query, $fecha): void
     {

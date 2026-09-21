@@ -10,21 +10,21 @@ use Illuminate\Support\Facades\DB;
 class InventarioService
 {
     /**
-     * Register a stock exit (output) for a given input, calculating FIFO cost.
+     * Registra una salida de stock para un insumo, calculando el costo FIFO.
      *
-     * Uses the PostgreSQL calcular_costo_fifo() function when available,
-     * otherwise falls back to manual FIFO calculation (SQLite/testing).
+     * Usa la función PostgreSQL calcular_costo_fifo() cuando está disponible;
+     * si no, cae al cálculo FIFO manual (SQLite/testing).
      *
-     * @param  int  $idInsumo  The input (insumo) ID to extract stock from
-     * @param  float  $cantidad  Amount to extract (must be > 0)
-     * @param  string  $motivo  Reason for the extraction (e.g. "Parte Diario #5 - Producción")
-     * @param  string|null  $fecha  Date of the movement (Y-m-d format). Defaults to today
-     * @param  int|null  $parteDiarioId  Optional related daily report ID
+     * @param  int  $idInsumo  Identificador del insumo del cual extraer stock
+     * @param  float  $cantidad  Cantidad a extraer (debe ser > 0)
+     * @param  string  $motivo  Motivo de la extracción (p. ej. "Parte Diario #5 - Producción")
+     * @param  string|null  $fecha  Fecha del movimiento (formato Y-m-d). Por defecto hoy
+     * @param  int|null  $parteDiarioId  Identificador opcional del parte diario asociado
      * @return array{movimientos: \Illuminate\Database\Eloquent\Collection, costo_total: float, lotes_consumidos: array}
      *
-     * @throws \Exception If there is insufficient stock or a database error occurs
+     * @throws \Exception Si el stock es insuficiente o ocurre un error de base de datos
      *
-     * @warning This method runs inside a DB transaction. On failure, all changes are rolled back.
+     * @warning Este método corre dentro de una transacción. Si falla, todos los cambios se revierten.
      */
     public static function registrarSalida($idInsumo, $cantidad, $motivo, $fecha = null, $parteDiarioId = null)
     {
@@ -86,16 +86,16 @@ class InventarioService
     }
 
     /**
-     * Register a stock entry (input) creating a new inventory lot.
+     * Registra una entrada de stock creando un nuevo lote de inventario.
      *
-     * @param  int  $idInsumo  The input (insumo) ID to add stock to
-     * @param  float  $cantidad  Amount being entered
-     * @param  float  $precioUnitario  Unit price for cost calculation
-     * @param  array  $metadata  Optional metadata: id_proveedor, numero_factura, tipo_movimiento, observaciones, motivo
-     * @param  string|null  $fecha  Date of the movement (Y-m-d format). Defaults to today
+     * @param  int  $idInsumo  Identificador del insumo al cual agregar stock
+     * @param  float  $cantidad  Cantidad ingresada
+     * @param  float  $precioUnitario  Precio unitario para el cálculo de costo
+     * @param  array  $metadata  Metadatos opcionales: id_proveedor, numero_factura, tipo_movimiento, observaciones, motivo
+     * @param  string|null  $fecha  Fecha del movimiento (formato Y-m-d). Por defecto hoy
      * @return array{movimiento: \App\Models\MovimientoStock, lote: \App\Models\LoteInventario}
      *
-     * @throws \Exception If a database error occurs
+     * @throws \Exception Si ocurre un error de base de datos
      */
     public static function registrarEntrada($idInsumo, $cantidad, $precioUnitario, $metadata = [], $fecha = null)
     {
@@ -143,12 +143,12 @@ class InventarioService
     }
 
     /**
-     * Get the total available stock for a given input.
+     * Obtiene el stock total disponible de un insumo.
      *
-     * Uses PostgreSQL function obtener_stock_disponible() when available.
+     * Usa la función PostgreSQL obtener_stock_disponible() cuando está disponible.
      *
-     * @param  int  $idInsumo  The input ID to check stock for
-     * @return float Available stock quantity
+     * @param  int  $idInsumo  Identificador del insumo a consultar
+     * @return float Cantidad de stock disponible
      */
     public static function stockDisponible($idInsumo)
     {
@@ -166,12 +166,12 @@ class InventarioService
     }
 
     /**
-     * Get the weighted average price for a given input across all available lots.
+     * Obtiene el precio promedio ponderado de un insumo sobre todos los lotes disponibles.
      *
-     * Uses PostgreSQL function obtener_precio_promedio() when available.
+     * Usa la función PostgreSQL obtener_precio_promedio() cuando está disponible.
      *
-     * @param  int  $idInsumo  The input ID to calculate average price for
-     * @return float Weighted average price (0 if no stock available)
+     * @param  int  $idInsumo  Identificador del insumo a calcular
+     * @return float Precio promedio ponderado (0 si no hay stock)
      */
     public static function precioPromedio($idInsumo)
     {
@@ -264,10 +264,10 @@ class InventarioService
     }
 
     /**
-     * Get the total available stock across all non-exhausted lots for an input.
+     * Obtiene el stock total disponible en todos los lotes no agotados de un insumo.
      *
-     * @param  int  $idInsumo  The input ID
-     * @return float Sum of cantidad_disponible across all available lots
+     * @param  int  $idInsumo  Identificador del insumo
+     * @return float Suma de cantidad_disponible de todos los lotes disponibles
      */
     public static function stockTotalDisponible($idInsumo)
     {
@@ -277,10 +277,10 @@ class InventarioService
     }
 
     /**
-     * Calculate the total inventory value for a given input.
+     * Calcula el valor total del inventario de un insumo.
      *
-     * @param  int  $idInsumo  The input ID
-     * @return float Sum of (cantidad_disponible * precio_unitario) for all available lots
+     * @param  int  $idInsumo  Identificador del insumo
+     * @return float Suma de (cantidad_disponible * precio_unitario) de todos los lotes disponibles
      */
     public static function valorInventario($idInsumo)
     {
@@ -294,10 +294,10 @@ class InventarioService
     }
 
     /**
-     * Get lots that are close to being exhausted (less than 20% remaining).
+     * Obtiene los lotes próximos a agotarse (menos del 20% restante).
      *
-     * @param  int|null  $idInsumo  Optional input ID to filter by
-     * @return \Illuminate\Support\Collection Collection of LoteInventario models near exhaustion
+     * @param  int|null  $idInsumo  Identificador de insumo opcional para filtrar
+     * @return \Illuminate\Support\Collection Colección de LoteInventario próximos a agotarse
      */
     public static function proximosAgotar($idInsumo = null)
     {

@@ -29,7 +29,7 @@ class GestionMantenimientosTest extends TestCase
 
     private function mockService(): \Mockery\MockInterface
     {
-        $mock = \Mockery::mock(MantenimientoService::class);
+        $mock = \Mockery::mock(MantenimientoService::class)->makePartial();
         $this->app->instance(MantenimientoService::class, $mock);
 
         return $mock;

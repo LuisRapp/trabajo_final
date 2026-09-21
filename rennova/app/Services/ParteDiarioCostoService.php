@@ -10,17 +10,17 @@ use App\Models\ParteDiario;
 class ParteDiarioCostoService
 {
     /**
-     * Calculate and persist all cost components for a daily report.
+     * Calcula y persiste todos los componentes de costo de un parte diario.
      *
-     * Computes three cost components:
-     * - Mano de obra (labor): Sum of employee costs via EmpleadoPagoService
-     * - Insumos (materials): Sum of FIFO stock movement costs
-     * Maquinaria (machinery): Rental costs per ton + completed maintenance costs
+     * Calcula tres componentes:
+     * - Mano de obra: suma de costos de empleados vía EmpleadoPagoService
+     * - Insumos: suma de costos de movimientos FIFO
+     * - Maquinaria: costos de alquiler por tonelada + costos de mantenimientos completados
      *
-     * Also calculates unit cost (cost per ton) when not a rainy day and tons > 0.
-     * Results are saved directly to the ParteDiario model via updateQuietly().
+     * También calcula el costo unitario (costo por tonelada) cuando no es día caído y hay toneladas > 0.
+     * Los resultados se guardan directamente en el modelo ParteDiario vía updateQuietly().
      *
-     * @param  \App\Models\ParteDiario  $parteDiario  The daily report to calculate costs for
+     * @param  \App\Models\ParteDiario  $parteDiario  Parte diario cuyo costo se calcula
      */
     public static function calcularYGuardarCostos(ParteDiario $parteDiario): void
     {

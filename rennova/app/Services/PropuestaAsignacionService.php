@@ -18,12 +18,12 @@ class PropuestaAsignacionService
     // =========================================================================
 
     /**
-     * Save the user's resource selection for a proposal.
+     * Guarda la selección de recursos del usuario para una propuesta.
      *
-     * Updates selected flags on employees, machinery, and inputs
-     * within a single database transaction.
+     * Actualiza los flags de selección de empleados, maquinarias e insumos
+     * dentro de una única transacción.
      *
-     * @param  int  $proposalId  The proposal ID
+     * @param  int  $proposalId  Identificador de la propuesta
      * @param  array<int|string, bool>  $employeeSelected  Row ID → selected flag
      * @param  array<int|string, bool>  $maquinariaSelected  Row ID → selected flag
      * @param  array<int|string, bool>  $insumoSelected  Row ID → selected flag
@@ -52,13 +52,13 @@ class PropuestaAsignacionService
     }
 
     /**
-     * Send purchase order notification if applicable.
+     * Envía la notificación de orden de compra si corresponde.
      *
-     * Prevents re-sending if already sent (tracked in meta.purchase_order.sent_at).
-     * Calls AutomaticAllocationService::ensureWeek1SupplyEstimates() to complete
-     * quantities and costs before sending.
+     * Evita reenvíos si ya fue enviada (registrado en meta.purchase_order.sent_at).
+     * Llama a AutomaticAllocationService::ensureWeek1SupplyEstimates() para completar
+     * cantidades y costos antes de enviar.
      *
-     * @param  int  $proposalId  The proposal ID
+     * @param  int  $proposalId  Identificador de la propuesta
      */
     public function enviarOrdenCompraSiCorresponde(int $proposalId): void
     {
@@ -112,7 +112,7 @@ class PropuestaAsignacionService
     // =========================================================================
 
     /**
-     * Load all proposals for a lot with eager-loaded relationships.
+     * Carga todas las propuestas de un lote con sus relaciones precargadas.
      *
      * @return array<PropuestaAsignacion>
      */
@@ -135,9 +135,9 @@ class PropuestaAsignacionService
     }
 
     /**
-     * Generate allocation proposals for a lot.
+     * Genera propuestas de asignación para un lote.
      *
-     * Closes existing drafts first, then dispatches generation synchronously.
+     * Cierra primero los borradores existentes y luego dispara la generación en síncrono.
      *
      * @return array{proposals: array<PropuestaAsignacion>, error: ?string}
      */
@@ -294,7 +294,7 @@ class PropuestaAsignacionService
     }
 
     /**
-     * Update proposal data and resource selections.
+     * Actualiza los datos de la propuesta y las selecciones de recursos.
      *
      * @param  array<string, mixed>  $editData  Validated estimation fields
      * @param  array<int, array<string, mixed>>  $editEmployees  Employee rows with id, selected
@@ -369,7 +369,7 @@ class PropuestaAsignacionService
     }
 
     /**
-     * Delete a draft proposal.
+     * Elimina una propuesta en borrador.
      *
      * @return array{error: ?string, message: ?string}
      */
@@ -394,7 +394,7 @@ class PropuestaAsignacionService
     }
 
     /**
-     * Delete all draft proposals for a lot.
+     * Elimina todas las propuestas en borrador de un lote.
      *
      * @return array{error: ?string, message: ?string}
      */
@@ -425,7 +425,7 @@ class PropuestaAsignacionService
     // =========================================================================
 
     /**
-     * Determine if a proposal has low confidence based on its meta.
+     * Determina si una propuesta tiene baja confianza según sus metadatos.
      */
     public static function esBajaConfianza($meta): bool
     {
@@ -443,7 +443,7 @@ class PropuestaAsignacionService
     }
 
     /**
-     * Close competing proposals for the same lot/task when applying one.
+     * Cierra las propuestas competidoras del mismo lote/tarea al aplicar una.
      */
     public static function cerrarPropuestasCompetidoras(PropuestaAsignacion $proposal): void
     {
@@ -465,7 +465,7 @@ class PropuestaAsignacionService
     }
 
     /**
-     * Find employees already assigned to other in-process lots.
+     * Busca empleados ya asignados a otros lotes en proceso.
      *
      * @param  array<int>  $empleadosIds
      * @return array<int>
@@ -488,7 +488,7 @@ class PropuestaAsignacionService
     }
 
     /**
-     * Find machinery already assigned to other in-process lots.
+     * Busca maquinarias ya asignadas a otros lotes en proceso.
      *
      * @param  array<int>  $maquinariasIds
      * @return array<int>
@@ -511,13 +511,13 @@ class PropuestaAsignacionService
     }
 
     /**
-     * Resolve email recipients for a purchase order notification.
+     * Resuelve los destinatarios de email para la notificación de orden de compra.
      *
-     * Priority order:
-     * 1. Configured purchase_order_emails
-     * 2. Selected capataz (foreman) employees with email
-     * 3. First selected employee with email (fallback)
-     * 4. admin_email (last fallback)
+     * Orden de prioridad:
+     * 1. purchase_order_emails configurados
+     * 2. Empleados capataces seleccionados con email
+     * 3. Primer empleado seleccionado con email (fallback)
+     * 4. admin_email (último recurso)
      *
      * @return array<string>
      */

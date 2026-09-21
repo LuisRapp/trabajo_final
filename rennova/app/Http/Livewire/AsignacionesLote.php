@@ -159,15 +159,12 @@ class AsignacionesLote extends Component
     public function liberar($loteId)
     {
         try {
-            $lote = Lote::findOrFail($loteId);
+            $finalizado = app(AsignacionLoteService::class)->finalizar((int) $loteId, $this->datosSolicitud());
 
-            if ($lote->estado !== 'terminado') {
-                $servicio = app(AsignacionLoteService::class);
-                $servicio->liberarRecursos($loteId, $this->datosSolicitud());
-
-                session()->flash('message', 'Lote marcado como terminado y recursos liberados.');
+            if ($finalizado) {
+                session()->flash('message', 'Lote finalizado y recursos liberados.');
             } else {
-                session()->flash('error', 'El lote ya está marcado como terminado.');
+                session()->flash('error', 'El lote ya está finalizado.');
             }
 
             $this->cargarHistorial();

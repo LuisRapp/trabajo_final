@@ -13,17 +13,17 @@ use Illuminate\Support\Facades\DB;
 class EmpleadoPagoService
 {
     /**
-     * Calculate the labor cost of an employee for a specific day.
+     * Calcula el costo laboral de un empleado para un día específico.
      *
-     * For rainy days (dia caido): returns the daily wage (jornal diario).
-     * For production days: returns tons processed × rate per ton.
-     * Uses the active salary record from HistoricoRolLaboral for the given date.
+     * Para días caídos: devuelve el jornal diario.
+     * Para días de producción: devuelve toneladas procesadas × tarifa por tonelada.
+     * Usa el registro salarial vigente de HistoricoRolLaboral para la fecha dada.
      *
-     * @param  \App\Models\Empleado  $empleado  The employee to calculate cost for
-     * @param  string|\DateTimeInterface  $fecha  The date to calculate cost for
-     * @param  bool  $esDiaCaido  Whether this is a non-productive (rainy) day
-     * @param  \Illuminate\Support\Collection|null  $cargasDelDia  Pre-loaded loads for the day (with empleados relation)
-     * @return float Rounded cost (2 decimals)
+     * @param  \App\Models\Empleado  $empleado  Empleado cuyo costo se calcula
+     * @param  string|\DateTimeInterface  $fecha  Fecha del cálculo
+     * @param  bool  $esDiaCaido  Si el día es no productivo (caído)
+     * @param  \Illuminate\Support\Collection|null  $cargasDelDia  Cargas del día precargadas (con relación empleados)
+     * @return float Costo redondeado (2 decimales)
      */
     public static function calcularCostoDia(Empleado $empleado, $fecha, bool $esDiaCaido, $cargasDelDia = null): float
     {
@@ -70,15 +70,15 @@ class EmpleadoPagoService
     }
 
     /**
-     * Calculate total payment for an employee over a date range.
+     * Calcula el pago total de un empleado en un rango de fechas.
      *
-     * Combines two payment components:
-     * - Rainy days: count of days × daily wage
-     * - Production days: total tons processed × rate per ton
+     * Combina dos componentes de pago:
+     * - Días caídos: cantidad de días × jornal diario
+     * - Días de producción: total de toneladas procesadas × tarifa por tonelada
      *
-     * @param  \App\Models\Empleado  $empleado  The employee to calculate payment for
-     * @param  string  $fechaInicio  Start date (Y-m-d)
-     * @param  string  $fechaFin  End date (Y-m-d)
+     * @param  \App\Models\Empleado  $empleado  Empleado cuyo pago se calcula
+     * @param  string  $fechaInicio  Fecha de inicio (Y-m-d)
+     * @param  string  $fechaFin  Fecha de fin (Y-m-d)
      * @return array{
      *     cantidad_dias_caidos: int,
      *     total_peso_neto: float,
@@ -182,20 +182,20 @@ class EmpleadoPagoService
     }
 
     /**
-     * Generate a payment receipt for an employee and mark associated advances as paid.
+     * Genera un recibo de pago para un empleado y marca los adelantos asociados como pagados.
      *
-     * Executes within a database transaction. The caller is responsible for
-     * any post-commit side effects (e.g. PDF generation, email).
+     * Ejecuta dentro de una transacción. El llamador es responsable de los
+     * efectos post-commit (p. ej. generación de PDF, email).
      *
-     * @param  int  $idEmpleado  The employee ID for the receipt
-     * @param  float  $montoBruto  Gross payment amount
-     * @param  float  $descuentos  Deductions from advances
-     * @param  float  $montoNeto  Net payment after deductions
-     * @param  string  $observaciones  Observations for the receipt
-     * @param  \Illuminate\Support\Collection  $adelantosPendientes  Advances to mark as paid
-     * @return \App\Models\Recibo The created receipt
+     * @param  int  $idEmpleado  Identificador del empleado del recibo
+     * @param  float  $montoBruto  Monto bruto del pago
+     * @param  float  $descuentos  Descuentos por adelantos
+     * @param  float  $montoNeto  Pago neto después de descuentos
+     * @param  string  $observaciones  Observaciones del recibo
+     * @param  \Illuminate\Support\Collection  $adelantosPendientes  Adelantos a marcar como pagados
+     * @return \App\Models\Recibo Recibo creado
      *
-     * @throws \Exception If a database error occurs (transaction rolled back)
+     * @throws \Exception Si ocurre un error de base de datos (transacción revertida)
      */
     public static function generarRecibo(int $idEmpleado, float $montoBruto, float $descuentos, float $montoNeto, string $observaciones, $adelantosPendientes): Recibo
     {
@@ -229,19 +229,19 @@ class EmpleadoPagoService
     }
 
     /**
-     * Generate payment receipts for all active employees in a date range.
+     * Genera recibos de pago para todos los empleados activos en un rango de fechas.
      *
-     * For each active employee: calculates payment via calcularPagoRango(),
-     * applies pending advance deductions, creates a receipt, and marks
-     * advances as paid. Executes within a database transaction.
+     * Por cada empleado activo: calcula el pago vía calcularPagoRango(),
+     * aplica los descuentos por adelantos pendientes, crea el recibo y marca
+     * los adelantos como pagados. Ejecuta dentro de una transacción.
      *
-     * The caller is responsible for PDF generation, email, and UI feedback.
+     * El llamador es responsable del PDF, el email y el feedback de la interfaz.
      *
-     * @param  string  $fechaInicio  Start date (Y-m-d)
-     * @param  string  $fechaFin  End date (Y-m-d)
+     * @param  string  $fechaInicio  Fecha de inicio (Y-m-d)
+     * @param  string  $fechaFin  Fecha de fin (Y-m-d)
      * @return array{recibos: array<int, array{recibo: Recibo, empleado: Empleado, adelantos_descontados: int}>}
      *
-     * @throws \Exception If a database error occurs
+     * @throws \Exception Si ocurre un error de base de datos
      */
     public static function liquidarTodos(string $fechaInicio, string $fechaFin): array
     {

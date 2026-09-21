@@ -3,10 +3,6 @@
 namespace App\Http\Livewire;
 
 use App\Http\Livewire\Traits\MensajesErrorUsuario;
-use App\Models\Insumo;
-use App\Models\KitMantenimientoPreventivo;
-use App\Models\Mantenimiento;
-use App\Services\InventarioService;
 use App\Services\MantenimientoService;
 use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\On;
@@ -34,26 +30,14 @@ class CompletarOrdenModal extends Component
 
     public function mount(): void
     {
-        $this->insumosDisponibles = $this->cargarInsumosDisponibles();
-    }
-
-    /**
-     * Carga todos los insumos con su stock y precio actual.
-     */
-    public function cargarInsumosDisponibles()
-    {
-        return Insumo::orderBy('nombre')->get()->map(function ($insumo) {
-            $insumo->stock_disponible = InventarioService::stockDisponible($insumo->id_insumo);
-            $insumo->precio_promedio = InventarioService::precioPromedio($insumo->id_insumo);
-
-            return $insumo;
-        });
+        $this->insumosDisponibles = app(MantenimientoService::class)->obtenerInsumosParaCierre();
     }
 
     #[On('abrirCompletarOrden')]
     public function abrirModal(int $id): void
     {
-        $orden = Mantenimiento::with(['maquinaria', 'tipoMantenimiento'])->findOrFail($id);
+        $servicio = app(MantenimientoService::class);
+        $orden = $servicio->obtenerOrdenParaCompletar($id);
 
         $this->orden_completar_id = $orden->id_mantenimiento;
         $this->orden_completar_info = [
@@ -67,23 +51,20 @@ class CompletarOrdenModal extends Component
         $this->costo_total_completar = null;
         $this->insumos_usados = [];
 
-        $this->orden_es_correctivo = str_contains(strtolower($this->orden_completar_info['tipo']), 'correctivo');
+        $this->orden_es_correctivo = $orden->tipoMantenimiento
+            && $servicio->esTipoCorrectivo($orden->tipoMantenimiento);
 
         if (! $this->orden_es_correctivo) {
-            $kitInsumos = KitMantenimientoPreventivo::where('id_maquinaria', $orden->id_maquinaria)
-                ->join('insumos', 'kit_mantenimiento_preventivo.id_insumo', '=', 'insumos.id_insumo')
-                ->select(
-                    'kit_mantenimiento_preventivo.id_insumo',
-                    'kit_mantenimiento_preventivo.cantidad_requerida',
-                    'insumos.nombre'
-                )
-                ->get();
+            $kitInsumos = $servicio->obtenerKitPreventivoParaMaquinaria(
+                $orden->id_maquinaria,
+                $orden->id_tipo_mantenimiento
+            );
 
-            if ($kitInsumos->count() > 0) {
+            if (! empty($kitInsumos)) {
                 foreach ($kitInsumos as $item) {
                     $this->insumos_usados[] = [
-                        'id_insumo' => $item->id_insumo,
-                        'cantidad' => $item->cantidad_requerida,
+                        'id_insumo' => $item['id_insumo'],
+                        'cantidad' => $item['cantidad_requerida'],
                     ];
                 }
             } else {
@@ -116,7 +97,8 @@ class CompletarOrdenModal extends Component
     public function completarOrden(): void
     {
         try {
-            $orden = Mantenimiento::with(['maquinaria', 'tipoMantenimiento'])->findOrFail($this->orden_completar_id);
+            $orden = app(MantenimientoService::class)
+                ->obtenerOrdenParaCompletar($this->orden_completar_id);
 
             $this->validate([
                 'fecha_fin_completar' => [
@@ -132,16 +114,28 @@ class CompletarOrdenModal extends Component
             ]);
 
             $costoBase = floatval($this->costo_total_completar ?? 0);
-            $tipoMantenimiento = $this->orden_es_correctivo ? 'Correctivo' : 'Preventivo';
+
+            $insumosData = collect($this->insumos_usados)
+                ->map(fn ($item) => [
+                    'id_insumo' => $item['id_insumo'],
+                    'cantidad_utilizada' => $item['cantidad'],
+                ])
+                ->toArray();
 
             $servicio = app(MantenimientoService::class);
-            $resultado = $servicio->completarMantenimientoConFifo(
+            $resultado = $servicio->completarMantenimiento(
                 $this->orden_completar_id,
-                $this->fecha_fin_completar,
+                $insumosData,
                 $costoBase,
-                $this->insumos_usados,
-                $tipoMantenimiento
+                $this->fecha_fin_completar
             );
+
+            if (! $resultado['success']) {
+                session()->flash('error', $resultado['message']);
+                $this->addError('general', $resultado['message']);
+
+                return;
+            }
 
             session()->flash('message', 'Orden completada exitosamente. Costo total: $'.number_format($resultado['costo_total'], 2));
 

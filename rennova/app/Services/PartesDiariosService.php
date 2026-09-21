@@ -12,13 +12,13 @@ use Illuminate\Support\Facades\DB;
 class PartesDiariosService
 {
     /**
-     * Create or update a ParteDiario record.
+     * Crea o actualiza un registro de ParteDiario.
      *
-     * @param  array  $data  Must contain: id_lote, id_lote_tarea, fecha, es_dia_caido,
+     * @param  array  $data  Debe contener: id_lote, id_lote_tarea, fecha, es_dia_caido,
      *                       observaciones, clima_override_confirmado, clima_override_motivo,
-     *                       and optionally parte_id for updates.
+     *                       y opcionalmente parte_id para actualizaciones.
      *
-     * @throws \InvalidArgumentException If tarea doesn't belong to lote
+     * @throws \InvalidArgumentException Si la tarea no pertenece al lote
      */
     public static function crearOActualizar(array $data): ParteDiario
     {
@@ -60,15 +60,15 @@ class PartesDiariosService
     }
 
     /**
-     * Register cargas for a ParteDiario: deletes previous cargas (if editing),
-     * creates new Carga records, and syncs empleados/maquinarias.
+     * Registra cargas para un ParteDiario: borra las cargas previas (si se edita),
+     * crea los nuevos registros de Carga y sincroniza empleados/maquinarias.
      *
-     * @param  int  $parteDiarioId  The ParteDiario ID
-     * @param  array  $cargas  Array of carga data with keys: id_categoria_madera, ticket,
+     * @param  int  $parteDiarioId  Identificador del ParteDiario
+     * @param  array  $cargas  Datos de cargas con claves: id_categoria_madera, ticket,
      *                         peso_bruto, tara, peso_neto, id_chofer, destino (id_cliente), empleados, maquinarias
-     * @param  int  $loteId  The Lote ID
-     * @param  string  $fecha  The cargo date (Y-m-d)
-     * @param  int|null  $parteId  Original parte ID for deletion of previous cargas (null = new)
+     * @param  int  $loteId  Identificador del lote
+     * @param  string  $fecha  Fecha de las cargas (Y-m-d)
+     * @param  int|null  $parteId  Identificador del parte original para borrar cargas previas (null = nuevo)
      * @return array{eventos: array<int, array{Carga, int, float}>}
      */
     public static function registrarCargas(int $parteDiarioId, array $cargas, int $loteId, string $fecha, ?int $parteId = null): array
@@ -117,10 +117,10 @@ class PartesDiariosService
     }
 
     /**
-     * Sync jornales (empleados) for a día caído ParteDiario.
+     * Sincroniza jornales (empleados) para un ParteDiario de día caído.
      *
-     * @param  \App\Models\ParteDiario  $parteDiario  The ParteDiario to sync
-     * @param  array  $jornales  Array with id_empleado keys
+     * @param  \App\Models\ParteDiario  $parteDiario  ParteDiario a sincronizar
+     * @param  array  $jornales  Arreglo con claves id_empleado
      */
     public static function sincronizarJornales(ParteDiario $parteDiario, array $jornales): void
     {
@@ -129,18 +129,18 @@ class PartesDiariosService
     }
 
     /**
-     * Register stock movements for a ParteDiario.
+     * Registra movimientos de stock para un ParteDiario.
      *
-     * Deletes previous movements (if editing) and registers FIFO exits
-     * via InventarioService::registrarSalida().
+     * Elimina los movimientos previos (si se edita) y registra las salidas FIFO
+     * vía InventarioService::registrarSalida().
      *
-     * @param  int  $parteDiarioId  The ParteDiario ID
-     * @param  array  $movimientos  Array of movimiento data with keys: id_insumo, tipo, cantidad, motivo, observaciones
-     * @param  string  $fecha  The movement date (Y-m-d)
-     * @param  int|null  $parteId  Original parte ID for deletion of previous movements (null = new)
+     * @param  int  $parteDiarioId  Identificador del ParteDiario
+     * @param  array  $movimientos  Datos de movimientos con claves: id_insumo, tipo, cantidad, motivo, observaciones
+     * @param  string  $fecha  Fecha del movimiento (Y-m-d)
+     * @param  int|null  $parteId  Identificador del parte original para borrar movimientos previos (null = nuevo)
      * @return array{resultados: array<int, array>}
      *
-     * @throws \Exception If stock is insufficient
+     * @throws \Exception Si el stock es insuficiente
      */
     public static function registrarMovimientos(int $parteDiarioId, array $movimientos, string $fecha, ?int $parteId = null): array
     {
@@ -246,12 +246,12 @@ class PartesDiariosService
     }
 
     /**
-     * Load a ParteDiario with all related data for editing.
+     * Carga un ParteDiario con todos sus datos relacionados para editar.
      *
-     * Builds structured arrays for cargas, jornales, and movimientos
-     * so the component can simply assign them to its properties.
+     * Construye arreglos estructurados de cargas, jornales y movimientos
+     * para que el componente los asigne directamente a sus propiedades.
      *
-     * @param  int  $id  The ParteDiario ID
+     * @param  int  $id  Identificador del ParteDiario
      * @return array{parte_id: int, id_lote: int, id_lote_tarea: int, fecha: string, es_dia_caido: bool, observaciones: ?string, clima_override_confirmado: bool, clima_override_motivo: ?string, cargas: array, jornales: array, movimientos: array, total_toneladas: float}
      *
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
@@ -358,7 +358,7 @@ class PartesDiariosService
     }
 
     /**
-     * Look up the active jornal for an employee on a given date.
+     * Busca el jornal vigente de un empleado en una fecha dada.
      */
     private static function buscarJornalVigente($empleado, string $fecha): float
     {

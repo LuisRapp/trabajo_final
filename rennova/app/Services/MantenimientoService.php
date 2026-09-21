@@ -2,45 +2,35 @@
 
 namespace App\Services;
 
-use App\Mail\MantenimientoOrdenGeneradaMail;
-use App\Models\Empleado;
 use App\Models\Insumo;
 use App\Models\KitMantenimientoPreventivo;
-use App\Models\Lote;
 use App\Models\Mantenimiento;
 use App\Models\MantenimientoInsumo;
 use App\Models\Maquinaria;
 use App\Models\NotificacionSistema;
-use App\Models\PropuestaCompraMantenimiento;
-use App\Models\PropuestaCompraMantenimientoInsumo;
 use App\Models\TipoMantenimiento;
-use App\Models\Usuario;
-use App\Notifications\MantenimientoProgramadoRecordatorio;
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Notification;
 
+/**
+ * Ciclo de vida interactivo de las órdenes de mantenimiento (UC-62/UC-63).
+ *
+ * Casos de uso que la persona dispara desde la interfaz: alta y edición de
+ * órdenes, aprobación con verificación de stock, cierre unificado con costo
+ * FIFO de insumos y snapshot del odómetro, kits preventivos y validaciones.
+ * El proceso automático (PA-01) vive en ProcesoMantenimientoService.
+ */
 class MantenimientoService
 {
-    private const CLIMA_VENTANA_HORAS = 72;
-
-    private float $ultimoEnvioMail = 0.0;
-
-    public function __construct(
-        private readonly ClimaDecisionService $climaDecisionService,
-        private readonly MantenimientoDocumentsService $documentsService,
-    ) {}
-
     /**
-     * Verify if there is sufficient stock to approve a preventive maintenance.
+     * Verifica si hay stock suficiente para aprobar un mantenimiento preventivo.
      *
-     * Checks the maintenance kit (prioritizing machine-specific kit, falling back
-     * to machine-type kit) against current available stock for each input.
+     * Compara el kit de mantenimiento (prioriza el kit por maquinaria, con
+     * fallback al kit por tipo de maquinaria) contra el stock disponible
+     * de cada insumo.
      *
-     * @param  int  $mantenimientoId  The maintenance order ID to verify
+     * @param  int  $mantenimientoId  Identificador de la orden a verificar
      * @return array{
      *     puede_aprobar: bool,
      *     insuficientes: array<array{insumo_id: int, insumo: string, requerido: float, disponible: float, faltante: float}>,
@@ -97,59 +87,52 @@ class MantenimientoService
     }
 
     /**
-     * Approve a preventive maintenance order: verify stock and change status.
+     * Aprueba una orden de mantenimiento preventivo: verifica stock y cambia el estado.
      *
-     * Runs inside a DB transaction. Only orders in 'programado' state can be approved.
+     * Ejecuta dentro de una transacción. Solo órdenes en estado 'programado' pueden aprobarse.
      *
-     * @param  int  $mantenimientoId  The maintenance order ID to approve
+     * @param  int  $mantenimientoId  Identificador de la orden a aprobar
      * @return array{success: bool, mantenimiento?: \App\Models\Mantenimiento, message?: string, insumos_insuficientes?: array}
      */
     public function aprobarMantenimiento(int $mantenimientoId): array
     {
-        DB::beginTransaction();
-
         try {
-            $mantenimiento = Mantenimiento::lockForUpdate()->findOrFail($mantenimientoId);
+            return DB::transaction(function () use ($mantenimientoId) {
+                $mantenimiento = Mantenimiento::lockForUpdate()->findOrFail($mantenimientoId);
 
-            if ($mantenimiento->estado !== 'programado') {
-                DB::rollBack();
+                if ($mantenimiento->estado !== 'programado') {
+                    return [
+                        'success' => false,
+                        'message' => 'Solo se pueden aprobar órdenes en estado "programado"',
+                    ];
+                }
+
+                $verificacion = $this->verificarStockParaAprobacion($mantenimientoId);
+
+                if (! $verificacion['puede_aprobar']) {
+                    return [
+                        'success' => false,
+                        'message' => 'No hay stock suficiente para aprobar esta orden',
+                        'insumos_insuficientes' => $verificacion['insuficientes'],
+                    ];
+                }
+
+                $mantenimiento->update([
+                    'estado' => 'en curso',
+                    'fecha_inicio' => now()->toDateString(),
+                ]);
+
+                Log::info('Orden de mantenimiento aprobada', [
+                    'mantenimiento_id' => $mantenimientoId,
+                    'maquinaria_id' => $mantenimiento->id_maquinaria,
+                ]);
 
                 return [
-                    'success' => false,
-                    'message' => 'Solo se pueden aprobar órdenes en estado "programado"',
+                    'success' => true,
+                    'mantenimiento' => $mantenimiento->fresh(),
                 ];
-            }
-
-            $verificacion = $this->verificarStockParaAprobacion($mantenimientoId);
-
-            if (! $verificacion['puede_aprobar']) {
-                DB::rollBack();
-
-                return [
-                    'success' => false,
-                    'message' => 'No hay stock suficiente para aprobar esta orden',
-                    'insumos_insuficientes' => $verificacion['insuficientes'],
-                ];
-            }
-
-            $mantenimiento->update([
-                'estado' => 'en curso',
-            ]);
-
-            DB::commit();
-
-            Log::info('Orden de mantenimiento aprobada', [
-                'mantenimiento_id' => $mantenimientoId,
-                'maquinaria_id' => $mantenimiento->id_maquinaria,
-            ]);
-
-            return [
-                'success' => true,
-                'mantenimiento' => $mantenimiento->fresh(),
-            ];
-
+            });
         } catch (\Exception $e) {
-            DB::rollBack();
             Log::error('Error aprobando mantenimiento', [
                 'mantenimiento_id' => $mantenimientoId,
                 'error' => $e->getMessage(),
@@ -163,99 +146,117 @@ class MantenimientoService
     }
 
     /**
-     * Complete a maintenance order: validate stock, deduct inputs, calculate costs, update snapshot.
+     * Completar una orden de mantenimiento: valida stock, descuenta insumos
+     * por FIFO, calcula costos y registra el snapshot del odómetro.
      *
-     * Runs inside a DB transaction. Fails if any input has insufficient stock.
+     * Regla única del dominio para el cierre de órdenes (UC-62): toda orden
+     * se cierra por este método, sin importar la pantalla de origen. El costo
+     * de cada insumo surge de la salida FIFO (InventarioService::registrarSalida)
+     * y el cierre registra costo_mano_obra y toneladas_snapshot de la maquinaria.
      *
-     * @param  int  $mantenimientoId  The maintenance order ID to complete
-     * @param  array  $insumos  Array of inputs used: [{id_insumo, cantidad_utilizada, costo_unitario?}]
-     * @param  float  $costoManoObra  Labor cost for this maintenance
-     * @return array{success: bool, mantenimiento?: \App\Models\Mantenimiento, costo_total?: float, message?: string}
+     * Valida stock suficiente de todos los insumos antes de la transacción
+     * (nunca genera stock negativo) y falla si la orden ya está completada.
+     *
+     * @param  int  $mantenimientoId  Identificador de la orden a completar
+     * @param  array  $insumos  Insumos utilizados: [{id_insumo: int, cantidad_utilizada: float}]
+     * @param  float  $costoManoObra  Costo de mano de obra / costo base del cierre
+     * @param  string|null  $fechaFin  Fecha de cierre (Y-m-d); por defecto hoy
+     * @return array{success: bool, mantenimiento?: Mantenimiento, costo_total?: float, costo_insumos?: float, message?: string}
      */
-    public function completarMantenimiento(int $mantenimientoId, array $insumos, float $costoManoObra = 0): array
+    public function completarMantenimiento(int $mantenimientoId, array $insumos, float $costoManoObra = 0, ?string $fechaFin = null): array
     {
-        DB::beginTransaction();
+        $fechaFin = $fechaFin ?? now()->toDateString();
 
-        try {
-            $mantenimiento = Mantenimiento::with('maquinaria')->lockForUpdate()->findOrFail($mantenimientoId);
+        $insumosValidados = [];
 
-            if ($mantenimiento->estado === 'completado') {
-                DB::rollBack();
+        foreach ($insumos as $insumoData) {
+            if (empty($insumoData['id_insumo']) || empty($insumoData['cantidad_utilizada'])) {
+                continue;
+            }
 
+            $insumo = Insumo::findOrFail($insumoData['id_insumo']);
+            $cantidadUsada = (float) $insumoData['cantidad_utilizada'];
+
+            $stockDisponible = InventarioService::stockDisponible($insumo->id_insumo);
+
+            if ($stockDisponible < $cantidadUsada) {
                 return [
                     'success' => false,
-                    'message' => 'Este mantenimiento ya está completado',
+                    'message' => "Stock insuficiente para {$insumo->nombre}. Disponible: {$stockDisponible}, requerido: {$cantidadUsada}",
                 ];
             }
 
-            $costoInsumos = 0;
+            $insumosValidados[] = ['insumo' => $insumo, 'cantidad' => $cantidadUsada];
+        }
 
-            foreach ($insumos as $insumoData) {
-                $insumo = Insumo::findOrFail($insumoData['id_insumo']);
-                $cantidadUsada = (float) ($insumoData['cantidad_utilizada'] ?? 0);
+        try {
+            return DB::transaction(function () use ($mantenimientoId, $insumosValidados, $costoManoObra, $fechaFin) {
+                $mantenimiento = Mantenimiento::with(['maquinaria', 'tipoMantenimiento'])
+                    ->lockForUpdate()
+                    ->findOrFail($mantenimientoId);
 
-                $stockDisponible = InventarioService::stockDisponible($insumo->id_insumo);
-
-                if ($stockDisponible < $cantidadUsada) {
-                    DB::rollBack();
-
+                if ($mantenimiento->estado === 'completado') {
                     return [
                         'success' => false,
-                        'message' => "Stock insuficiente para {$insumo->nombre}. Disponible: {$stockDisponible}, requerido: {$cantidadUsada}",
+                        'message' => 'Este mantenimiento ya está completado',
                     ];
                 }
 
-                $resultadoSalida = InventarioService::registrarSalida(
-                    $insumo->id_insumo,
-                    $cantidadUsada,
-                    "Mantenimiento ID: {$mantenimientoId}",
-                    now()->toDateString()
-                );
+                $tipoNombre = $mantenimiento->tipoMantenimiento?->nombre ?? 'Mantenimiento';
+                $costoInsumos = 0;
 
-                $costoUnitario = $cantidadUsada > 0
-                    ? $resultadoSalida['costo_total'] / $cantidadUsada
-                    : 0;
-                $subtotal = $resultadoSalida['costo_total'];
+                foreach ($insumosValidados as $validado) {
+                    $insumo = $validado['insumo'];
+                    $cantidadUsada = $validado['cantidad'];
 
-                MantenimientoInsumo::create([
-                    'id_mantenimiento' => $mantenimientoId,
-                    'id_insumo' => $insumo->id_insumo,
-                    'cantidad_utilizada' => $cantidadUsada,
-                    'costo_unitario' => $costoUnitario,
-                    'subtotal' => $subtotal,
+                    $resultadoSalida = InventarioService::registrarSalida(
+                        $insumo->id_insumo,
+                        $cantidadUsada,
+                        "Mantenimiento {$tipoNombre} - Orden #{$mantenimientoId}",
+                        $fechaFin
+                    );
+
+                    $costoUnitario = $cantidadUsada > 0
+                        ? $resultadoSalida['costo_total'] / $cantidadUsada
+                        : 0;
+
+                    MantenimientoInsumo::create([
+                        'id_mantenimiento' => $mantenimientoId,
+                        'id_insumo' => $insumo->id_insumo,
+                        'cantidad_utilizada' => $cantidadUsada,
+                        'costo_unitario' => $costoUnitario,
+                        'subtotal' => $resultadoSalida['costo_total'],
+                    ]);
+
+                    $costoInsumos += $resultadoSalida['costo_total'];
+                }
+
+                $costoTotal = $costoInsumos + $costoManoObra;
+
+                $mantenimiento->update([
+                    'estado' => 'completado',
+                    'fecha_fin' => $fechaFin,
+                    'costo_total' => $costoTotal,
+                    'costo_mano_obra' => $costoManoObra,
+                    'toneladas_snapshot' => $mantenimiento->maquinaria->toneladas_acumuladas,
                 ]);
 
-                $costoInsumos += $subtotal;
-            }
+                Log::info('Mantenimiento completado', [
+                    'mantenimiento_id' => $mantenimientoId,
+                    'costo_total' => $costoTotal,
+                    'costo_insumos' => $costoInsumos,
+                    'costo_mano_obra' => $costoManoObra,
+                    'snapshot' => $mantenimiento->toneladas_snapshot,
+                ]);
 
-            $costoTotal = $costoInsumos + $costoManoObra;
-
-            $mantenimiento->update([
-                'estado' => 'completado',
-                'fecha_fin' => now()->toDateString(),
-                'costo_total' => $costoTotal,
-                'costo_mano_obra' => $costoManoObra,
-                'toneladas_snapshot' => $mantenimiento->maquinaria->toneladas_acumuladas,
-            ]);
-
-            DB::commit();
-
-            Log::info('Mantenimiento completado', [
-                'mantenimiento_id' => $mantenimientoId,
-                'costo_total' => $costoTotal,
-                'costo_insumos' => $costoInsumos,
-                'costo_mano_obra' => $costoManoObra,
-                'snapshot' => $mantenimiento->toneladas_snapshot,
-            ]);
-
-            return [
-                'success' => true,
-                'mantenimiento' => $mantenimiento->fresh(),
-                'costo_total' => $costoTotal,
-            ];
-
+                return [
+                    'success' => true,
+                    'mantenimiento' => $mantenimiento->fresh(),
+                    'costo_total' => $costoTotal,
+                    'costo_insumos' => $costoInsumos,
+                ];
+            });
         } catch (\Exception $e) {
-            DB::rollBack();
             Log::error('Error completando mantenimiento', [
                 'mantenimiento_id' => $mantenimientoId,
                 'error' => $e->getMessage(),
@@ -269,10 +270,10 @@ class MantenimientoService
     }
 
     /**
-     * Get the preventive maintenance kit for a given machine type.
+     * Obtiene el kit de mantenimiento preventivo para un tipo de maquinaria.
      *
-     * @param  int  $tipoMaquinariaId  The machine type ID
-     * @return \Illuminate\Database\Eloquent\Collection Collection of KitMantenimientoPreventivo with insumo relation
+     * @param  int  $tipoMaquinariaId  Identificador del tipo de maquinaria
+     * @return \Illuminate\Database\Eloquent\Collection Colección de KitMantenimientoPreventivo con la relación insumo
      */
     public function obtenerKitPreventivo($tipoMaquinariaId)
     {
@@ -282,9 +283,9 @@ class MantenimientoService
     }
 
     /**
-     * Create a new maintenance order.
+     * Crea una nueva orden de mantenimiento.
      *
-     * @param  array  $datos  Validated data: id_maquinaria, id_tipo_mantenimiento, fecha_inicio, fecha_programada?, estado
+     * @param  array  $datos  Datos validados: id_maquinaria, id_tipo_mantenimiento, fecha_inicio, fecha_programada?, estado
      */
     public function crearMantenimiento(array $datos): Mantenimiento
     {
@@ -298,106 +299,7 @@ class MantenimientoService
     }
 
     /**
-     * Complete a maintenance order with FIFO-based input consumption.
-     *
-     * Performs inside a DB transaction:
-     * - Updates the order with fecha_fin, costo_total, estado='completado'
-     * - For each input used: validates stock, exits via InventarioService::registrarSalida (FIFO)
-     * - Records each input in the mantenimiento_insumos table
-     *
-     * @param  int  $mantenimientoId  The maintenance order ID
-     * @param  string  $fechaFin  Completion date (Y-m-d)
-     * @param  float  $costoBase  Base labor/additional cost
-     * @param  array  $insumos  Array of ['id_insumo' => int, 'cantidad' => float]
-     * @param  string  $tipoMantenimiento  'Preventivo' or 'Correctivo' for the movement reason
-     * @return array{costo_total: float, costo_insumos: float}
-     *
-     * @throws \Exception If stock is insufficient or a DB error occurs
-     */
-    public function completarMantenimientoConFifo(int $mantenimientoId, string $fechaFin, float $costoBase, array $insumos, string $tipoMantenimiento = 'Preventivo'): array
-    {
-        $orden = Mantenimiento::with(['maquinaria', 'tipoMantenimiento'])->findOrFail($mantenimientoId);
-
-        $insumosValidados = [];
-        $costoInsumos = 0;
-
-        foreach ($insumos as $insumo) {
-            if (empty($insumo['id_insumo']) || empty($insumo['cantidad'])) {
-                continue;
-            }
-
-            $cantidad = floatval($insumo['cantidad']);
-
-            $stockDisponible = InventarioService::stockDisponible($insumo['id_insumo']);
-            if ($stockDisponible < $cantidad) {
-                $nombreInsumo = Insumo::find($insumo['id_insumo'])->nombre ?? 'ID '.$insumo['id_insumo'];
-                throw new \Exception("Stock insuficiente para {$nombreInsumo}. Disponible: {$stockDisponible}, Requerido: {$cantidad}");
-            }
-
-            $resultadoSimulado = DB::selectOne(
-                'SELECT * FROM calcular_costo_fifo(?, ?)',
-                [$insumo['id_insumo'], $cantidad]
-            );
-
-            $costoInsumos += $resultadoSimulado->v_costo_total;
-            $insumosValidados[] = $insumo;
-        }
-
-        $costoTotal = $costoBase + $costoInsumos;
-
-        DB::beginTransaction();
-
-        try {
-            $orden->fecha_fin = $fechaFin;
-            $orden->costo_total = $costoTotal;
-            $orden->estado = 'completado';
-            $orden->save();
-
-            foreach ($insumosValidados as $insumo) {
-                $cantidad = floatval($insumo['cantidad']);
-                $motivo = "Mantenimiento {$tipoMantenimiento} - Orden #".$orden->id_mantenimiento;
-
-                $resultadoSalida = InventarioService::registrarSalida(
-                    $insumo['id_insumo'],
-                    $cantidad,
-                    $motivo,
-                    $fechaFin
-                );
-
-                $costoRealInsumo = $resultadoSalida['costo_total'];
-
-                DB::table('mantenimiento_insumos')->insert([
-                    'id_mantenimiento' => $orden->id_mantenimiento,
-                    'id_insumo' => $insumo['id_insumo'],
-                    'cantidad_utilizada' => $cantidad,
-                    'costo_unitario' => $costoRealInsumo / $cantidad,
-                    'subtotal' => $costoRealInsumo,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            }
-
-            DB::commit();
-
-            Log::info('Mantenimiento completado con FIFO', [
-                'mantenimiento_id' => $mantenimientoId,
-                'costo_total' => $costoTotal,
-                'costo_insumos' => $costoInsumos,
-            ]);
-
-            return [
-                'costo_total' => $costoTotal,
-                'costo_insumos' => $costoInsumos,
-            ];
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
-    }
-
-    /**
-     * List maintenance orders filtered by free-text search (read-only).
+     * Lista órdenes de mantenimiento con búsqueda de texto libre (solo lectura).
      *
      * El marcado de vencidos lo realiza el proceso automático programado
      * (marcarMantenimientosVencidos, cada 4 horas); el listado no muta estado.
@@ -411,13 +313,13 @@ class MantenimientoService
         if ($busqueda) {
             $busq = $busqueda;
             $query->where(function ($q) use ($busq) {
-                $q->where('estado', 'ILIKE', '%'.$busq.'%')
+                $q->whereLike('estado', '%'.$busq.'%')
                     ->when(is_numeric($busq), fn ($q) => $q->orWhere('costo_total', (float) $busq))
                     ->orWhereHas('maquinaria', function ($qm) use ($busq) {
-                        $qm->where('modelo', 'ILIKE', '%'.$busq.'%');
+                        $qm->whereLike('modelo', '%'.$busq.'%');
                     })
                     ->orWhereHas('tipoMantenimiento', function ($qt) use ($busq) {
-                        $qt->where('nombre', 'ILIKE', '%'.$busq.'%');
+                        $qt->whereLike('nombre', '%'.$busq.'%');
                     });
             });
         }
@@ -438,7 +340,116 @@ class MantenimientoService
     }
 
     /**
-     * Get the preventive maintenance kit for a specific machine and maintenance type.
+     * Si un tipo de mantenimiento es correctivo.
+     *
+     * Regla única del dominio: el nombre del tipo contiene "correctivo".
+     */
+    public function esTipoCorrectivo(TipoMantenimiento $tipo): bool
+    {
+        return str_contains(mb_strtolower($tipo->nombre), 'correctivo');
+    }
+
+    /**
+     * Obtiene una orden con sus relaciones para el modal de cierre.
+     */
+    public function obtenerOrdenParaCompletar(int $id): Mantenimiento
+    {
+        return Mantenimiento::with(['maquinaria', 'tipoMantenimiento'])->findOrFail($id);
+    }
+
+    /**
+     * Obtiene una orden con sus relaciones para el modal de detalle.
+     */
+    public function obtenerOrdenParaDetalle(int $id): Mantenimiento
+    {
+        return Mantenimiento::with([
+            'maquinaria.tipoMaquinaria',
+            'mantenimientoInsumos.insumo',
+        ])->findOrFail($id);
+    }
+
+    /**
+     * Obtiene una orden con su maquinaria para el modal de aprobación.
+     */
+    public function obtenerOrdenParaAprobar(int $id): Mantenimiento
+    {
+        return Mantenimiento::with(['maquinaria.tipoMaquinaria'])->findOrFail($id);
+    }
+
+    /**
+     * Maquinarias en estado activo para los filtros de la gestión de mantenimientos.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection<int, Maquinaria>
+     */
+    public function obtenerMaquinariasActivasParaFiltro(): Collection
+    {
+        return Maquinaria::with('tipoMaquinaria')
+            ->where('estado', 'activo')
+            ->orderBy('modelo')
+            ->get();
+    }
+
+    /**
+     * Insumos disponibles para el cierre de una orden, con stock y precio.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection<int, Insumo>
+     */
+    public function obtenerInsumosParaCierre(): Collection
+    {
+        return Insumo::orderBy('nombre')->get()->map(function (Insumo $insumo) {
+            $insumo->stock_disponible = InventarioService::stockDisponible($insumo->id_insumo);
+            $insumo->precio_promedio = InventarioService::precioPromedio($insumo->id_insumo);
+
+            return $insumo;
+        });
+    }
+
+    /**
+     * Obtiene un insumo por su identificador (para actualización del modal de cierre).
+     */
+    public function obtenerInsumo(int $idInsumo): ?Insumo
+    {
+        return Insumo::find($idInsumo);
+    }
+
+    /**
+     * Lista las órdenes para la pantalla de gestión según pestaña y filtros.
+     *
+     * @param  array{estado?: string, maquinaria?: string, tipo?: string, fecha_desde?: string, fecha_hasta?: string}  $filtros
+     * @param  string  $tab  Pestaña activa: 'ordenes', 'completadas' o 'kits'
+     * @return \Illuminate\Database\Eloquent\Collection<int, Mantenimiento>
+     */
+    public function listarOrdenesGestion(array $filtros, string $tab): Collection
+    {
+        $query = Mantenimiento::with(['maquinaria.tipoMaquinaria', 'tipoMantenimiento'])
+            ->whereBetween('fecha_inicio', [
+                $filtros['fecha_desde'] ?: now()->subYear(),
+                $filtros['fecha_hasta'] ?: now(),
+            ]);
+
+        if (! empty($filtros['estado'])) {
+            $query->where('estado', $filtros['estado']);
+        }
+
+        if (! empty($filtros['maquinaria'])) {
+            $query->where('id_maquinaria', $filtros['maquinaria']);
+        }
+
+        if (! empty($filtros['tipo'])) {
+            $query->where('id_tipo_mantenimiento', $filtros['tipo']);
+        }
+
+        if ($tab === 'ordenes') {
+            $query->whereIn('estado', ['programado', 'en curso']);
+        } elseif ($tab === 'completadas') {
+            $query->where('estado', 'completado');
+        }
+
+        return $query->orderBy('fecha_inicio', 'desc')->get();
+    }
+
+    /**
+     * Obtiene el kit de mantenimiento preventivo para una maquinaria y tipo específicos.
      *
      * @return array<int, array{nombre: string, cantidad_requerida: float}>
      */
@@ -452,13 +463,13 @@ class MantenimientoService
 
         return KitMantenimientoPreventivo::where('kit_mantenimiento_preventivo.id_maquinaria', $idMaquinaria)
             ->join('insumos', 'kit_mantenimiento_preventivo.id_insumo', '=', 'insumos.id_insumo')
-            ->select('insumos.nombre', 'kit_mantenimiento_preventivo.cantidad_requerida')
+            ->select('kit_mantenimiento_preventivo.id_insumo', 'insumos.nombre', 'kit_mantenimiento_preventivo.cantidad_requerida')
             ->get()
             ->toArray();
     }
 
     /**
-     * Get active machines (not decommissioned) ordered by model.
+     * Obtiene las maquinarias activas (no dadas de baja) ordenadas por modelo.
      *
      * @return \Illuminate\Database\Eloquent\Collection<int, Maquinaria>
      */
@@ -468,7 +479,7 @@ class MantenimientoService
     }
 
     /**
-     * Get all maintenance types ordered by name.
+     * Obtiene todos los tipos de mantenimiento ordenados por nombre.
      *
      * @return \Illuminate\Database\Eloquent\Collection<int, TipoMantenimiento>
      */
@@ -478,7 +489,7 @@ class MantenimientoService
     }
 
     /**
-     * Get a maintenance order ready for editing.
+     * Obtiene una orden de mantenimiento lista para editar.
      */
     public function obtenerMantenimientoParaEditar(int $id): Mantenimiento
     {
@@ -486,54 +497,52 @@ class MantenimientoService
     }
 
     /**
-     * Save (create or update) a maintenance order and mark related notification as actioned.
+     * Guarda (crea o actualiza) una orden de mantenimiento y marca la notificación
+     * asociada como accionada.
      *
-     * Runs inside a DB transaction.
+     * Ejecuta dentro de una transacción.
      *
-     * @param  array  $datos  Validated data
+     * @param  array  $datos  Datos validados
      * @return array{success: bool, mantenimiento?: Mantenimiento, tipoNombre: string, maquinaNombre: string, message?: string}
      */
     public function guardarMantenimiento(array $datos, ?int $mantenimientoId = null, ?int $usuarioId = null): array
     {
-        DB::beginTransaction();
-
         try {
-            if ($mantenimientoId) {
-                $mantenimiento = Mantenimiento::findOrFail($mantenimientoId);
-                $mantenimiento->update([
-                    'id_maquinaria' => $datos['id_maquinaria'],
-                    'id_tipo_mantenimiento' => $datos['id_tipo_mantenimiento'],
-                    'fecha_inicio' => $datos['fecha_inicio'],
-                    'fecha_programada' => $datos['fecha_programada'] ?? null,
-                    'estado' => $datos['estado'],
-                ]);
-            } else {
-                $mantenimiento = Mantenimiento::create([
-                    'id_maquinaria' => $datos['id_maquinaria'],
-                    'id_tipo_mantenimiento' => $datos['id_tipo_mantenimiento'],
-                    'fecha_inicio' => $datos['fecha_inicio'],
-                    'fecha_programada' => $datos['fecha_programada'] ?? null,
-                    'estado' => $datos['estado'],
-                ]);
-            }
+            return DB::transaction(function () use ($datos, $mantenimientoId, $usuarioId) {
+                if ($mantenimientoId) {
+                    $mantenimiento = Mantenimiento::findOrFail($mantenimientoId);
+                    $mantenimiento->update([
+                        'id_maquinaria' => $datos['id_maquinaria'],
+                        'id_tipo_mantenimiento' => $datos['id_tipo_mantenimiento'],
+                        'fecha_inicio' => $datos['fecha_inicio'],
+                        'fecha_programada' => $datos['fecha_programada'] ?? null,
+                        'estado' => $datos['estado'],
+                    ]);
+                } else {
+                    $mantenimiento = Mantenimiento::create([
+                        'id_maquinaria' => $datos['id_maquinaria'],
+                        'id_tipo_mantenimiento' => $datos['id_tipo_mantenimiento'],
+                        'fecha_inicio' => $datos['fecha_inicio'],
+                        'fecha_programada' => $datos['fecha_programada'] ?? null,
+                        'estado' => $datos['estado'],
+                    ]);
+                }
 
-            if ($usuarioId) {
-                $this->marcarNotificacionComoAccionada($mantenimiento->id_mantenimiento, $usuarioId);
-            }
+                if ($usuarioId) {
+                    $this->marcarNotificacionComoAccionada($mantenimiento->id_mantenimiento, $usuarioId);
+                }
 
-            $tipoNombre = TipoMantenimiento::find($datos['id_tipo_mantenimiento'])->nombre ?? 'Mantenimiento';
-            $maquinaNombre = Maquinaria::find($datos['id_maquinaria'])->modelo ?? '';
+                $tipoNombre = TipoMantenimiento::find($datos['id_tipo_mantenimiento'])->nombre ?? 'Mantenimiento';
+                $maquinaNombre = Maquinaria::find($datos['id_maquinaria'])->modelo ?? '';
 
-            DB::commit();
-
-            return [
-                'success' => true,
-                'mantenimiento' => $mantenimiento->fresh(),
-                'tipoNombre' => $tipoNombre,
-                'maquinaNombre' => $maquinaNombre,
-            ];
+                return [
+                    'success' => true,
+                    'mantenimiento' => $mantenimiento->fresh(),
+                    'tipoNombre' => $tipoNombre,
+                    'maquinaNombre' => $maquinaNombre,
+                ];
+            });
         } catch (\Exception $e) {
-            DB::rollBack();
             Log::error('Error guardando mantenimiento', [
                 'mantenimiento_id' => $mantenimientoId,
                 'error' => $e->getMessage(),
@@ -549,7 +558,7 @@ class MantenimientoService
     }
 
     /**
-     * Soft-delete a maintenance order.
+     * Elimina (baja lógica) una orden de mantenimiento.
      */
     public function eliminarMantenimiento(int $id): bool
     {
@@ -560,46 +569,41 @@ class MantenimientoService
     }
 
     /**
-     * Confirm a scheduled maintenance order and mark its notification as actioned.
+     * Confirma una orden programada y marca su notificación como accionada.
      *
-     * Runs inside a DB transaction.
+     * Ejecuta dentro de una transacción.
      *
      * @return array{success: bool, mantenimiento?: Mantenimiento, message?: string}
      */
     public function confirmarMantenimiento(int $id, ?int $usuarioId = null): array
     {
-        DB::beginTransaction();
-
         try {
-            $mantenimiento = Mantenimiento::findOrFail($id);
+            return DB::transaction(function () use ($id, $usuarioId) {
+                $mantenimiento = Mantenimiento::findOrFail($id);
 
-            if ($mantenimiento->estado !== 'programado') {
-                DB::rollBack();
+                if ($mantenimiento->estado !== 'programado') {
+                    return [
+                        'success' => false,
+                        'message' => 'Solo se pueden confirmar mantenimientos en estado programado.',
+                    ];
+                }
+
+                $mantenimiento->update([
+                    'estado' => 'en curso',
+                    'fecha_inicio' => now()->toDateString(),
+                ]);
+
+                if ($usuarioId) {
+                    $this->marcarNotificacionComoAccionada($mantenimiento->id_mantenimiento, $usuarioId);
+                }
 
                 return [
-                    'success' => false,
-                    'message' => 'Solo se pueden confirmar mantenimientos en estado programado.',
+                    'success' => true,
+                    'mantenimiento' => $mantenimiento->fresh(),
+                    'message' => "Mantenimiento #{$id} confirmado y en curso.",
                 ];
-            }
-
-            $mantenimiento->update([
-                'estado' => 'en curso',
-                'fecha_inicio' => now()->toDateString(),
-            ]);
-
-            if ($usuarioId) {
-                $this->marcarNotificacionComoAccionada($mantenimiento->id_mantenimiento, $usuarioId);
-            }
-
-            DB::commit();
-
-            return [
-                'success' => true,
-                'mantenimiento' => $mantenimiento->fresh(),
-                'message' => "Mantenimiento #{$id} confirmado y en curso.",
-            ];
+            });
         } catch (\Exception $e) {
-            DB::rollBack();
             Log::error('Error confirmando mantenimiento', [
                 'mantenimiento_id' => $id,
                 'error' => $e->getMessage(),
@@ -613,42 +617,37 @@ class MantenimientoService
     }
 
     /**
-     * Reprogram an expired maintenance order back to scheduled state.
+     * Reprograma una orden vencida devolviéndola al estado programado.
      *
-     * Runs inside a DB transaction.
+     * Ejecuta dentro de una transacción.
      *
      * @return array{success: bool, mantenimiento?: Mantenimiento, message?: string}
      */
     public function reprogramarMantenimiento(int $id): array
     {
-        DB::beginTransaction();
-
         try {
-            $mantenimiento = Mantenimiento::findOrFail($id);
+            return DB::transaction(function () use ($id) {
+                $mantenimiento = Mantenimiento::findOrFail($id);
 
-            if ($mantenimiento->estado !== 'vencido') {
-                DB::rollBack();
+                if ($mantenimiento->estado !== 'vencido') {
+                    return [
+                        'success' => false,
+                        'message' => 'Solo se pueden reprogramar mantenimientos vencidos.',
+                    ];
+                }
+
+                $mantenimiento->update([
+                    'estado' => 'programado',
+                    'fecha_programada' => null,
+                ]);
 
                 return [
-                    'success' => false,
-                    'message' => 'Solo se pueden reprogramar mantenimientos vencidos.',
+                    'success' => true,
+                    'mantenimiento' => $mantenimiento->fresh(),
+                    'message' => "Mantenimiento #{$id} reprogramado. Por favor, asigne una nueva fecha.",
                 ];
-            }
-
-            $mantenimiento->update([
-                'estado' => 'programado',
-                'fecha_programada' => null,
-            ]);
-
-            DB::commit();
-
-            return [
-                'success' => true,
-                'mantenimiento' => $mantenimiento->fresh(),
-                'message' => "Mantenimiento #{$id} reprogramado. Por favor, asigne una nueva fecha.",
-            ];
+            });
         } catch (\Exception $e) {
-            DB::rollBack();
             Log::error('Error reprogramando mantenimiento', [
                 'mantenimiento_id' => $id,
                 'error' => $e->getMessage(),
@@ -662,9 +661,10 @@ class MantenimientoService
     }
 
     /**
-     * Validate that a scheduled date is within 7 days from the related notification.
+     * Valida que una fecha programada esté dentro de 7 días desde la notificación
+     * asociada.
      *
-     * Used when editing an existing maintenance order.
+     * Se usa al editar una orden de mantenimiento existente.
      */
     public function validarFechaProgramadaEdicion(int $mantenimientoId, string $fechaProgramada): ?string
     {
@@ -688,9 +688,9 @@ class MantenimientoService
     }
 
     /**
-     * Validate that a scheduled date is within the next 7 days from today.
+     * Valida que una fecha programada esté dentro de los próximos 7 días desde hoy.
      *
-     * Used when creating a new maintenance order without a previous notification.
+     * Se usa al crear una orden nueva sin notificación previa.
      */
     public function validarFechaProgramadaNueva(string $fechaProgramada): ?string
     {
@@ -705,7 +705,7 @@ class MantenimientoService
     }
 
     /**
-     * Mark the current user's pending notification for a maintenance order as actioned.
+     * Marca como accionada la notificación pendiente del usuario actual para una orden.
      */
     public function marcarNotificacionComoAccionada(int $mantenimientoId, int $usuarioId): void
     {
@@ -717,685 +717,6 @@ class MantenimientoService
         if ($notificacion) {
             NotificacionService::marcarComoAccionada($notificacion);
             Log::info("Notificación #{$notificacion->id} marcada como accionada para mantenimiento #{$mantenimientoId}");
-        }
-    }
-
-    // =========================================================================
-    // Proceso automático de mantenimiento preventivo (PA-01)
-    // =========================================================================
-
-    /**
-     * Maquinarias operativas con umbral configurado, candidatas a verificación.
-     *
-     * @return Collection<int, Maquinaria>
-     */
-    public function obtenerMaquinariasElegibles(?int $maquinariaId = null): Collection
-    {
-        return Maquinaria::query()
-            ->with('tipoMaquinaria')
-            ->whereNotNull('umbral_toneladas')
-            ->whereIn('estado', ['operativa', 'activo'])
-            ->when($maquinariaId, fn ($q) => $q->where('id_maquinaria', $maquinariaId))
-            ->get();
-    }
-
-    /**
-     * Tipo de mantenimiento preventivo configurado en el catálogo.
-     */
-    public function obtenerTipoPreventivo(): ?TipoMantenimiento
-    {
-        return TipoMantenimiento::query()
-            ->whereLike('nombre', '%preventivo%')
-            ->first();
-    }
-
-    /**
-     * Caso de uso del proceso automático por umbral para una maquinaria.
-     *
-     * Si supera el umbral y no tiene orden abierta: resuelve la fecha por clima,
-     * crea la orden en transacción (personal, stock del kit, propuesta de compra
-     * y notificación interna) y envía el email con adjuntos después del commit.
-     *
-     * @param  Maquinaria  $maquinaria  Maquinaria a verificar
-     * @param  TipoMantenimiento  $tipoPreventivo  Tipo preventivo del catálogo
-     * @return array{generada: bool, motivo?: string, toneladas?: float, umbral?: float, mantenimiento?: Mantenimiento, programacion?: array, falta_stock?: bool, insumos?: array}
-     *
-     * @throws \Throwable Si falla la transacción de creación de la orden
-     */
-    public function procesarUmbralMaquinaria(Maquinaria $maquinaria, TipoMantenimiento $tipoPreventivo): array
-    {
-        $toneladasDesdeUltimo = $this->obtenerToneladasDesdeUltimoMantenimiento($maquinaria);
-        $umbral = (float) $maquinaria->umbral_toneladas;
-
-        if ($toneladasDesdeUltimo < $umbral) {
-            return [
-                'generada' => false,
-                'motivo' => 'bajo_umbral',
-                'toneladas' => $toneladasDesdeUltimo,
-                'umbral' => $umbral,
-            ];
-        }
-
-        if ($this->tieneOrdenAbierta($maquinaria)) {
-            return ['generada' => false, 'motivo' => 'orden_abierta'];
-        }
-
-        $programacion = $this->resolverFechaProgramadaPorClima($maquinaria);
-
-        [$faltaStock, $insumosConProblema, $propuesta, $mantenimiento] = DB::transaction(function () use ($maquinaria, $tipoPreventivo, $programacion, $toneladasDesdeUltimo) {
-            $mantenimiento = $this->crearMantenimiento([
-                'id_maquinaria' => $maquinaria->id_maquinaria,
-                'id_tipo_mantenimiento' => $tipoPreventivo->id_tipo_mantenimiento,
-                'fecha_inicio' => $programacion['fecha_programada']->toDateString(),
-                'fecha_programada' => $programacion['fecha_programada']->toDateString(),
-                'estado' => 'programado',
-            ]);
-
-            $asignacion = $this->asignarPersonalAutomatico(
-                mantenimiento: $mantenimiento,
-                fechaProgramada: $programacion['fecha_programada']
-            );
-
-            $verificacionStock = $this->verificarStockParaAprobacion($mantenimiento->id_mantenimiento);
-            $faltaStock = ! $verificacionStock['puede_aprobar'];
-            $insumosConProblema = $verificacionStock['insuficientes'];
-
-            $propuesta = null;
-            if ($faltaStock) {
-                $propuesta = $this->crearPropuestaCompraMantenimiento($mantenimiento, $insumosConProblema);
-            }
-
-            $this->crearNotificacionInterna(
-                mantenimiento: $mantenimiento,
-                maquinaria: $maquinaria,
-                toneladasDesdeUltimo: $toneladasDesdeUltimo,
-                programacion: $programacion,
-                asignacion: $asignacion
-            );
-
-            return [$faltaStock, $insumosConProblema, $propuesta, $mantenimiento];
-        });
-
-        $this->enviarCorreoOrdenConAdjuntos($mantenimiento, $propuesta);
-
-        return [
-            'generada' => true,
-            'mantenimiento' => $mantenimiento,
-            'programacion' => $programacion,
-            'falta_stock' => $faltaStock,
-            'insumos' => $insumosConProblema,
-        ];
-    }
-
-    /**
-     * Mantenimientos programados para hoy.
-     *
-     * @return Collection<int, Mantenimiento>
-     */
-    public function obtenerProgramadosDeHoy(): Collection
-    {
-        return Mantenimiento::with(['maquinaria', 'tipoMantenimiento'])
-            ->where('estado', 'programado')
-            ->where('fecha_programada', now()->toDateString())
-            ->get();
-    }
-
-    /**
-     * Notificaciones de umbral pendientes de programar con fecha límite cercana.
-     *
-     * @param  string  $limiteAviso  Fecha límite máxima para el aviso
-     * @return Collection<int, NotificacionSistema>
-     */
-    public function obtenerPendientesDeProgramar(string $limiteAviso): Collection
-    {
-        return NotificacionSistema::query()
-            ->with(['mantenimiento.maquinaria', 'mantenimiento.tipoMantenimiento'])
-            ->where('tipo', 'umbral_alcanzado')
-            ->whereNotNull('fecha_limite')
-            ->where('fecha_limite', '<=', $limiteAviso)
-            ->where(function ($q) {
-                $q->where('accionada', false)->orWhereNull('accionada');
-            })
-            ->whereHas('mantenimiento', function ($q) {
-                $q->where('estado', 'programado')->whereNull('fecha_programada');
-            })
-            ->orderByDesc('created_at')
-            ->get()
-            ->unique('mantenimiento_id')
-            ->values();
-    }
-
-    /**
-     * Marca como vencidos los mantenimientos no confirmados cuya fecha pasó
-     * y crea la notificación interna de respaldo para los usuarios configurados.
-     *
-     * @param  string  $hoy  Fecha de hoy (Y-m-d)
-     * @return Collection<int, Mantenimiento> Mantenimientos marcados como vencidos
-     */
-    public function marcarMantenimientosVencidos(string $hoy): Collection
-    {
-        $vencidos = Mantenimiento::query()
-            ->where('estado', 'programado')
-            ->where('fecha_programada', '<', $hoy)
-            ->get();
-
-        if ($vencidos->isEmpty()) {
-            return $vencidos;
-        }
-
-        DB::transaction(function () use ($vencidos) {
-            foreach ($vencidos as $mantenimiento) {
-                $mantenimiento->update(['estado' => 'vencido']);
-                $this->crearNotificacionVencido($mantenimiento);
-
-                Log::warning('Mantenimiento vencido', [
-                    'id_mantenimiento' => $mantenimiento->id_mantenimiento,
-                    'id_maquinaria' => $mantenimiento->id_maquinaria,
-                    'fecha_programada' => $mantenimiento->fecha_programada,
-                ]);
-            }
-        });
-
-        return $vencidos;
-    }
-
-    /**
-     * Envía el recordatorio de mantenimientos de hoy y pendientes de programar
-     * por email a los usuarios configurados (con reintentos).
-     *
-     * @param  Collection<int, Mantenimiento>  $mantenimientosHoy
-     * @param  Collection<int, NotificacionSistema>|null  $pendientesProgramar
-     */
-    public function enviarRecordatorioProgramados(Collection $mantenimientosHoy, ?Collection $pendientesProgramar = null): void
-    {
-        try {
-            $pendientesProgramar = $pendientesProgramar ?? collect();
-
-            if ($mantenimientosHoy->isEmpty() && $pendientesProgramar->isEmpty()) {
-                return;
-            }
-
-            $idsUsuarios = app(NotificacionService::class)->cargarConfiguracionMantenimiento()['recordatorio'];
-
-            if (empty($idsUsuarios)) {
-                $correoAdmin = config('mail.admin_email', 'admin@example.com');
-                $this->enviarConReintento(function () use ($correoAdmin, $mantenimientosHoy, $pendientesProgramar) {
-                    $this->esperarParaEnviarMail();
-                    Notification::route('mail', $correoAdmin)
-                        ->notify(new MantenimientoProgramadoRecordatorio($mantenimientosHoy, $pendientesProgramar));
-                });
-                Log::info("Recordatorio de mantenimientos enviado a {$correoAdmin} (fallback)");
-
-                return;
-            }
-
-            $usuarios = Usuario::whereIn('id', $idsUsuarios)->get();
-            foreach ($usuarios as $usuario) {
-                $this->enviarConReintento(function () use ($usuario, $mantenimientosHoy, $pendientesProgramar) {
-                    $this->esperarParaEnviarMail();
-                    $usuario->notify(new MantenimientoProgramadoRecordatorio($mantenimientosHoy, $pendientesProgramar));
-                });
-            }
-            Log::info("Recordatorio de mantenimientos enviado a {$usuarios->count()} usuario(s)");
-        } catch (\Throwable $e) {
-            Log::error('Error enviando recordatorio de mantenimientos', ['error' => $e->getMessage()]);
-        }
-    }
-
-    /**
-     * Toneladas procesadas por la maquinaria desde su último mantenimiento cerrado.
-     */
-    private function obtenerToneladasDesdeUltimoMantenimiento(Maquinaria $maquinaria): float
-    {
-        $ultimoMantenimiento = Mantenimiento::query()
-            ->where('id_maquinaria', $maquinaria->id_maquinaria)
-            ->whereNotNull('toneladas_snapshot')
-            ->orderBy('fecha_fin', 'desc')
-            ->first();
-
-        if (! $ultimoMantenimiento) {
-            return (float) $maquinaria->toneladas_acumuladas;
-        }
-
-        return (float) $maquinaria->toneladas_acumuladas - (float) $ultimoMantenimiento->toneladas_snapshot;
-    }
-
-    /**
-     * Si la maquinaria ya tiene una orden de mantenimiento abierta.
-     */
-    private function tieneOrdenAbierta(Maquinaria $maquinaria): bool
-    {
-        return Mantenimiento::query()
-            ->where('id_maquinaria', $maquinaria->id_maquinaria)
-            ->whereIn('estado', ['programado', 'en curso'])
-            ->exists();
-    }
-
-    /**
-     * Resuelve la fecha programada del mantenimiento según el clima del lote.
-     *
-     * Regla:
-     * - Si hay lluvia dentro de 72h -> usar ese dia exacto (se trabaja igual por clima).
-     * - Si no hay lluvia o faltan datos -> fallback al dia siguiente.
-     *
-     * @return array{fecha_programada: Carbon, fuente: string, motivo: string, lote_id: ?int, lluvia_mm: ?float}
-     */
-    private function resolverFechaProgramadaPorClima(Maquinaria $maquinaria): array
-    {
-        $fallbackDate = now()->addDay()->startOfDay();
-        $limite = now()->addHours(self::CLIMA_VENTANA_HORAS);
-
-        $lote = Lote::query()
-            ->whereIn('estado', ['activo', 'en_proceso'])
-            ->whereHas('maquinarias', function ($q) use ($maquinaria) {
-                $q->where('maquinarias.id_maquinaria', $maquinaria->id_maquinaria);
-            })
-            ->first();
-
-        if (! $lote) {
-            Log::warning('Fallback clima: maquinaria sin lote activo/en_proceso', [
-                'maquinaria_id' => $maquinaria->id_maquinaria,
-                'fallback_fecha' => $fallbackDate->toDateString(),
-            ]);
-
-            return [
-                'fecha_programada' => $fallbackDate,
-                'fuente' => 'fallback',
-                'motivo' => 'sin_lote_asociado',
-                'lote_id' => null,
-                'lluvia_mm' => null,
-            ];
-        }
-
-        $clima = $this->climaDecisionService->analizarYRecomendar($lote);
-        $dias = $clima['pronostico'] ?? $clima['dias_detalle'] ?? [];
-
-        if (! ($clima['success'] ?? false) || empty($dias)) {
-            Log::warning('Fallback clima: sin datos validos de pronostico', [
-                'maquinaria_id' => $maquinaria->id_maquinaria,
-                'lote_id' => $lote->id_lote,
-                'error' => $clima['error'] ?? null,
-                'fallback_fecha' => $fallbackDate->toDateString(),
-            ]);
-
-            return [
-                'fecha_programada' => $fallbackDate,
-                'fuente' => 'fallback',
-                'motivo' => 'sin_datos_clima',
-                'lote_id' => $lote->id_lote,
-                'lluvia_mm' => null,
-            ];
-        }
-
-        foreach ($dias as $dia) {
-            $fechaRaw = $dia['fecha'] ?? null;
-            $fecha = $fechaRaw instanceof Carbon ? $fechaRaw->copy() : Carbon::parse((string) $fechaRaw);
-            $mm = (float) ($dia['precipitacion_mm'] ?? 0);
-            $razon = mb_strtolower((string) ($dia['razon'] ?? ''));
-
-            if ($fecha->lt(now()->startOfDay()) || $fecha->gt($limite)) {
-                continue;
-            }
-
-            if ($mm >= ClimaDecisionService::UMBRAL_LLUVIA || str_contains($razon, 'lluvia')) {
-                return [
-                    'fecha_programada' => $fecha->startOfDay(),
-                    'fuente' => 'clima',
-                    'motivo' => 'lluvia_detectada',
-                    'lote_id' => $lote->id_lote,
-                    'lluvia_mm' => $mm,
-                ];
-            }
-        }
-
-        Log::warning('Fallback clima: sin lluvia en ventana de 72h', [
-            'maquinaria_id' => $maquinaria->id_maquinaria,
-            'lote_id' => $lote->id_lote,
-            'fallback_fecha' => $fallbackDate->toDateString(),
-        ]);
-
-        return [
-            'fecha_programada' => $fallbackDate,
-            'fuente' => 'fallback',
-            'motivo' => 'sin_lluvia_72h',
-            'lote_id' => $lote->id_lote,
-            'lluvia_mm' => null,
-        ];
-    }
-
-    /**
-     * Asigna automáticamente personal disponible a la orden generada.
-     *
-     * Prioriza por rol (mantenimiento -> administrativo) y luego cualquier
-     * empleado activo disponible en la fecha programada.
-     *
-     * @return array{empleado_id: ?int, rol_origen: ?string, nombre?: string}
-     */
-    private function asignarPersonalAutomatico(Mantenimiento $mantenimiento, Carbon $fechaProgramada): array
-    {
-        $fecha = $fechaProgramada->toDateString();
-
-        $empleado = $this->buscarEmpleadoDisponiblePorRol('mantenimiento', $fecha);
-        $origen = 'mantenimiento';
-
-        if (! $empleado) {
-            $empleado = $this->buscarEmpleadoDisponiblePorRol('administrativo', $fecha);
-            $origen = 'administrativo';
-        }
-
-        if (! $empleado) {
-            $empleado = $this->buscarEmpleadoDisponibleSinFiltro($fecha);
-            $origen = 'fallback';
-        }
-
-        if (! $empleado) {
-            Log::warning('No se encontro personal disponible para mantenimiento', [
-                'mantenimiento_id' => $mantenimiento->id_mantenimiento,
-                'fecha_programada' => $fecha,
-            ]);
-
-            return [
-                'empleado_id' => null,
-                'rol_origen' => null,
-            ];
-        }
-
-        $mantenimiento->empleados()->syncWithoutDetaching([
-            $empleado->id_empleado => ['rol_origen' => $origen],
-        ]);
-
-        return [
-            'empleado_id' => (int) $empleado->id_empleado,
-            'rol_origen' => $origen,
-            'nombre' => trim($empleado->apellido.', '.$empleado->nombre),
-        ];
-    }
-
-    /**
-     * Empleado activo y disponible en la fecha, filtrado por rol laboral.
-     */
-    private function buscarEmpleadoDisponiblePorRol(string $keyword, string $fecha): ?Empleado
-    {
-        $ocupados = $this->idsEmpleadosOcupados($fecha);
-
-        return Empleado::query()
-            ->where(function ($q) {
-                $q->whereNull('fecha_fin_actividades')
-                    ->orWhereDate('fecha_fin_actividades', '>', now()->toDateString());
-            })
-            ->whereHas('rolLaboral', function ($q) use ($keyword) {
-                $q->whereLike('nombre', '%'.$keyword.'%');
-            })
-            ->when(! empty($ocupados), fn ($q) => $q->whereNotIn('id_empleado', $ocupados))
-            ->orderBy('id_empleado')
-            ->first();
-    }
-
-    /**
-     * Empleado activo y disponible en la fecha, sin filtro de rol.
-     */
-    private function buscarEmpleadoDisponibleSinFiltro(string $fecha): ?Empleado
-    {
-        $ocupados = $this->idsEmpleadosOcupados($fecha);
-
-        return Empleado::query()
-            ->where(function ($q) {
-                $q->whereNull('fecha_fin_actividades')
-                    ->orWhereDate('fecha_fin_actividades', '>', now()->toDateString());
-            })
-            ->when(! empty($ocupados), fn ($q) => $q->whereNotIn('id_empleado', $ocupados))
-            ->orderBy('id_empleado')
-            ->first();
-    }
-
-    /**
-     * @return array<int, int>
-     */
-    private function idsEmpleadosOcupados(string $fecha): array
-    {
-        return DB::table('mantenimiento_empleado as me')
-            ->join('mantenimientos as m', 'm.id_mantenimiento', '=', 'me.id_mantenimiento')
-            ->whereIn('m.estado', ['programado', 'en curso'])
-            ->whereNull('m.deleted_at')
-            ->whereDate('m.fecha_programada', $fecha)
-            ->pluck('me.id_empleado')
-            ->map(fn ($id) => (int) $id)
-            ->all();
-    }
-
-    /**
-     * Crea o regenera la propuesta de compra de insumos para la orden.
-     *
-     * Los ítems anteriores de la propuesta quedan con baja lógica (SoftDeletes)
-     * para preservar el historial de qué insumos contenía.
-     */
-    private function crearPropuestaCompraMantenimiento(
-        Mantenimiento $mantenimiento,
-        array $insumosConProblema
-    ): PropuestaCompraMantenimiento {
-        $propuesta = PropuestaCompraMantenimiento::firstOrCreate(
-            ['id_mantenimiento' => $mantenimiento->id_mantenimiento],
-            [
-                'id_maquinaria' => $mantenimiento->id_maquinaria,
-                'status' => 'pending',
-            ]
-        );
-
-        if ($propuesta->id_maquinaria !== $mantenimiento->id_maquinaria) {
-            $propuesta->id_maquinaria = $mantenimiento->id_maquinaria;
-            $propuesta->save();
-        }
-
-        PropuestaCompraMantenimientoInsumo::query()
-            ->where('id_mantenimiento_purchase_proposal', $propuesta->id_mantenimiento_purchase_proposal)
-            ->delete();
-
-        foreach ($insumosConProblema as $ins) {
-            if (empty($ins['insumo_id'])) {
-                continue;
-            }
-            PropuestaCompraMantenimientoInsumo::create([
-                'id_mantenimiento_purchase_proposal' => $propuesta->id_mantenimiento_purchase_proposal,
-                'id_insumo' => (int) $ins['insumo_id'],
-                'cantidad_requerida' => (float) ($ins['requerido'] ?? 0),
-                'stock_disponible' => (float) ($ins['disponible'] ?? 0),
-                'faltante' => (float) ($ins['faltante'] ?? 0),
-            ]);
-        }
-
-        return $propuesta->fresh(['insumos.insumo.unidadMedida', 'maquinaria.tipoMaquinaria', 'mantenimiento']);
-    }
-
-    /**
-     * Envía por email la orden generada (y su propuesta de compra) con adjuntos.
-     *
-     * Con reintentos ante rate-limit; si falla, queda registrado en log y la
-     * notificación interna (creada en la transacción) persiste como canal de registro.
-     */
-    private function enviarCorreoOrdenConAdjuntos(
-        Mantenimiento $mantenimiento,
-        ?PropuestaCompraMantenimiento $propuesta
-    ): void {
-        $destinatarios = $this->obtenerDestinatariosMail();
-        if (empty($destinatarios)) {
-            return;
-        }
-
-        try {
-            $mantenimiento->loadMissing(['maquinaria.tipoMaquinaria', 'tipoMantenimiento', 'empleados.rolLaboral']);
-
-            $adjuntos = [];
-            $adjuntos[] = $this->documentsService->generateMaintenanceOrderPdf($mantenimiento);
-
-            if ($propuesta) {
-                $adjuntos[] = $this->documentsService->generatePurchaseOrderPdf($propuesta);
-            }
-
-            $this->enviarConReintento(function () use ($destinatarios, $mantenimiento, $propuesta, $adjuntos) {
-                $this->esperarParaEnviarMail();
-                Mail::to($destinatarios)->send(new MantenimientoOrdenGeneradaMail($mantenimiento, $propuesta, $adjuntos));
-            });
-
-            if ($propuesta) {
-                $metadatos = is_array($propuesta->meta) ? $propuesta->meta : [];
-                $metadatos['purchase_order'] = [
-                    'sent_at' => now()->toISOString(),
-                    'recipients' => $destinatarios,
-                    'attachments' => array_map(fn ($adjunto) => $adjunto['path'] ?? null, $adjuntos),
-                ];
-                $propuesta->meta = $metadatos;
-                $propuesta->status = 'sent';
-                $propuesta->save();
-            }
-        } catch (\Throwable $e) {
-            Log::error('Error enviando mail de mantenimiento con adjuntos', [
-                'mantenimiento_id' => $mantenimiento->id_mantenimiento,
-                'error' => $e->getMessage(),
-            ]);
-        }
-    }
-
-    /**
-     * Destinatarios configurados para los mails del proceso de mantenimiento.
-     *
-     * @return array<int, string>
-     */
-    private function obtenerDestinatariosMail(): array
-    {
-        $destinatarios = array_values(array_filter((array) config('mail.purchase_order_emails', [])));
-        $correoAdmin = trim((string) config('mail.admin_email', ''));
-        if ($correoAdmin !== '') {
-            $destinatarios[] = $correoAdmin;
-        }
-
-        return array_values(array_unique(array_filter($destinatarios)));
-    }
-
-    /**
-     * Ejecuta el envío con reintentos ante rate-limit del servidor de mail.
-     */
-    private function enviarConReintento(callable $enviar): void
-    {
-        $intentos = 0;
-        $maxIntentos = 3;
-        $espera = 2;
-
-        while (true) {
-            try {
-                $enviar();
-
-                return;
-            } catch (\Exception $e) {
-                $intentos++;
-                $mensaje = $e->getMessage();
-                $esRateLimit = stripos($mensaje, 'Too many emails per second') !== false || stripos($mensaje, '550') !== false;
-                if (! $esRateLimit || $intentos >= $maxIntentos) {
-                    throw $e;
-                }
-                sleep($espera);
-                $espera *= 2;
-            }
-        }
-    }
-
-    /**
-     * Espera el intervalo mínimo entre envíos (rate-limit manual compartido).
-     */
-    private function esperarParaEnviarMail(): void
-    {
-        $minInterval = 1.5;
-        $ahora = microtime(true);
-        $ultimoGlobal = cache()->get('mantenimiento_mail_last_sent_at');
-        $referencia = max((float) $this->ultimoEnvioMail, (float) $ultimoGlobal);
-
-        if ($referencia > 0) {
-            $delta = $ahora - $referencia;
-            if ($delta < $minInterval) {
-                usleep((int) (($minInterval - $delta) * 1000000));
-            }
-        }
-
-        $this->ultimoEnvioMail = microtime(true);
-        cache()->put('mantenimiento_mail_last_sent_at', $this->ultimoEnvioMail, 60);
-    }
-
-    /**
-     * Crea la notificación interna de umbral alcanzado (canal de registro)
-     * para los usuarios configurados.
-     */
-    private function crearNotificacionInterna(
-        Mantenimiento $mantenimiento,
-        Maquinaria $maquinaria,
-        float $toneladasDesdeUltimo,
-        array $programacion,
-        array $asignacion
-    ): void {
-        try {
-            $idsUsuarios = app(NotificacionService::class)
-                ->cargarConfiguracionMantenimiento()['umbral'];
-
-            if (empty($idsUsuarios)) {
-                Log::warning('No hay usuarios configurados para notificacion interna de umbral.');
-
-                return;
-            }
-
-            $fechaLimite = now()->addDays(7)->toDateString();
-            $fechaProgramada = $programacion['fecha_programada']->toDateString();
-            $origen = $programacion['fuente'];
-            $asignado = $asignacion['nombre'] ?? 'Sin asignacion';
-
-            $titulo = "Mantenimiento Preventivo - Maquinaria {$maquinaria->id_maquinaria}";
-            $mensaje = "Se genero la orden #{$mantenimiento->id_mantenimiento}. ".
-                "Toneladas detectadas: {$toneladasDesdeUltimo} (umbral {$maquinaria->umbral_toneladas}). ".
-                "Fecha programada: {$fechaProgramada} (fuente {$origen}). ".
-                "Personal asignado: {$asignado}.";
-
-            foreach ($idsUsuarios as $userId) {
-                NotificacionSistema::create([
-                    'user_id' => $userId,
-                    'mantenimiento_id' => $mantenimiento->id_mantenimiento,
-                    'tipo' => 'umbral_alcanzado',
-                    'titulo' => $titulo,
-                    'mensaje' => $mensaje,
-                    'fecha_limite' => $fechaLimite,
-                ]);
-            }
-        } catch (\Throwable $e) {
-            Log::error('Error en crearNotificacionInterna', ['error' => $e->getMessage()]);
-        }
-    }
-
-    /**
-     * Crea la notificación interna de mantenimiento vencido (respaldo del
-     * recordatorio por email) para los usuarios configurados.
-     */
-    private function crearNotificacionVencido(Mantenimiento $mantenimiento): void
-    {
-        try {
-            $idsUsuarios = app(NotificacionService::class)
-                ->cargarConfiguracionMantenimiento()['recordatorio'];
-
-            if (empty($idsUsuarios)) {
-                return;
-            }
-
-            $titulo = "Mantenimiento Vencido - Orden #{$mantenimiento->id_mantenimiento}";
-            $mensaje = "La orden #{$mantenimiento->id_mantenimiento} programada para {$mantenimiento->fecha_programada} ".
-                'no fue confirmada y quedo marcada como vencida. Requiere reprogramacion.';
-
-            foreach ($idsUsuarios as $userId) {
-                NotificacionSistema::create([
-                    'user_id' => $userId,
-                    'mantenimiento_id' => $mantenimiento->id_mantenimiento,
-                    'tipo' => 'mantenimiento_vencido',
-                    'titulo' => $titulo,
-                    'mensaje' => $mensaje,
-                    'fecha_limite' => now()->addDays(7)->toDateString(),
-                ]);
-            }
-        } catch (\Throwable $e) {
-            Log::error('Error creando notificacion de mantenimiento vencido', ['error' => $e->getMessage()]);
         }
     }
 }

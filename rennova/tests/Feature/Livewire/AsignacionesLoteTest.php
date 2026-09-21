@@ -235,16 +235,17 @@ class AsignacionesLoteTest extends TestCase
     // Liberar
     // =========================================================================
 
-    public function test_liberar_recursos_cambia_estado_a_terminado(): void
+    public function test_liberar_finaliza_el_lote(): void
     {
         $lote = Lote::factory()->activo()->create();
         $empleado = Empleado::factory()->create(['fecha_fin_actividades' => null]);
         $lote->empleados()->attach($empleado->id_empleado);
 
         $mock = \Mockery::mock(AsignacionLoteService::class);
-        $mock->shouldReceive('liberarRecursos')
+        $mock->shouldReceive('finalizar')
             ->once()
-            ->with($lote->id_lote, \Mockery::type('array'));
+            ->with($lote->id_lote, \Mockery::type('array'))
+            ->andReturn(true);
 
         $this->app->instance(AsignacionLoteService::class, $mock);
 
@@ -253,14 +254,15 @@ class AsignacionesLoteTest extends TestCase
             ->call('liberar', $lote->id_lote);
     }
 
-    public function test_liberar_lote_ya_terminado_no_falla(): void
+    public function test_liberar_lote_ya_finalizado_muestra_error(): void
     {
         $lote = Lote::factory()->cerrado()->create();
 
         $mock = \Mockery::mock(AsignacionLoteService::class);
-        $mock->shouldReceive('liberarRecursos')
+        $mock->shouldReceive('finalizar')
             ->once()
-            ->with($lote->id_lote, \Mockery::type('array'));
+            ->with($lote->id_lote, \Mockery::type('array'))
+            ->andReturn(false);
 
         $this->app->instance(AsignacionLoteService::class, $mock);
 
@@ -275,7 +277,7 @@ class AsignacionesLoteTest extends TestCase
         $lote = Lote::factory()->activo()->create();
 
         $mock = \Mockery::mock(AsignacionLoteService::class);
-        $mock->shouldReceive('liberarRecursos')->once();
+        $mock->shouldReceive('finalizar')->once()->andReturn(true);
 
         $this->app->instance(AsignacionLoteService::class, $mock);
 

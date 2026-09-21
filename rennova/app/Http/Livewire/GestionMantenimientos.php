@@ -3,9 +3,6 @@
 namespace App\Http\Livewire;
 
 use App\Http\Livewire\Traits\MensajesErrorUsuario;
-use App\Models\Insumo;
-use App\Models\Mantenimiento;
-use App\Models\Maquinaria;
 use App\Services\MantenimientoService;
 use Illuminate\Support\Facades\Log;
 use Livewire\Component;
@@ -75,12 +72,12 @@ class GestionMantenimientos extends Component
     public function abrirModalAprobar($ordenId)
     {
         try {
-            $this->orden_seleccionada = Mantenimiento::with(['maquinaria.tipoMaquinaria'])
-                ->findOrFail($ordenId);
+            $this->orden_seleccionada = $this->mantenimientoService
+                ->obtenerOrdenParaAprobar((int) $ordenId);
 
             // Verificar stock disponible
             $this->verificacion_stock = $this->mantenimientoService
-                ->verificarStockParaAprobacion($ordenId);
+                ->verificarStockParaAprobacion((int) $ordenId);
 
             $this->modal_aprobar = true;
         } catch (\Exception $e) {
@@ -102,25 +99,24 @@ class GestionMantenimientos extends Component
                 throw new \Exception('No hay orden seleccionada');
             }
 
-            // Verificar stock nuevamente
-            $verificacion = $this->mantenimientoService
-                ->verificarStockParaAprobacion($this->orden_seleccionada->id_mantenimiento);
+            $resultado = $this->mantenimientoService
+                ->aprobarMantenimiento($this->orden_seleccionada->id_mantenimiento);
 
-            if (! $verificacion['puede_aprobar']) {
-                $faltantes = collect($verificacion['insuficientes'])
-                    ->pluck('nombre')
-                    ->join(', ');
+            if (! $resultado['success']) {
+                if (! empty($resultado['insumos_insuficientes'])) {
+                    $faltantes = collect($resultado['insumos_insuficientes'])
+                        ->pluck('insumo')
+                        ->join(', ');
 
-                session()->flash('error', "Stock insuficiente para: {$faltantes}");
+                    session()->flash('error', "Stock insuficiente para: {$faltantes}");
+
+                    return;
+                }
+
+                session()->flash('error', $resultado['message']);
 
                 return;
             }
-
-            // Aprobar orden
-            $this->orden_seleccionada->update([
-                'estado' => 'en curso',
-                'fecha_inicio' => now(),
-            ]);
 
             session()->flash('message', 'Orden aprobada correctamente');
             $this->cerrarModalAprobar();
@@ -134,17 +130,16 @@ class GestionMantenimientos extends Component
     public function abrirModalCompletar($ordenId)
     {
         try {
-            $this->orden_seleccionada = Mantenimiento::with([
-                'maquinaria.tipoMaquinaria',
-                'mantenimientoInsumos.insumo',
-            ])->findOrFail($ordenId);
+            $this->orden_seleccionada = $this->mantenimientoService
+                ->obtenerOrdenParaCompletar((int) $ordenId);
 
             if ($this->orden_seleccionada->estado !== 'en curso') {
                 throw new \Exception('Solo se pueden completar órdenes en curso');
             }
 
             // Si es preventivo, cargar kit
-            if ($this->orden_seleccionada->tipoMantenimiento && str_contains(strtolower($this->orden_seleccionada->tipoMantenimiento->nombre), 'preventivo')) {
+            if ($this->orden_seleccionada->tipoMantenimiento
+                && $this->mantenimientoService->esTipoPreventivo($this->orden_seleccionada->tipoMantenimiento)) {
                 $kit = $this->mantenimientoService->obtenerKitPreventivo(
                     $this->orden_seleccionada->maquinaria->id_tipo_maquinaria
                 );
@@ -193,7 +188,7 @@ class GestionMantenimientos extends Component
 
     public function actualizarInsumo($index, $insumoId)
     {
-        $insumo = Insumo::find($insumoId);
+        $insumo = $this->mantenimientoService->obtenerInsumo((int) $insumoId);
         if ($insumo) {
             $this->insumos_usados[$index]['nombre'] = $insumo->nombre;
             $this->insumos_usados[$index]['stock_disponible'] = $insumo->stock;
@@ -234,11 +229,17 @@ class GestionMantenimientos extends Component
             })->toArray();
 
             // Completar mantenimiento usando el servicio
-            $this->mantenimientoService->completarMantenimiento(
+            $resultado = $this->mantenimientoService->completarMantenimiento(
                 $this->orden_seleccionada->id_mantenimiento,
                 $insumosData,
-                $this->costo_mano_obra
+                (float) $this->costo_mano_obra
             );
+
+            if (! $resultado['success']) {
+                session()->flash('error', $resultado['message']);
+
+                return;
+            }
 
             session()->flash('message', 'Mantenimiento completado correctamente');
             $this->cerrarModalCompletar();
@@ -252,10 +253,8 @@ class GestionMantenimientos extends Component
     public function verDetalle($ordenId)
     {
         try {
-            $this->detalle_orden = Mantenimiento::with([
-                'maquinaria.tipoMaquinaria',
-                'mantenimientoInsumos.insumo',
-            ])->findOrFail($ordenId);
+            $this->detalle_orden = $this->mantenimientoService
+                ->obtenerOrdenParaDetalle((int) $ordenId);
 
             $this->modal_detalle = true;
         } catch (\Exception $e) {
@@ -271,45 +270,23 @@ class GestionMantenimientos extends Component
 
     public function getOrdenesProperty()
     {
-        $query = Mantenimiento::with(['maquinaria.tipoMaquinaria', 'tipoMantenimiento'])
-            ->whereBetween('fecha_inicio', [
-                $this->filtro_fecha_desde ?: now()->subYear(),
-                $this->filtro_fecha_hasta ?: now(),
-            ]);
-
-        if ($this->filtro_estado) {
-            $query->where('estado', $this->filtro_estado);
-        }
-
-        if ($this->filtro_maquinaria) {
-            $query->where('id_maquinaria', $this->filtro_maquinaria);
-        }
-
-        if ($this->filtro_tipo) {
-            $query->where('id_tipo_mantenimiento', $this->filtro_tipo);
-        }
-
-        // Filtrar según la pestaña activa
-        if ($this->tab_activo === 'ordenes') {
-            $query->whereIn('estado', ['programado', 'en curso']);
-        } elseif ($this->tab_activo === 'completadas') {
-            $query->where('estado', 'completado');
-        }
-
-        return $query->orderBy('fecha_inicio', 'desc')->get();
+        return $this->mantenimientoService->listarOrdenesGestion([
+            'estado' => $this->filtro_estado,
+            'maquinaria' => $this->filtro_maquinaria,
+            'tipo' => $this->filtro_tipo,
+            'fecha_desde' => $this->filtro_fecha_desde,
+            'fecha_hasta' => $this->filtro_fecha_hasta,
+        ], $this->tab_activo);
     }
 
     public function getMaquinariasProperty()
     {
-        return Maquinaria::with('tipoMaquinaria')
-            ->where('estado', 'activo')
-            ->orderBy('modelo')
-            ->get();
+        return $this->mantenimientoService->obtenerMaquinariasActivasParaFiltro();
     }
 
     public function getInsumosDisponiblesProperty()
     {
-        return Insumo::orderBy('nombre')->get();
+        return $this->mantenimientoService->obtenerInsumosParaCierre();
     }
 
     public function render()

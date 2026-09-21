@@ -10,12 +10,12 @@ class PropuestaCompraMantenimientoInsumo extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $table = 'mantenimiento_purchase_proposal_insumos';
+    protected $table = 'propuestas_compra_mantenimiento_insumos';
 
-    protected $primaryKey = 'id_mantenimiento_purchase_proposal_insumo';
+    protected $primaryKey = 'id_propuesta_compra_mantenimiento_insumo';
 
     protected $fillable = [
-        'id_mantenimiento_purchase_proposal',
+        'id_propuesta_compra_mantenimiento',
         'id_insumo',
         'cantidad_requerida',
         'stock_disponible',
@@ -24,7 +24,7 @@ class PropuestaCompraMantenimientoInsumo extends Model
 
     public function propuesta()
     {
-        return $this->belongsTo(PropuestaCompraMantenimiento::class, 'id_mantenimiento_purchase_proposal');
+        return $this->belongsTo(PropuestaCompraMantenimiento::class, 'id_propuesta_compra_mantenimiento');
     }
 
     public function insumo()

@@ -8,11 +8,11 @@ use Illuminate\Support\Facades\DB;
 class NotificacionService
 {
     /**
-     * Mark a notification as read.
+     * Marca una notificación como leída.
      *
-     * Sets leida=true and records the timestamp. No-op if already read.
+     * Establece leida=true y registra la marca de hora. No opera si ya estaba leída.
      *
-     * @param  \App\Models\NotificacionSistema  $notificacion  The notification to mark as read
+     * @param  \App\Models\NotificacionSistema  $notificacion  Notificación a marcar como leída
      */
     public static function marcarComoLeida(NotificacionSistema $notificacion): void
     {
@@ -25,12 +25,12 @@ class NotificacionService
     }
 
     /**
-     * Mark a notification as actioned (resolved).
+     * Marca una notificación como accionada (resuelta).
      *
-     * Sets accionada=true and records the timestamp. Also marks as read if not already.
-     * No-op if already actioned.
+     * Establece accionada=true y registra la marca de hora. También la marca como leída si no lo estaba.
+     * No opera si ya estaba accionada.
      *
-     * @param  \App\Models\NotificacionSistema  $notificacion  The notification to mark as actioned
+     * @param  \App\Models\NotificacionSistema  $notificacion  Notificación a marcar como accionada
      */
     public static function marcarComoAccionada(NotificacionSistema $notificacion): void
     {
@@ -45,10 +45,10 @@ class NotificacionService
     }
 
     /**
-     * Load maintenance notification configuration.
+     * Carga la configuración de notificaciones de mantenimiento.
      *
-     * Reads the configuracion_notificaciones_mantenimiento table and returns
-     * user IDs grouped by notification type.
+     * Lee la tabla configuracion_notificaciones_mantenimiento y devuelve
+     * los identificadores de usuario agrupados por tipo de notificación.
      *
      * @return array{umbral: array<int>, recordatorio: array<int>, stock: array<int>}
      */
@@ -64,14 +64,14 @@ class NotificacionService
     }
 
     /**
-     * Save maintenance notification configuration.
+     * Guarda la configuración de notificaciones de mantenimiento.
      *
-     * Replaces the entire configuracion_notificaciones_mantenimiento table
-     * with the provided user IDs per notification type, within a transaction.
+     * Reemplaza toda la tabla configuracion_notificaciones_mantenimiento
+     * con los usuarios provistos por tipo de notificación, dentro de una transacción.
      *
-     * @param  array<int>  $usuariosUmbral  User IDs for threshold notifications
-     * @param  array<int>  $usuariosRecordatorio  User IDs for reminder notifications
-     * @param  array<int>  $usuariosStock  User IDs for stock notifications
+     * @param  array<int>  $usuariosUmbral  Usuarios para notificaciones de umbral
+     * @param  array<int>  $usuariosRecordatorio  Usuarios para notificaciones de recordatorio
+     * @param  array<int>  $usuariosStock  Usuarios para notificaciones de stock
      */
     public function guardarConfiguracionMantenimiento(array $usuariosUmbral, array $usuariosRecordatorio, array $usuariosStock): void
     {
@@ -85,7 +85,7 @@ class NotificacionService
     }
 
     /**
-     * Insert configuration rows for a notification type.
+     * Inserta las filas de configuración para un tipo de notificación.
      *
      * @param  array<int>  $userIds
      */

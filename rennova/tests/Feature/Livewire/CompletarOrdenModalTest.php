@@ -202,10 +202,11 @@ class CompletarOrdenModalTest extends TestCase
             'fecha_inicio' => now()->subDay()->toDateString(),
         ]);
 
-        $this->mock(MantenimientoService::class, function ($mock) {
-            $mock->shouldReceive('completarMantenimientoConFifo')
+        $this->partialMock(MantenimientoService::class, function ($mock) {
+            $mock->shouldReceive('completarMantenimiento')
                 ->once()
                 ->andReturn([
+                    'success' => true,
                     'costo_total' => 1500.00,
                     'costo_insumos' => 500.00,
                 ]);
@@ -229,10 +230,11 @@ class CompletarOrdenModalTest extends TestCase
             'fecha_inicio' => now()->subDay()->toDateString(),
         ]);
 
-        $this->mock(MantenimientoService::class, function ($mock) {
-            $mock->shouldReceive('completarMantenimientoConFifo')
+        $this->partialMock(MantenimientoService::class, function ($mock) {
+            $mock->shouldReceive('completarMantenimiento')
                 ->once()
                 ->andReturn([
+                    'success' => true,
                     'costo_total' => 100.00,
                     'costo_insumos' => 0.00,
                 ]);
@@ -278,7 +280,7 @@ class CompletarOrdenModalTest extends TestCase
             'fecha_inicio' => now()->toDateString(),
         ]);
 
-        $this->mock(MantenimientoService::class, function ($mock) {
+        $this->partialMock(MantenimientoService::class, function ($mock) {
             $mock->shouldNotReceive('completarMantenimientoConFifo');
         });
 
@@ -322,7 +324,7 @@ class CompletarOrdenModalTest extends TestCase
             'fecha_inicio' => now()->subDay()->toDateString(),
         ]);
 
-        $this->mock(MantenimientoService::class, function ($mock) {
+        $this->partialMock(MantenimientoService::class, function ($mock) {
             $mock->shouldReceive('completarMantenimientoConFifo')
                 ->andThrow(new \Exception('Stock insuficiente'));
         });
@@ -349,8 +351,8 @@ class CompletarOrdenModalTest extends TestCase
             'fecha_inicio' => now()->subDay()->toDateString(),
         ]);
 
-        $this->mock(MantenimientoService::class, function ($mock) {
-            $mock->shouldReceive('completarMantenimientoConFifo')
+        $this->partialMock(MantenimientoService::class, function ($mock) {
+            $mock->shouldReceive('completarMantenimiento')
                 ->andThrow(new \Exception('Error'));
         });
 

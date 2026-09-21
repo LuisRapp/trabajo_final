@@ -14,14 +14,14 @@ use Illuminate\Support\Facades\Log;
 class AnalizarRiesgoClimatico extends Command
 {
     /**
-     * The name and signature of the console command.
+     * Nombre y firma del comando de consola.
      *
      * @var string
      */
     protected $signature = 'clima:analizar {--dias=7 : Cantidad de días a analizar hacia adelante}';
 
     /**
-     * The console command description.
+     * Descripción del comando de consola.
      *
      * @var string
      */
@@ -33,7 +33,7 @@ class AnalizarRiesgoClimatico extends Command
     const UMBRAL_LLUVIA = 10;
 
     /**
-     * Execute the console command.
+     * Ejecutar el comando de consola.
      */
     public function handle()
     {

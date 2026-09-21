@@ -9,14 +9,14 @@ use Illuminate\Console\Command;
 class AnalizarDecisionesClimaticas extends Command
 {
     /**
-     * The name and signature of the console command.
+     * Nombre y firma del comando de consola.
      *
      * @var string
      */
     protected $signature = 'clima:decisiones {--lote= : ID del lote a analizar (opcional)}';
 
     /**
-     * The console command description.
+     * Descripción del comando de consola.
      *
      * @var string
      */
@@ -31,7 +31,7 @@ class AnalizarDecisionesClimaticas extends Command
     }
 
     /**
-     * Execute the console command.
+     * Ejecutar el comando de consola.
      */
     public function handle()
     {

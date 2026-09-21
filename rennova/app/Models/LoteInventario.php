@@ -108,7 +108,7 @@ class LoteInventario extends Model implements Auditable
     // Métodos de instancia
 
     /**
-     * Get the total value of available stock in this lot.
+     * Obtiene el valor total del stock disponible en este lote.
      *
      * @return float
      */
@@ -134,11 +134,11 @@ class LoteInventario extends Model implements Auditable
     }
 
     /**
-     * Check if this lot is close to being exhausted (< 20% remaining).
+     * Verifica si este lote está próximo a agotarse (< 20% restante).
      *
      * @return bool
      *
-     * @deprecated Use InventarioService::estaProximoAgotar($lote) instead
+     * @deprecated Usar InventarioService::estaProximoAgotar($lote)
      */
     public function estaProximoAgotar()
     {

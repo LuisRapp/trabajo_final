@@ -96,7 +96,7 @@ test('los items de las propuestas de compra usan baja logica', function () {
     ]);
 
     $item = PropuestaCompraMantenimientoInsumo::create([
-        'id_mantenimiento_purchase_proposal' => $proposal->id_mantenimiento_purchase_proposal,
+        'id_propuesta_compra_mantenimiento' => $proposal->id_propuesta_compra_mantenimiento,
         'id_insumo' => $insumo->id_insumo,
         'cantidad_requerida' => 10,
         'stock_disponible' => 2,

@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Services\MantenimientoService;
+use App\Services\ProcesoMantenimientoService;
 use Illuminate\Console\Command;
 
 class CheckMantenimientosProgramados extends Command
@@ -11,7 +11,7 @@ class CheckMantenimientosProgramados extends Command
 
     protected $description = 'Verifica mantenimientos programados para hoy y marca como vencidos los no confirmados';
 
-    public function handle(MantenimientoService $servicio): int
+    public function handle(ProcesoMantenimientoService $servicio): int
     {
         $this->info('Verificando mantenimientos programados...');
 

@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Services\MantenimientoService;
+use App\Services\ProcesoMantenimientoService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -13,7 +13,7 @@ class CheckMantenimientoUmbrales extends Command
 
     protected $description = 'Verifica umbrales, programa por clima y genera orden de mantenimiento con personal asignado';
 
-    public function handle(MantenimientoService $servicio): int
+    public function handle(ProcesoMantenimientoService $servicio): int
     {
         $maquinariaIdOpt = $this->option('maquinaria');
 
