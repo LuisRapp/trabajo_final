@@ -2,9 +2,7 @@
 
 namespace App\Http\Livewire;
 
-use App\Models\Usuario;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rule;
+use App\Services\UsuarioService;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -32,26 +30,16 @@ class Usuarios extends Component
 
     public $tab_activo = 'listado';
 
+    protected UsuarioService $servicio;
+
+    public function boot(): void
+    {
+        $this->servicio = app(UsuarioService::class);
+    }
+
     protected function rules()
     {
-        // Construir regla de email dinámicamente
-        $emailRules = ['required', 'email'];
-
-        // Solo aplicar ignore() si estamos editando (usuario_id tiene valor)
-        if ($this->usuario_id) {
-            $emailRules[] = Rule::unique('usuarios', 'email')->ignore($this->usuario_id);
-        } else {
-            $emailRules[] = Rule::unique('usuarios', 'email');
-        }
-
-        return [
-            'nombre' => 'required|min:2',
-            'apellido' => 'required|min:2',
-            'email' => $emailRules,
-            'password' => $this->usuario_id ? 'nullable|min:6|confirmed' : 'required|min:6|confirmed',
-            'telefono' => 'nullable|string',
-            'activo' => 'required|boolean',
-        ];
+        return $this->servicio->reglas($this->usuario_id);
     }
 
     protected $messages = [
@@ -69,25 +57,8 @@ class Usuarios extends Component
     public function render()
     {
         return view('livewire.usuarios', [
-            'usuarios' => $this->cargarUsuarios(),
+            'usuarios' => $this->servicio->listar($this->busqueda),
         ]);
-    }
-
-    public function cargarUsuarios()
-    {
-        $query = Usuario::withTrashed();
-
-        if ($this->busqueda) {
-            $busq = $this->busqueda;
-            $query->where(function ($q) use ($busq) {
-                $q->where('nombre', 'ILIKE', '%'.$busq.'%')
-                    ->orWhere('apellido', 'ILIKE', '%'.$busq.'%')
-                    ->orWhere('email', 'ILIKE', '%'.$busq.'%')
-                    ->orWhere('telefono', 'ILIKE', '%'.$busq.'%');
-            });
-        }
-
-        return $query->orderBy('id', 'desc')->paginate(15);
     }
 
     public function updatedBusqueda()
@@ -99,27 +70,15 @@ class Usuarios extends Component
     {
         $this->validate();
 
-        $data = [
+        $this->servicio->crearOActualizar($this->usuario_id, [
             'nombre' => $this->nombre,
             'apellido' => $this->apellido,
             'email' => $this->email,
             'telefono' => $this->telefono,
-        ];
-
-        if ($this->password) {
-            $data['password'] = Hash::make($this->password);
-        }
-
-        $usuario = Usuario::updateOrCreate(
-            ['id' => $this->usuario_id],
-            $data
-        );
-
-        if ($this->activo == 0 && ! $usuario->trashed()) {
-            $usuario->delete();
-        } elseif ($this->activo == 1 && $usuario->trashed()) {
-            $usuario->restore();
-        }
+            'password' => $this->password,
+            'password_confirmation' => $this->password_confirmation,
+            'activo' => $this->activo,
+        ]);
 
         session()->flash('message', $this->usuario_id ? 'Usuario actualizado correctamente.' : 'Usuario creado correctamente.');
         $this->tab_activo = 'listado';
@@ -130,7 +89,7 @@ class Usuarios extends Component
     public function editar($id)
     {
         $this->tab_activo = 'nuevo';
-        $usuario = Usuario::findOrFail($id);
+        $usuario = $this->servicio->obtener($id);
         $this->usuario_id = $usuario->id;
         $this->nombre = $usuario->nombre;
         $this->apellido = $usuario->apellido;
@@ -141,7 +100,7 @@ class Usuarios extends Component
 
     public function eliminar($id)
     {
-        Usuario::findOrFail($id)->delete();
+        $this->servicio->eliminar($id);
         session()->flash('message', 'Usuario eliminado correctamente.');
     }
 
