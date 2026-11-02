@@ -102,7 +102,7 @@
                                     @enderror
                                 </td>
                                 <td class="text-right">
-                                    <x-ui.button variant="ghost" size="sm" icon="trash" wire:click="removeTareaRow({{ $i }})" @if($guardando) disabled @endif title="Eliminar" />
+                                    <x-ui.button variant="ghost" size="sm" icon="trash" wire:click="removeTareaRow($i)" :disabled="$guardando" title="Eliminar" />
                                 </td>
                             </tr>
                         @endforeach
@@ -111,7 +111,7 @@
                         <tr>
                             <td colspan="4" class="px-4 py-3">
                                 <div class="flex flex-wrap justify-between items-center">
-                                    <x-ui.button variant="secondary" icon="plus" wire:click="addTareaRow" @if($guardando) disabled @endif>
+                                    <x-ui.button variant="secondary" icon="plus" wire:click="addTareaRow" :disabled="$guardando">
                                         Agregar tarea
                                     </x-ui.button>
                                     <div class="text-tinta-suave text-sm">
@@ -131,7 +131,7 @@
         </div>
         <div class="flex justify-end gap-2 px-6 py-4 bg-blanco border-t border-arena">
             <x-ui.button variant="primary" icon="check"
-                type="button" wire:click="guardar" @if($guardando) disabled @endif>
+                type="button" wire:click="guardar" :disabled="$guardando">
                 Guardar y generar propuestas de asignación
             </x-ui.button>
         </div>
