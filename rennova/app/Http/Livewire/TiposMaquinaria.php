@@ -2,7 +2,7 @@
 
 namespace App\Http\Livewire;
 
-use App\Models\TipoMaquinaria;
+use App\Services\TipoMaquinariaService;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -18,6 +18,13 @@ class TiposMaquinaria extends Component
 
     public $tab_activo = 'listado';
 
+    protected TipoMaquinariaService $servicio;
+
+    public function boot(): void
+    {
+        $this->servicio = app(TipoMaquinariaService::class);
+    }
+
     protected $messages = [
         'nombre.required' => 'El nombre es obligatorio.',
         'nombre.min' => 'El nombre debe tener al menos 3 caracteres.',
@@ -26,32 +33,14 @@ class TiposMaquinaria extends Component
 
     protected function rules()
     {
-        return [
-            'nombre' => [
-                'required',
-                'min:3',
-                'unique:tipo_maquinarias,nombre,'.($this->tipo_id ?? 'NULL').',id_tipo_maquinaria',
-            ],
-        ];
+        return $this->servicio->reglas($this->tipo_id);
     }
 
     public function render()
     {
         return view('livewire.tipos-maquinaria', [
-            'tipos' => $this->cargarTipos(),
+            'tipos' => $this->servicio->listar($this->busqueda),
         ]);
-    }
-
-    public function cargarTipos()
-    {
-        $query = TipoMaquinaria::query();
-
-        if ($this->busqueda) {
-            $busq = $this->busqueda;
-            $query->where('nombre', 'ILIKE', '%'.$busq.'%');
-        }
-
-        return $query->orderBy('id_tipo_maquinaria', 'desc')->paginate(15);
     }
 
     public function updatedBusqueda()
@@ -63,12 +52,9 @@ class TiposMaquinaria extends Component
     {
         $this->validate();
 
-        TipoMaquinaria::updateOrCreate(
-            ['id_tipo_maquinaria' => $this->tipo_id],
-            [
-                'nombre' => $this->nombre,
-            ]
-        );
+        $this->servicio->crearOActualizar($this->tipo_id, [
+            'nombre' => $this->nombre,
+        ]);
 
         session()->flash('message', $this->tipo_id ? 'Tipo actualizado correctamente.' : 'Tipo creado correctamente.');
         $this->tab_activo = 'listado';
@@ -79,14 +65,14 @@ class TiposMaquinaria extends Component
     public function editar($id)
     {
         $this->tab_activo = 'nuevo';
-        $tipo = TipoMaquinaria::findOrFail($id);
+        $tipo = $this->servicio->obtener($id);
         $this->tipo_id = $tipo->id_tipo_maquinaria;
         $this->nombre = $tipo->nombre;
     }
 
     public function eliminar($id)
     {
-        TipoMaquinaria::findOrFail($id)->delete();
+        $this->servicio->eliminar($id);
         session()->flash('message', 'Tipo eliminado correctamente.');
     }
 

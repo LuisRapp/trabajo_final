@@ -2,8 +2,7 @@
 
 namespace App\Http\Livewire;
 
-use App\Models\Chofer;
-use App\Models\Cliente;
+use App\Services\ChoferService;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -29,49 +28,25 @@ class Choferes extends Component
 
     public $direccion;
 
-    public $estado = true; // tratar como booleano
+    public $estado = true;
 
     public $busqueda = '';
 
+    protected ChoferService $servicio;
+
+    public function boot(): void
+    {
+        $this->servicio = app(ChoferService::class);
+    }
+
     protected function rules()
     {
-        $id = $this->chofer_id ?? 'NULL';
-
-        return [
-            'id_cliente' => 'required|exists:clientes,id_cliente',
-            'apellido' => 'required|string|max:100',
-            'nombre' => 'required|string|max:100',
-            'dni' => 'required|string|max:20|unique:choferes,dni,'.$id.',id_chofer',
-            'telefono' => 'nullable|string|max:30',
-            'direccion' => 'nullable|string|max:150',
-            'estado' => 'boolean',
-        ];
+        return $this->servicio->reglas($this->chofer_id);
     }
 
     public function mount()
     {
-        $this->clientes = Cliente::orderBy('razon_social')->get();
-    }
-
-    public function cargarChoferes()
-    {
-        $query = Chofer::with('cliente');
-
-        if ($this->busqueda) {
-            $busq = $this->busqueda;
-            $query->where(function ($q) use ($busq) {
-                $q->where('apellido', 'ILIKE', "%{$busq}%")
-                    ->orWhere('nombre', 'ILIKE', "%{$busq}%")
-                    ->orWhere('dni', 'ILIKE', "%{$busq}%")
-                    ->orWhere('telefono', 'ILIKE', "%{$busq}%")
-                    ->orWhere('direccion', 'ILIKE', "%{$busq}%")
-                    ->orWhereHas('cliente', function ($qr) use ($busq) {
-                        $qr->where('razon_social', 'ILIKE', "%{$busq}%");
-                    });
-            });
-        }
-
-        return $query->orderByDesc('id_chofer')->paginate(15);
+        $this->clientes = $this->servicio->listarClientes();
     }
 
     public function updatedBusqueda()
@@ -82,7 +57,7 @@ class Choferes extends Component
     public function render()
     {
         return view('livewire.choferes', [
-            'choferes' => $this->cargarChoferes(),
+            'choferes' => $this->servicio->listar($this->busqueda),
         ]);
     }
 
@@ -90,18 +65,15 @@ class Choferes extends Component
     {
         $this->validate();
 
-        Chofer::updateOrCreate(
-            ['id_chofer' => $this->chofer_id],
-            [
-                'id_cliente' => $this->id_cliente,
-                'apellido' => $this->apellido,
-                'nombre' => $this->nombre,
-                'dni' => $this->dni,
-                'telefono' => $this->telefono,
-                'direccion' => $this->direccion,
-                'estado' => (bool) $this->estado,
-            ]
-        );
+        $this->servicio->crearOActualizar($this->chofer_id, [
+            'id_cliente' => $this->id_cliente,
+            'apellido' => $this->apellido,
+            'nombre' => $this->nombre,
+            'dni' => $this->dni,
+            'telefono' => $this->telefono,
+            'direccion' => $this->direccion,
+            'estado' => $this->estado,
+        ]);
 
         session()->flash('message', $this->chofer_id ? 'Chofer actualizado correctamente.' : 'Chofer creado correctamente.');
         $this->tab_activo = 'listado';
@@ -112,7 +84,7 @@ class Choferes extends Component
     public function editar($id)
     {
         $this->tab_activo = 'nuevo';
-        $chofer = Chofer::findOrFail($id);
+        $chofer = $this->servicio->obtener($id);
         $this->chofer_id = $chofer->id_chofer;
         $this->id_cliente = $chofer->id_cliente;
         $this->apellido = $chofer->apellido;
@@ -125,7 +97,7 @@ class Choferes extends Component
 
     public function eliminar($id)
     {
-        Chofer::findOrFail($id)->delete();
+        $this->servicio->eliminar($id);
         session()->flash('message', 'Chofer eliminado correctamente.');
         $this->resetCampos();
     }

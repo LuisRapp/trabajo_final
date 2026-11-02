@@ -2,7 +2,7 @@
 
 namespace App\Http\Livewire;
 
-use App\Models\TipoMantenimiento as TipoMantenimientoModel;
+use App\Services\TipoMantenimientoService;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -18,13 +18,16 @@ class TipoMantenimiento extends Component
 
     public $tab_activo = 'listado';
 
+    protected TipoMantenimientoService $servicio;
+
+    public function boot(): void
+    {
+        $this->servicio = app(TipoMantenimientoService::class);
+    }
+
     protected function rules(): array
     {
-        return [
-            'nombre' => $this->tipo_id
-                ? 'required|min:3|unique:tipo_mantenimientos,nombre,'.$this->tipo_id.',id_tipo_mantenimiento'
-                : 'required|min:3|unique:tipo_mantenimientos,nombre',
-        ];
+        return $this->servicio->reglas($this->tipo_id);
     }
 
     protected $messages = [
@@ -36,20 +39,8 @@ class TipoMantenimiento extends Component
     public function render()
     {
         return view('livewire.tipo-mantenimiento', [
-            'tipos' => $this->cargarTipos(),
+            'tipos' => $this->servicio->listar($this->busqueda),
         ]);
-    }
-
-    public function cargarTipos()
-    {
-        $query = TipoMantenimientoModel::query();
-
-        if ($this->busqueda) {
-            $busq = $this->busqueda;
-            $query->where('nombre', 'ILIKE', '%'.$busq.'%');
-        }
-
-        return $query->orderBy('id_tipo_mantenimiento', 'desc')->paginate(15);
     }
 
     public function updatedBusqueda()
@@ -61,10 +52,9 @@ class TipoMantenimiento extends Component
     {
         $this->validate();
 
-        TipoMantenimientoModel::updateOrCreate(
-            ['id_tipo_mantenimiento' => $this->tipo_id],
-            ['nombre' => $this->nombre]
-        );
+        $this->servicio->crearOActualizar($this->tipo_id, [
+            'nombre' => $this->nombre,
+        ]);
 
         session()->flash('message', $this->tipo_id ? 'Tipo actualizado correctamente.' : 'Tipo creado correctamente.');
         $this->tab_activo = 'listado';
@@ -75,15 +65,14 @@ class TipoMantenimiento extends Component
     public function editar($id)
     {
         $this->tab_activo = 'nuevo';
-        $tipo = TipoMantenimientoModel::findOrFail($id);
+        $tipo = $this->servicio->obtener($id);
         $this->tipo_id = $tipo->id_tipo_mantenimiento;
         $this->nombre = $tipo->nombre;
     }
 
     public function eliminar($id)
     {
-        $tipo = TipoMantenimientoModel::findOrFail($id);
-        $tipo->delete();
+        $this->servicio->eliminar($id);
         session()->flash('message', 'Tipo de mantenimiento dado de baja.');
     }
 

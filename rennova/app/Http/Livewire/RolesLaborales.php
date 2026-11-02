@@ -2,7 +2,7 @@
 
 namespace App\Http\Livewire;
 
-use App\Models\RolLaboral;
+use App\Services\RolLaboralService;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -18,13 +18,16 @@ class RolesLaborales extends Component
 
     public $tab_activo = 'listado';
 
+    protected RolLaboralService $servicio;
+
+    public function boot(): void
+    {
+        $this->servicio = app(RolLaboralService::class);
+    }
+
     protected function rules(): array
     {
-        return [
-            'nombre' => $this->rol_id
-                ? 'required|min:3|unique:roles_laborales,nombre,'.$this->rol_id.',id_rol_laboral'
-                : 'required|min:3|unique:roles_laborales,nombre',
-        ];
+        return $this->servicio->reglas($this->rol_id);
     }
 
     protected $messages = [
@@ -36,20 +39,8 @@ class RolesLaborales extends Component
     public function render()
     {
         return view('livewire.roles-laborales', [
-            'roles' => $this->cargarRoles(),
+            'roles' => $this->servicio->listar($this->busqueda),
         ]);
-    }
-
-    public function cargarRoles()
-    {
-        $query = RolLaboral::query();
-
-        if ($this->busqueda) {
-            $busq = $this->busqueda;
-            $query->where('nombre', 'ILIKE', '%'.$busq.'%');
-        }
-
-        return $query->orderBy('id_rol_laboral', 'desc')->paginate(15);
     }
 
     public function updatedBusqueda()
@@ -61,10 +52,9 @@ class RolesLaborales extends Component
     {
         $this->validate();
 
-        RolLaboral::updateOrCreate(
-            ['id_rol_laboral' => $this->rol_id],
-            ['nombre' => $this->nombre]
-        );
+        $this->servicio->crearOActualizar($this->rol_id, [
+            'nombre' => $this->nombre,
+        ]);
 
         session()->flash('message', $this->rol_id ? 'Rol actualizado correctamente.' : 'Rol creado correctamente.');
         $this->tab_activo = 'listado';
@@ -75,14 +65,14 @@ class RolesLaborales extends Component
     public function editar($id)
     {
         $this->tab_activo = 'nuevo';
-        $rol = RolLaboral::findOrFail($id);
+        $rol = $this->servicio->obtener($id);
         $this->rol_id = $rol->id_rol_laboral;
         $this->nombre = $rol->nombre;
     }
 
     public function eliminar($id)
     {
-        RolLaboral::findOrFail($id)->delete();
+        $this->servicio->eliminar($id);
         session()->flash('message', 'Rol eliminado correctamente.');
     }
 

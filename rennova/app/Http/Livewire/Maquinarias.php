@@ -2,8 +2,7 @@
 
 namespace App\Http\Livewire;
 
-use App\Models\Maquinaria;
-use App\Models\TipoMaquinaria;
+use App\Services\MaquinariaService;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -31,14 +30,17 @@ class Maquinarias extends Component
 
     public $tab_activo = 'listado';
 
-    protected $rules = [
-        'id_tipo_maquinaria' => 'required|exists:tipo_maquinarias,id_tipo_maquinaria',
-        'modelo' => 'required|min:2',
-        'estado' => 'required|in:disponible,asignada,en_mantenimiento',
-        'es_alquilada' => 'required|boolean',
-        'fecha_inicio_actividades' => 'required|date',
-        'umbral_toneladas' => 'nullable|numeric|min:0',
-    ];
+    protected MaquinariaService $servicio;
+
+    public function boot(): void
+    {
+        $this->servicio = app(MaquinariaService::class);
+    }
+
+    protected function rules(): array
+    {
+        return $this->servicio->reglas();
+    }
 
     protected $messages = [
         'id_tipo_maquinaria.required' => 'Debe seleccionar un tipo de maquinaria.',
@@ -53,32 +55,14 @@ class Maquinarias extends Component
 
     public function mount()
     {
-        $this->tipos = TipoMaquinaria::all();
+        $this->tipos = $this->servicio->listarTipos();
     }
 
     public function render()
     {
         return view('livewire.maquinarias', [
-            'maquinarias' => $this->cargarMaquinarias(),
+            'maquinarias' => $this->servicio->listar($this->busqueda),
         ]);
-    }
-
-    public function cargarMaquinarias()
-    {
-        $query = Maquinaria::with('tipoMaquinaria');
-
-        if ($this->busqueda) {
-            $busq = $this->busqueda;
-            $query->where(function ($q) use ($busq) {
-                $q->where('modelo', 'ILIKE', '%'.$busq.'%')
-                    ->orWhere('estado', 'ILIKE', '%'.$busq.'%')
-                    ->orWhereHas('tipoMaquinaria', function ($qt) use ($busq) {
-                        $qt->where('nombre', 'ILIKE', '%'.$busq.'%');
-                    });
-            });
-        }
-
-        return $query->orderBy('id_maquinaria', 'desc')->paginate(15);
     }
 
     public function updatedBusqueda()
@@ -90,17 +74,14 @@ class Maquinarias extends Component
     {
         $this->validate();
 
-        Maquinaria::updateOrCreate(
-            ['id_maquinaria' => $this->maquinaria_id],
-            [
-                'id_tipo_maquinaria' => $this->id_tipo_maquinaria,
-                'modelo' => $this->modelo,
-                'estado' => $this->estado,
-                'es_alquilada' => $this->es_alquilada,
-                'fecha_inicio_actividades' => $this->fecha_inicio_actividades,
-                'umbral_toneladas' => $this->umbral_toneladas,
-            ]
-        );
+        $this->servicio->crearOActualizar($this->maquinaria_id, [
+            'id_tipo_maquinaria' => $this->id_tipo_maquinaria,
+            'modelo' => $this->modelo,
+            'estado' => $this->estado,
+            'es_alquilada' => $this->es_alquilada,
+            'fecha_inicio_actividades' => $this->fecha_inicio_actividades,
+            'umbral_toneladas' => $this->umbral_toneladas,
+        ]);
 
         session()->flash('message', $this->maquinaria_id ? 'Maquinaria actualizada correctamente.' : 'Maquinaria creada correctamente.');
         $this->tab_activo = 'listado';
@@ -111,7 +92,7 @@ class Maquinarias extends Component
     public function editar($id)
     {
         $this->tab_activo = 'nuevo';
-        $maquinaria = Maquinaria::findOrFail($id);
+        $maquinaria = $this->servicio->obtener($id);
         $this->maquinaria_id = $maquinaria->id_maquinaria;
         $this->id_tipo_maquinaria = $maquinaria->id_tipo_maquinaria;
         $this->modelo = $maquinaria->modelo;
@@ -123,7 +104,7 @@ class Maquinarias extends Component
 
     public function eliminar($id)
     {
-        Maquinaria::findOrFail($id)->delete();
+        $this->servicio->eliminar($id);
         session()->flash('message', 'Maquinaria eliminada correctamente.');
     }
 

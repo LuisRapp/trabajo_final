@@ -2,7 +2,7 @@
 
 namespace App\Http\Livewire;
 
-use App\Models\UnidadMedida;
+use App\Services\UnidadMedidaService;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -20,14 +20,16 @@ class UnidadesMedida extends Component
 
     public $tab_activo = 'listado';
 
+    protected UnidadMedidaService $servicio;
+
+    public function boot(): void
+    {
+        $this->servicio = app(UnidadMedidaService::class);
+    }
+
     protected function rules(): array
     {
-        return [
-            'nombre' => $this->unidad_id
-                ? 'required|min:2|unique:unidad_medidas,nombre,'.$this->unidad_id.',id_unidad_medida'
-                : 'required|min:2|unique:unidad_medidas,nombre',
-            'abreviatura' => 'required|max:10',
-        ];
+        return $this->servicio->reglas($this->unidad_id);
     }
 
     protected $messages = [
@@ -41,23 +43,8 @@ class UnidadesMedida extends Component
     public function render()
     {
         return view('livewire.unidades-medida', [
-            'unidades' => $this->cargarUnidades(),
+            'unidades' => $this->servicio->listar($this->busqueda),
         ]);
-    }
-
-    public function cargarUnidades()
-    {
-        $query = UnidadMedida::query();
-
-        if ($this->busqueda) {
-            $busq = $this->busqueda;
-            $query->where(function ($q) use ($busq) {
-                $q->where('nombre', 'ILIKE', '%'.$busq.'%')
-                    ->orWhere('abreviatura', 'ILIKE', '%'.$busq.'%');
-            });
-        }
-
-        return $query->orderBy('id_unidad_medida', 'desc')->paginate(15);
     }
 
     public function updatedBusqueda()
@@ -69,13 +56,10 @@ class UnidadesMedida extends Component
     {
         $this->validate();
 
-        UnidadMedida::updateOrCreate(
-            ['id_unidad_medida' => $this->unidad_id],
-            [
-                'nombre' => $this->nombre,
-                'abreviatura' => $this->abreviatura,
-            ]
-        );
+        $this->servicio->crearOActualizar($this->unidad_id, [
+            'nombre' => $this->nombre,
+            'abreviatura' => $this->abreviatura,
+        ]);
 
         session()->flash('message', $this->unidad_id ? 'Unidad actualizada correctamente.' : 'Unidad creada correctamente.');
         $this->tab_activo = 'listado';
@@ -86,7 +70,7 @@ class UnidadesMedida extends Component
     public function editar($id)
     {
         $this->tab_activo = 'nuevo';
-        $unidad = UnidadMedida::findOrFail($id);
+        $unidad = $this->servicio->obtener($id);
         $this->unidad_id = $unidad->id_unidad_medida;
         $this->nombre = $unidad->nombre;
         $this->abreviatura = $unidad->abreviatura;
@@ -94,7 +78,7 @@ class UnidadesMedida extends Component
 
     public function eliminar($id)
     {
-        UnidadMedida::findOrFail($id)->delete();
+        $this->servicio->eliminar($id);
         session()->flash('message', 'Unidad eliminada correctamente.');
     }
 
