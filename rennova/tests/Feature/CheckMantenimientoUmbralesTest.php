@@ -24,7 +24,7 @@ test('check-umbrales genera orden y notificacion interna al superarse el umbral'
     ]);
 
     $maquinaria = Maquinaria::factory()->create([
-        'estado' => 'operativa',
+        'estado' => 'disponible',
         'umbral_toneladas' => 1000,
         'toneladas_acumuladas' => 1500,
     ]);
@@ -48,7 +48,7 @@ test('check-umbrales genera orden y notificacion interna al superarse el umbral'
 
 test('check-umbrales no genera orden cuando ya existe una orden abierta', function () {
     $maquinaria = Maquinaria::factory()->create([
-        'estado' => 'operativa',
+        'estado' => 'disponible',
         'umbral_toneladas' => 1000,
         'toneladas_acumuladas' => 1500,
     ]);
@@ -68,7 +68,7 @@ test('check-umbrales no genera orden cuando ya existe una orden abierta', functi
 
 test('check-umbrales no genera orden por debajo del umbral', function () {
     $maquinaria = Maquinaria::factory()->create([
-        'estado' => 'operativa',
+        'estado' => 'disponible',
         'umbral_toneladas' => 1000,
         'toneladas_acumuladas' => 400,
     ]);
@@ -83,7 +83,7 @@ test('check-umbrales no genera orden por debajo del umbral', function () {
 });
 
 test('los items de las propuestas de compra usan baja logica', function () {
-    $maquinaria = Maquinaria::factory()->create(['estado' => 'operativa']);
+    $maquinaria = Maquinaria::factory()->create(['estado' => 'disponible']);
     $mantenimiento = Mantenimiento::factory()->programado()->create([
         'id_maquinaria' => $maquinaria->id_maquinaria,
     ]);

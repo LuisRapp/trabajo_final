@@ -19,7 +19,7 @@ test('puede crear una maquinaria', function () {
         ->test(Maquinarias::class)
         ->set('id_tipo_maquinaria', $tipo->id_tipo_maquinaria)
         ->set('modelo', 'JD-5500')
-        ->set('estado', 'operativa')
+        ->set('estado', 'disponible')
         ->set('es_alquilada', false)
         ->set('fecha_inicio_actividades', '2020-01-01')
         ->set('umbral_toneladas', 10000)
@@ -30,7 +30,7 @@ test('puede crear una maquinaria', function () {
 });
 
 test('puede editar una maquinaria', function () {
-    $maquinaria = Maquinaria::factory()->create(['estado' => 'operativa']);
+    $maquinaria = Maquinaria::factory()->create();
 
     Livewire::actingAs(Usuario::factory()->create())
         ->test(Maquinarias::class)

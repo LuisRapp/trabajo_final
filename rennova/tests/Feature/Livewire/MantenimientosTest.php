@@ -40,8 +40,8 @@ class MantenimientosTest extends TestCase
 
     public function test_mount_loads_maquinarias_activas(): void
     {
-        $activa = Maquinaria::factory()->create(['estado' => 'activo', 'modelo' => 'CAT-001']);
-        $mantenimiento = Maquinaria::factory()->create(['estado' => 'mantenimiento', 'modelo' => 'JD-002']);
+        $activa = Maquinaria::factory()->create(['estado' => 'disponible', 'modelo' => 'CAT-001']);
+        $mantenimiento = Maquinaria::factory()->create(['estado' => 'en_mantenimiento', 'modelo' => 'JD-002']);
         $baja = Maquinaria::factory()->create(['estado' => 'dado_de_baja', 'modelo' => 'VOL-003']);
 
         $component = Livewire::actingAs($this->usuario)
@@ -74,7 +74,7 @@ class MantenimientosTest extends TestCase
 
     public function test_crear_mantenimiento_preventivo(): void
     {
-        $maquinaria = Maquinaria::factory()->create(['estado' => 'activo']);
+        $maquinaria = Maquinaria::factory()->create(['estado' => 'disponible']);
         $tipo = TipoMantenimiento::factory()->preventivo()->create();
 
         Livewire::actingAs($this->usuario)
@@ -94,7 +94,7 @@ class MantenimientosTest extends TestCase
 
     public function test_crear_mantenimiento_correctivo(): void
     {
-        $maquinaria = Maquinaria::factory()->create(['estado' => 'activo']);
+        $maquinaria = Maquinaria::factory()->create(['estado' => 'disponible']);
         $tipo = TipoMantenimiento::factory()->correctivo()->create();
 
         Livewire::actingAs($this->usuario)
@@ -131,7 +131,7 @@ class MantenimientosTest extends TestCase
 
     public function test_validacion_fecha_programada_despues_de_fecha_inicio(): void
     {
-        $maquinaria = Maquinaria::factory()->create(['estado' => 'activo']);
+        $maquinaria = Maquinaria::factory()->create(['estado' => 'disponible']);
         $tipo = TipoMantenimiento::factory()->create();
 
         Livewire::actingAs($this->usuario)
@@ -165,7 +165,7 @@ class MantenimientosTest extends TestCase
 
     public function test_editar_carga_datos_en_formulario(): void
     {
-        $maquinaria = Maquinaria::factory()->create(['estado' => 'activo', 'modelo' => 'EDIT-TEST']);
+        $maquinaria = Maquinaria::factory()->create(['estado' => 'disponible', 'modelo' => 'EDIT-TEST']);
         $tipo = TipoMantenimiento::factory()->preventivo()->create();
 
         $mantenimiento = Mantenimiento::factory()->create([
@@ -316,7 +316,7 @@ class MantenimientosTest extends TestCase
             $this->markTestSkipped('ILIKE operator not supported on SQLite.');
         }
 
-        $maquinaria = Maquinaria::factory()->create(['estado' => 'activo', 'modelo' => 'BUSCAR-TEST-123']);
+        $maquinaria = Maquinaria::factory()->create(['estado' => 'disponible', 'modelo' => 'BUSCAR-TEST-123']);
         $tipo = TipoMantenimiento::factory()->create();
 
         $mantenimiento = Mantenimiento::factory()->create([
@@ -324,7 +324,7 @@ class MantenimientosTest extends TestCase
             'id_tipo_mantenimiento' => $tipo->id_tipo_mantenimiento,
         ]);
 
-        $otraMaquinaria = Maquinaria::factory()->create(['estado' => 'activo', 'modelo' => 'OTRO-MODELO']);
+        $otraMaquinaria = Maquinaria::factory()->create(['estado' => 'disponible', 'modelo' => 'OTRO-MODELO']);
         $otro = Mantenimiento::factory()->create([
             'id_maquinaria' => $otraMaquinaria->id_maquinaria,
             'id_tipo_mantenimiento' => $tipo->id_tipo_mantenimiento,
@@ -375,7 +375,7 @@ class MantenimientosTest extends TestCase
 
     public function test_validacion_tipo_mantenimiento_debe_existir(): void
     {
-        $maquinaria = Maquinaria::factory()->create(['estado' => 'activo']);
+        $maquinaria = Maquinaria::factory()->create(['estado' => 'disponible']);
 
         Livewire::actingAs($this->usuario)
             ->test(Mantenimientos::class)
@@ -393,7 +393,7 @@ class MantenimientosTest extends TestCase
 
     public function test_seleccionar_maquinaria_y_tipo_preventivo_carga_kit(): void
     {
-        $maquinaria = Maquinaria::factory()->create(['estado' => 'activo']);
+        $maquinaria = Maquinaria::factory()->create(['estado' => 'disponible']);
         $insumo = Insumo::factory()->create(['nombre' => 'Aceite Kit Test']);
         $tipo = TipoMantenimiento::factory()->preventivo()->create();
 
@@ -415,7 +415,7 @@ class MantenimientosTest extends TestCase
 
     public function test_seleccionar_tipo_correctivo_no_carga_kit(): void
     {
-        $maquinaria = Maquinaria::factory()->create(['estado' => 'activo']);
+        $maquinaria = Maquinaria::factory()->create(['estado' => 'disponible']);
         $insumo = Insumo::factory()->create();
         $tipo = TipoMantenimiento::factory()->correctivo()->create();
 
@@ -435,7 +435,7 @@ class MantenimientosTest extends TestCase
 
     public function test_kit_preventivo_vacio_no_rompe_componente(): void
     {
-        $maquinaria = Maquinaria::factory()->create(['estado' => 'activo']);
+        $maquinaria = Maquinaria::factory()->create(['estado' => 'disponible']);
         $tipo = TipoMantenimiento::factory()->preventivo()->create();
 
         Livewire::actingAs($this->usuario)
@@ -452,7 +452,7 @@ class MantenimientosTest extends TestCase
 
     public function test_crear_mantenimiento_marca_notificacion_como_accionada(): void
     {
-        $maquinaria = Maquinaria::factory()->create(['estado' => 'activo']);
+        $maquinaria = Maquinaria::factory()->create(['estado' => 'disponible']);
         $tipo = TipoMantenimiento::factory()->preventivo()->create();
 
         $this->be($this->usuario);
@@ -521,7 +521,7 @@ class MantenimientosTest extends TestCase
 
     public function test_validacion_fecha_programada_dentro_de_7_dias_desde_notificacion(): void
     {
-        $maquinaria = Maquinaria::factory()->create(['estado' => 'activo']);
+        $maquinaria = Maquinaria::factory()->create(['estado' => 'disponible']);
         $tipo = TipoMantenimiento::factory()->preventivo()->create();
 
         $this->be($this->usuario);
@@ -549,7 +549,7 @@ class MantenimientosTest extends TestCase
 
     public function test_validacion_fecha_programada_dentro_de_7_dias_desde_hoy_si_no_hay_notificacion(): void
     {
-        $maquinaria = Maquinaria::factory()->create(['estado' => 'activo']);
+        $maquinaria = Maquinaria::factory()->create(['estado' => 'disponible']);
         $tipo = TipoMantenimiento::factory()->preventivo()->create();
 
         Livewire::actingAs($this->usuario)

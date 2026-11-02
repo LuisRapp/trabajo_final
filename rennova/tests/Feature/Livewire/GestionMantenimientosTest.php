@@ -551,8 +551,8 @@ class GestionMantenimientosTest extends TestCase
 
     public function test_computed_maquinarias_solo_activas(): void
     {
-        $maqActiva = Maquinaria::factory()->create(['estado' => 'activo']);
-        $maqMantenimiento = Maquinaria::factory()->create(['estado' => 'mantenimiento']);
+        $maqActiva = Maquinaria::factory()->create(['estado' => 'disponible']);
+        $maqMantenimiento = Maquinaria::factory()->create(['estado' => 'en_mantenimiento']);
 
         $this->mockService();
 

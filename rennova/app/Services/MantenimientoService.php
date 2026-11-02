@@ -384,7 +384,7 @@ class MantenimientoService
     public function obtenerMaquinariasActivasParaFiltro(): Collection
     {
         return Maquinaria::with('tipoMaquinaria')
-            ->where('estado', 'activo')
+            ->whereIn('estado', ['disponible', 'asignada'])
             ->orderBy('modelo')
             ->get();
     }

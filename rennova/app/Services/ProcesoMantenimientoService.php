@@ -49,7 +49,7 @@ class ProcesoMantenimientoService
         return Maquinaria::query()
             ->with('tipoMaquinaria')
             ->whereNotNull('umbral_toneladas')
-            ->whereIn('estado', ['operativa', 'activo'])
+            ->whereIn('estado', ['disponible', 'asignada'])
             ->when($maquinariaId, fn ($q) => $q->where('id_maquinaria', $maquinariaId))
             ->get();
     }

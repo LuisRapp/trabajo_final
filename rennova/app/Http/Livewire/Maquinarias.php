@@ -34,7 +34,7 @@ class Maquinarias extends Component
     protected $rules = [
         'id_tipo_maquinaria' => 'required|exists:tipo_maquinarias,id_tipo_maquinaria',
         'modelo' => 'required|min:2',
-        'estado' => 'required|in:operativa,en_mantenimiento,fuera_de_servicio',
+        'estado' => 'required|in:disponible,asignada,en_mantenimiento',
         'es_alquilada' => 'required|boolean',
         'fecha_inicio_actividades' => 'required|date',
         'umbral_toneladas' => 'nullable|numeric|min:0',
