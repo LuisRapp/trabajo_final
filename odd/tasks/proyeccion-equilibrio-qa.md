@@ -18,15 +18,16 @@ Rama: feat/proyeccion-equilibrio-qa · Entrega: ask-on-risk · Test runner: php 
 
 ## Tasks
 
-- T1 (S1) — Carbon::setLocale('es') global + test de locale. Ruta: inline.
-- T2 (S2) — Mover flux:modal "Crear tarea rápida" fuera del x-show paso===3. Ruta: inline.
-- T3 (S3) — Copy amigable de fallback (ClimaOperativoService, ClimaPersistenciaService, blade). Ruta: inline.
-- T4 (S4) — Día caído no exige tarea (PartesDiarios::rules + validarPaso1). Ruta: inline.
-- T5 (S5) — Cargas elige lote por nombre/propietario (cargas.blade.php + Cargas.php). Ruta: inline.
-- T6 (S6-S10) — Proyección global + objetivo automático + alerta; tests de regresión S6 y S10. Ruta: inline.
+- T1 (S1) — Carbon::setLocale('es') global + test de locale. Ruta: inline. ✅ commit 7564187.
+- T2 (S2) — Mover flux:modal "Crear tarea rápida" fuera del x-show paso===3. Ruta: inline. ✅ commit fd485cc.
+- T3 (S3) — Copy amigable de fallback (ClimaOperativoService, ClimaPersistenciaService, blade). Ruta: inline. ✅ commit fd485cc.
+- T4 (S4) — Día caído no exige tarea (PartesDiarios::rules + validarPaso1). Ruta: inline. ✅ commit fd485cc.
+- T5 (S5) — Cargas elige lote por nombre/propietario (cargas.blade.php). Ruta: inline. ✅ commit fd485cc.
+- T6 (S6-S10) — Proyección global + objetivo automático + alerta; tests de regresión. Ruta: inline. ✅ commit ff26409.
 
 ## Log
 
 - L1 (request original, verbatim): "cosas que vi: los dias en el dash principal se muestran en ingles no en espanol / los sabados y domingos no se pueden tomar como dias productivos porque justamente son dias no laborales / el boton de agregar tarea cuando un lote no tiene tarea en el parte diario no funciona / Fallback: sin datos de API ... me parece poco explicativa para un usuario final / si marco dia caido igual me exige una tarea / en la pantalla para crear cargas me permite elegir los lotes por id en lugar de por nombre / ... no podrias automatizar su deteccion y correccion?"
 - L2 (2026-11-02): Decisiones — override de finde se mantiene; suma de toneladas real se mantiene (suma todo); proyección solo lun-vie; objetivo automático (punto de equilibrio); alcance GLOBAL (no por lote); alerta si corto; desglose por lote diferido.
 - L3 (2026-11-02): APP_LOCALE=en aunque toda la UI es español; fix = Carbon::setLocale('es') explícito (también arregla format('M Y') de reportes).
+- L4 (2026-11-02): Cierre T1-T6. Suite 517 passed / 9 skipped. Proyección verificada contra base real (objetivo 1575 tn vs proyección 1050 tn, 21 días hábiles). gga review falla por privacy settings del workspace (modelo pago bloqueado), commits pasan sin review — pendiente que el user habilite el endpoint.
