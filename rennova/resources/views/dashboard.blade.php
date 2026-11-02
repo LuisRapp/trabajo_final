@@ -15,7 +15,7 @@
         <livewire:selector-lote />
 
         {{-- Proyección mensual vs punto de equilibrio --}}
-        @if(!empty($proyeccion))
+        @if(!empty($proyeccion) && $proyeccion['objetivo_mensual_tn'] > 0)
             <x-ui.card class="p-5 mb-6">
                 <div class="flex flex-wrap items-center justify-between gap-4">
                     <div>
