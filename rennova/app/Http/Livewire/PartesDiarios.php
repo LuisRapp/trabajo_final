@@ -104,13 +104,15 @@ class PartesDiarios extends Component
 
         $rules = [
             'id_lote' => 'required|exists:lotes,id_lote',
-            'id_lote_tarea' => [
-                'required',
-                'integer',
-                \Illuminate\Validation\Rule::exists('lote_tareas', 'id_lote_tarea')->where(function ($q) {
-                    $q->where('id_lote', $this->id_lote);
-                }),
-            ],
+            'id_lote_tarea' => $this->es_dia_caido
+                ? ['nullable', 'integer']
+                : [
+                    'required',
+                    'integer',
+                    \Illuminate\Validation\Rule::exists('lote_tareas', 'id_lote_tarea')->where(function ($q) {
+                        $q->where('id_lote', $this->id_lote);
+                    }),
+                ],
             // Validar fecha: solo hoy o dentro de los últimos 7 días
             'fecha' => [
                 'required',
@@ -364,11 +366,14 @@ class PartesDiarios extends Component
     public function validarPaso1(): bool
     {
         $this->resetValidation();
-        $this->validate([
+        $reglas = [
             'id_lote' => 'required',
-            'id_lote_tarea' => 'required',
             'fecha' => 'required|date',
-        ]);
+        ];
+        if (! $this->es_dia_caido) {
+            $reglas['id_lote_tarea'] = 'required';
+        }
+        $this->validate($reglas);
 
         return true;
     }

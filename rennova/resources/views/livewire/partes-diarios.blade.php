@@ -114,6 +114,7 @@
                             </div>
                         </div>
 
+                        @if(!$es_dia_caido)
                         <div class="md:col-span-2">
                             <label class="block text-sm font-semibold text-tinta mb-2">Tarea del lote <span class="text-tierra">*</span></label>
                             <select wire:model.live="id_lote_tarea" wire:key="lote-tareas-{{ $id_lote }}" class="form-input @error('id_lote_tarea') ring-2 ring-tierra @enderror">
@@ -142,6 +143,7 @@
                                 </div>
                             @endif
                         </div>
+                        @endif
 
                         <div>
                             <label class="block text-sm font-semibold text-tinta mb-2">Día Caído</label>
@@ -176,7 +178,7 @@
                                         <x-ui.badge variant="neutral">Fin de semana</x-ui.badge>
                                     @endif
                                     @if($clima_fuente === 'fallback')
-                                        <x-ui.badge variant="warning">Fallback: sin datos de API</x-ui.badge>
+                                        <x-ui.badge variant="warning">Sin datos de clima</x-ui.badge>
                                     @endif
                                 </div>
                                 @if($clima_razon)
@@ -262,37 +264,6 @@
                     wire:key="movimiento-form-{{ $parte_id ?? 'new' }}"
                 />
 
-            <!-- MODAL: Crear Tarea Rápida -->
-            <flux:modal wire:model.live="mostrarModalTareaRapida" class="md:w-96">
-                <div class="space-y-4">
-                    <flux:heading size="lg">Crear Tarea Rápida</flux:heading>
-
-                    <div>
-                        <label class="block text-sm font-semibold text-tinta mb-2">Tipo <span class="text-tierra">*</span></label>
-                        <select wire:model.live="nueva_tarea_tipo_tarea" class="form-input">
-                            <option value="">Seleccione...</option>
-                            @foreach($this->taskTypes as $taskType)
-                                <option value="{{ $taskType->value }}" wire:key="option-{{ $taskType->value }}">{{ $taskType->label() }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-semibold text-tinta mb-2">Superficie (ha)</label>
-                        <input type="number" wire:model.live="nueva_tarea_superficie_afectada_ha" step="0.01" min="0"
-                            class="form-input"
-                            placeholder="(opcional)">
-                    </div>
-
-                    <div class="flex gap-3 justify-end pt-2">
-                        <x-ui.button variant="secondary" wire:click="$set('mostrarModalTareaRapida', false)">Cancelar</x-ui.button>
-                        <x-ui.button variant="primary" wire:click="crearTareaRapida" :disabled="!$nueva_tarea_tipo_tarea">
-                            Crear
-                        </x-ui.button>
-                    </div>
-                </div>
-            </flux:modal>
-
             <!-- BOTÓN GUARDAR -->
             <x-ui.card class="overflow-hidden">
                 <div class="p-6">
@@ -329,6 +300,37 @@
                 </div>
             </x-ui.card>
             </div>
+
+            <!-- MODAL: Crear Tarea Rápida (fuera de los pasos para que se abra siempre) -->
+            <flux:modal wire:model.live="mostrarModalTareaRapida" class="md:w-96">
+                <div class="space-y-4">
+                    <flux:heading size="lg">Crear Tarea Rápida</flux:heading>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-tinta mb-2">Tipo <span class="text-tierra">*</span></label>
+                        <select wire:model.live="nueva_tarea_tipo_tarea" class="form-input">
+                            <option value="">Seleccione...</option>
+                            @foreach($this->taskTypes as $taskType)
+                                <option value="{{ $taskType->value }}" wire:key="option-{{ $taskType->value }}">{{ $taskType->label() }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-tinta mb-2">Superficie (ha)</label>
+                        <input type="number" wire:model.live="nueva_tarea_superficie_afectada_ha" step="0.01" min="0"
+                            class="form-input"
+                            placeholder="(opcional)">
+                    </div>
+
+                    <div class="flex gap-3 justify-end pt-2">
+                        <x-ui.button variant="secondary" wire:click="$set('mostrarModalTareaRapida', false)">Cancelar</x-ui.button>
+                        <x-ui.button variant="primary" wire:click="crearTareaRapida" :disabled="!$nueva_tarea_tipo_tarea">
+                            Crear
+                        </x-ui.button>
+                    </div>
+                </div>
+            </flux:modal>
         </div>
         @endcanany
     @endif

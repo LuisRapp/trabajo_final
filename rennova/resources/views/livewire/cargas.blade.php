@@ -51,7 +51,7 @@
                                 class="form-input @error('id_lote') border-tierra bg-tierra-suave @enderror">
                                 <option value="">Seleccione...</option>
                                 @foreach($lotes as $lote)
-                                    <option value="{{ $lote->id_lote }}" wire:key="option-{{ $lote->id_lote }}">{{ $lote->id_lote }}</option>
+                                    <option value="{{ $lote->id_lote }}" wire:key="option-{{ $lote->id_lote }}">{{ $lote->propietario }} - {{ $lote->ubicacion }}</option>
                                 @endforeach
                             </select>
                             @error('id_lote') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
@@ -180,7 +180,7 @@
                             @forelse ($cargas as $carga)
                                 <tr wire:key="row-{{ $carga->id_carga }}">
                                     <td><x-ui.badge variant="neutral">{{ $carga->id_carga }}</x-ui.badge></td>
-                                    <td class="text-tinta-suave">{{ $carga->lote->id_lote ?? $carga->id_lote }}</td>
+                                    <td class="text-tinta-suave">{{ $carga->lote->propietario ?? ('Lote #'.$carga->lote->id_lote) }}</td>
                                     <td class="text-tinta-suave">{{ $carga->categoriaMadera->nombre ?? '-' }}</td>
                                     <td class="text-tinta-suave">
                                         @if($carga->chofer)

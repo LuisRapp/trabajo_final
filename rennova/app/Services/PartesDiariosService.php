@@ -22,10 +22,20 @@ class PartesDiariosService
      */
     public static function crearOActualizar(array $data): ParteDiario
     {
-        $tarea = LoteTarea::find($data['id_lote_tarea']);
+        $esDiaCaido = (bool) ($data['es_dia_caido'] ?? false);
 
-        if (! $tarea || (int) $tarea->id_lote !== (int) $data['id_lote']) {
-            throw new \InvalidArgumentException('La tarea seleccionada no corresponde al lote.');
+        if ($esDiaCaido) {
+            $idLoteTarea = null;
+            $tipoTarea = null;
+        } else {
+            $tarea = LoteTarea::find($data['id_lote_tarea'] ?? null);
+
+            if (! $tarea || (int) $tarea->id_lote !== (int) $data['id_lote']) {
+                throw new \InvalidArgumentException('La tarea seleccionada no corresponde al lote.');
+            }
+
+            $idLoteTarea = $tarea->id_lote_tarea;
+            $tipoTarea = (string) $tarea->tipo_tarea;
         }
 
         $overrideAplicado = ! (bool) $data['es_dia_caido'] && (bool) ($data['clima_override_confirmado'] ?? false);
@@ -46,9 +56,9 @@ class PartesDiariosService
             ['id_parte_diario' => $data['parte_id'] ?? null],
             [
                 'id_lote' => $data['id_lote'],
-                'id_lote_tarea' => $tarea->id_lote_tarea,
+                'id_lote_tarea' => $idLoteTarea,
                 'fecha' => $data['fecha'],
-                'tipo_tarea' => (string) $tarea->tipo_tarea,
+                'tipo_tarea' => $tipoTarea,
                 'es_dia_caido' => (bool) $data['es_dia_caido'],
                 'clima_override' => $overrideAplicado,
                 'clima_override_motivo' => $overrideMotivo,
