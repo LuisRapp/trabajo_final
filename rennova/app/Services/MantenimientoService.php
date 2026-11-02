@@ -140,7 +140,7 @@ class MantenimientoService
 
             return [
                 'success' => false,
-                'message' => 'Error al aprobar la orden: '.$e->getMessage(),
+                'message' => 'Error al aprobar la orden. Intente nuevamente o contacte al administrador.',
             ];
         }
     }
@@ -264,7 +264,7 @@ class MantenimientoService
 
             return [
                 'success' => false,
-                'message' => 'Error al completar el mantenimiento: '.$e->getMessage(),
+                'message' => 'Error al completar el mantenimiento. Intente nuevamente o contacte al administrador.',
             ];
         }
     }
@@ -552,7 +552,7 @@ class MantenimientoService
                 'success' => false,
                 'tipoNombre' => 'Mantenimiento',
                 'maquinaNombre' => '',
-                'message' => 'Error al guardar el mantenimiento: '.$e->getMessage(),
+                'message' => 'Error al guardar el mantenimiento. Intente nuevamente o contacte al administrador.',
             ];
         }
     }
@@ -611,7 +611,7 @@ class MantenimientoService
 
             return [
                 'success' => false,
-                'message' => 'Error al confirmar el mantenimiento: '.$e->getMessage(),
+                'message' => 'Error al confirmar el mantenimiento. Intente nuevamente o contacte al administrador.',
             ];
         }
     }
@@ -655,7 +655,7 @@ class MantenimientoService
 
             return [
                 'success' => false,
-                'message' => 'Error al reprogramar el mantenimiento: '.$e->getMessage(),
+                'message' => 'Error al reprogramar el mantenimiento. Intente nuevamente o contacte al administrador.',
             ];
         }
     }
