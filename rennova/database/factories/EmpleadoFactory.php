@@ -13,7 +13,7 @@ class EmpleadoFactory extends Factory
     {
         return [
             'id_rol_laboral' => null,
-            'dni' => $this->faker->unique()->numerify('##.###.###'),
+            'dni' => $this->faker->unique()->numerify('########'),
             'apellido' => $this->faker->lastName(),
             'nombre' => $this->faker->firstName(),
             'fecha_nacimiento' => $this->faker->optional()->dateTimeBetween('-60 years', '-22 years'),
