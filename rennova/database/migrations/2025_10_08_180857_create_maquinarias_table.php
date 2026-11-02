@@ -16,7 +16,7 @@ return new class extends Migration
             $table->unsignedBigInteger('id_tipo_maquinaria');
             $table->foreign('id_tipo_maquinaria')->references('id_tipo_maquinaria')->on('tipo_maquinarias');
             $table->string('modelo', 60)->nullable();
-            $table->string('estado', 20)->default('activo');
+            $table->string('estado', 20)->default('disponible');
             $table->boolean('es_alquilada')->default(false);
             $table->date('fecha_inicio_actividades')->nullable();
             $table->timestamps();
