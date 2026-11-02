@@ -179,6 +179,75 @@ class ForestalStatsService
     }
 
     /**
+     * Proyección mensual global (solo días hábiles lun-vie) comparada contra el
+     * punto de equilibrio agregado de todos los lotes en producción.
+     *
+     * @return array{objetivo_mensual_tn: float, proyeccion_mensual_tn: float, dias_habiles_mes: int, deficit_tn: float, cumple_objetivo: bool}
+     */
+    public function getProyeccionVsEquilibrio(): array
+    {
+        $objetivoDiario = $this->objetivoDiarioGlobal();
+        $metaDiaria = app(ClimaAnalisisService::class)->calcularMetaDiaria();
+        $diasHabiles = $this->diasHabilesDelMes(Carbon::now());
+
+        return $this->calcularProyeccionMensual($objetivoDiario, $metaDiaria, $diasHabiles);
+    }
+
+    /**
+     * Suma el punto de equilibrio diario (tn/día) de todos los lotes en producción.
+     */
+    private function objetivoDiarioGlobal(): float
+    {
+        $total = 0.0;
+
+        foreach (Lote::whereIn('estado', ['activo', 'en_proceso'])->get() as $lote) {
+            $total += $this->getPuntoEquilibrioDiario($lote);
+        }
+
+        return round($total, 2);
+    }
+
+    /**
+     * Cantidad de días hábiles (lunes a viernes) del mes de una fecha.
+     */
+    public function diasHabilesDelMes(Carbon $fecha): int
+    {
+        $dias = 0;
+        $cursor = $fecha->copy()->startOfMonth();
+        $fin = $fecha->copy()->endOfMonth();
+
+        while ($cursor->lessThanOrEqualTo($fin)) {
+            if ($cursor->isWeekday()) {
+                $dias++;
+            }
+            $cursor->addDay();
+        }
+
+        return $dias;
+    }
+
+    /**
+     * Proyección mensual pura: objetivo y proyección a partir de tasas diarias y
+     * días hábiles, con el déficit resultante (positivo = quedar corto).
+     *
+     * @return array{objetivo_mensual_tn: float, proyeccion_mensual_tn: float, dias_habiles_mes: int, deficit_tn: float, cumple_objetivo: bool}
+     */
+    public function calcularProyeccionMensual(float $objetivoDiario, float $metaDiaria, int $diasHabiles): array
+    {
+        $objetivoMensual = round($objetivoDiario * $diasHabiles, 2);
+        $proyeccionMensual = round($metaDiaria * $diasHabiles, 2);
+        $deficit = round($objetivoMensual - $proyeccionMensual, 2);
+
+        return [
+            'objetivo_mensual_tn' => $objetivoMensual,
+            'proyeccion_mensual_tn' => $proyeccionMensual,
+            'dias_habiles_mes' => $diasHabiles,
+            'deficit_tn' => $deficit,
+            'cumple_objetivo' => $deficit <= 0,
+        ];
+    }
+
+    /**
      * Composición de gastos (incluye Mano de Obra calculada)
      */
     public function getComposicionGastos(Lote $lote, ?string $desde = null): array

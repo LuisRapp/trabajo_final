@@ -26,6 +26,7 @@ class PanelControlService
             'costoPromedioTn' => $this->costoPromedioPorTonelada($mes, $anio),
             'precioVentaPromedioTn' => $this->precioVentaPromedioPorTonelada($mes, $anio),
             'mantenimientosPendientes' => $this->mantenimientosPendientes(),
+            'proyeccion' => $this->proyeccionVsEquilibrio(),
         ];
     }
 
@@ -85,5 +86,10 @@ class PanelControlService
     private function mantenimientosPendientes(): int
     {
         return Mantenimiento::where('estado', 'pendiente')->count();
+    }
+
+    private function proyeccionVsEquilibrio(): array
+    {
+        return app(ForestalStatsService::class)->getProyeccionVsEquilibrio();
     }
 }

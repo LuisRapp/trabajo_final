@@ -14,6 +14,27 @@
         {{-- Pronóstico del tiempo por lote --}}
         <livewire:selector-lote />
 
+        {{-- Proyección mensual vs punto de equilibrio --}}
+        @if(!empty($proyeccion))
+            <x-ui.card class="p-5 mb-6">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                        <p class="text-xs font-medium text-tinta-suave">Proyección del mes (lun-vie)</p>
+                        <p class="mt-1 text-2xl font-bold text-tinta">
+                            {{ number_format($proyeccion['proyeccion_mensual_tn'], 1) }}
+                            <span class="text-sm font-normal text-tinta-suave">/ {{ number_format($proyeccion['objetivo_mensual_tn'], 1) }} TN objetivo</span>
+                        </p>
+                    </div>
+                    @if($proyeccion['cumple_objetivo'])
+                        <x-ui.badge variant="success">Vas bien: alcanzás el objetivo</x-ui.badge>
+                    @else
+                        <x-ui.badge variant="danger">Vas corto {{ number_format($proyeccion['deficit_tn'], 1) }} TN este mes</x-ui.badge>
+                    @endif
+                </div>
+                <p class="text-xs text-tinta-suave mt-2">Calculado sobre {{ $proyeccion['dias_habiles_mes'] }} días hábiles (lunes a viernes).</p>
+            </x-ui.card>
+        @endif
+
         {{-- Alerta si no hay lotes activos --}}
         @if(!$hayLotesActivos)
             <x-ui.alert variant="warning" class="mb-6">
