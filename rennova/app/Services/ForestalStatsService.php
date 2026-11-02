@@ -283,7 +283,7 @@ class ForestalStatsService
                 $labels = [];
                 $data = [];
                 foreach ($rows as $row) {
-                    $labels[] = Carbon::parse($row->periodo.'-01')->format('M Y');
+                    $labels[] = Carbon::parse($row->periodo.'-01')->isoFormat('MMM YYYY');
                     $data[] = round((float) $row->costo_prom, 2);
                 }
 

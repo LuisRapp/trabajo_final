@@ -6,6 +6,7 @@ use App\Events\CargaRegistrada;
 use App\Listeners\ActualizarOdometroMaquina;
 use App\Models\Lote;
 use App\Observers\LoteObserver;
+use Carbon\Carbon;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
@@ -26,6 +27,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Configurar Carbon en español (días y meses en la UI)
+        Carbon::setLocale('es');
+        Carbon::setFallbackLocale('es');
+
         // Registrar observadores
         Lote::observe(LoteObserver::class);
 

@@ -230,7 +230,7 @@ class ReporteController extends Controller
         $mesCursor = $fechaDesde->copy()->startOfMonth();
         $mesFin = $fechaHasta->copy()->startOfMonth();
         while ($mesCursor->lessThanOrEqualTo($mesFin)) {
-            $fechas_6_meses[] = $mesCursor->format('M Y');
+            $fechas_6_meses[] = $mesCursor->isoFormat('MMM YYYY');
 
             $costo = $evolucion_costos->firstWhere('mes', $mesCursor->toDateTimeString());
             $evolucion_6_meses[] = $costo ? (float) $costo->costo_promedio : 0;
@@ -323,7 +323,7 @@ class ReporteController extends Controller
             $end = $fechaHasta->copy()->startOfMonth();
             while ($cursor->lessThanOrEqualTo($end)) {
                 $key = $cursor->toDateTimeString();
-                $labels[] = $cursor->format('M Y');
+                $labels[] = $cursor->isoFormat('MMM YYYY');
                 $prod = $produccionMensual->firstWhere('mes', $key);
                 $cost = $costosMensual->firstWhere('mes', $key);
                 $serieProduccion[] = $prod ? round((float) $prod->toneladas, 2) : 0;
@@ -481,7 +481,7 @@ class ReporteController extends Controller
             $endGlobal = $fechaHasta->copy()->startOfMonth();
             while ($cursorGlobal->lessThanOrEqualTo($endGlobal)) {
                 $key = $cursorGlobal->toDateTimeString();
-                $labelsGlobal[] = $cursorGlobal->format('M Y');
+                $labelsGlobal[] = $cursorGlobal->isoFormat('MMM YYYY');
                 $prod = $produccionMensualGlobal->firstWhere('mes', $key);
                 $cost = $costosMensualGlobal->firstWhere('mes', $key);
                 $serieProduccionGlobal[] = $prod ? round((float) $prod->toneladas, 2) : 0;
