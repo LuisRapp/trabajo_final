@@ -2,7 +2,7 @@
 
 namespace App\Http\Livewire;
 
-use App\Models\Cliente;
+use App\Services\ClienteService;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -24,16 +24,16 @@ class Clientes extends Component
 
     public $tab_activo = 'listado';
 
+    protected ClienteService $servicio;
+
+    public function boot(): void
+    {
+        $this->servicio = app(ClienteService::class);
+    }
+
     protected function rules(): array
     {
-        return [
-            'razon_social' => 'required|min:3',
-            'cuit' => $this->cliente_id
-                ? 'required|digits:11|unique:clientes,cuit,'.$this->cliente_id.',id_cliente'
-                : 'required|digits:11|unique:clientes,cuit',
-            'direccion' => 'required',
-            'contacto' => 'nullable|string',
-        ];
+        return $this->servicio->reglas($this->cliente_id);
     }
 
     protected $messages = [
@@ -48,23 +48,8 @@ class Clientes extends Component
     public function render()
     {
         return view('livewire.clientes', [
-            'clientes' => $this->cargarClientes(),
+            'clientes' => $this->servicio->listar($this->busqueda),
         ]);
-    }
-
-    public function cargarClientes()
-    {
-        $query = Cliente::query();
-
-        if ($this->busqueda) {
-            $query->where(function ($q) {
-                $q->where('razon_social', 'ILIKE', '%'.$this->busqueda.'%')
-                    ->orWhere('cuit', 'ILIKE', '%'.$this->busqueda.'%')
-                    ->orWhere('contacto', 'ILIKE', '%'.$this->busqueda.'%');
-            });
-        }
-
-        return $query->orderBy('id_cliente', 'desc')->paginate(15);
     }
 
     public function updatedBusqueda()
@@ -76,15 +61,12 @@ class Clientes extends Component
     {
         $this->validate();
 
-        Cliente::updateOrCreate(
-            ['id_cliente' => $this->cliente_id],
-            [
-                'razon_social' => $this->razon_social,
-                'cuit' => $this->cuit,
-                'direccion' => $this->direccion,
-                'contacto' => $this->contacto,
-            ]
-        );
+        $this->servicio->crearOActualizar($this->cliente_id, [
+            'razon_social' => $this->razon_social,
+            'cuit' => $this->cuit,
+            'direccion' => $this->direccion,
+            'contacto' => $this->contacto,
+        ]);
 
         session()->flash('message', $this->cliente_id ? 'Cliente actualizado correctamente.' : 'Cliente creado correctamente.');
         $this->tab_activo = 'listado';
@@ -95,7 +77,7 @@ class Clientes extends Component
     public function editar($id)
     {
         $this->tab_activo = 'nuevo';
-        $cliente = Cliente::findOrFail($id);
+        $cliente = $this->servicio->obtener($id);
         $this->cliente_id = $cliente->id_cliente;
         $this->razon_social = $cliente->razon_social;
         $this->cuit = $cliente->cuit;
@@ -105,7 +87,7 @@ class Clientes extends Component
 
     public function eliminar($id)
     {
-        Cliente::findOrFail($id)->delete();
+        $this->servicio->eliminar($id);
         session()->flash('message', 'Cliente eliminado correctamente.');
     }
 
