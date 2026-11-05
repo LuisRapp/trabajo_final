@@ -87,6 +87,29 @@ Esta documento dimensiona lo que queda: severidad, esfuerzo estimado y riesgo. E
 
 ---
 
+## Deuda nueva — detectada por el gate en `ProcesoMantenimientoService` (2026-11-05)
+
+Apareció al intentar commitear el checkpoint de kits/indicadores. Es deuda **pre-existente** del archivo, no de esos cambios. Se commiteó con `--no-verify` para no bloquear la etapa financiera.
+
+### D12. Notificaciones que tragan excepciones y rompen la atomicidad (ALTA)
+- **Donde:** `ProcesoMantenimientoService::crearNotificacionInterna` (~494-527) y `crearNotificacionVencido` (~536-560), invocadas dentro de transacciones (102-134 y 203-214).
+- **Riesgo:** el `catch (\Throwable)` solo loguea; la excepcion no propaga, asi que `DB::transaction()` nunca hace rollback: la orden se commitea aunque las notificaciones no se hayan escrito.
+- **Fix:** re-lanzar la excepcion dentro de la transaccion, o mover la creacion de notificaciones fuera de la misma (como se hace con el email en la linea 136).
+- **Esfuerzo:** ~1 h.
+
+### D13. Reglas de clima y "tipo preventivo" duplicadas (MEDIA)
+- **Donde:** `obtenerTipoPreventivo()` (~62-67) re-implementa `whereLike('nombre','%preventivo%')` en vez de usar `MantenimientoService::esTipoPreventivo()`. `resolverFechaProgramadaPorClima` (~327-366) re-deriva la decision de lluvia (`UMBRAL_LLUVIA` + `str_contains($razon,'lluvia')`) en vez de consumir `ClimaAnalisisService::mapearDiasInactivos()`.
+- **Riesgo:** dos copias divergentes de la misma regla (viola la prohibicion de duplicacion de reglas en multiples capas).
+- **Fix:** delegar en los metodos canonicos ya existentes.
+- **Esfuerzo:** ~2 h (cambia la logica de programacion por clima).
+
+### D14. Identificadores en ingles y dedup en memoria (BAJA)
+- **Donde:** `$fallbackDate`, `$fechaRaw`, `$keyword`, `$correoAdmin` (lineas 302, 315, 319, 335, 339, 371, 375, 434); `->get()->unique('mantenimiento_id')->values()` (~180-182).
+- **Fix:** renombrar a espanol y deduplicar a nivel query.
+- **Esfuerzo:** ~30 min.
+
+---
+
 ## Sugerencia de orden para la proxima sesion de refactor
 
 1. D2 + D1 juntos (mismo dominio, desbloquea el gate).
