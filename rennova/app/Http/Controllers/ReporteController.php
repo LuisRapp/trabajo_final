@@ -133,8 +133,16 @@ class ReporteController extends Controller
             ]);
         }
 
+        // Toneladas por lote (para rendimiento tn/ha)
+        $toneladasPorLote = Carga::whereIn('id_lote', $lotes->pluck('id_lote'))
+            ->whereBetween('fecha_carga', [$filtroDesde, $filtroHasta])
+            ->selectRaw('id_lote, SUM(peso_neto / 1000.0) as toneladas')
+            ->groupBy('id_lote')
+            ->get()
+            ->keyBy('id_lote');
+
         // Calcular estadísticas por lote
-        $lotes_estadisticas = $lotes->map(function (Lote $lote) use ($filtroDesde, $filtroHasta) {
+        $lotes_estadisticas = $lotes->map(function (Lote $lote) use ($filtroDesde, $filtroHasta, $toneladasPorLote) {
             $precio_promedio = $this->statsService->getPrecioPromedioVenta(
                 $lote,
                 $filtroDesde,
@@ -151,6 +159,10 @@ class ReporteController extends Controller
                 $filtroHasta
             );
 
+            $toneladas = (float) ($toneladasPorLote[$lote->id_lote]->toneladas ?? 0);
+            $rendimiento = $lote->superficie > 0 ? round($toneladas / $lote->superficie, 2) : 0.0;
+            $margen_pct = $precio_promedio > 0 ? round(($precio_promedio - $costo_promedio) / $precio_promedio * 100, 2) : 0.0;
+
             return [
                 'id' => $lote->id_lote,
                 'nombre' => $lote->ubicacion ?? $lote->propietario ?? 'Lote '.$lote->id_lote,
@@ -159,6 +171,8 @@ class ReporteController extends Controller
                 'costo_promedio' => $costo_promedio,
                 'punto_equilibrio' => $punto_equilibrio,
                 'rentabilidad' => $precio_promedio - $costo_promedio,
+                'rendimiento' => $rendimiento,
+                'margen_pct' => $margen_pct,
             ];
         });
 
@@ -640,6 +654,10 @@ class ReporteController extends Controller
                 'punto_equilibrio' => 0,
                 'total_lotes' => 0,
                 'rentabilidad_promedio' => 0,
+                'ingresos_totales' => 0,
+                'margen_bruto' => 0,
+                'margen_bruto_pct' => 0,
+                'rendimiento' => 0,
             ];
         }
 
@@ -672,12 +690,22 @@ class ReporteController extends Controller
             fn (Lote $lote) => $this->statsService->getPuntoEquilibrioDiario($lote, $desde, $hasta)
         ), 2);
 
+        $ingresosTotales = round($totalVentas, 2);
+        $margenBruto = round($totalVentas - $totalCostos, 2);
+        $margenBrutoPct = $totalVentas > 0 ? round(($totalVentas - $totalCostos) / $totalVentas * 100, 2) : 0.0;
+        $superficieTotal = (float) $lotes->sum('superficie');
+        $rendimiento = $superficieTotal > 0 ? round($totalToneladas / $superficieTotal, 2) : 0.0;
+
         return [
             'precio_promedio' => $precioPromedio,
             'costo_promedio' => $costoPromedio,
             'punto_equilibrio' => $puntoEquilibrio,
             'total_lotes' => $lotes->count(),
             'rentabilidad_promedio' => $rentabilidad,
+            'ingresos_totales' => $ingresosTotales,
+            'margen_bruto' => $margenBruto,
+            'margen_bruto_pct' => $margenBrutoPct,
+            'rendimiento' => $rendimiento,
         ];
     }
 
