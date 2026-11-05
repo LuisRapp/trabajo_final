@@ -2,10 +2,8 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Empleado;
 use App\Models\Lote;
-use App\Models\Maquinaria;
-use App\Services\EmpleadoPagoService;
+use App\Services\ClimaAnalisisService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
@@ -35,7 +33,7 @@ class AnalizarRiesgoClimatico extends Command
     /**
      * Ejecutar el comando de consola.
      */
-    public function handle()
+    public function handle(ClimaAnalisisService $analisisService)
     {
         $diasAnalizar = (int) $this->option('dias');
 
@@ -83,8 +81,8 @@ class AnalizarRiesgoClimatico extends Command
                     continue;
                 }
 
-                // 4. Calcular costo estructural diario
-                $costoEstructuralDiario = $this->calcularCostoEstructuralDiario($lote);
+                // 4. Calcular costo estructural diario (regla única en ClimaAnalisisService)
+                $costoEstructuralDiario = $analisisService->calcularCostoEstructuralDiario($lote);
 
                 // 5. Generar alertas
                 foreach ($diasCaidosPronosticados as $diaLluvia) {
@@ -180,38 +178,6 @@ class AnalizarRiesgoClimatico extends Command
         }
 
         return $diasCaidos;
-    }
-
-    /**
-     * Calcula el costo estructural diario (empleados + maquinaria)
-     */
-    private function calcularCostoEstructuralDiario(Lote $lote): float
-    {
-        $costoTotal = 0;
-
-        // A) Costo de empleados asignados al lote (usar jornal diario promedio)
-        $empleadosActivos = Empleado::where('estado', 'activo')->get();
-
-        foreach ($empleadosActivos as $empleado) {
-            // Usar costo de día caído del trait
-            try {
-                $costoTotal += EmpleadoPagoService::calcularCostoDia($empleado, Carbon::today(), true, null);
-            } catch (\Exception $e) {
-                // Si no hay histórico, usar un costo base estimado
-                Log::warning("Sin histórico de tarifa para empleado {$empleado->id_empleado}");
-            }
-        }
-
-        // B) Costo de maquinaria en alquiler (costo fijo estimado)
-        $maquinariasAlquiladas = Maquinaria::where('tipo_maquinaria', 'alquiler')->get();
-
-        foreach ($maquinariasAlquiladas as $maquinaria) {
-            // Estimar costo diario basado en precio de alquiler
-            // Asumimos que el precio_alquiler_destajo es por tonelada, estimamos 10 ton/día
-            $costoTotal += ($maquinaria->precio_alquiler_destajo ?? 0) * 10;
-        }
-
-        return round($costoTotal, 2);
     }
 
     /**
