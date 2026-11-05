@@ -34,4 +34,8 @@ php artisan migrate --force || true
 
 service cron start
 
+# Worker de cola en background: procesa jobs encolados (asignación automática, correos, etc.)
+# que de otro modo se acumulan en la tabla `jobs` sin ejecutarse nunca.
+nohup php artisan queue:work --sleep=3 --tries=3 --timeout=90 >> storage/logs/queue-worker.log 2>&1 &
+
 exec apache2-foreground
