@@ -354,7 +354,7 @@ class ProcesoMantenimientoService
                 continue;
             }
 
-            if ($mm >= ClimaDecisionService::UMBRAL_LLUVIA || str_contains($razon, 'lluvia')) {
+            if ($mm >= ClimaAnalisisService::UMBRAL_LLUVIA || str_contains($razon, 'lluvia')) {
                 return [
                     'fecha_programada' => $fecha->startOfDay(),
                     'fuente' => 'clima',
