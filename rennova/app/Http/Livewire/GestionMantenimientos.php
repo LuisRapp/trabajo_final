@@ -103,22 +103,17 @@ class GestionMantenimientos extends Component
                 ->aprobarMantenimiento($this->orden_seleccionada->id_mantenimiento);
 
             if (! $resultado['success']) {
-                if (! empty($resultado['insumos_insuficientes'])) {
-                    $faltantes = collect($resultado['insumos_insuficientes'])
-                        ->pluck('insumo')
-                        ->join(', ');
-
-                    session()->flash('error', "Stock insuficiente para: {$faltantes}");
-
-                    return;
-                }
-
                 session()->flash('error', $resultado['message']);
 
                 return;
             }
 
-            session()->flash('message', 'Orden aprobada correctamente');
+            if (! empty($resultado['compra_generada'])) {
+                session()->flash('message', 'Orden aprobada. Se generó una orden de compra para los insumos obligatorios faltantes.');
+            } else {
+                session()->flash('message', 'Orden aprobada correctamente');
+            }
+
             $this->cerrarModalAprobar();
 
         } catch (\Exception $e) {
@@ -137,11 +132,11 @@ class GestionMantenimientos extends Component
                 throw new \Exception('Solo se pueden completar órdenes en curso');
             }
 
-            // Si es preventivo, cargar kit
+            // Si es preventivo, cargar kit (por maquinaria, con fallback al tipo)
             if ($this->orden_seleccionada->tipoMantenimiento
                 && $this->mantenimientoService->esTipoPreventivo($this->orden_seleccionada->tipoMantenimiento)) {
-                $kit = $this->mantenimientoService->obtenerKitPreventivo(
-                    $this->orden_seleccionada->maquinaria->id_tipo_maquinaria
+                $kit = $this->mantenimientoService->obtenerKitParaMaquinaria(
+                    $this->orden_seleccionada->maquinaria
                 );
 
                 // Inicializar insumos con cantidades del kit

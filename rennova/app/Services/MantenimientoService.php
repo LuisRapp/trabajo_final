@@ -24,16 +24,21 @@ use Illuminate\Support\Facades\Log;
 class MantenimientoService
 {
     /**
-     * Verifica si hay stock suficiente para aprobar un mantenimiento preventivo.
+     * Verifica el stock del kit para la aprobación de un mantenimiento preventivo.
      *
-     * Compara el kit de mantenimiento (prioriza el kit por maquinaria, con
-     * fallback al kit por tipo de maquinaria) contra el stock disponible
-     * de cada insumo.
+     * Compara el kit (prioriza el kit por maquinaria, con fallback al kit por
+     * tipo de maquinaria) contra el stock disponible de cada insumo.
+     *
+     * Solo los insumos OBLIGATORIOS en falta bloquean la compra automática:
+     * `insuficientes` es la lista a reponer y `puede_aprobar` indica si no hay
+     * obligatorios en falta. Los opcionales en falta se informan aparte y no
+     * generan orden de compra.
      *
      * @param  int  $mantenimientoId  Identificador de la orden a verificar
      * @return array{
      *     puede_aprobar: bool,
      *     insuficientes: array<array{insumo_id: int, insumo: string, requerido: float, disponible: float, faltante: float}>,
+     *     insuficientes_opcionales: array<array{insumo_id: int, insumo: string, requerido: float, disponible: float, faltante: float}>,
      *     kit: array<array{insumo_id: int, nombre: string, cantidad_requerida: float, stock_disponible: float, es_obligatorio: bool}>
      * }
      */
@@ -41,20 +46,11 @@ class MantenimientoService
     {
         $mantenimiento = Mantenimiento::with(['maquinaria.tipoMaquinaria'])->findOrFail($mantenimientoId);
 
-        // Obtener kit de insumos requeridos (prioriza kit por maquinaria)
-        $kit = KitMantenimientoPreventivo::where('id_maquinaria', $mantenimiento->id_maquinaria)
-            ->whereNull('deleted_at')
-            ->with('insumo')
-            ->get();
-
-        if ($kit->isEmpty()) {
-            $kit = KitMantenimientoPreventivo::where('id_tipo_maquinaria', $mantenimiento->maquinaria->id_tipo_maquinaria)
-                ->whereNull('deleted_at')
-                ->with('insumo')
-                ->get();
-        }
+        // Kit de la maquinaria, con fallback al kit del tipo (regla única del dominio)
+        $kit = $this->obtenerKitParaMaquinaria($mantenimiento->maquinaria);
 
         $insuficientes = [];
+        $insuficientesOpcionales = [];
         $kitCompleto = [];
 
         foreach ($kit as $item) {
@@ -68,31 +64,42 @@ class MantenimientoService
                 'es_obligatorio' => $item->es_obligatorio,
             ];
 
-            if ($stockDisponible < $item->cantidad_requerida) {
-                $insuficientes[] = [
-                    'insumo_id' => $item->id_insumo,
-                    'insumo' => $item->insumo->nombre,
-                    'requerido' => $item->cantidad_requerida,
-                    'disponible' => $stockDisponible,
-                    'faltante' => $item->cantidad_requerida - $stockDisponible,
-                ];
+            if ($stockDisponible >= $item->cantidad_requerida) {
+                continue;
+            }
+
+            $faltante = [
+                'insumo_id' => $item->id_insumo,
+                'insumo' => $item->insumo->nombre,
+                'requerido' => $item->cantidad_requerida,
+                'disponible' => $stockDisponible,
+                'faltante' => $item->cantidad_requerida - $stockDisponible,
+            ];
+
+            if ($item->es_obligatorio) {
+                $insuficientes[] = $faltante;
+            } else {
+                $insuficientesOpcionales[] = $faltante;
             }
         }
 
         return [
             'puede_aprobar' => empty($insuficientes),
             'insuficientes' => $insuficientes,
+            'insuficientes_opcionales' => $insuficientesOpcionales,
             'kit' => $kitCompleto,
         ];
     }
 
     /**
-     * Aprueba una orden de mantenimiento preventivo: verifica stock y cambia el estado.
+     * Aprueba una orden de mantenimiento preventivo y genera la orden de compra
+     * de los insumos OBLIGATORIOS que faltan, sin bloquear la aprobación.
      *
-     * Ejecuta dentro de una transacción. Solo órdenes en estado 'programado' pueden aprobarse.
+     * Ejecuta dentro de una transacción. Solo órdenes en estado 'programado'
+     * pueden aprobarse. Los insumos opcionales en falta no se compran ni bloquean.
      *
      * @param  int  $mantenimientoId  Identificador de la orden a aprobar
-     * @return array{success: bool, mantenimiento?: \App\Models\Mantenimiento, message?: string, insumos_insuficientes?: array}
+     * @return array{success: bool, mantenimiento?: \App\Models\Mantenimiento, compra_generada?: bool, message?: string}
      */
     public function aprobarMantenimiento(int $mantenimientoId): array
     {
@@ -109,27 +116,27 @@ class MantenimientoService
 
                 $verificacion = $this->verificarStockParaAprobacion($mantenimientoId);
 
-                if (! $verificacion['puede_aprobar']) {
-                    return [
-                        'success' => false,
-                        'message' => 'No hay stock suficiente para aprobar esta orden',
-                        'insumos_insuficientes' => $verificacion['insuficientes'],
-                    ];
-                }
-
                 $mantenimiento->update([
                     'estado' => 'en curso',
                     'fecha_inicio' => now()->toDateString(),
                 ]);
 
+                $propuesta = null;
+                if (! empty($verificacion['insuficientes'])) {
+                    $propuesta = app(PropuestaCompraMantenimientoService::class)
+                        ->crearPropuesta($mantenimiento, $verificacion['insuficientes']);
+                }
+
                 Log::info('Orden de mantenimiento aprobada', [
                     'mantenimiento_id' => $mantenimientoId,
                     'maquinaria_id' => $mantenimiento->id_maquinaria,
+                    'compra_generada' => $propuesta !== null,
                 ]);
 
                 return [
                     'success' => true,
                     'mantenimiento' => $mantenimiento->fresh(),
+                    'compra_generada' => $propuesta !== null,
                 ];
             });
         } catch (\Exception $e) {
@@ -280,6 +287,33 @@ class MantenimientoService
         return KitMantenimientoPreventivo::where('id_tipo_maquinaria', $tipoMaquinariaId)
             ->with('insumo')
             ->get();
+    }
+
+    /**
+     * Resuelve el kit preventivo de una maquinaria específica.
+     *
+     * Regla única del dominio: el kit de una maquinaria tiene prioridad sobre
+     * el kit de su tipo. Dos maquinarias del mismo tipo pueden tener kits
+     * distintos, por eso el fallback al tipo solo aplica cuando la maquinaria
+     * no tiene un kit propio.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection<int, KitMantenimientoPreventivo> Con la relación insumo cargada
+     */
+    public function obtenerKitParaMaquinaria(Maquinaria $maquinaria)
+    {
+        $kit = KitMantenimientoPreventivo::where('id_maquinaria', $maquinaria->id_maquinaria)
+            ->whereNull('deleted_at')
+            ->with('insumo')
+            ->get();
+
+        if ($kit->isEmpty()) {
+            $kit = KitMantenimientoPreventivo::where('id_tipo_maquinaria', $maquinaria->id_tipo_maquinaria)
+                ->whereNull('deleted_at')
+                ->with('insumo')
+                ->get();
+        }
+
+        return $kit;
     }
 
     /**
@@ -451,7 +485,9 @@ class MantenimientoService
     /**
      * Obtiene el kit de mantenimiento preventivo para una maquinaria y tipo específicos.
      *
-     * @return array<int, array{nombre: string, cantidad_requerida: float}>
+     * Usa la regla única del dominio (kit por maquinaria, con fallback al tipo).
+     *
+     * @return array<int, array{id_insumo: int, nombre: ?string, cantidad_requerida: float}>
      */
     public function obtenerKitPreventivoParaMaquinaria(int $idMaquinaria, int $idTipoMantenimiento): array
     {
@@ -461,11 +497,20 @@ class MantenimientoService
             return [];
         }
 
-        return KitMantenimientoPreventivo::where('kit_mantenimiento_preventivo.id_maquinaria', $idMaquinaria)
-            ->join('insumos', 'kit_mantenimiento_preventivo.id_insumo', '=', 'insumos.id_insumo')
-            ->select('kit_mantenimiento_preventivo.id_insumo', 'insumos.nombre', 'kit_mantenimiento_preventivo.cantidad_requerida')
-            ->get()
-            ->toArray();
+        $maquinaria = Maquinaria::find($idMaquinaria);
+
+        if (! $maquinaria) {
+            return [];
+        }
+
+        return $this->obtenerKitParaMaquinaria($maquinaria)
+            ->map(fn (KitMantenimientoPreventivo $item) => [
+                'id_insumo' => $item->id_insumo,
+                'nombre' => $item->insumo?->nombre,
+                'cantidad_requerida' => $item->cantidad_requerida,
+            ])
+            ->values()
+            ->all();
     }
 
     /**

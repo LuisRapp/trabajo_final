@@ -172,7 +172,7 @@ class GestionMantenimientosTest extends TestCase
         ]);
     }
 
-    public function test_aprobar_orden_con_stock_insuficiente_falla(): void
+    public function test_aprobar_orden_con_stock_insuficiente_aprueba_igual(): void
     {
         $maquinaria = Maquinaria::factory()->create();
         $tipo = TipoMantenimiento::factory()->create();
@@ -186,6 +186,7 @@ class GestionMantenimientosTest extends TestCase
             ->andReturn([
                 'puede_aprobar' => false,
                 'insuficientes' => [['nombre' => 'Aceite']],
+                'insuficientes_opcionales' => [],
                 'kit' => [],
             ]);
 
@@ -196,7 +197,7 @@ class GestionMantenimientosTest extends TestCase
 
         $this->assertDatabaseHas('mantenimientos', [
             'id_mantenimiento' => $orden->id_mantenimiento,
-            'estado' => 'programado',
+            'estado' => 'en curso',
         ]);
     }
 
@@ -336,17 +337,6 @@ class GestionMantenimientosTest extends TestCase
             'es_obligatorio' => true,
         ]);
 
-        $mock = $this->mockService();
-        $mock->shouldReceive('obtenerKitPreventivo')
-            ->once()
-            ->with($maquinaria->id_tipo_maquinaria)
-            ->andReturn(collect([(object) [
-                'id_insumo' => $insumo->id_insumo,
-                'cantidad_requerida' => 3,
-                'es_obligatorio' => true,
-                'insumo' => $insumo,
-            ]]));
-
         $component = Livewire::actingAs($this->usuario)
             ->test(GestionMantenimientos::class)
             ->call('abrirModalCompletar', $orden->id_mantenimiento);
@@ -354,9 +344,9 @@ class GestionMantenimientosTest extends TestCase
         $component->assertSet('modal_completar', true);
         $component->assertSet('insumos_usados', function ($insumos) use ($insumo) {
             return count($insumos) === 1
-                && $insumos[0]['insumo_id'] === $insumo->id_insumo
-                && $insumos[0]['cantidad'] === 3
-                && $insumos[0]['es_obligatorio'] === true;
+                && (int) $insumos[0]['insumo_id'] === (int) $insumo->id_insumo
+                && (float) $insumos[0]['cantidad'] === 3.0
+                && (bool) $insumos[0]['es_obligatorio'] === true;
         });
     }
 

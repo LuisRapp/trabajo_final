@@ -181,11 +181,11 @@
 
                     @if($verificacion_stock['puede_aprobar'])
                         <x-ui.alert variant="success" class="my-3" :dismissible="false">
-                            Todos los insumos estan disponibles
+                            Todos los insumos obligatorios estan disponibles
                         </x-ui.alert>
                     @else
-                        <x-ui.alert variant="danger" class="my-3" :dismissible="false">
-                            Stock insuficiente para aprobar
+                        <x-ui.alert variant="warning" class="my-3" :dismissible="false">
+                            Se generara automaticamente una orden de compra para los insumos obligatorios faltantes
                         </x-ui.alert>
                     @endif
 
@@ -208,6 +208,8 @@
                                     <td>
                                         @if($item['stock_disponible'] >= $item['cantidad_requerida'])
                                             <span class="text-musgo flex items-center gap-1"><flux:icon.check class="size-3" /> OK</span>
+                                        @elseif(! $item['es_obligatorio'])
+                                            <span class="text-tinta-suave flex items-center gap-1">Opcional - Faltan {{ $item['cantidad_requerida'] - $item['stock_disponible'] }}</span>
                                         @else
                                             <span class="text-tierra flex items-center gap-1"><flux:icon.x-mark class="size-3" /> Faltan {{ $item['cantidad_requerida'] - $item['stock_disponible'] }}</span>
                                         @endif
@@ -223,11 +225,9 @@
                 <x-ui.button type="button" variant="secondary" wire:click="cerrarModalAprobar">
                     Cancelar
                 </x-ui.button>
-                @if($verificacion_stock && $verificacion_stock['puede_aprobar'])
-                    <x-ui.button type="button" icon="check" wire:click="aprobarOrden">
-                        Aprobar Orden
-                    </x-ui.button>
-                @endif
+                <x-ui.button type="button" icon="check" wire:click="aprobarOrden">
+                    Aprobar Orden
+                </x-ui.button>
             </div>
         </div>
     </div>
