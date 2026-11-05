@@ -658,11 +658,6 @@ class ReporteController extends Controller
             ->selectRaw('SUM(COALESCE(vc.subtotal, vc.precio_unitario * vc.peso_toneladas)) as monto_total')
             ->value('monto_total') ?? 0);
 
-        $costosRaw = ParteDiario::whereIn('id_lote', $lotesIds)
-            ->whereBetween('fecha', [$desde, $hasta])
-            ->selectRaw('AVG(COALESCE(costo_insumos, 0) + COALESCE(costo_maquinaria, 0)) as costo_diario_base')
-            ->first();
-
         // Costo unificado: costo_total_dia ya incluye insumos + maquinaria + mano de obra.
         $totalCostos = (float) ParteDiario::whereIn('id_lote', $lotesIds)
             ->whereBetween('fecha', [$desde, $hasta])
@@ -672,17 +667,10 @@ class ReporteController extends Controller
         $costoPromedio = $totalToneladas > 0 ? round($totalCostos / $totalToneladas, 2) : 0;
         $rentabilidad = round($precioPromedio - $costoPromedio, 2);
 
-        $fijos = (float) ($costosRaw->costo_diario_base ?? 0);
-        $fijos = $fijos > 0 ? $fijos : 75;
-
-        $denominador = $precioPromedio - $costoPromedio;
-        $puntoEquilibrio = 75;
-        if ($denominador > 0 && $precioPromedio > 0) {
-            $punto = $fijos / $denominador;
-            if ($punto > 0 && is_finite($punto)) {
-                $puntoEquilibrio = round($punto, 2);
-            }
-        }
+        // Punto de equilibrio global (tn/día): suma del punto diario de cada lote.
+        $puntoEquilibrio = round((float) $lotes->sum(
+            fn (Lote $lote) => $this->statsService->getPuntoEquilibrioDiario($lote, $desde, $hasta)
+        ), 2);
 
         return [
             'precio_promedio' => $precioPromedio,

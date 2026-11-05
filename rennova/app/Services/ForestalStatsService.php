@@ -102,35 +102,69 @@ class ForestalStatsService
     }
 
     /**
-     * Punto de equilibrio diario en toneladas
+     * Punto de equilibrio diario en toneladas por día.
+     *
+     * Regla: costo fijo = mano de obra de días caídos (jornales); costo
+     * variable = el resto (insumos + maquinaria + mano de obra de producción).
+     *
+     * Fórmula: (fijo ÷ días del período) ÷ (precio − variable ÷ toneladas).
+     *
+     * @return float Toneladas por día necesarias para cubrir costos
      */
     public function getPuntoEquilibrioDiario(Lote $lote, ?string $desde = null, ?string $hasta = null): float
     {
-        $fechaDesde = $desde ? Carbon::parse($desde) : null;
-        $fechaHasta = $hasta ? Carbon::parse($hasta) : null;
-        $cacheKey = "stats.punto_equilibrio.{$lote->id_lote}.".($fechaDesde ? $fechaDesde->format('Ymd') : 'na').'.'.($fechaHasta ? $fechaHasta->format('Ymd') : 'na');
+        $fechaDesde = $desde ? Carbon::parse($desde) : Carbon::now()->subMonth();
+        $fechaHasta = $hasta ? Carbon::parse($hasta) : Carbon::now();
+        $cacheKey = "stats.punto_equilibrio.{$lote->id_lote}.{$fechaDesde->format('Ymd')}.".($fechaHasta ? $fechaHasta->format('Ymd') : 'na');
 
         return Cache::remember(
             $cacheKey,
             self::CACHE_TTL,
-            function () use ($lote, $desde, $hasta) {
-                $precioUnit = $this->getPrecioPromedioVenta($lote, $desde, $hasta);
-                $costoUnit = $this->getCostoPromedioPorTn($lote, $desde, $hasta);
+            function () use ($lote, $fechaDesde, $fechaHasta) {
+                $desde = $fechaDesde->toDateString();
+                $hasta = $fechaHasta->toDateString();
 
-                // Estimar costos fijos diarios desde parte_diarios último mes
-                $fijos = ParteDiario::query()
+                $precio = $this->getPrecioPromedioVenta($lote, $desde, $hasta);
+
+                $costoTotal = (float) ParteDiario::query()
                     ->where('id_lote', $lote->id_lote)
-                    ->whereDate('fecha', '>=', Carbon::now()->subMonth()->toDateString())
-                    ->avg('costo_total_dia');
+                    ->whereBetween('fecha', [$desde, $hasta])
+                    ->sum('costo_total_dia');
 
-                $fijos = $fijos ? (float) $fijos : self::FALLBACK_PUNTO_EQUILIBRIO;
+                $fijoTotal = (float) ParteDiario::query()
+                    ->where('id_lote', $lote->id_lote)
+                    ->where('es_dia_caido', true)
+                    ->whereBetween('fecha', [$desde, $hasta])
+                    ->sum('costo_mano_obra');
 
-                $denominador = $precioUnit - $costoUnit;
-                if ($denominador <= 0 || $precioUnit <= 0) {
+                $variableTotal = max(0.0, $costoTotal - $fijoTotal);
+
+                $toneladas = (float) DB::table('cargas')
+                    ->where('id_lote', $lote->id_lote)
+                    ->whereNull('cargas.deleted_at')
+                    ->whereBetween('fecha_carga', [$desde, $hasta])
+                    ->sum(DB::raw('peso_neto / 1000.0'));
+
+                if ($toneladas <= 0 || $precio <= 0) {
                     return self::FALLBACK_PUNTO_EQUILIBRIO;
                 }
 
-                $punto = $fijos / $denominador;
+                $variablePorTonelada = $variableTotal / $toneladas;
+                $margen = $precio - $variablePorTonelada;
+
+                if ($margen <= 0) {
+                    return self::FALLBACK_PUNTO_EQUILIBRIO;
+                }
+
+                $dias = max(1, $fechaDesde->diffInDays($fechaHasta));
+                $fijoPorDia = $fijoTotal / $dias;
+
+                if ($fijoPorDia <= 0) {
+                    return 0.0;
+                }
+
+                $punto = $fijoPorDia / $margen;
+
                 if ($punto <= 0 || ! is_finite($punto)) {
                     return self::FALLBACK_PUNTO_EQUILIBRIO;
                 }

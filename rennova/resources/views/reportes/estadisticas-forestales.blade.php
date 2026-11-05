@@ -96,7 +96,7 @@
             </x-ui.card>
             <x-ui.card class="p-4">
                 <p class="text-xs font-medium text-tinta-suave">Punto de Equilibrio</p>
-                <p class="mt-2 text-lg font-bold text-tinta">${{ number_format($estadisticas_globales['punto_equilibrio'], 2) }}/tn</p>
+                <p class="mt-2 text-lg font-bold text-tinta">{{ number_format($estadisticas_globales['punto_equilibrio'], 2) }} tn/día</p>
             </x-ui.card>
             <x-ui.card class="p-4">
                 <p class="text-xs font-medium text-tinta-suave">Rentabilidad Promedio</p>
@@ -192,7 +192,7 @@
                                     <x-ui.badge variant="warning">${{ number_format($stat['costo_promedio'], 2) }}/tn</x-ui.badge>
                                 </td>
                                 <td>
-                                    <x-ui.badge variant="info">${{ number_format($stat['punto_equilibrio'], 2) }}/tn</x-ui.badge>
+                                    <x-ui.badge variant="info">{{ number_format($stat['punto_equilibrio'], 2) }} tn/día</x-ui.badge>
                                 </td>
                                 <td>
                                     <x-ui.badge variant="{{ $stat['rentabilidad'] >= 0 ? 'success' : 'danger' }}">
@@ -218,7 +218,7 @@
                 <ul class="mt-3 space-y-2 text-sm text-tinta-suave">
                     <li><span class="font-semibold text-tinta">Precio Promedio:</span> Precio unitario esperado por tonelada.</li>
                     <li><span class="font-semibold text-tinta">Costo Promedio:</span> Costo operacional por tonelada (insumos + maquinaria + mano de obra).</li>
-                    <li><span class="font-semibold text-tinta">Punto de Equilibrio:</span> Precio mínimo para no perder dinero.</li>
+                    <li><span class="font-semibold text-tinta">Punto de Equilibrio:</span> Toneladas por día necesarias para cubrir costos fijos y variables.</li>
                     <li><span class="font-semibold text-tinta">Rentabilidad:</span> Diferencia entre ingreso y costo (Precio - Costo).</li>
                 </ul>
             </x-ui.card>
