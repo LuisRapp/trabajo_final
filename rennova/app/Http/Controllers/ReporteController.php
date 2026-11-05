@@ -143,16 +143,12 @@ class ReporteController extends Controller
             $costo_promedio = $this->statsService->getCostoPromedioPorTn(
                 $lote,
                 $filtroDesde,
-                $filtroHasta,
-                true,
-                false
+                $filtroHasta
             );
             $punto_equilibrio = $this->statsService->getPuntoEquilibrioDiario(
                 $lote,
                 $filtroDesde,
-                $filtroHasta,
-                true,
-                false
+                $filtroHasta
             );
 
             return [
@@ -196,24 +192,13 @@ class ReporteController extends Controller
             ->whereBetween('fecha', [$filtroDesde, $filtroHasta])
             ->selectRaw('SUM(COALESCE(costo_insumos, 0)) as insumos')
             ->selectRaw('SUM(COALESCE(costo_maquinaria, 0)) as maquinaria')
+            ->selectRaw('SUM(COALESCE(costo_mano_obra, 0)) as mano_obra')
             ->first();
-
-        $empleadosIds = DB::table('lote_empleado')
-            ->whereIn('id_lote', $lotes->pluck('id_lote'))
-            ->pluck('id_empleado')
-            ->unique();
-
-        $liquidacionesPeriodo = 0.0;
-        if ($empleadosIds->isNotEmpty()) {
-            $liquidacionesPeriodo = (float) (Recibo::whereIn('id_empleado', $empleadosIds)
-                ->whereBetween('fecha_emision', [$filtroDesde, $filtroHasta])
-                ->sum('monto') ?? 0);
-        }
 
         $distribucion_costos = [
             ['name' => 'Insumos', 'value' => (float) ($costos_totales->insumos ?? 0)],
             ['name' => 'Maquinaria', 'value' => (float) ($costos_totales->maquinaria ?? 0)],
-            ['name' => 'Mano de Obra', 'value' => round($liquidacionesPeriodo, 2)],
+            ['name' => 'Mano de Obra', 'value' => round((float) ($costos_totales->mano_obra ?? 0), 2)],
         ];
 
         // GRÁFICO 3: Evolución costo por tonelada últimos 6 meses
@@ -356,6 +341,8 @@ class ReporteController extends Controller
                 ->selectRaw('SUM(COALESCE(costo_total_dia,0)) as total')
                 ->value('total') ?? 0);
 
+            // Liquidaciones se muestran por separado (información de lo pagado);
+            // no se suman a gastos_periodo porque costo_total_dia ya incluye mano de obra.
             $empleadosIds = $lote->empleados()->pluck('empleados.id_empleado');
             $liquidacionesPeriodo = 0.0;
             if ($empleadosIds->isNotEmpty()) {
@@ -363,7 +350,6 @@ class ReporteController extends Controller
                     ->whereBetween('fecha_emision', [$fechaDesde->toDateString(), $fechaHasta->toDateString()])
                     ->sum('monto') ?? 0);
             }
-            $gastosPeriodo += $liquidacionesPeriodo;
 
             $indicadores = [
                 'precio_promedio' => $this->statsService->getPrecioPromedioVenta(
@@ -374,16 +360,12 @@ class ReporteController extends Controller
                 'costo_promedio' => $this->statsService->getCostoPromedioPorTn(
                     $lote,
                     $fechaDesde->toDateString(),
-                    $fechaHasta->toDateString(),
-                    true,
-                    false
+                    $fechaHasta->toDateString()
                 ),
                 'punto_equilibrio' => $this->statsService->getPuntoEquilibrioDiario(
                     $lote,
                     $fechaDesde->toDateString(),
-                    $fechaHasta->toDateString(),
-                    true,
-                    false
+                    $fechaHasta->toDateString()
                 ),
             ];
             $indicadores['rentabilidad'] = $indicadores['precio_promedio'] - $indicadores['costo_promedio'];
@@ -423,16 +405,12 @@ class ReporteController extends Controller
                 $costo_promedio = $this->statsService->getCostoPromedioPorTn(
                     $lote,
                     $fechaDesde->toDateString(),
-                    $fechaHasta->toDateString(),
-                    true,
-                    false
+                    $fechaHasta->toDateString()
                 );
                 $punto_equilibrio = $this->statsService->getPuntoEquilibrioDiario(
                     $lote,
                     $fechaDesde->toDateString(),
-                    $fechaHasta->toDateString(),
-                    true,
-                    false
+                    $fechaHasta->toDateString()
                 );
                 $produccion = (float) ($toneladasPorLote[$lote->id_lote]->toneladas ?? 0);
 
@@ -507,6 +485,8 @@ class ReporteController extends Controller
                     ->selectRaw('SUM(COALESCE(costo_total_dia,0)) as total')
                     ->value('total') ?? 0);
 
+                // Liquidaciones por separado (lo pagado); no se suman porque
+                // costo_total_dia ya incluye la mano de obra.
                 $empleadosIds = DB::table('lote_empleado')
                     ->whereIn('id_lote', $lotes->pluck('id_lote'))
                     ->pluck('id_empleado')
@@ -517,8 +497,6 @@ class ReporteController extends Controller
                         ->whereBetween('fecha_emision', [$fechaDesde->toDateString(), $fechaHasta->toDateString()])
                         ->sum('monto') ?? 0);
                 }
-
-                $gastosPeriodo += $liquidacionesPeriodo;
             }
 
             $top_lotes = $lotes->map(function (Lote $lote) use ($toneladasPorLote) {
@@ -682,24 +660,13 @@ class ReporteController extends Controller
 
         $costosRaw = ParteDiario::whereIn('id_lote', $lotesIds)
             ->whereBetween('fecha', [$desde, $hasta])
-            ->selectRaw('SUM(COALESCE(costo_insumos, 0)) as insumos')
-            ->selectRaw('SUM(COALESCE(costo_maquinaria, 0)) as maquinaria')
             ->selectRaw('AVG(COALESCE(costo_insumos, 0) + COALESCE(costo_maquinaria, 0)) as costo_diario_base')
             ->first();
 
-        $empleadosIds = DB::table('lote_empleado')
-            ->whereIn('id_lote', $lotesIds)
-            ->pluck('id_empleado')
-            ->unique();
-
-        $liquidacionesPeriodo = 0.0;
-        if ($empleadosIds->isNotEmpty()) {
-            $liquidacionesPeriodo = (float) (Recibo::whereIn('id_empleado', $empleadosIds)
-                ->whereBetween('fecha_emision', [$desde, $hasta])
-                ->sum('monto') ?? 0);
-        }
-
-        $totalCostos = (float) ($costosRaw->insumos ?? 0) + (float) ($costosRaw->maquinaria ?? 0) + $liquidacionesPeriodo;
+        // Costo unificado: costo_total_dia ya incluye insumos + maquinaria + mano de obra.
+        $totalCostos = (float) ParteDiario::whereIn('id_lote', $lotesIds)
+            ->whereBetween('fecha', [$desde, $hasta])
+            ->sum('costo_total_dia');
 
         $precioPromedio = $totalToneladas > 0 ? round($totalVentas / $totalToneladas, 2) : 0;
         $costoPromedio = $totalToneladas > 0 ? round($totalCostos / $totalToneladas, 2) : 0;
