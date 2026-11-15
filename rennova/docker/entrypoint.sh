@@ -11,6 +11,7 @@ fi
 
 # Nunca se pisa una APP_KEY existente: regenerarla invalida las sesiones y deja
 # ilegible cualquier dato cifrado con la clave anterior.
+# Corre como root porque escribe .env, que www-data no debe poder modificar.
 if [ -z "${APP_KEY:-}" ] && ! grep -qE '^APP_KEY=base64:.+' .env; then
 	echo "Generando APP_KEY: no se encontro ninguna configurada."
 	php artisan key:generate --force
@@ -18,6 +19,15 @@ if [ -z "${APP_KEY:-}" ] && ! grep -qE '^APP_KEY=base64:.+' .env; then
 	echo "redeploy genera otra y se invalidan las sesiones y los datos cifrados." >&2
 fi
 
+# Todo comando de la aplicacion corre como www-data, el mismo usuario con el
+# que escribe Apache. Si corriera como root, los archivos que cree en storage/
+# quedarian de root y www-data no podria escribir en ellos.
+como_www_data() {
+	gosu www-data "$@"
+}
+
+# El symlink se crea como root: public/ no es escribible por www-data y no
+# necesita serlo. Es un symlink, no un archivo: Apache lo lee igual.
 php artisan storage:link || true
 
 # Espera acotada a Postgres. Si no responde, el contenedor falla en vez de
@@ -36,12 +46,13 @@ fi
 
 # Sin || true: si las migraciones fallan, el despliegue esta mal y el
 # contenedor no debe quedar arriba como si estuviera sano.
-php artisan migrate --force
+como_www_data php artisan migrate --force
 
 service cron start
 
 # Worker de cola en background: procesa jobs encolados (asignacion automatica,
-# correos, etc.) que de otro modo se acumulan en la tabla `jobs`.
-nohup php artisan queue:work --sleep=3 --tries=3 --timeout=90 >> storage/logs/queue-worker.log 2>&1 &
+# correos, etc.) que de otro modo se acumulan en la tabla `jobs`. El redirect
+# va dentro del gosu para que el log quede a nombre de www-data.
+nohup gosu www-data sh -c 'php artisan queue:work --sleep=3 --tries=3 --timeout=90 >> storage/logs/queue-worker.log 2>&1' &
 
 exec apache2-foreground

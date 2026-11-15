@@ -11,8 +11,11 @@
 # ---------------------------------------------------------------------------
 # PHP 8.4.27 incluye el parche de php2shell (CVE-2026-109618 / CVE-2026-109619, RCE critico).
 # No bajar de esta version ni usar tags flotantes como php:8.4-apache.
-# ctype, dom, fileinfo, filter, hash, iconv, json, libxml, mbstring, openssl,
+# pdo, ctype, dom, fileinfo, filter, hash, iconv, json, libxml, mbstring, openssl,
 # pcre, session y tokenizer ya vienen compiladas: no reinstalar.
+# gosu permite correr los comandos de artisan como www-data. Si corren como
+# root, cualquier archivo que creen en storage/ (por ejemplo laravel.log) queda
+# de root y despues www-data no puede escribir ahi.
 FROM php:8.4.27-apache AS base
 
 RUN apt-get update \
@@ -20,7 +23,7 @@ RUN apt-get update \
         libpq-dev \
         libicu-dev \
         unzip \
-    && docker-php-ext-install pdo pdo_pgsql intl \
+    && docker-php-ext-install pdo_pgsql intl \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -70,7 +73,7 @@ RUN npm run build
 FROM base AS runtime
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends cron \
+    && apt-get install -y --no-install-recommends cron gosu \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
