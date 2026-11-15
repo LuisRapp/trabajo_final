@@ -9,6 +9,10 @@ services:
     volumes:
       - ./rennova:/var/www/html
     environment:
+      # La app vive en un bind mount propiedad del usuario del host: www-data
+      # no puede escribir ahi. En produccion no se define y corre como
+      # www-data, que es lo correcto.
+      USUARIO_APP: root
       DB_CONNECTION: pgsql
       DB_HOST: db
       DB_PORT: 5432

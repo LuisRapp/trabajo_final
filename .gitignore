@@ -1,1 +1,5 @@
 .atl/
+
+# Secretos de produccion: el compose los toma con --env-file.
+# Solo se versiona el ejemplo.
+.env.production

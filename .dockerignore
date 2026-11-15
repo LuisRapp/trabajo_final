@@ -1,0 +1,37 @@
+# Contexto de build: la raiz del repo. La app Laravel vive en rennova/.
+
+# Secretos y configuracion local: nunca entran a la imagen.
+rennova/.env
+rennova/.env.*
+!rennova/.env.example
+
+# Dependencias y artefactos que la imagen construye por su cuenta.
+rennova/vendor
+rennova/node_modules
+rennova/public/build
+rennova/public/hot
+rennova/public/storage
+
+# Estado de ejecucion de la maquina que hace el build.
+rennova/storage/*.key
+rennova/storage/logs/*.log
+rennova/storage/framework/cache/data/*
+rennova/storage/framework/sessions/*
+rennova/storage/framework/testing/*
+rennova/storage/framework/views/*.php
+rennova/bootstrap/cache/*.php
+
+# Base sqlite de desarrollo y cache de tests.
+rennova/database/*.sqlite
+rennova/.phpunit.cache
+rennova/.phpunit.result.cache
+
+# No viajan a produccion.
+rennova/tests
+rennova/Documentacion
+odd
+.git
+.github
+.gitignore
+.idea
+.vscode

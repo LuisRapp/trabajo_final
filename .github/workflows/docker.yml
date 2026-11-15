@@ -1,0 +1,54 @@
+name: docker
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+  pull_request:
+    branches:
+      - develop
+      - main
+
+# Valida que la imagen de produccion se construya desde un clon limpio y que
+# contenga lo que la fase 2 promete: codigo, vendor y assets compilados.
+# Es el unico gate que prueba el empaquetado: la app vive en rennova/ y el
+# Dockerfile se construye desde la raiz del repo.
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Preparar Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Construir la imagen
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          push: false
+          load: true
+          tags: rennova:verificacion
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Un build exitoso no prueba que la imagen final tenga el codigo, el
+      # vendor ni los assets: cada COPY podria estar apuntando mal. El
+      # entrypoint se reemplaza para no necesitar base de datos ni APP_KEY.
+      - name: Verificar el contenido de la imagen
+        run: |
+          docker run --rm --entrypoint sh rennova:verificacion -c '
+            set -e
+            test -f artisan || { echo "Falta el codigo de la aplicacion"; exit 1; }
+            test -f public/build/manifest.json || { echo "Faltan los assets compilados"; exit 1; }
+            test -d vendor/livewire/flux || { echo "Falta el vendor de produccion"; exit 1; }
+            php -m | grep -qx pdo_pgsql || { echo "Falta la extension pdo_pgsql"; exit 1; }
+            php -m | grep -qx intl || { echo "Falta la extension intl"; exit 1; }
+            test -f /etc/cron.d/laravel-cron || { echo "Falta el cron de Laravel"; exit 1; }
+            test -x /entrypoint.sh || { echo "Falta el entrypoint ejecutable"; exit 1; }
+            echo "Contenido de la imagen verificado."
+          '
