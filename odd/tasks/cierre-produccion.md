@@ -7,7 +7,7 @@ Test runner: `php artisan test` (Pest) + `vendor/bin/pint --test`.
 ## Specs
 
 - **S1 — CI real (Fase 1).** Los workflows viven en `.github/workflows/` de la raiz, que es el unico lugar que GitHub lee. Ambos jobs verdes sobre PHP 8.4.27. El piso de PHP vive en `composer.json`, no en el YAML: `setup-php` trunca el pin de parche a `major.minor`.
-- **S2 — Docker de produccion (Fase 2).** `docker build` reproducible desde un clon limpio: multi-stage (Node compila assets, PHP sirve la app), imagen con codigo + `vendor` + assets compilados, sin `composer install` en runtime. Entrypoint: `key:generate` solo si `APP_KEY` esta vacio; `migrate --force` sin `|| true`. Compose de produccion separado del de desarrollo, sin credenciales hardcodeadas y sin bind mount del codigo. `.dockerignore` presente. Job de `docker build` en CI.
+- **S2 — Docker de produccion (Fase 2).** `docker build` reproducible desde un clon limpio: multi-stage (Node compila assets, PHP sirve la app), imagen con codigo + `vendor` + assets compilados, sin `composer install` en runtime. Entrypoint: `key:generate` solo si `APP_KEY` esta vacio; `migrate --force` sin `|| true`. Compose de produccion separado del de desarrollo, sin credenciales hardcodeadas y sin bind mount del codigo. `.dockerignore` presente. Job de `docker build` en CI. **La fase se cierra con build verde en CI; la verificacion por uso NO se hace aca** (ver Gate de entrega).
 - **S3 — Autorizacion server-side (Fase 3).** Cada accion Livewire valida el permiso en PHP antes de ejecutarse (`@can` en Blade no protege el endpoint). `/adelantos` con middleware de permiso. Test por dominio que intente la accion sin permiso y verifique que no se ejecuta.
 - **S4 — Dependencias y deuda critica (Fase 4).** `dompdf` en version sin los advisories de filtrado y DoS, con los PDFs validados despues del salto. Cero advisories criticos de runtime sin resolver o documentados. D12 resuelto, D6 con stock validado en la ruta FIFO, D1+D2 con las validaciones en el Servicio.
 - **S5 — Indicadores (Fase 5).** Verificacion visual de los KPIs de T3 (vista + PDF). Luego tn/dia operativo y tendencia mes vs mes. La tendencia compara **solo meses cerrados**; el mes en curso se marca parcial o se compara contra el mismo tramo del mes anterior. Precio promedio por categoria de madera queda como deuda.
@@ -33,6 +33,27 @@ Test runner: `php artisan test` (Pest) + `vendor/bin/pint --test`.
 - **D12**: best-effort post-commit. Las notificaciones salen de la transaccion (via `DB::afterCommit()`) con log de contexto; se documenta que son no atomicas **por diseno**. El invariante es la orden de mantenimiento, no el aviso. Ya existe el precedente en el mismo archivo: el email se manda fuera de la transaccion (linea 136).
 - **Estrategia de entrega**: una rama + un PR por fase. Razon: el PR #24 se mergeo con 106 archivos y +3.597 lineas sin revision humana real; con un solo desarrollador el PR es checkpoint, y su valor es poder revertir un slice sin perder el resto.
 - **Destino de produccion**: imagen de produccion + compose prod, porque sirve tanto para VPS propio como para entrega de repo y elimina la deriva de entorno. El destino concreto todavia no esta definido. Hallazgo: hoy la documentacion y el compose se contradicen — `docker-compose.yml` es de desarrollo (bind mount del codigo, `postgres/postgres` hardcodeado, puerto 5432 expuesto, sin `APP_ENV`/`APP_KEY`) y `GUIA_DESPLIEGUE_PRODUCCION.md` describe un despliegue nativo (PHP, nginx, crontab, systemd). Se elige Docker; la guia nativa se reescribe o se retira.
+
+## Gate de entrega (antes de entregar, despues de F8)
+
+Se instala Docker **una sola vez**, al final del plan, para no abrir cambios de alcance a mitad de camino. Esto NO es deuda: es un paso obligatorio y verificable.
+
+- [ ] Instalar Docker y agregar el usuario al grupo `docker`.
+- [ ] Clonar el repo en un directorio limpio (no el working copy).
+- [ ] `docker compose -f docker-compose.prod.yml up --build` sin tocar nada a mano.
+- [ ] Verificar: la app responde, el login funciona, las migraciones corrieron, el queue worker procesa un job y el cron esta programado.
+- [ ] Verificar que el `.env` del working copy **no se modifico** (la APP_KEY local queda intacta).
+- [ ] Recien con eso verde: entregar.
+
+Si algo falla aca, se corrige y se vuelve a correr el gate completo. No se entrega con el gate parcialmente verificado.
+
+## Backlog post-entrega (parking)
+
+Todo lo que aparezca durante F2-F8 y no sea un defecto de la fase en curso se anota aca y **no entra al alcance**. Esto es lo que evita el "ya que estoy, cambio esto" a mitad de plan.
+
+- Precio promedio por categoria de madera (descartado de F5, ver `indicadores-financieros.md` L7).
+- D13, D14 (deuda aceptada).
+- Cualquier mejora de UI que surja al ver la app corriendo durante el Gate de entrega.
 
 ## Log
 
