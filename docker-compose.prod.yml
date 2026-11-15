@@ -1,0 +1,55 @@
+# Compose de PRODUCCION. El de desarrollo es docker-compose.yml.
+#
+# Uso:
+#   docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
+#
+# El --env-file es obligatorio: de ahi salen tanto las variables que consume
+# este archivo (DB_DATABASE, DB_USERNAME, DB_PASSWORD) como las que recibe el
+# contenedor de la app.
+#
+# No hay bind mount del codigo: la imagen ya contiene la aplicacion. Los
+# volumenes son solo para datos que deben sobrevivir a un redeploy.
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: rennova:latest
+    container_name: rennova_app
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      DB_CONNECTION: pgsql
+      DB_HOST: db
+      DB_PORT: "5432"
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:80"
+    volumes:
+      - rennova_storage:/var/www/html/storage
+
+  db:
+    image: postgres:15
+    container_name: rennova_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - rennova_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  rennova_pgdata:
+  rennova_storage:

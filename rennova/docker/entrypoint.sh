@@ -3,39 +3,45 @@ set -e
 
 cd /var/www/html
 
-if [ ! -f "/var/www/html/.env" ] && [ -f "/var/www/html/.env.example" ]; then
-	cp /var/www/html/.env.example /var/www/html/.env
+# La configuracion de produccion llega por variables de entorno. El .env solo
+# se usa si alguien lo provee explicitamente.
+if [ ! -f .env ]; then
+	touch .env
 fi
 
-if [ ! -d "/var/www/html/vendor" ]; then
-	composer install --no-interaction --prefer-dist --optimize-autoloader
+# Nunca se pisa una APP_KEY existente: regenerarla invalida las sesiones y deja
+# ilegible cualquier dato cifrado con la clave anterior.
+if [ -z "${APP_KEY:-}" ] && ! grep -qE '^APP_KEY=base64:.+' .env; then
+	echo "Generando APP_KEY: no se encontro ninguna configurada."
+	php artisan key:generate --force
+	echo "AVISO: copia la APP_KEY generada a .env.production. Si no, el proximo" >&2
+	echo "redeploy genera otra y se invalidan las sesiones y los datos cifrados." >&2
 fi
 
-php artisan key:generate --force || true
 php artisan storage:link || true
 
-DB_CONNECTION=$(php -r "require 'vendor/autoload.php'; \$dotenv=Dotenv\\Dotenv::createImmutable(__DIR__); \$dotenv->safeLoad(); echo \$_ENV['DB_CONNECTION'] ?? getenv('DB_CONNECTION') ?? '';" 2>/dev/null || true)
-DB_HOST=$(php -r "require 'vendor/autoload.php'; \$dotenv=Dotenv\\Dotenv::createImmutable(__DIR__); \$dotenv->safeLoad(); echo \$_ENV['DB_HOST'] ?? getenv('DB_HOST') ?? 'db';" 2>/dev/null || echo "db")
-DB_PORT=$(php -r "require 'vendor/autoload.php'; \$dotenv=Dotenv\\Dotenv::createImmutable(__DIR__); \$dotenv->safeLoad(); echo \$_ENV['DB_PORT'] ?? getenv('DB_PORT') ?? '5432';" 2>/dev/null || echo "5432")
-
-if [ "$DB_CONNECTION" = "pgsql" ]; then
-	echo "Waiting for Postgres at $DB_HOST:$DB_PORT ..."
-	for i in $(seq 1 60); do
-		php -r "@fsockopen('$DB_HOST', (int)('$DB_PORT')) ? exit(0) : exit(1);" && break
+# Espera acotada a Postgres. Si no responde, el contenedor falla en vez de
+# arrancar contra una base inexistente.
+if [ "${DB_CONNECTION:-pgsql}" = "pgsql" ]; then
+	intentos=0
+	until php -r 'exit(@fsockopen(getenv("DB_HOST") ?: "db", (int) (getenv("DB_PORT") ?: 5432)) ? 0 : 1);'; do
+		intentos=$((intentos + 1))
+		if [ "$intentos" -ge 60 ]; then
+			echo "ERROR: Postgres no responde en ${DB_HOST:-db}:${DB_PORT:-5432}." >&2
+			exit 1
+		fi
 		sleep 1
 	done
 fi
 
-php artisan config:clear || true
-php artisan route:clear || true
-php artisan view:clear || true
-
-php artisan migrate --force || true
+# Sin || true: si las migraciones fallan, el despliegue esta mal y el
+# contenedor no debe quedar arriba como si estuviera sano.
+php artisan migrate --force
 
 service cron start
 
-# Worker de cola en background: procesa jobs encolados (asignación automática, correos, etc.)
-# que de otro modo se acumulan en la tabla `jobs` sin ejecutarse nunca.
+# Worker de cola en background: procesa jobs encolados (asignacion automatica,
+# correos, etc.) que de otro modo se acumulan en la tabla `jobs`.
 nohup php artisan queue:work --sleep=3 --tries=3 --timeout=90 >> storage/logs/queue-worker.log 2>&1 &
 
 exec apache2-foreground
