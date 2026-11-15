@@ -2,10 +2,7 @@
 
 namespace App\Http\Livewire;
 
-use App\Models\Carga;
-use App\Models\CategoriaMadera;
-use App\Models\Lote;
-use App\Models\ParteDiario;
+use App\Services\CargaService;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -47,64 +44,30 @@ class Cargas extends Component
 
     public $busqueda = '';
 
-    protected $rules = [
-        'id_lote' => 'required|exists:lotes,id_lote',
-        'id_categoria_madera' => 'nullable|exists:categoria_maderas,id_categoria_madera',
-        'id_chofer' => 'nullable|integer',
-        'id_parte_diario' => 'nullable|exists:parte_diarios,id_parte_diario',
-        'ticket' => 'nullable|string|max:20',
-        'peso_bruto' => 'nullable|numeric|min:0',
-        'tara' => 'nullable|numeric|min:0',
-        'peso_neto' => 'nullable|numeric|min:0',
-        'id_cliente' => 'nullable|exists:clientes,id_cliente',
-        'fecha_carga' => 'required|date|before_or_equal:today',
-    ];
+    protected CargaService $servicio;
+
+    public function boot(): void
+    {
+        $this->servicio = app(CargaService::class);
+    }
+
+    protected function rules(): array
+    {
+        return $this->servicio->reglas();
+    }
 
     public function mount()
     {
-        $this->lotes = Lote::all();
-        $this->categorias = CategoriaMadera::all();
-        $this->partes = ParteDiario::all();
-    }
-
-    public function getCargas()
-    {
-        $query = Carga::with(['lote', 'parteDiario', 'categoriaMadera', 'chofer', 'cliente']);
-
-        if ($this->busqueda) {
-            $busq = $this->busqueda;
-            $query->where(function ($q) use ($busq) {
-                $q->where('ticket', 'ILIKE', "%{$busq}%")
-                    ->orWhereRaw('CAST(peso_bruto AS TEXT) ILIKE ?', ["%{$busq}%"])
-                    ->orWhereRaw('CAST(peso_neto AS TEXT) ILIKE ?', ["%{$busq}%"])
-                    ->orWhereDate('fecha_carga', $busq)
-                    ->orWhereHas('lote', function ($qr) use ($busq) {
-                        $qr->where('propietario', 'ILIKE', "%{$busq}%")
-                            ->orWhere('ubicacion', 'ILIKE', "%{$busq}%");
-                    })
-                    ->orWhereHas('categoriaMadera', function ($qr) use ($busq) {
-                        $qr->where('nombre', 'ILIKE', "%{$busq}%");
-                    })
-                    ->orWhereHas('chofer', function ($qr) use ($busq) {
-                        $qr->where('apellido', 'ILIKE', "%{$busq}%")
-                            ->orWhere('nombre', 'ILIKE', "%{$busq}%");
-                    })
-                    ->orWhereHas('cliente', function ($qr) use ($busq) {
-                        $qr->where('razon_social', 'ILIKE', "%{$busq}%");
-                    });
-            });
-        }
-
-        return $query->orderBy('id_carga', 'desc')->paginate($this->pagina);
+        $this->lotes = $this->servicio->listarLotes();
+        $this->categorias = $this->servicio->listarCategorias();
+        $this->partes = $this->servicio->listarPartes();
     }
 
     public function render()
     {
-        $clientes = \App\Models\Cliente::orderBy('razon_social')->get();
-
         return view('livewire.cargas', [
-            'cargas' => $this->getCargas(),
-            'clientes' => $clientes,
+            'cargas' => $this->servicio->listar($this->busqueda, $this->pagina),
+            'clientes' => $this->servicio->listarClientes(),
         ]);
     }
 
@@ -116,27 +79,20 @@ class Cargas extends Component
     public function guardar()
     {
         $this->validate();
-        // Bloqueo adicional: evitar fecha futura
-        if (\Carbon\Carbon::parse($this->fecha_carga)->isAfter(\Carbon\Carbon::today())) {
-            session()->flash('error', 'La fecha de la carga no puede ser futura.');
 
-            return;
-        }
-        $carga = Carga::updateOrCreate(
-            ['id_carga' => $this->carga_id],
-            [
-                'id_lote' => $this->id_lote,
-                'id_categoria_madera' => $this->id_categoria_madera,
-                'id_chofer' => $this->id_chofer,
-                'id_parte_diario' => $this->id_parte_diario,
-                'id_cliente' => $this->id_cliente,
-                'ticket' => $this->ticket,
-                'peso_bruto' => $this->peso_bruto,
-                'tara' => $this->tara,
-                'peso_neto' => $this->peso_neto,
-                'fecha_carga' => $this->fecha_carga,
-            ]
-        );
+        $this->servicio->crearOActualizar($this->carga_id, [
+            'id_lote' => $this->id_lote,
+            'id_categoria_madera' => $this->id_categoria_madera,
+            'id_chofer' => $this->id_chofer,
+            'id_parte_diario' => $this->id_parte_diario,
+            'id_cliente' => $this->id_cliente,
+            'ticket' => $this->ticket,
+            'peso_bruto' => $this->peso_bruto,
+            'tara' => $this->tara,
+            'peso_neto' => $this->peso_neto,
+            'fecha_carga' => $this->fecha_carga,
+        ]);
+
         session()->flash('message', $this->carga_id ? 'Carga actualizada correctamente.' : 'Carga creada correctamente.');
         $this->tab_activo = 'listado';
         $this->resetCampos();
@@ -147,7 +103,7 @@ class Cargas extends Component
     public function editar($id)
     {
         $this->tab_activo = 'nuevo';
-        $carga = Carga::findOrFail($id);
+        $carga = $this->servicio->obtener($id);
         $this->carga_id = $carga->id_carga;
         $this->id_lote = $carga->id_lote;
         $this->id_categoria_madera = $carga->id_categoria_madera;
@@ -163,7 +119,7 @@ class Cargas extends Component
 
     public function eliminar($id)
     {
-        Carga::findOrFail($id)->delete();
+        $this->servicio->eliminar($id);
         session()->flash('message', 'Carga eliminada correctamente.');
         $this->resetCampos();
         $this->resetPage();

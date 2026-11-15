@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Insumo;
+use App\Models\Lote;
 use App\Models\Mantenimiento;
 use App\Models\Maquinaria;
 use App\Models\NotificacionSistema;
@@ -8,6 +9,7 @@ use App\Models\PropuestaCompraMantenimiento;
 use App\Models\PropuestaCompraMantenimientoInsumo;
 use App\Models\TipoMantenimiento;
 use App\Models\Usuario;
+use App\Services\ClimaDecisionService;
 use Illuminate\Support\Facades\DB;
 
 beforeEach(function () {
@@ -24,7 +26,7 @@ test('check-umbrales genera orden y notificacion interna al superarse el umbral'
     ]);
 
     $maquinaria = Maquinaria::factory()->create([
-        'estado' => 'operativa',
+        'estado' => 'disponible',
         'umbral_toneladas' => 1000,
         'toneladas_acumuladas' => 1500,
     ]);
@@ -48,7 +50,7 @@ test('check-umbrales genera orden y notificacion interna al superarse el umbral'
 
 test('check-umbrales no genera orden cuando ya existe una orden abierta', function () {
     $maquinaria = Maquinaria::factory()->create([
-        'estado' => 'operativa',
+        'estado' => 'disponible',
         'umbral_toneladas' => 1000,
         'toneladas_acumuladas' => 1500,
     ]);
@@ -68,7 +70,7 @@ test('check-umbrales no genera orden cuando ya existe una orden abierta', functi
 
 test('check-umbrales no genera orden por debajo del umbral', function () {
     $maquinaria = Maquinaria::factory()->create([
-        'estado' => 'operativa',
+        'estado' => 'disponible',
         'umbral_toneladas' => 1000,
         'toneladas_acumuladas' => 400,
     ]);
@@ -83,7 +85,7 @@ test('check-umbrales no genera orden por debajo del umbral', function () {
 });
 
 test('los items de las propuestas de compra usan baja logica', function () {
-    $maquinaria = Maquinaria::factory()->create(['estado' => 'operativa']);
+    $maquinaria = Maquinaria::factory()->create(['estado' => 'disponible']);
     $mantenimiento = Mantenimiento::factory()->programado()->create([
         'id_maquinaria' => $maquinaria->id_maquinaria,
     ]);
@@ -107,4 +109,52 @@ test('los items de las propuestas de compra usan baja logica', function () {
 
     expect(PropuestaCompraMantenimientoInsumo::query()->count())->toBe(0)
         ->and(PropuestaCompraMantenimientoInsumo::withTrashed()->count())->toBe(1);
+});
+
+test('check-umbrales programa la orden por clima cuando hay lluvia en la ventana', function () {
+    $usuario = Usuario::factory()->create();
+    DB::table('configuracion_notificaciones_mantenimiento')->insert([
+        'user_id' => $usuario->id,
+        'tipo_notificacion' => 'umbral',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $maquinaria = Maquinaria::factory()->create([
+        'estado' => 'disponible',
+        'umbral_toneladas' => 1000,
+        'toneladas_acumuladas' => 1500,
+    ]);
+
+    $lote = Lote::factory()->activo()->create([
+        'latitud' => -26.5,
+        'longitud' => -54.5,
+    ]);
+
+    $lote->maquinarias()->attach($maquinaria->id_maquinaria);
+
+    $this->mock(ClimaDecisionService::class, function ($mock) {
+        $mock->shouldReceive('analizarYRecomendar')
+            ->once()
+            ->andReturn([
+                'success' => true,
+                'dias_detalle' => [
+                    [
+                        'fecha' => now()->addDay()->toDateString(),
+                        'precipitacion_mm' => 15,
+                        'razon' => 'lluvia',
+                    ],
+                ],
+            ]);
+    });
+
+    $this->artisan('mantenimiento:check-umbrales')->assertExitCode(0);
+
+    $orden = Mantenimiento::query()
+        ->where('id_maquinaria', $maquinaria->id_maquinaria)
+        ->first();
+
+    expect($orden)->not->toBeNull()
+        ->and($orden->estado)->toBe('programado')
+        ->and($orden->fecha_programada)->not->toBeNull();
 });

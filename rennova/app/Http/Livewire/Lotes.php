@@ -4,9 +4,8 @@ namespace App\Http\Livewire;
 
 use App\Enums\TaskType;
 use App\Http\Livewire\Traits\MensajesErrorUsuario;
-use App\Models\Lote;
-use App\Models\LoteTarea;
 use App\Services\AsignacionLoteService;
+use App\Services\LoteService;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -37,17 +36,17 @@ class Lotes extends Component
 
     public $busqueda = '';
 
-    protected $rules = [
-        'propietario' => 'required|string|min:3|max:100',
-        'ubicacion' => 'required|string|min:3|max:150',
-        'especie' => 'required|string|min:2|max:100',
-        'superficie' => 'required|numeric|min:0.1|max:10000',
-        'condicion_compra' => 'required|in:propio,alquilado',
-        'estado' => 'required|in:activo,en_proceso,inactivo,cerrado,baja',
-        'main_task_type' => 'required|in:tala_rasa,raleo,poda,limpieza',
-        'latitud' => 'nullable|numeric|between:-90,90',
-        'longitud' => 'nullable|numeric|between:-180,180',
-    ];
+    protected LoteService $servicio;
+
+    public function boot(): void
+    {
+        $this->servicio = app(LoteService::class);
+    }
+
+    protected function rules(): array
+    {
+        return $this->servicio->reglas();
+    }
 
     protected $messages = [
         'required' => 'Este campo es obligatorio.',
@@ -60,21 +59,6 @@ class Lotes extends Component
     public function mount()
     {
         $this->resetCampos();
-    }
-
-    public function cargarLotes()
-    {
-        $query = Lote::query();
-
-        if (! empty($this->busqueda)) {
-            $query->where(function ($q) {
-                $q->where('propietario', 'ILIKE', '%'.$this->busqueda.'%')
-                    ->orWhere('ubicacion', 'ILIKE', '%'.$this->busqueda.'%')
-                    ->orWhere('especie', 'ILIKE', '%'.$this->busqueda.'%');
-            });
-        }
-
-        return $query->orderBy('id_lote', 'desc')->paginate(15);
     }
 
     public function updatedBusqueda()
@@ -101,46 +85,44 @@ class Lotes extends Component
         return TaskType::cases();
     }
 
-    // =========================================================================
-    // CRUD — delegates to Eloquent (simple operations)
-    // =========================================================================
-
     public function guardar()
     {
         $this->validate();
 
         try {
-            if ($this->lote_id) {
-                $lote = Lote::find($this->lote_id);
-                $fromEstado = $lote->estado;
-                $lote->update($this->only(['propietario', 'ubicacion', 'superficie', 'estado', 'condicion_compra', 'especie', 'latitud', 'longitud', 'main_task_type']));
-                session()->flash('message', 'Lote actualizado correctamente.');
+            $resultado = $this->servicio->crearOActualizar($this->lote_id, [
+                'propietario' => $this->propietario,
+                'ubicacion' => $this->ubicacion,
+                'superficie' => $this->superficie,
+                'estado' => $this->estado,
+                'condicion_compra' => $this->condicion_compra,
+                'especie' => $this->especie,
+                'latitud' => $this->latitud,
+                'longitud' => $this->longitud,
+                'main_task_type' => $this->main_task_type,
+            ]);
 
-                if ($fromEstado !== 'en_proceso' && $lote->estado === 'en_proceso') {
-                    $tareasActivas = LoteTarea::query()
-                        ->where('id_lote', $lote->id_lote)
-                        ->whereIn('estado', ['planificada', 'en_ejecucion'])
-                        ->count();
+            $lote = $resultado['lote'];
 
-                    if ($tareasActivas === 0) {
+            if ($resultado['tareas_activas'] !== null) {
+                if ($this->lote_id) {
+                    if ($resultado['tareas_activas'] === 0) {
                         session()->flash('message', 'El lote pasó a En explotación. Antes, planificá las tareas para generar propuestas de asignación reales (ej: 5 ha raleo + 5 ha tala rasa).');
 
                         return redirect()->route('lotes.tareas', ['loteId' => $lote->id_lote]);
                     }
 
+                    session()->flash('message', 'Lote actualizado correctamente.');
+
                     return redirect()->route('lotes.recomendaciones', ['loteId' => $lote->id_lote]);
                 }
-            } else {
-                $lote = Lote::create($this->only(['propietario', 'ubicacion', 'superficie', 'estado', 'condicion_compra', 'especie', 'latitud', 'longitud', 'main_task_type']));
 
-                if ($lote->estado === 'en_proceso') {
-                    session()->flash('message', 'Lote creado en En explotación. Planificá tareas para generar propuestas de asignación.');
+                session()->flash('message', 'Lote creado en En explotación. Planificá tareas para generar propuestas de asignación.');
 
-                    return redirect()->route('lotes.tareas', ['loteId' => $lote->id_lote]);
-                }
-
-                session()->flash('message', 'Lote creado correctamente.');
+                return redirect()->route('lotes.tareas', ['loteId' => $lote->id_lote]);
             }
+
+            session()->flash('message', $this->lote_id ? 'Lote actualizado correctamente.' : 'Lote creado correctamente.');
         } catch (\Throwable $e) {
             session()->flash('error', 'No se pudo guardar el lote. Verificá los datos e intentá nuevamente.');
 
@@ -153,7 +135,7 @@ class Lotes extends Component
 
     public function editar($id)
     {
-        $lote = Lote::findOrFail($id);
+        $lote = $this->servicio->obtener($id);
         $this->lote_id = $lote->id_lote;
         $this->propietario = $lote->propietario;
         $this->ubicacion = $lote->ubicacion;
@@ -168,7 +150,7 @@ class Lotes extends Component
 
     public function eliminar($id)
     {
-        Lote::destroy($id);
+        $this->servicio->eliminar($id);
         session()->flash('message', 'Lote eliminado correctamente.');
         $this->resetCampos();
     }
@@ -206,7 +188,7 @@ class Lotes extends Component
     public function render()
     {
         return view('livewire.lotes', [
-            'lotes' => $this->cargarLotes(),
+            'lotes' => $this->servicio->listar($this->busqueda),
         ]);
     }
 }

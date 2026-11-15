@@ -2,8 +2,7 @@
 
 namespace App\Http\Livewire;
 
-use App\Models\Empleado;
-use App\Models\RolLaboral;
+use App\Services\EmpleadoService;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -33,19 +32,16 @@ class Empleados extends Component
 
     public $tab_activo = 'listado';
 
+    protected EmpleadoService $servicio;
+
+    public function boot(): void
+    {
+        $this->servicio = app(EmpleadoService::class);
+    }
+
     public function rules()
     {
-        return [
-            'id_rol_laboral' => 'required|exists:roles_laborales,id_rol_laboral',
-            'dni' => $this->empleado_id
-                ? 'nullable|digits:8|unique:empleados,dni,'.$this->empleado_id.',id_empleado'
-                : 'required|digits:8|unique:empleados,dni',
-            'apellido' => 'required|min:2',
-            'nombre' => 'required|min:2',
-            'fecha_nacimiento' => 'required|date',
-            'fecha_inicio_actividades' => 'required|date',
-            'fecha_fin_actividades' => 'nullable|date|after:fecha_inicio_actividades',
-        ];
+        return $this->servicio->reglas($this->empleado_id);
     }
 
     protected $messages = [
@@ -61,33 +57,14 @@ class Empleados extends Component
 
     public function mount()
     {
-        $this->roles = RolLaboral::all();
+        $this->roles = $this->servicio->listarRoles();
     }
 
     public function render()
     {
         return view('livewire.empleados', [
-            'empleados' => $this->obtenerEmpleados()->paginate(15),
+            'empleados' => $this->servicio->listar($this->busqueda),
         ]);
-    }
-
-    public function obtenerEmpleados()
-    {
-        $query = Empleado::with('rolLaboral');
-
-        if ($this->busqueda) {
-            $busq = $this->busqueda;
-            $query->where(function ($q) use ($busq) {
-                $q->where('apellido', 'ILIKE', '%'.$busq.'%')
-                    ->orWhere('nombre', 'ILIKE', '%'.$busq.'%')
-                    ->orWhereRaw('CAST(dni AS TEXT) ILIKE ?', ['%'.$busq.'%'])
-                    ->orWhereHas('rolLaboral', function ($qr) use ($busq) {
-                        $qr->where('nombre', 'ILIKE', '%'.$busq.'%');
-                    });
-            });
-        }
-
-        return $query->orderBy('id_empleado', 'desc');
     }
 
     public function updatedBusqueda()
@@ -99,18 +76,15 @@ class Empleados extends Component
     {
         $this->validate();
 
-        Empleado::updateOrCreate(
-            ['id_empleado' => $this->empleado_id],
-            [
-                'id_rol_laboral' => $this->id_rol_laboral,
-                'dni' => $this->dni,
-                'apellido' => $this->apellido,
-                'nombre' => $this->nombre,
-                'fecha_nacimiento' => $this->fecha_nacimiento,
-                'fecha_inicio_actividades' => $this->fecha_inicio_actividades,
-                'fecha_fin_actividades' => $this->fecha_fin_actividades,
-            ]
-        );
+        $this->servicio->crearOActualizar($this->empleado_id, [
+            'id_rol_laboral' => $this->id_rol_laboral,
+            'dni' => $this->dni,
+            'apellido' => $this->apellido,
+            'nombre' => $this->nombre,
+            'fecha_nacimiento' => $this->fecha_nacimiento,
+            'fecha_inicio_actividades' => $this->fecha_inicio_actividades,
+            'fecha_fin_actividades' => $this->fecha_fin_actividades,
+        ]);
 
         session()->flash('message', $this->empleado_id ? 'Empleado actualizado correctamente.' : 'Empleado creado correctamente.');
         $this->tab_activo = 'listado';
@@ -121,7 +95,7 @@ class Empleados extends Component
     public function editar($id)
     {
         $this->tab_activo = 'nuevo';
-        $empleado = Empleado::findOrFail($id);
+        $empleado = $this->servicio->obtener($id);
         $this->empleado_id = $empleado->id_empleado;
         $this->id_rol_laboral = $empleado->id_rol_laboral;
         $this->dni = $empleado->dni;
@@ -130,12 +104,11 @@ class Empleados extends Component
         $this->fecha_nacimiento = $empleado->fecha_nacimiento;
         $this->fecha_inicio_actividades = $empleado->fecha_inicio_actividades;
         $this->fecha_fin_actividades = $empleado->fecha_fin_actividades;
-        $this->tab_activo = 'nuevo';
     }
 
     public function eliminar($id)
     {
-        Empleado::findOrFail($id)->delete();
+        $this->servicio->eliminar($id);
         session()->flash('message', 'Empleado eliminado correctamente.');
         $this->resetPage();
     }

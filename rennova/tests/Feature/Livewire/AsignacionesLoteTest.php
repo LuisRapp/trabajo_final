@@ -82,7 +82,7 @@ class AsignacionesLoteTest extends TestCase
         $empleado = Empleado::factory()->create(['fecha_fin_actividades' => null]);
         $maquinaria = Maquinaria::factory()->create();
 
-        $mock = \Mockery::mock(AsignacionLoteService::class);
+        $mock = \Mockery::mock(AsignacionLoteService::class)->makePartial();
         $mock->shouldReceive('asignarRecursos')
             ->once()
             ->withArgs(function ($loteId, $empIds, $maqIds, $request) use ($lote, $empleado, $maquinaria) {
@@ -111,7 +111,7 @@ class AsignacionesLoteTest extends TestCase
 
         $lote->empleados()->attach($empleadoViejo->id_empleado);
 
-        $mock = \Mockery::mock(AsignacionLoteService::class);
+        $mock = \Mockery::mock(AsignacionLoteService::class)->makePartial();
         $mock->shouldReceive('asignarRecursos')
             ->once()
             ->andReturn([]);
@@ -135,7 +135,7 @@ class AsignacionesLoteTest extends TestCase
 
         $loteActivo->empleados()->attach($empleado->id_empleado);
 
-        $mock = \Mockery::mock(AsignacionLoteService::class);
+        $mock = \Mockery::mock(AsignacionLoteService::class)->makePartial();
         $mock->shouldNotReceive('asignarRecursos');
         $this->app->instance(AsignacionLoteService::class, $mock);
 
@@ -156,7 +156,7 @@ class AsignacionesLoteTest extends TestCase
 
         $loteActivo->maquinarias()->attach($maquinaria->id_maquinaria);
 
-        $mock = \Mockery::mock(AsignacionLoteService::class);
+        $mock = \Mockery::mock(AsignacionLoteService::class)->makePartial();
         $mock->shouldNotReceive('asignarRecursos');
         $this->app->instance(AsignacionLoteService::class, $mock);
 
@@ -179,7 +179,7 @@ class AsignacionesLoteTest extends TestCase
         $loteActivo->empleados()->attach($empleado->id_empleado);
         $loteActivo->maquinarias()->attach($maquinaria->id_maquinaria);
 
-        $mock = \Mockery::mock(AsignacionLoteService::class);
+        $mock = \Mockery::mock(AsignacionLoteService::class)->makePartial();
         $mock->shouldNotReceive('asignarRecursos');
         $this->app->instance(AsignacionLoteService::class, $mock);
 
@@ -202,7 +202,7 @@ class AsignacionesLoteTest extends TestCase
         $empleado = Empleado::factory()->create(['fecha_fin_actividades' => null]);
         $lote->empleados()->attach($empleado->id_empleado);
 
-        $mock = \Mockery::mock(AsignacionLoteService::class);
+        $mock = \Mockery::mock(AsignacionLoteService::class)->makePartial();
         $mock->shouldReceive('eliminarAsignaciones')
             ->once()
             ->with($lote->id_lote, \Mockery::type('array'));
@@ -218,7 +218,7 @@ class AsignacionesLoteTest extends TestCase
     {
         $lote = Lote::factory()->activo()->create();
 
-        $mock = \Mockery::mock(AsignacionLoteService::class);
+        $mock = \Mockery::mock(AsignacionLoteService::class)->makePartial();
         $mock->shouldReceive('eliminarAsignaciones')
             ->once()
             ->with($lote->id_lote, \Mockery::type('array'));
@@ -241,7 +241,7 @@ class AsignacionesLoteTest extends TestCase
         $empleado = Empleado::factory()->create(['fecha_fin_actividades' => null]);
         $lote->empleados()->attach($empleado->id_empleado);
 
-        $mock = \Mockery::mock(AsignacionLoteService::class);
+        $mock = \Mockery::mock(AsignacionLoteService::class)->makePartial();
         $mock->shouldReceive('finalizar')
             ->once()
             ->with($lote->id_lote, \Mockery::type('array'))
@@ -258,7 +258,7 @@ class AsignacionesLoteTest extends TestCase
     {
         $lote = Lote::factory()->cerrado()->create();
 
-        $mock = \Mockery::mock(AsignacionLoteService::class);
+        $mock = \Mockery::mock(AsignacionLoteService::class)->makePartial();
         $mock->shouldReceive('finalizar')
             ->once()
             ->with($lote->id_lote, \Mockery::type('array'))
@@ -276,7 +276,7 @@ class AsignacionesLoteTest extends TestCase
     {
         $lote = Lote::factory()->activo()->create();
 
-        $mock = \Mockery::mock(AsignacionLoteService::class);
+        $mock = \Mockery::mock(AsignacionLoteService::class)->makePartial();
         $mock->shouldReceive('finalizar')->once()->andReturn(true);
 
         $this->app->instance(AsignacionLoteService::class, $mock);
@@ -402,7 +402,7 @@ class AsignacionesLoteTest extends TestCase
 
         $loteCerrado->empleados()->attach($empleado->id_empleado);
 
-        $mock = \Mockery::mock(AsignacionLoteService::class);
+        $mock = \Mockery::mock(AsignacionLoteService::class)->makePartial();
         $mock->shouldReceive('asignarRecursos')->once()->andReturn([]);
 
         $this->app->instance(AsignacionLoteService::class, $mock);
@@ -423,7 +423,7 @@ class AsignacionesLoteTest extends TestCase
 
         $lote->empleados()->attach($empleado->id_empleado);
 
-        $mock = \Mockery::mock(AsignacionLoteService::class);
+        $mock = \Mockery::mock(AsignacionLoteService::class)->makePartial();
         $mock->shouldReceive('asignarRecursos')->once()->andReturn([]);
 
         $this->app->instance(AsignacionLoteService::class, $mock);

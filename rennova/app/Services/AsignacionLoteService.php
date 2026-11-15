@@ -195,4 +195,68 @@ class AsignacionLoteService
             'url' => $requestData['url'],
         ]);
     }
+
+    /**
+     * Detecta conflictos de empleados ya asignados a otros lotes activos.
+     *
+     * @return array<string>
+     */
+    public function detectarConflictosEmpleados(int $loteId, array $empleadosIds): array
+    {
+        if (empty($empleadosIds)) {
+            return [];
+        }
+
+        $conflictos = [];
+        $lotesConflicto = Lote::where('estado', 'activo')
+            ->where('id_lote', '!=', $loteId)
+            ->whereHas('empleados', function ($q) use ($empleadosIds) {
+                $q->whereIn('empleados.id_empleado', $empleadosIds);
+            })
+            ->with(['empleados' => function ($q) use ($empleadosIds) {
+                $q->whereIn('empleados.id_empleado', $empleadosIds)
+                    ->select('empleados.id_empleado', 'apellido', 'nombre');
+            }])
+            ->get();
+
+        foreach ($lotesConflicto as $lote) {
+            foreach ($lote->empleados as $empleado) {
+                $conflictos[] = "{$empleado->apellido}, {$empleado->nombre} (ya asignado a Lote #{$lote->id_lote} - {$lote->ubicacion})";
+            }
+        }
+
+        return $conflictos;
+    }
+
+    /**
+     * Detecta conflictos de maquinarias ya asignadas a otros lotes activos.
+     *
+     * @return array<string>
+     */
+    public function detectarConflictosMaquinarias(int $loteId, array $maquinariasIds): array
+    {
+        if (empty($maquinariasIds)) {
+            return [];
+        }
+
+        $conflictos = [];
+        $lotesConflicto = Lote::where('estado', 'activo')
+            ->where('id_lote', '!=', $loteId)
+            ->whereHas('maquinarias', function ($q) use ($maquinariasIds) {
+                $q->whereIn('maquinarias.id_maquinaria', $maquinariasIds);
+            })
+            ->with(['maquinarias' => function ($q) use ($maquinariasIds) {
+                $q->whereIn('maquinarias.id_maquinaria', $maquinariasIds)
+                    ->select('maquinarias.id_maquinaria', 'modelo');
+            }])
+            ->get();
+
+        foreach ($lotesConflicto as $lote) {
+            foreach ($lote->maquinarias as $maquinaria) {
+                $conflictos[] = "{$maquinaria->modelo} (ya asignada a Lote #{$lote->id_lote} - {$lote->ubicacion})";
+            }
+        }
+
+        return $conflictos;
+    }
 }

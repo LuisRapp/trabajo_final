@@ -49,7 +49,7 @@ class ProcesoMantenimientoService
         return Maquinaria::query()
             ->with('tipoMaquinaria')
             ->whereNotNull('umbral_toneladas')
-            ->whereIn('estado', ['operativa', 'activo'])
+            ->whereIn('estado', ['disponible', 'asignada'])
             ->when($maquinariaId, fn ($q) => $q->where('id_maquinaria', $maquinariaId))
             ->get();
     }
@@ -354,7 +354,7 @@ class ProcesoMantenimientoService
                 continue;
             }
 
-            if ($mm >= ClimaDecisionService::UMBRAL_LLUVIA || str_contains($razon, 'lluvia')) {
+            if ($mm >= ClimaAnalisisService::UMBRAL_LLUVIA || str_contains($razon, 'lluvia')) {
                 return [
                     'fecha_programada' => $fecha->startOfDay(),
                     'fuente' => 'clima',

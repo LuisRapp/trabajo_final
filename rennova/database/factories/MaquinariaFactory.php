@@ -15,7 +15,7 @@ class MaquinariaFactory extends Factory
         return [
             'id_tipo_maquinaria' => TipoMaquinaria::factory(),
             'modelo' => $this->faker->bothify('JD-####-?'),
-            'estado' => $this->faker->randomElement(['activo', 'mantenimiento', 'fuera_servicio']),
+            'estado' => $this->faker->randomElement(['disponible', 'asignada', 'en_mantenimiento']),
             'es_alquilada' => $this->faker->boolean(25),
             'fecha_inicio_actividades' => $this->faker->dateTimeBetween('-5 years', 'now'),
             'toneladas_acumuladas' => $this->faker->randomFloat(2, 500, 25000),

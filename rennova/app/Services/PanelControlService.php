@@ -26,6 +26,7 @@ class PanelControlService
             'costoPromedioTn' => $this->costoPromedioPorTonelada($mes, $anio),
             'precioVentaPromedioTn' => $this->precioVentaPromedioPorTonelada($mes, $anio),
             'mantenimientosPendientes' => $this->mantenimientosPendientes(),
+            'proyeccion' => $this->proyeccionVsEquilibrio(),
         ];
     }
 
@@ -74,16 +75,33 @@ class PanelControlService
 
     private function precioVentaPromedioPorTonelada(int $mes, int $anio): float
     {
-        return DB::table('venta_cargas')
-            ->join('ventas', 'venta_cargas.id_venta', '=', 'ventas.id_recibo')
+        // Promedio ponderado por toneladas (consistente con ForestalStatsService)
+        $row = DB::table('venta_cargas as vc')
+            ->join('ventas', 'vc.id_venta', '=', 'ventas.id_recibo')
             ->whereNull('ventas.deleted_at')
             ->whereMonth('ventas.fecha_emision', $mes)
             ->whereYear('ventas.fecha_emision', $anio)
-            ->avg('venta_cargas.precio_unitario') ?? 0;
+            ->selectRaw('SUM(COALESCE(vc.subtotal, vc.precio_unitario * vc.peso_toneladas)) as monto_total')
+            ->selectRaw('SUM(vc.peso_toneladas) as ton_total')
+            ->first();
+
+        $montoTotal = (float) ($row->monto_total ?? 0);
+        $tonTotal = (float) ($row->ton_total ?? 0);
+
+        if ($tonTotal <= 0) {
+            return 0.0;
+        }
+
+        return round($montoTotal / $tonTotal, 2);
     }
 
     private function mantenimientosPendientes(): int
     {
         return Mantenimiento::where('estado', 'pendiente')->count();
+    }
+
+    private function proyeccionVsEquilibrio(): array
+    {
+        return app(ForestalStatsService::class)->getProyeccionVsEquilibrio();
     }
 }

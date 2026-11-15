@@ -2,8 +2,7 @@
 
 namespace App\Http\Livewire;
 
-use App\Models\HistoricoCostosMaquinaria;
-use App\Models\Maquinaria;
+use App\Services\HistoricoCostosMaquinariaService;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -27,12 +26,17 @@ class HistoricoCostosMaquinarias extends Component
 
     public $tab_activo = 'listado';
 
-    protected $rules = [
-        'id_maquinaria' => 'required|exists:maquinarias,id_maquinaria',
-        'costo_por_tonelada' => 'required|numeric|min:0',
-        'fecha_inicio_vigencia' => 'required|date',
-        'fecha_fin_vigencia' => 'nullable|date|after:fecha_inicio_vigencia',
-    ];
+    protected HistoricoCostosMaquinariaService $servicio;
+
+    public function boot(): void
+    {
+        $this->servicio = app(HistoricoCostosMaquinariaService::class);
+    }
+
+    protected function rules(): array
+    {
+        return $this->servicio->reglas();
+    }
 
     protected $messages = [
         'id_maquinaria.required' => 'Debe seleccionar una maquinaria.',
@@ -44,33 +48,14 @@ class HistoricoCostosMaquinarias extends Component
 
     public function mount()
     {
-        $this->maquinarias = Maquinaria::all();
+        $this->maquinarias = $this->servicio->listarMaquinarias();
     }
 
     public function render()
     {
         return view('livewire.historico-costos-maquinarias', [
-            'historicos' => $this->cargarHistoricos(),
+            'historicos' => $this->servicio->listar($this->busqueda),
         ]);
-    }
-
-    public function cargarHistoricos()
-    {
-        $query = HistoricoCostosMaquinaria::with('maquinaria');
-
-        if ($this->busqueda) {
-            $busq = $this->busqueda;
-            $query->where(function ($q) use ($busq) {
-                $q->whereRaw('CAST(costo_por_tonelada AS TEXT) ILIKE ?', ["%{$busq}%"])
-                    ->orWhereDate('fecha_inicio_vigencia', $busq)
-                    ->orWhereDate('fecha_fin_vigencia', $busq)
-                    ->orWhereHas('maquinaria', function ($qr) use ($busq) {
-                        $qr->where('modelo', 'ILIKE', "%{$busq}%");
-                    });
-            });
-        }
-
-        return $query->orderBy('id_costo', 'desc')->paginate(15);
     }
 
     public function updatedBusqueda()
@@ -82,15 +67,12 @@ class HistoricoCostosMaquinarias extends Component
     {
         $this->validate();
 
-        HistoricoCostosMaquinaria::updateOrCreate(
-            ['id_costo' => $this->historico_id],
-            [
-                'id_maquinaria' => $this->id_maquinaria,
-                'costo_por_tonelada' => $this->costo_por_tonelada,
-                'fecha_inicio_vigencia' => $this->fecha_inicio_vigencia,
-                'fecha_fin_vigencia' => $this->fecha_fin_vigencia,
-            ]
-        );
+        $this->servicio->crearOActualizar($this->historico_id, [
+            'id_maquinaria' => $this->id_maquinaria,
+            'costo_por_tonelada' => $this->costo_por_tonelada,
+            'fecha_inicio_vigencia' => $this->fecha_inicio_vigencia,
+            'fecha_fin_vigencia' => $this->fecha_fin_vigencia,
+        ]);
 
         session()->flash('message', $this->historico_id ? 'Histórico actualizado correctamente.' : 'Histórico creado correctamente.');
         $this->tab_activo = 'listado';
@@ -100,7 +82,7 @@ class HistoricoCostosMaquinarias extends Component
 
     public function editar($id)
     {
-        $historico = HistoricoCostosMaquinaria::findOrFail($id);
+        $historico = $this->servicio->obtener($id);
         $this->tab_activo = 'nuevo';
         $this->historico_id = $historico->id_costo;
         $this->id_maquinaria = $historico->id_maquinaria;
@@ -111,7 +93,7 @@ class HistoricoCostosMaquinarias extends Component
 
     public function eliminar($id)
     {
-        HistoricoCostosMaquinaria::findOrFail($id)->delete();
+        $this->servicio->eliminar($id);
         session()->flash('message', 'Histórico eliminado correctamente.');
     }
 

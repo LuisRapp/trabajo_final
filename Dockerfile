@@ -1,4 +1,7 @@
-FROM php:8.2-apache
+# PHP 8.4.27 incluye el parche de php2shell (CVE-2026-109618 / CVE-2026-109619, RCE crítico).
+# No bajar de esta version ni usar tags flotantes como php:8.4-apache.
+# pdo_sqlite y mbstring ya vienen compiladas en la imagen oficial; no reinstalar.
+FROM php:8.4.27-apache
 
 # Instalar extensiones necesarias
 RUN apt-get update \

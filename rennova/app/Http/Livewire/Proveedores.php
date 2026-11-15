@@ -2,7 +2,7 @@
 
 namespace App\Http\Livewire;
 
-use App\Models\Proveedor;
+use App\Services\ProveedorService;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -26,17 +26,16 @@ class Proveedores extends Component
 
     public $tab_activo = 'listado';
 
+    protected ProveedorService $servicio;
+
+    public function boot(): void
+    {
+        $this->servicio = app(ProveedorService::class);
+    }
+
     protected function rules(): array
     {
-        return [
-            'razon_social' => 'required|min:3',
-            'cuit' => $this->proveedor_id
-                ? 'required|digits:11|unique:proveedores,cuit,'.$this->proveedor_id.',id_proveedor'
-                : 'required|digits:11|unique:proveedores,cuit',
-            'direccion' => 'required',
-            'telefono' => 'nullable|string',
-            'email' => 'nullable|email',
-        ];
+        return $this->servicio->reglas($this->proveedor_id);
     }
 
     protected $messages = [
@@ -52,23 +51,8 @@ class Proveedores extends Component
     public function render()
     {
         return view('livewire.proveedores', [
-            'proveedores' => $this->cargarProveedores(),
+            'proveedores' => $this->servicio->listar($this->busqueda),
         ]);
-    }
-
-    public function cargarProveedores()
-    {
-        $query = Proveedor::query();
-
-        if ($this->busqueda) {
-            $query->where(function ($q) {
-                $q->where('razon_social', 'ILIKE', '%'.$this->busqueda.'%')
-                    ->orWhere('cuit', 'ILIKE', '%'.$this->busqueda.'%')
-                    ->orWhere('email', 'ILIKE', '%'.$this->busqueda.'%');
-            });
-        }
-
-        return $query->orderBy('id_proveedor', 'desc')->paginate(15);
     }
 
     public function updatedBusqueda()
@@ -80,16 +64,13 @@ class Proveedores extends Component
     {
         $this->validate();
 
-        Proveedor::updateOrCreate(
-            ['id_proveedor' => $this->proveedor_id],
-            [
-                'razon_social' => $this->razon_social,
-                'cuit' => $this->cuit,
-                'direccion' => $this->direccion,
-                'telefono' => $this->telefono,
-                'email' => $this->email,
-            ]
-        );
+        $this->servicio->crearOActualizar($this->proveedor_id, [
+            'razon_social' => $this->razon_social,
+            'cuit' => $this->cuit,
+            'direccion' => $this->direccion,
+            'telefono' => $this->telefono,
+            'email' => $this->email,
+        ]);
 
         session()->flash('message', $this->proveedor_id ? 'Proveedor actualizado correctamente.' : 'Proveedor creado correctamente.');
         $this->tab_activo = 'listado';
@@ -100,7 +81,7 @@ class Proveedores extends Component
     public function editar($id)
     {
         $this->tab_activo = 'nuevo';
-        $proveedor = Proveedor::findOrFail($id);
+        $proveedor = $this->servicio->obtener($id);
         $this->proveedor_id = $proveedor->id_proveedor;
         $this->razon_social = $proveedor->razon_social;
         $this->cuit = $proveedor->cuit;
@@ -111,7 +92,7 @@ class Proveedores extends Component
 
     public function eliminar($id)
     {
-        Proveedor::findOrFail($id)->delete();
+        $this->servicio->eliminar($id);
         session()->flash('message', 'Proveedor eliminado correctamente.');
     }
 

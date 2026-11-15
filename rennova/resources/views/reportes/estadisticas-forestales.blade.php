@@ -96,12 +96,26 @@
             </x-ui.card>
             <x-ui.card class="p-4">
                 <p class="text-xs font-medium text-tinta-suave">Punto de Equilibrio</p>
-                <p class="mt-2 text-lg font-bold text-tinta">${{ number_format($estadisticas_globales['punto_equilibrio'], 2) }}/tn</p>
+                <p class="mt-2 text-lg font-bold text-tinta">{{ number_format($estadisticas_globales['punto_equilibrio'], 2) }} tn/día</p>
             </x-ui.card>
             <x-ui.card class="p-4">
                 <p class="text-xs font-medium text-tinta-suave">Rentabilidad Promedio</p>
                 <p class="mt-2 text-lg font-bold {{ $estadisticas_globales['rentabilidad_promedio'] >= 0 ? 'text-musgo' : 'text-tierra' }}">
                     ${{ number_format($estadisticas_globales['rentabilidad_promedio'], 2) }}/tn
+                </p>
+            </x-ui.card>
+            <x-ui.card class="p-4">
+                <p class="text-xs font-medium text-tinta-suave">Ingresos Totales</p>
+                <p class="mt-2 text-lg font-bold text-tinta">${{ number_format($estadisticas_globales['ingresos_totales'], 2) }}</p>
+            </x-ui.card>
+            <x-ui.card class="p-4">
+                <p class="text-xs font-medium text-tinta-suave">Rendimiento</p>
+                <p class="mt-2 text-lg font-bold text-tinta">{{ number_format($estadisticas_globales['rendimiento'], 2) }} tn/ha</p>
+            </x-ui.card>
+            <x-ui.card class="p-4">
+                <p class="text-xs font-medium text-tinta-suave">Margen Bruto</p>
+                <p class="mt-2 text-lg font-bold {{ $estadisticas_globales['margen_bruto_pct'] >= 0 ? 'text-musgo' : 'text-tierra' }}">
+                    {{ number_format($estadisticas_globales['margen_bruto_pct'], 2) }}%
                 </p>
             </x-ui.card>
         </div>
@@ -159,13 +173,15 @@
             <x-ui.table-container>
                 <table class="data-table">
                     <colgroup>
-                        <col style="width: 25%;">
+                        <col style="width: 20%;">
+                        <col style="width: 8%;">
                         <col style="width: 10%;">
-                        <col style="width: 12%;">
-                        <col style="width: 12%;">
-                        <col style="width: 12%;">
-                        <col style="width: 12%;">
-                        <col style="width: 17%;">
+                        <col style="width: 10%;">
+                        <col style="width: 10%;">
+                        <col style="width: 9%;">
+                        <col style="width: 10%;">
+                        <col style="width: 8%;">
+                        <col style="width: 15%;">
                     </colgroup>
                     <thead>
                         <tr>
@@ -174,7 +190,9 @@
                             <th>Precio Promedio</th>
                             <th>Costo Promedio</th>
                             <th>Punto Equilibrio</th>
+                            <th>Rendimiento</th>
                             <th>Rentabilidad</th>
+                            <th>Margen %</th>
                             <th>Estado</th>
                         </tr>
                     </thead>
@@ -192,12 +210,16 @@
                                     <x-ui.badge variant="warning">${{ number_format($stat['costo_promedio'], 2) }}/tn</x-ui.badge>
                                 </td>
                                 <td>
-                                    <x-ui.badge variant="info">${{ number_format($stat['punto_equilibrio'], 2) }}/tn</x-ui.badge>
+                                    <x-ui.badge variant="info">{{ number_format($stat['punto_equilibrio'], 2) }} tn/día</x-ui.badge>
                                 </td>
+                                <td class="text-tinta-suave">{{ number_format($stat['rendimiento'] ?? 0, 2) }} tn/ha</td>
                                 <td>
                                     <x-ui.badge variant="{{ $stat['rentabilidad'] >= 0 ? 'success' : 'danger' }}">
                                         ${{ number_format($stat['rentabilidad'], 2) }}/tn
                                     </x-ui.badge>
+                                </td>
+                                <td class="text-tinta-suave {{ ($stat['margen_pct'] ?? 0) >= 0 ? 'text-musgo' : 'text-tierra' }}">
+                                    {{ number_format($stat['margen_pct'] ?? 0, 2) }}%
                                 </td>
                                 <td>
                                     <x-ui.badge variant="{{ $stat['rentabilidad'] >= 0 ? 'success' : 'danger' }}">
@@ -218,7 +240,7 @@
                 <ul class="mt-3 space-y-2 text-sm text-tinta-suave">
                     <li><span class="font-semibold text-tinta">Precio Promedio:</span> Precio unitario esperado por tonelada.</li>
                     <li><span class="font-semibold text-tinta">Costo Promedio:</span> Costo operacional por tonelada (insumos + maquinaria + mano de obra).</li>
-                    <li><span class="font-semibold text-tinta">Punto de Equilibrio:</span> Precio mínimo para no perder dinero.</li>
+                    <li><span class="font-semibold text-tinta">Punto de Equilibrio:</span> Toneladas por día necesarias para cubrir costos fijos y variables.</li>
                     <li><span class="font-semibold text-tinta">Rentabilidad:</span> Diferencia entre ingreso y costo (Precio - Costo).</li>
                 </ul>
             </x-ui.card>

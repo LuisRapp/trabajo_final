@@ -837,10 +837,4 @@ class SystemWhiteBoxTest extends TestCase
     // ============================================================================
     // RESUMEN FINAL
     // ============================================================================
-
-    public static function tearDownAfterClass(): void
-    {
-        parent::tearDownAfterClass();
-        Log::info('═══ FIN DE PRUEBAS DE CAJA BLANCA ═══');
-    }
 }

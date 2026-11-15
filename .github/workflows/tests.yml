@@ -10,6 +10,11 @@ on:
       - develop
       - main
 
+# La app vive en rennova/; todos los `run:` se ejecutan ahi.
+defaults:
+  run:
+    working-directory: rennova
+
 jobs:
   ci:
     runs-on: ubuntu-latest
@@ -22,7 +27,9 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: 8.4
+          # setup-php no admite pin de parche: trunca '8.4.27' a '8.4'.
+          # El piso real (>=8.4.27) lo exige composer.json y lo valida composer install.
+          php-version: '8.4'
           tools: composer:v2
           coverage: xdebug
 
@@ -31,12 +38,10 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
+          cache-dependency-path: rennova/package-lock.json
 
       - name: Install Node Dependencies
         run: npm i
-
-      - name: Add Flux Credentials Loaded From ENV
-        run: composer config http-basic.composer.fluxui.dev "${{ secrets.FLUX_USERNAME }}" "${{ secrets.FLUX_LICENSE_KEY }}"
 
       - name: Install Dependencies
         run: composer install --no-interaction --prefer-dist --optimize-autoloader

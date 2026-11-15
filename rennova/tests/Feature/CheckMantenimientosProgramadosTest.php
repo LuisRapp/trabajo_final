@@ -15,7 +15,7 @@ test('check-programados marca vencido el mantenimiento no confirmado y notifica 
         'updated_at' => now(),
     ]);
 
-    $maquinaria = Maquinaria::factory()->create(['estado' => 'operativa']);
+    $maquinaria = Maquinaria::factory()->create(['estado' => 'disponible']);
     $mantenimiento = Mantenimiento::factory()->programado()->create([
         'id_maquinaria' => $maquinaria->id_maquinaria,
         'fecha_programada' => now()->subDay()->toDateString(),
@@ -34,7 +34,7 @@ test('check-programados marca vencido el mantenimiento no confirmado y notifica 
 });
 
 test('check-programados no marca vencidos los mantenimientos confirmados en curso', function () {
-    $maquinaria = Maquinaria::factory()->create(['estado' => 'operativa']);
+    $maquinaria = Maquinaria::factory()->create(['estado' => 'disponible']);
     $mantenimiento = Mantenimiento::factory()->enCurso()->create([
         'id_maquinaria' => $maquinaria->id_maquinaria,
         'fecha_programada' => now()->subDay()->toDateString(),

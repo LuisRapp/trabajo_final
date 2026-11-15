@@ -2,8 +2,7 @@
 
 namespace App\Http\Livewire;
 
-use App\Models\HistoricoRolLaboral;
-use App\Models\RolLaboral;
+use App\Services\HistoricoRolLaboralService;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -31,14 +30,17 @@ class HistoricoRolesLaborales extends Component
 
     public $tab_activo = 'listado';
 
-    protected $rules = [
-        'rol_laboral_id' => 'required|exists:roles_laborales,id_rol_laboral',
-        'precio_tonelada' => 'nullable|numeric|min:0',
-        'jornal_diario' => 'nullable|numeric|min:0',
-        'fecha_inicio' => 'required|date',
-        'fecha_fin' => 'nullable|date|after:fecha_inicio',
-        'motivo_cambio' => 'nullable|string',
-    ];
+    protected HistoricoRolLaboralService $servicio;
+
+    public function boot(): void
+    {
+        $this->servicio = app(HistoricoRolLaboralService::class);
+    }
+
+    protected function rules(): array
+    {
+        return $this->servicio->reglas();
+    }
 
     protected $messages = [
         'rol_laboral_id.required' => 'Debe seleccionar un rol laboral.',
@@ -50,28 +52,7 @@ class HistoricoRolesLaborales extends Component
 
     public function mount()
     {
-        $this->rolesLaborales = RolLaboral::orderBy('nombre')->get();
-    }
-
-    public function cargarHistoricos()
-    {
-        $query = HistoricoRolLaboral::with(['rolLaboral']);
-
-        if ($this->busqueda) {
-            $busq = $this->busqueda;
-            $query->where(function ($q) use ($busq) {
-                $q->whereRaw('CAST(precio_tonelada AS TEXT) ILIKE ?', ["%{$busq}%"])
-                    ->orWhereRaw('CAST(jornal_diario AS TEXT) ILIKE ?', ["%{$busq}%"])
-                    ->orWhere('motivo_cambio', 'ILIKE', "%{$busq}%")
-                    ->orWhereDate('fecha_inicio', $busq)
-                    ->orWhereDate('fecha_fin', $busq)
-                    ->orWhereHas('rolLaboral', function ($qr) use ($busq) {
-                        $qr->where('nombre', 'ILIKE', "%{$busq}%");
-                    });
-            });
-        }
-
-        return $query->orderByDesc('fecha_inicio')->paginate(15);
+        $this->rolesLaborales = $this->servicio->listarRoles();
     }
 
     public function updatedBusqueda()
@@ -82,7 +63,7 @@ class HistoricoRolesLaborales extends Component
     public function render()
     {
         return view('livewire.historico-roles-laborales', [
-            'historicos' => $this->cargarHistoricos(),
+            'historicos' => $this->servicio->listar($this->busqueda),
         ]);
     }
 
@@ -90,17 +71,14 @@ class HistoricoRolesLaborales extends Component
     {
         $this->validate();
 
-        HistoricoRolLaboral::updateOrCreate(
-            ['id' => $this->historico_id],
-            [
-                'rol_laboral_id' => $this->rol_laboral_id,
-                'precio_tonelada' => $this->precio_tonelada,
-                'jornal_diario' => $this->jornal_diario,
-                'fecha_inicio' => $this->fecha_inicio,
-                'fecha_fin' => $this->fecha_fin,
-                'motivo_cambio' => $this->motivo_cambio,
-            ]
-        );
+        $this->servicio->crearOActualizar($this->historico_id, [
+            'rol_laboral_id' => $this->rol_laboral_id,
+            'precio_tonelada' => $this->precio_tonelada,
+            'jornal_diario' => $this->jornal_diario,
+            'fecha_inicio' => $this->fecha_inicio,
+            'fecha_fin' => $this->fecha_fin,
+            'motivo_cambio' => $this->motivo_cambio,
+        ]);
 
         session()->flash('message', $this->historico_id ? 'Histórico actualizado correctamente.' : 'Histórico creado correctamente.');
         $this->tab_activo = 'listado';
@@ -110,7 +88,7 @@ class HistoricoRolesLaborales extends Component
 
     public function editar($id)
     {
-        $historico = HistoricoRolLaboral::findOrFail($id);
+        $historico = $this->servicio->obtener($id);
         $this->tab_activo = 'nuevo';
         $this->historico_id = $historico->id;
         $this->rol_laboral_id = $historico->rol_laboral_id;
@@ -123,7 +101,7 @@ class HistoricoRolesLaborales extends Component
 
     public function eliminar($id)
     {
-        HistoricoRolLaboral::findOrFail($id)->delete();
+        $this->servicio->eliminar($id);
         session()->flash('message', 'Histórico eliminado correctamente.');
         $this->resetCampos();
     }

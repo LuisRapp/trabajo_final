@@ -141,7 +141,7 @@ class DemoDaySeeder extends Seeder
         $maquinariaA = Maquinaria::factory()->create([
             'id_tipo_maquinaria' => $tipoSkidder->id_tipo_maquinaria,
             'modelo' => 'Skidder BR-40',
-            'estado' => 'activo',
+            'estado' => 'disponible',
             'es_alquilada' => false,
             'fecha_inicio_actividades' => Carbon::now()->subYears(2),
             'toneladas_acumuladas' => 3200,
@@ -165,7 +165,7 @@ class DemoDaySeeder extends Seeder
         $maquinariaB = Maquinaria::factory()->create([
             'id_tipo_maquinaria' => $tipoGrua->id_tipo_maquinaria,
             'modelo' => 'Grúa hidráulica K905',
-            'estado' => 'activo',
+            'estado' => 'disponible',
             'es_alquilada' => false,
             'fecha_inicio_actividades' => Carbon::now()->subYears(3),
             'toneladas_acumuladas' => 8500, // 85% del umbral configurado abajo
@@ -189,7 +189,7 @@ class DemoDaySeeder extends Seeder
         $maquinariaC = Maquinaria::factory()->create([
             'id_tipo_maquinaria' => $tipoForwarder->id_tipo_maquinaria,
             'modelo' => 'Forwarder 1210E',
-            'estado' => 'activo',
+            'estado' => 'disponible',
             'es_alquilada' => true,
             'fecha_inicio_actividades' => Carbon::now()->subYears(1),
             'toneladas_acumuladas' => 4100,

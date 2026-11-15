@@ -506,6 +506,26 @@ class PartesDiariosTest extends TestCase
         $this->assertEquals(0, $parte->cargas()->count());
     }
 
+    public function test_guardar_dia_caido_does_not_require_tarea(): void
+    {
+        Livewire::actingAs($this->usuario)
+            ->test(PartesDiarios::class)
+            ->tap(fn ($c) => $this->setRequiredFields($c, ['id_lote_tarea' => null]))
+            ->set('es_dia_caido', true)
+            ->set('jornales', [$this->jornalData()])
+            ->call('guardar')
+            ->assertHasNoErrors(['id_lote_tarea']);
+
+        $this->assertDatabaseHas('parte_diarios', [
+            'id_lote' => $this->lote->id_lote,
+            'es_dia_caido' => true,
+        ]);
+
+        $parte = ParteDiario::where('id_lote', $this->lote->id_lote)->first();
+        $this->assertNull($parte->id_lote_tarea);
+        $this->assertNull($parte->tipo_tarea);
+    }
+
     // ================================================================
     // GUARDAR — Updates existing Parte Diario
     // ================================================================

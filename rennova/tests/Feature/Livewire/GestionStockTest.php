@@ -8,7 +8,6 @@ use App\Models\LoteInventario;
 use App\Models\MovimientoStock;
 use App\Models\Proveedor;
 use App\Models\Usuario;
-use App\Services\InventarioService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;

@@ -40,7 +40,7 @@ CREATE INDEX IF NOT EXISTS idx_mantenimientos_fecha_inicio ON mantenimientos(fec
 -- =====================================================
 CREATE INDEX IF NOT EXISTS idx_maquinarias_estado ON maquinarias(estado);
 CREATE INDEX IF NOT EXISTS idx_maquinarias_tipo ON maquinarias(id_tipo_maquinaria);
-CREATE INDEX IF NOT EXISTS idx_maquinarias_umbral ON maquinarias(toneladas_acumuladas, umbral_toneladas) WHERE estado = 'operativa';
+CREATE INDEX IF NOT EXISTS idx_maquinarias_umbral ON maquinarias(toneladas_acumuladas, umbral_toneladas) WHERE estado IN ('disponible', 'asignada');
 
 -- =====================================================
 -- TABLA: empleados

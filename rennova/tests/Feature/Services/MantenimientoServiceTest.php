@@ -1,7 +1,11 @@
 <?php
 
 use App\Models\Insumo;
+use App\Models\KitMantenimientoPreventivo;
 use App\Models\Mantenimiento;
+use App\Models\Maquinaria;
+use App\Models\PropuestaCompraMantenimiento;
+use App\Models\PropuestaCompraMantenimientoInsumo;
 use App\Services\InventarioService;
 use App\Services\MantenimientoService;
 
@@ -23,6 +27,49 @@ test('aprobar mantenimiento no programado falla', function () {
 
     expect($resultado['success'])->toBeFalse();
     expect($mantenimiento->fresh()->estado)->toBe('en curso');
+});
+
+test('aprobar mantenimiento genera orden de compra solo para insumos obligatorios faltantes', function () {
+    $maquinaria = Maquinaria::factory()->create();
+    $mantenimiento = Mantenimiento::factory()->programado()->create([
+        'id_maquinaria' => $maquinaria->id_maquinaria,
+    ]);
+
+    $obligatorio = Insumo::factory()->create();
+    $opcional = Insumo::factory()->create();
+
+    KitMantenimientoPreventivo::factory()->create([
+        'id_tipo_maquinaria' => $maquinaria->id_tipo_maquinaria,
+        'id_insumo' => $obligatorio->id_insumo,
+        'cantidad_requerida' => 10,
+        'es_obligatorio' => true,
+    ]);
+    KitMantenimientoPreventivo::factory()->create([
+        'id_tipo_maquinaria' => $maquinaria->id_tipo_maquinaria,
+        'id_insumo' => $opcional->id_insumo,
+        'cantidad_requerida' => 5,
+        'es_obligatorio' => false,
+    ]);
+
+    $service = app(MantenimientoService::class);
+    $resultado = $service->aprobarMantenimiento($mantenimiento->id_mantenimiento);
+
+    expect($resultado['success'])->toBeTrue()
+        ->and($resultado['compra_generada'])->toBeTrue()
+        ->and($mantenimiento->fresh()->estado)->toBe('en curso');
+
+    $propuesta = PropuestaCompraMantenimiento::query()
+        ->where('id_mantenimiento', $mantenimiento->id_mantenimiento)
+        ->first();
+
+    expect($propuesta)->not->toBeNull();
+
+    $insumosComprados = PropuestaCompraMantenimientoInsumo::query()
+        ->where('id_propuesta_compra_mantenimiento', $propuesta->id_propuesta_compra_mantenimiento)
+        ->get();
+
+    expect($insumosComprados)->toHaveCount(1)
+        ->and($insumosComprados->first()->id_insumo)->toBe($obligatorio->id_insumo);
 });
 
 test('completar mantenimiento cambia el estado a completado con stock suficiente', function () {

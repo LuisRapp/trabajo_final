@@ -12,7 +12,7 @@ Este documento resume el estado actual del proyecto, su arquitectura, módulos p
 - Base de datos PostgreSQL.
 
 ## 2. Stack y Arquitectura
-- Backend: Laravel 12.x (PHP 8.2)
+- Backend: Laravel 12.x (PHP 8.4)
 - Frontend: Blade + Livewire, Bootstrap
 - BD: PostgreSQL
 - Email: Mailtrap (SMTP sandbox)
@@ -83,7 +83,7 @@ Este documento resume el estado actual del proyecto, su arquitectura, módulos p
   - Para correctivo, cada insumo usado con cantidad > 0 y precio_unitario ≥ 0 suma al costo total.
 
 ## 8. Configuración y Entorno
-- Requisitos: PHP 8.2, Composer, PostgreSQL.
+- Requisitos: PHP 8.4 (mínimo admitido 8.2.35 por parches de seguridad), Composer, PostgreSQL.
 - Email: configurar Mailtrap en `.env` (host, puerto, credenciales sandbox).
 - Arranque:
   - `php artisan serve` (o `php -S 127.0.0.1:8000 -t public`).

@@ -154,7 +154,7 @@
                             @forelse ($empleados as $empleado)
                                 <tr wire:key="row-{{ $empleado->id_empleado }}">
                                     <td><x-ui.badge variant="neutral">{{ $empleado->id_empleado }}</x-ui.badge></td>
-                                    <td class="text-tinta-suave">{{ number_format($empleado->dni, 0, ',', '.') }}</td>
+                                    <td class="text-tinta-suave">{{ $empleado->dni }}</td>
                                     <td class="font-medium text-tinta">{{ $empleado->apellido }}, {{ $empleado->nombre }}</td>
                                     <td class="text-tinta-suave">{{ $empleado->rolLaboral?->nombre ?? 'N/A' }}</td>
                                     <td class="text-tinta-suave">{{ $empleado->fecha_nacimiento ? \Carbon\Carbon::parse($empleado->fecha_nacimiento)->format('d/m/Y') : 'N/A' }}</td>
