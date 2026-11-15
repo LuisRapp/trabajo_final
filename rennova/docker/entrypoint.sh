@@ -19,11 +19,20 @@ if [ -z "${APP_KEY:-}" ] && ! grep -qE '^APP_KEY=base64:.+' .env; then
 	echo "redeploy genera otra y se invalidan las sesiones y los datos cifrados." >&2
 fi
 
-# Todo comando de la aplicacion corre como www-data, el mismo usuario con el
-# que escribe Apache. Si corriera como root, los archivos que cree en storage/
-# quedarian de root y www-data no podria escribir en ellos.
-como_www_data() {
-	gosu www-data "$@"
+# Usuario con el que corren los comandos de la aplicacion.
+# En produccion es www-data, el mismo usuario de Apache: si corrieran como
+# root, cualquier archivo que creen en storage/ quedaria de root y despues
+# Apache no podria escribir en el.
+# En desarrollo la app vive en un bind mount propiedad del usuario del host,
+# asi que www-data no puede escribir ahi y se usa root.
+USUARIO_APP="${USUARIO_APP:-www-data}"
+
+como_usuario_app() {
+	if [ "$USUARIO_APP" = "root" ]; then
+		"$@"
+	else
+		gosu "$USUARIO_APP" "$@"
+	fi
 }
 
 # El symlink se crea como root: public/ no es escribible por www-data y no
@@ -46,13 +55,13 @@ fi
 
 # Sin || true: si las migraciones fallan, el despliegue esta mal y el
 # contenedor no debe quedar arriba como si estuviera sano.
-como_www_data php artisan migrate --force
+como_usuario_app php artisan migrate --force
 
 service cron start
 
 # Worker de cola en background: procesa jobs encolados (asignacion automatica,
 # correos, etc.) que de otro modo se acumulan en la tabla `jobs`. El redirect
-# va dentro del gosu para que el log quede a nombre de www-data.
-nohup gosu www-data sh -c 'php artisan queue:work --sleep=3 --tries=3 --timeout=90 >> storage/logs/queue-worker.log 2>&1' &
+# va dentro del gosu para que el log quede a nombre del usuario de la app.
+nohup gosu "$USUARIO_APP" sh -c 'php artisan queue:work --sleep=3 --tries=3 --timeout=90 >> storage/logs/queue-worker.log 2>&1' &
 
 exec apache2-foreground
