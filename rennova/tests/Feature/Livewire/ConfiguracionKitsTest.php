@@ -6,7 +6,6 @@ use App\Http\Livewire\ConfiguracionKits;
 use App\Models\Insumo;
 use App\Models\KitMantenimientoPreventivo;
 use App\Models\Maquinaria;
-use App\Models\TipoMaquinaria;
 use App\Models\Usuario;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
