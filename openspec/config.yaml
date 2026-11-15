@@ -4,7 +4,7 @@
 project:
   name: trabajo_final
   stack:
-    backend: PHP 8.2, Laravel 12
+    backend: PHP 8.4 (mínimo 8.2.35), Laravel 12
     frontend: Livewire 3, Flux UI 2, Tailwind CSS 4
     database: PostgreSQL (prod), SQLite (test)
     testing: Pest 3 + RefreshDatabase

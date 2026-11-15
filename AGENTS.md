@@ -6,7 +6,7 @@ mira asi quedo, elimine las reglas de negocio porque no estan claras todavia
 
 ## Tecnologías
 
-* PHP 8.2+
+* PHP 8.4 (mínimo 8.2.35)
 * Laravel 12
 * Livewire 3
 * PostgreSQL
