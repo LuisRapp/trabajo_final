@@ -101,7 +101,7 @@ class Lotes extends Component
                 'latitud' => $this->latitud,
                 'longitud' => $this->longitud,
                 'main_task_type' => $this->main_task_type,
-            ]);
+            ], $this->datosSolicitud());
 
             $lote = $resultado['lote'];
 

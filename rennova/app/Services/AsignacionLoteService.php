@@ -118,24 +118,50 @@ class AsignacionLoteService
                 return false;
             }
 
-            $empleadosActuales = $lote->empleados()->pluck('empleados.id_empleado')->toArray();
-            $maquinariasActuales = $lote->maquinarias()->pluck('maquinarias.id_maquinaria')->toArray();
-
             $lote->update(['estado' => 'cerrado']);
-
-            $lote->empleados()->detach();
-            $lote->maquinarias()->detach();
-
-            $this->registrarAuditoriaDesvinculados($lote, 'empleados', $empleadosActuales, $requestData);
-            $this->registrarAuditoriaDesvinculados($lote, 'maquinarias', $maquinariasActuales, $requestData);
-
-            PropuestaAsignacion::query()
-                ->where('id_lote', $loteId)
-                ->whereNull('deleted_at')
-                ->update(['status' => 'closed']);
+            $this->desvincularRecursos($lote, $requestData);
 
             return true;
         });
+    }
+
+    /**
+     * Libera los recursos de un lote sin cambiar su estado: desvincula empleados
+     * y maquinarias con registro de auditoría y cierra sus propuestas.
+     *
+     * Se usa desde finalizar() y desde el cierre/baja del lote por el ABM, para
+     * que un lote cerrado o dado de baja no quede con recursos colgados.
+     *
+     * @param  int  $loteId  Identificador del lote
+     * @param  array  $requestData  Contexto del request para auditoría
+     */
+    public function liberarRecursos(int $loteId, array $requestData): void
+    {
+        DB::transaction(function () use ($loteId, $requestData) {
+            $lote = Lote::findOrFail($loteId);
+
+            $this->desvincularRecursos($lote, $requestData);
+        });
+    }
+
+    /**
+     * Desvincula los recursos de un lote (dentro de una transacción existente).
+     */
+    private function desvincularRecursos(Lote $lote, array $requestData): void
+    {
+        $empleadosActuales = $lote->empleados()->pluck('empleados.id_empleado')->toArray();
+        $maquinariasActuales = $lote->maquinarias()->pluck('maquinarias.id_maquinaria')->toArray();
+
+        $lote->empleados()->detach();
+        $lote->maquinarias()->detach();
+
+        $this->registrarAuditoriaDesvinculados($lote, 'empleados', $empleadosActuales, $requestData);
+        $this->registrarAuditoriaDesvinculados($lote, 'maquinarias', $maquinariasActuales, $requestData);
+
+        PropuestaAsignacion::query()
+            ->where('id_lote', $lote->id_lote)
+            ->whereNull('deleted_at')
+            ->update(['status' => 'closed']);
     }
 
     /**
