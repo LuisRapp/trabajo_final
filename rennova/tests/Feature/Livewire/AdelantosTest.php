@@ -3,6 +3,7 @@
 use App\Http\Livewire\Adelantos;
 use App\Models\Adelanto;
 use App\Models\Empleado;
+use App\Models\Recibo;
 use App\Models\RolLaboral;
 use Livewire\Livewire;
 
@@ -13,6 +14,13 @@ function crearEmpleadoValido(): Empleado
     return Empleado::factory()->create(['id_rol_laboral' => $rol->id_rol_laboral]);
 }
 
+function crearLiquidaciones(Empleado $empleado, array $montos): void
+{
+    foreach ($montos as $monto) {
+        Recibo::factory()->create(['id_empleado' => $empleado->id_empleado, 'monto' => $monto]);
+    }
+}
+
 test('usuario autenticado puede renderizar', function () {
     Livewire::actingAs(usuarioConPermisos(['crear-adelantos', 'editar-adelantos', 'eliminar-adelantos']))
         ->test(Adelantos::class)
@@ -21,6 +29,7 @@ test('usuario autenticado puede renderizar', function () {
 
 test('puede crear un adelanto', function () {
     $empleado = crearEmpleadoValido();
+    crearLiquidaciones($empleado, [5000, 3000]); // promedio 4000, tope 2000
 
     Livewire::actingAs(usuarioConPermisos(['crear-adelantos', 'editar-adelantos', 'eliminar-adelantos']))
         ->test(Adelantos::class)
@@ -35,6 +44,7 @@ test('puede crear un adelanto', function () {
 
 test('puede editar un adelanto', function () {
     $empleado = crearEmpleadoValido();
+    crearLiquidaciones($empleado, [6000]); // promedio 6000, tope 3000
     $adelanto = Adelanto::factory()->create([
         'id_empleado' => $empleado->id_empleado,
         'monto' => 1000,
@@ -49,6 +59,35 @@ test('puede editar un adelanto', function () {
         ->assertHasNoErrors();
 
     expect((float) $adelanto->fresh()->monto)->toBe(2500.0);
+});
+
+test('rechaza un adelanto que supera el 50% del promedio de liquidaciones', function () {
+    $empleado = crearEmpleadoValido();
+    crearLiquidaciones($empleado, [5000, 3000]); // promedio 4000, tope 2000
+
+    Livewire::actingAs(usuarioConPermisos(['crear-adelantos', 'editar-adelantos', 'eliminar-adelantos']))
+        ->test(Adelantos::class)
+        ->set('id_empleado', $empleado->id_empleado)
+        ->set('monto', 2500)
+        ->set('fecha_emision', '2026-01-15')
+        ->call('guardar')
+        ->assertHasErrors(['monto']);
+
+    expect(Adelanto::where('id_empleado', $empleado->id_empleado)->exists())->toBeFalse();
+});
+
+test('rechaza un adelanto cuando el empleado no tiene liquidaciones', function () {
+    $empleado = crearEmpleadoValido();
+
+    Livewire::actingAs(usuarioConPermisos(['crear-adelantos', 'editar-adelantos', 'eliminar-adelantos']))
+        ->test(Adelantos::class)
+        ->set('id_empleado', $empleado->id_empleado)
+        ->set('monto', 100)
+        ->set('fecha_emision', '2026-01-15')
+        ->call('guardar')
+        ->assertHasErrors(['monto']);
+
+    expect(Adelanto::where('id_empleado', $empleado->id_empleado)->exists())->toBeFalse();
 });
 
 test('puede eliminar un adelanto (soft delete)', function () {

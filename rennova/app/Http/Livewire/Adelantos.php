@@ -4,6 +4,7 @@ namespace App\Http\Livewire;
 
 use App\Models\Adelanto;
 use App\Models\Empleado;
+use App\Services\EmpleadoPagoService;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -72,6 +73,15 @@ class Adelantos extends Component
     {
         $this->authorize($this->adelanto_id ? 'editar-adelantos' : 'crear-adelantos');
         $this->validate();
+
+        // Regla: el adelanto no puede superar el 50% del promedio de
+        // liquidaciones del empleado (LCT art. 130).
+        $maximo = EmpleadoPagoService::montoMaximoAdelanto(Empleado::findOrFail($this->id_empleado));
+        if ((float) $this->monto > $maximo) {
+            $this->addError('monto', "El adelanto no puede superar el 50% del promedio de liquidaciones del empleado (tope: {$maximo}).");
+
+            return;
+        }
 
         Adelanto::updateOrCreate(
             ['id_adelanto' => $this->adelanto_id],

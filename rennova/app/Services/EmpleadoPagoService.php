@@ -316,4 +316,29 @@ class EmpleadoPagoService
             throw $e;
         }
     }
+
+    /**
+     * Promedio de liquidaciones (recibos) de un empleado.
+     *
+     * Base del tope de adelanto: la ley argentina (LCT art. 130) no permite
+     * adelantar más de la mitad de la remuneración del período. Como no hay un
+     * campo de sueldo fijo, el tope se calcula sobre el promedio de lo que el
+     * empleado cobró (recibos emitidos).
+     */
+    public static function promedioLiquidaciones(Empleado $empleado): float
+    {
+        return round((float) Recibo::query()
+            ->where('id_empleado', $empleado->id_empleado)
+            ->avg('monto'), 2);
+    }
+
+    /**
+     * Tope de adelanto: 50% del promedio de liquidaciones del empleado.
+     *
+     * Sin recibos el promedio es 0, así que el tope es 0 (no se puede adelantar).
+     */
+    public static function montoMaximoAdelanto(Empleado $empleado): float
+    {
+        return round(self::promedioLiquidaciones($empleado) * 0.5, 2);
+    }
 }
