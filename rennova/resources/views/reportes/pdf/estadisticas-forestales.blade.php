@@ -106,6 +106,15 @@
         $costoPromedio = $tipo === 'lote'
             ? ($indicadores['costo_promedio'] ?? 0)
             : ($estadisticas_globales['costo_promedio'] ?? 0);
+        $kpiIngresos = $tipo === 'lote'
+            ? ($ingresos_periodo ?? 0)
+            : ($estadisticas_globales['ingresos_totales'] ?? 0);
+        $kpiMargenBrutoPct = $tipo === 'lote'
+            ? ($indicadores['margen_bruto_pct'] ?? 0)
+            : ($estadisticas_globales['margen_bruto_pct'] ?? 0);
+        $kpiTnDiaOperativo = $tipo === 'lote'
+            ? ($indicadores['tn_dia_operativo'] ?? 0)
+            : ($estadisticas_globales['tn_dia_operativo'] ?? 0);
 
         $logoPath = public_path('images/logo_rennova.png');
         $mostrarLogo = is_file($logoPath) && extension_loaded('gd');
@@ -241,6 +250,20 @@
                     <span class="kpi-value">ARS {{ number_format($costoPromedio, 2) }}</span>
                 </td>
             </tr>
+            <tr>
+                <td class="kpi-card" width="33%">
+                    <span class="kpi-label">Ingresos Totales</span>
+                    <span class="kpi-value">ARS {{ number_format($kpiIngresos, 2) }}</span>
+                </td>
+                <td class="kpi-card" width="33%">
+                    <span class="kpi-label">Margen Bruto</span>
+                    <span class="kpi-value">{{ number_format($kpiMargenBrutoPct, 2) }}%</span>
+                </td>
+                <td class="kpi-card" width="33%">
+                    <span class="kpi-label">Prod. por Día Operativo</span>
+                    <span class="kpi-value">{{ number_format($kpiTnDiaOperativo, 2) }} Tn/día</span>
+                </td>
+            </tr>
         </table>
 
         <h3>Resumen Financiero del Periodo</h3>
@@ -280,6 +303,34 @@
                 @endforeach
             </tbody>
         </table>
+
+        @if(isset($tendencia_mensual) && count($tendencia_mensual))
+            <h3>Tendencia Mensual de Producción</h3>
+            <table class="table-data">
+                <thead>
+                    <tr>
+                        <th>Mes</th>
+                        <th>Producción (Tn)</th>
+                        <th>Variación vs mes anterior</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($tendencia_mensual as $mes)
+                        <tr>
+                            <td>{{ $mes['label'] }}{{ $mes['parcial'] ? ' (parcial)' : '' }}</td>
+                            <td>{{ number_format($mes['toneladas'], 2) }} Tn</td>
+                            <td style="color: {{ ($mes['variacion_pct'] ?? 0) >= 0 ? '#3f6212' : '#991b1b' }}">
+                                @if($mes['variacion_pct'] === null)
+                                    —
+                                @else
+                                    <strong>{{ $mes['variacion_pct'] >= 0 ? '+' : '' }}{{ number_format($mes['variacion_pct'], 2) }}%</strong>
+                                @endif
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        @endif
     </main>
 </body>
 </html>

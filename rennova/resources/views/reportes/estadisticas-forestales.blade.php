@@ -113,6 +113,10 @@
                 <p class="mt-2 text-lg font-bold text-tinta">{{ number_format($estadisticas_globales['rendimiento'], 2) }} tn/ha</p>
             </x-ui.card>
             <x-ui.card class="p-4">
+                <p class="text-xs font-medium text-tinta-suave">Prod. por Día Operativo</p>
+                <p class="mt-2 text-lg font-bold text-tinta">{{ number_format($estadisticas_globales['tn_dia_operativo'], 2) }} tn/día</p>
+            </x-ui.card>
+            <x-ui.card class="p-4">
                 <p class="text-xs font-medium text-tinta-suave">Margen Bruto</p>
                 <p class="mt-2 text-lg font-bold {{ $estadisticas_globales['margen_bruto_pct'] >= 0 ? 'text-musgo' : 'text-tierra' }}">
                     {{ number_format($estadisticas_globales['margen_bruto_pct'], 2) }}%
@@ -179,6 +183,7 @@
                         <col style="width: 10%;">
                         <col style="width: 10%;">
                         <col style="width: 9%;">
+                        <col style="width: 8%;">
                         <col style="width: 10%;">
                         <col style="width: 8%;">
                         <col style="width: 15%;">
@@ -191,6 +196,7 @@
                             <th>Costo Promedio</th>
                             <th>Punto Equilibrio</th>
                             <th>Rendimiento</th>
+                            <th>tn/Día Op.</th>
                             <th>Rentabilidad</th>
                             <th>Margen %</th>
                             <th>Estado</th>
@@ -213,6 +219,7 @@
                                     <x-ui.badge variant="info">{{ number_format($stat['punto_equilibrio'], 2) }} tn/día</x-ui.badge>
                                 </td>
                                 <td class="text-tinta-suave">{{ number_format($stat['rendimiento'] ?? 0, 2) }} tn/ha</td>
+                                <td class="text-tinta-suave">{{ number_format($stat['tn_dia_operativo'] ?? 0, 2) }} tn/día</td>
                                 <td>
                                     <x-ui.badge variant="{{ $stat['rentabilidad'] >= 0 ? 'success' : 'danger' }}">
                                         ${{ number_format($stat['rentabilidad'], 2) }}/tn
@@ -225,6 +232,44 @@
                                     <x-ui.badge variant="{{ $stat['rentabilidad'] >= 0 ? 'success' : 'danger' }}">
                                         {{ $stat['rentabilidad'] >= 0 ? 'Rentable' : 'No Rentable' }}
                                     </x-ui.badge>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </x-ui.table-container>
+        </x-ui.card>
+
+        <!-- Tendencia Mes vs Mes -->
+        <x-ui.card class="mt-6">
+            <div class="border-b border-arena px-4 py-3">
+                <h2 class="text-sm font-semibold text-tinta">Tendencia Mensual de Producción (meses cerrados)</h2>
+                <p class="mt-1 text-xs text-tinta-suave">La variación se calcula solo entre meses cerrados; el mes en curso se marca como parcial.</p>
+            </div>
+            <x-ui.table-container>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Mes</th>
+                            <th>Producción (tn)</th>
+                            <th>Variación vs mes anterior</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($tendencia_mensual as $mes)
+                            <tr>
+                                <td class="font-semibold text-tinta">
+                                    {{ $mes['label'] }}{{ $mes['parcial'] ? ' (parcial)' : '' }}
+                                </td>
+                                <td class="text-tinta-suave">{{ number_format($mes['toneladas'], 2) }} tn</td>
+                                <td>
+                                    @if($mes['variacion_pct'] === null)
+                                        <span class="text-tinta-suave">—</span>
+                                    @else
+                                        <x-ui.badge variant="{{ $mes['variacion_pct'] >= 0 ? 'success' : 'danger' }}">
+                                            {{ $mes['variacion_pct'] >= 0 ? '+' : '' }}{{ number_format($mes['variacion_pct'], 2) }}%
+                                        </x-ui.badge>
+                                    @endif
                                 </td>
                             </tr>
                         @endforeach

@@ -119,6 +119,7 @@ class ReporteController extends Controller
                     'costo_promedio' => 0,
                     'punto_equilibrio' => 0,
                     'total_lotes' => 0,
+                    'tn_dia_operativo' => 0,
                 ],
                 'lotes_estadisticas' => [],
                 'produccion_30_dias' => [],
@@ -126,6 +127,7 @@ class ReporteController extends Controller
                 'distribucion_costos' => [],
                 'evolucion_6_meses' => [],
                 'fechas_6_meses' => [],
+                'tendencia_mensual' => [],
                 'filtro_desde' => $filtroDesde,
                 'filtro_hasta' => $filtroHasta,
                 'rango_label' => $rangoLabel,
@@ -158,6 +160,11 @@ class ReporteController extends Controller
                 $filtroDesde,
                 $filtroHasta
             );
+            $tn_dia_operativo = $this->statsService->getTnDiaOperativo(
+                $lote,
+                $filtroDesde,
+                $filtroHasta
+            );
 
             $toneladas = (float) ($toneladasPorLote[$lote->id_lote]->toneladas ?? 0);
             $rendimiento = $lote->superficie > 0 ? round($toneladas / $lote->superficie, 2) : 0.0;
@@ -173,6 +180,7 @@ class ReporteController extends Controller
                 'rentabilidad' => $precio_promedio - $costo_promedio,
                 'rendimiento' => $rendimiento,
                 'margen_pct' => $margen_pct,
+                'tn_dia_operativo' => $tn_dia_operativo,
             ];
         });
 
@@ -218,7 +226,7 @@ class ReporteController extends Controller
         // GRÁFICO 3: Evolución costo por tonelada últimos 6 meses
         $evolucion_costos = ParteDiario::whereIn('id_lote', $lotes->pluck('id_lote'))
             ->whereBetween('fecha', [$filtroDesde, $filtroHasta])
-            ->selectRaw('DATE_TRUNC(\'month\', fecha) as mes')
+            ->selectRaw($this->monthFirstDay('fecha').' as mes')
             ->selectRaw('AVG(costo_unitario_calculado) as costo_promedio')
             ->groupBy('mes')
             ->orderBy('mes')
@@ -231,10 +239,17 @@ class ReporteController extends Controller
         while ($mesCursor->lessThanOrEqualTo($mesFin)) {
             $fechas_6_meses[] = $mesCursor->isoFormat('MMM YYYY');
 
-            $costo = $evolucion_costos->firstWhere('mes', $mesCursor->toDateTimeString());
+            $costo = $evolucion_costos->firstWhere('mes', $mesCursor->toDateString());
             $evolucion_6_meses[] = $costo ? (float) $costo->costo_promedio : 0;
             $mesCursor->addMonth();
         }
+
+        // Tendencia de producción mes vs mes (solo meses cerrados)
+        $tendencia_mensual = $this->statsService->getTendenciaProduccionMensual(
+            $lotes->pluck('id_lote')->all(),
+            $filtroDesde,
+            $filtroHasta
+        );
 
         return view('reportes.estadisticas-forestales', [
             'lotes' => $lotes,
@@ -245,6 +260,7 @@ class ReporteController extends Controller
             'distribucion_costos' => $distribucion_costos,
             'evolucion_6_meses' => $evolucion_6_meses,
             'fechas_6_meses' => $fechas_6_meses,
+            'tendencia_mensual' => $tendencia_mensual,
             'filtro_desde' => $filtroDesde,
             'filtro_hasta' => $filtroHasta,
             'rango_label' => $rangoLabel,
@@ -301,7 +317,7 @@ class ReporteController extends Controller
 
             $produccionMensual = Carga::where('id_lote', $lote->id_lote)
                 ->whereBetween('fecha_carga', [$fechaDesde->toDateString(), $fechaHasta->toDateString()])
-                ->selectRaw('DATE_TRUNC(\'month\', fecha_carga) as mes')
+                ->selectRaw($this->monthFirstDay('fecha_carga').' as mes')
                 ->selectRaw('SUM(peso_neto / 1000.0) as toneladas')
                 ->groupBy('mes')
                 ->orderBy('mes')
@@ -309,7 +325,7 @@ class ReporteController extends Controller
 
             $costosMensual = ParteDiario::where('id_lote', $lote->id_lote)
                 ->whereBetween('fecha', [$fechaDesde->toDateString(), $fechaHasta->toDateString()])
-                ->selectRaw('DATE_TRUNC(\'month\', fecha) as mes')
+                ->selectRaw($this->monthFirstDay('fecha').' as mes')
                 ->selectRaw('SUM(COALESCE(costo_total_dia, 0)) as costo_total')
                 ->groupBy('mes')
                 ->orderBy('mes')
@@ -321,7 +337,7 @@ class ReporteController extends Controller
             $cursor = $fechaDesde->copy()->startOfMonth();
             $end = $fechaHasta->copy()->startOfMonth();
             while ($cursor->lessThanOrEqualTo($end)) {
-                $key = $cursor->toDateTimeString();
+                $key = $cursor->toDateString();
                 $labels[] = $cursor->isoFormat('MMM YYYY');
                 $prod = $produccionMensual->firstWhere('mes', $key);
                 $cost = $costosMensual->firstWhere('mes', $key);
@@ -381,8 +397,16 @@ class ReporteController extends Controller
                     $fechaDesde->toDateString(),
                     $fechaHasta->toDateString()
                 ),
+                'tn_dia_operativo' => $this->statsService->getTnDiaOperativo(
+                    $lote,
+                    $fechaDesde->toDateString(),
+                    $fechaHasta->toDateString()
+                ),
             ];
             $indicadores['rentabilidad'] = $indicadores['precio_promedio'] - $indicadores['costo_promedio'];
+            $indicadores['margen_bruto_pct'] = $indicadores['precio_promedio'] > 0
+                ? round($indicadores['rentabilidad'] / $indicadores['precio_promedio'] * 100, 2)
+                : 0.0;
 
             $data = array_merge($base, [
                 'lote' => $lote,
@@ -452,7 +476,7 @@ class ReporteController extends Controller
 
             $produccionMensualGlobal = Carga::whereIn('id_lote', $lotes->pluck('id_lote'))
                 ->whereBetween('fecha_carga', [$fechaDesde->toDateString(), $fechaHasta->toDateString()])
-                ->selectRaw('DATE_TRUNC(\'month\', fecha_carga) as mes')
+                ->selectRaw($this->monthFirstDay('fecha_carga').' as mes')
                 ->selectRaw('SUM(peso_neto / 1000.0) as toneladas')
                 ->groupBy('mes')
                 ->orderBy('mes')
@@ -460,7 +484,7 @@ class ReporteController extends Controller
 
             $costosMensualGlobal = ParteDiario::whereIn('id_lote', $lotes->pluck('id_lote'))
                 ->whereBetween('fecha', [$fechaDesde->toDateString(), $fechaHasta->toDateString()])
-                ->selectRaw('DATE_TRUNC(\'month\', fecha) as mes')
+                ->selectRaw($this->monthFirstDay('fecha').' as mes')
                 ->selectRaw('SUM(COALESCE(costo_total_dia, 0)) as costo_total')
                 ->groupBy('mes')
                 ->orderBy('mes')
@@ -472,7 +496,7 @@ class ReporteController extends Controller
             $cursorGlobal = $fechaDesde->copy()->startOfMonth();
             $endGlobal = $fechaHasta->copy()->startOfMonth();
             while ($cursorGlobal->lessThanOrEqualTo($endGlobal)) {
-                $key = $cursorGlobal->toDateTimeString();
+                $key = $cursorGlobal->toDateString();
                 $labelsGlobal[] = $cursorGlobal->isoFormat('MMM YYYY');
                 $prod = $produccionMensualGlobal->firstWhere('mes', $key);
                 $cost = $costosMensualGlobal->firstWhere('mes', $key);
@@ -546,6 +570,11 @@ class ReporteController extends Controller
                 'ingresos_periodo' => round($ingresosPeriodo, 2),
                 'gastos_periodo' => round($gastosPeriodo, 2),
                 'liquidaciones_periodo' => round($liquidacionesPeriodo, 2),
+                'tendencia_mensual' => $this->statsService->getTendenciaProduccionMensual(
+                    $lotes->pluck('id_lote')->all(),
+                    $fechaDesde->toDateString(),
+                    $fechaHasta->toDateString()
+                ),
                 'top_lotes' => $top_lotes,
                 'distribucion_ubicaciones' => $distribucion_ubicaciones,
             ]);
@@ -658,6 +687,7 @@ class ReporteController extends Controller
                 'margen_bruto' => 0,
                 'margen_bruto_pct' => 0,
                 'rendimiento' => 0,
+                'tn_dia_operativo' => 0,
             ];
         }
 
@@ -695,6 +725,7 @@ class ReporteController extends Controller
         $margenBrutoPct = $totalVentas > 0 ? round(($totalVentas - $totalCostos) / $totalVentas * 100, 2) : 0.0;
         $superficieTotal = (float) $lotes->sum('superficie');
         $rendimiento = $superficieTotal > 0 ? round($totalToneladas / $superficieTotal, 2) : 0.0;
+        $tnDiaOperativo = $this->statsService->getTnDiaOperativoGlobal($lotesIds->all(), $desde, $hasta);
 
         return [
             'precio_promedio' => $precioPromedio,
@@ -706,7 +737,27 @@ class ReporteController extends Controller
             'margen_bruto' => $margenBruto,
             'margen_bruto_pct' => $margenBrutoPct,
             'rendimiento' => $rendimiento,
+            'tn_dia_operativo' => $tnDiaOperativo,
         ];
+    }
+
+    /**
+     * Primer día del mes como string canónico (YYYY-MM-01) portable entre motores.
+     *
+     * Reemplaza el DATE_TRUNC específico de PostgreSQL para que los gráficos por
+     * mes funcionen también en SQLite (tests) y MySQL.
+     */
+    private function monthFirstDay(string $column): string
+    {
+        $driver = DB::getDriverName();
+        if ($driver === 'pgsql') {
+            return "DATE_TRUNC('month', {$column})::date";
+        }
+        if ($driver === 'mysql') {
+            return "DATE_FORMAT({$column}, '%Y-%m-01')";
+        }
+
+        return "strftime('%Y-%m-01', {$column})";
     }
 
     /**
