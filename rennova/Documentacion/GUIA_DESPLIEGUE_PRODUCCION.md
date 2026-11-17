@@ -1,415 +1,176 @@
-#  GUIA DE DESPLIEGUE EN PRODUCCION
+# Guía de despliegue en producción — Rennova
 
-Ultima actualizacion: 8 de febrero de 2026.
+Última actualización: 17 de noviembre de 2026.
 
-**Fecha:** 5 de Diciembre de 2025  
-**Versión:** 1.0 Final
+Rennova se entrega como **imagen Docker** (PHP 8.4.27 + Apache) junto a un
+`docker-compose.prod.yml` que levanta la aplicación y PostgreSQL. Esta guía
+describe ese camino; el despliegue nativo (nginx/systemd/crontab) que describía
+una versión anterior de este documento **quedó obsoleto** y no se usa.
 
----
+## Qué se entrega
 
-##  CHECKLIST PRE-DESPLIEGUE
+| Artefacto | Ubicación | Función |
+|---|---|---|
+| `Dockerfile` | raíz del repo | Imagen multi-stage: compila assets (Node), resuelve `vendor` y arma el runtime (PHP + Apache) |
+| `docker-compose.prod.yml` | raíz del repo | Compose de producción: `app` + `db` (PostgreSQL 15) |
+| `.env.production.example` | raíz del repo | Plantilla de variables para producción |
+| `rennova/docker/entrypoint.sh` | imagen | `key:generate` si falta, `storage:link`, espera a Postgres, `migrate --force`, cron y queue worker |
+| `rennova/docker/laravel-cron` | imagen | Ejecuta `php artisan schedule:run` cada minuto |
 
-### Sistema Completamente Configurado
+La imagen fija `php:8.4.27-apache`: esa versión incluye el parche de `php2shell`
+(CVE-2026-109618 / CVE-2026-109619, RCE crítico). **No bajar de esa versión.**
 
--  **Procesos automatizados:** Mantenimiento y Clima
--  **Reportes y estadísticas:** Dashboard con gráficos ApexCharts
--  **Tareas programadas:** Scheduler configurado
--  **Notificaciones:** Sistema integrado
--  **Base de datos:** Estructura completa
--  **Testing:** 34/34 pruebas pasadas (100%)
+## Prerrequisitos
 
----
+- Docker Engine + Docker Compose v2 (`docker compose`, no `docker-compose`).
+- Acceso de lectura al repositorio.
 
-##  PASOS DE DESPLIEGUE
-
-### 1. Preparar Servidor
+## 1. Clonar y preparar la configuración
 
 ```bash
-# En el servidor de producción:
-cd /var/www/rennova
-
-# Instalar dependencias
-composer install --optimize-autoloader --no-dev
-
-# Instalar dependencias Node
-npm install --production
-
-# Build de assets
-npm run build
-
-# Generar cache
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
+git clone <url-del-repo> rennova
+cd rennova
+cp .env.production.example .env.production
 ```
 
-### 2. Configurar Base de Datos
+Completar `.env.production` (el archivo **no se versiona**):
 
-```bash
-# Ejecutar migraciones
-php artisan migrate --force
-
-# Seed inicial (opcional)
-php artisan db:seed
-```
-
-### 3. Configurar Tareas Programadas
-
-#### Opción A: Linux/Mac (crontab)
-
-```bash
-# Editar crontab
-crontab -e
-
-# Agregar esta línea
-* * * * * cd /var/www/rennova && php artisan schedule:run >> /dev/null 2>&1
-
-# Guardar y salir (Ctrl+O, Enter, Ctrl+X en nano)
-```
-
-#### Opción B: Docker (Ya incluido)
-
-El archivo `docker/laravel-cron` ya contiene la configuración.
-
-Asegurar que el servicio cron está activo:
-
-```bash
-docker-compose restart
-```
-
-#### Opción C: Windows Server (Task Scheduler)
-
-1. Abrir **Task Scheduler**
-2. Crear tarea básica:
-   - **Nombre:** Laravel Scheduler
-   - **Acción:** Ejecutar programa
-   - **Programa:** `C:\PHP\php.exe`
-   - **Argumentos:** `C:\inetpub\rennova\artisan schedule:run`
-   - **Repetir:** Cada 1 minuto
-   - **Duración:** Indefinida
-
-#### Worker de Cola (OBLIGATORIO para las propuestas de asignación)
-
-Las propuestas de asignación automática se ejecutan como jobs en cola
-(disparados por cambios de estado del lote y por la planificación de tareas).
-**Sin un worker corriendo, ese proceso no se ejecuta** y los jobs quedan pendientes.
-
-```bash
-# Verificar que no haya jobs atascados
-php artisan queue:failed
-
-# Worker en producción (mantener corriendo con systemd, supervisor o nohup)
-php artisan queue:work --queue=default --daemon
-```
-
-El estado de la cola (pendientes y fallidos) se puede monitorear en la pantalla
-**Estado de procesos** (Administración → Estado de procesos).
-
-### 4. Configurar Variables de Entorno
-
-```bash
-# Copiar y configurar
-cp .env.example .env
-
-# Editar .env con:
+```env
+APP_NAME=Rennova
 APP_ENV=production
 APP_DEBUG=false
+APP_KEY=            # php artisan key:generate --show  (ver nota)
+APP_URL=http://tudominio.com
 DB_CONNECTION=pgsql
-DB_HOST=localhost
+DB_HOST=db
 DB_PORT=5432
 DB_DATABASE=rennova
-DB_USERNAME=rennova_user
-DB_PASSWORD=***
-QUEUE_CONNECTION=database
-LOG_CHANNEL=stack
+DB_USERNAME=rennova
+DB_PASSWORD=clave-segura
 ```
 
-### 5. Permisos de Carpetas
+**Sobre `APP_KEY`:** si queda vacía, el entrypoint genera una en el primer
+arranque y la imprime con un aviso por `stderr`. Hay que copiarla a
+`.env.production`, porque el `.env` dentro del contenedor se pierde en el
+próximo redeploy y regenerarla **invalida sesiones y datos cifrados**.
+
+## 2. Levantar los servicios
 
 ```bash
-# Dar permisos de escritura
-chmod -R 775 storage bootstrap/cache
-chown -R www-data:www-data storage bootstrap/cache
+docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
 ```
 
-### 6. SSL Certificate (HTTPS)
+El `--env-file` es obligatorio: de ahí salen las variables que consume el
+compose (`DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`) y las que recibe el
+contenedor de la app. La app queda expuesta en `http://localhost:8080` (se
+adelanta un reverse proxy o se cambia el puerto en el compose).
+
+Lo que hace el entrypoint en el arranque, en orden:
+
+1. Genera `APP_KEY` si no hay una.
+2. `storage:link` (el symlink del storage público).
+3. Espera a que Postgres responda (máximo 60 s; si no, el contenedor falla).
+4. `php artisan migrate --force` — **sin `|| true`**: si migra mal, el
+   despliegue está mal y el contenedor no queda arriba como si estuviera sano.
+5. Arranca `cron` (scheduler) y el worker de cola en background.
+6. Levanta Apache.
+
+## 3. Verificación post-despliegue
 
 ```bash
-# Si usa Let's Encrypt con Certbot
-sudo certbot certonly --webroot -w /var/www/rennova/public -d tudominio.com
+# Estado de los contenedores
+docker compose -f docker-compose.prod.yml ps
 
-# Actualizar nginx/apache para usar SSL
+# Logs de la app (migraciones, cron, worker)
+docker compose -f docker-compose.prod.yml logs -f app
 ```
 
----
+Checklist:
 
-##  VERIFICACIÓN POST-DESPLIEGUE
+- [ ] La app responde en `http://localhost:8080` y el login funciona.
+- [ ] Las migraciones corrieron sin error (log de `app` al arrancar).
+- [ ] `php artisan schedule:list` muestra las 5 tareas programadas (abajo).
+- [ ] El worker de cola está corriendo (ver sección siguiente).
 
-### 1. Verificar que el sitio está en línea
+## 4. Tareas programadas (scheduler)
+
+El cron del contenedor ejecuta `schedule:run` cada minuto. Estas son las tareas:
+
+| Comando | Frecuencia | Qué hace |
+|---|---|---|
+| `clima:real` | Diaria 00:30 | Sincroniza clima real (histórico) |
+| `clima:analizar --dias=7` | Diaria 06:00 | Análisis de riesgo climático |
+| `clima:decisiones` | Cada 6 horas | Decisiones climáticas por lote |
+| `mantenimiento:check-umbrales` | Diaria 06:30 | Genera órdenes de mantenimiento al superarse el umbral de toneladas |
+| `mantenimiento:check-programados` | Cada 4 horas | Marca vencidos y notifica |
+
+Para probar una tarea a mano: `docker compose -f docker-compose.prod.yml exec app php artisan mantenimiento:check-umbrales`.
+
+## 5. Worker de cola (obligatorio)
+
+Las propuestas de asignación automática se ejecutan como jobs en cola. **Sin el
+worker corriendo, ese proceso no se ejecuta** y los jobs quedan pendientes. El
+entrypoint ya lo arranca con:
+
+```
+php artisan queue:work --sleep=3 --tries=3 --timeout=90
+```
+
+El estado de la cola (pendientes y fallidos) se monitorea en la pantalla
+**Estado de procesos** (Administración → Estado de procesos). Para ver jobs
+fallidos: `docker compose -f docker-compose.prod.yml exec app php artisan queue:failed`.
+
+## 6. Backup
+
+Los datos viven en el volumen `rennova_pgdata` (Postgres) y `rennova_storage`
+(archivos de la app). El backup se hace con `pg_dump` desde el contenedor de la
+base:
 
 ```bash
-# Acceder a
-https://tudominio.com
+docker compose -f docker-compose.prod.yml exec -T db \
+  pg_dump -U rennova rennova | gzip > rennova_$(date +%Y%m%d).sql.gz
 ```
 
-### 2. Verificar que las tareas programadas están configuradas
+Restaurar:
 
 ```bash
-# En el servidor
-php artisan schedule:list
-
-# Debe mostrar:
-# - mantenimiento:check-umbrales ..................... (02:00)
-# - clima:decisiones ............................... (Every 6 hours)
-# - clima:analizar .................................. (06:00)
-# - mantenimiento:check-programados ................ (Every 4 hours)
+gunzip -c rennova_20260101.sql.gz | docker compose -f docker-compose.prod.yml exec -T db psql -U rennova rennova
 ```
 
-### 3. Verificar que cron está ejecutándose
+## 7. Actualizar (redeploy)
 
 ```bash
-# Ver último acceso a logs
-tail -f storage/logs/laravel.log
-
-# Debe mostrar logs de tareas siendo ejecutadas
+git pull
+docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
 ```
 
-### 4. Ejecutar una tarea manual para probar
+El build regenera la imagen (código + vendor + assets) y el contenedor se
+recrea. Las migraciones pendientes corren en el arranque.
+
+## 8. Rollback
 
 ```bash
-# Probar mantenimiento
-php artisan mantenimiento:check-umbrales
-
-# Probar clima
-php artisan clima:decisiones
-
-# Debe completarse sin errores
+git checkout <commit-anterior>
+docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
 ```
 
----
-
-##  MONITOREO EN PRODUCCIÓN
-
-### Logs
-
-```bash
-# Ver logs en tiempo real
-tail -f storage/logs/laravel.log
-
-# Filtrar solo errores
-tail -f storage/logs/laravel.log | grep ERROR
-
-# Filtrar solo tareas programadas
-tail -f storage/logs/laravel.log | grep "Tarea"
-```
-
-### Cron (Linux)
-
-```bash
-# Verificar que cron está activo
-ps aux | grep cron
-
-# Ver historial de cron
-grep CRON /var/log/syslog  # Debian/Ubuntu
-grep CRON /var/log/messages # CentOS/RHEL
-```
-
-### Alertas Recomendadas
-
-Configurar alertas para:
--  Si una tarea falla
--  Si no hay logs de tareas en 24 horas
--  Si la base de datos está desconectada
-- ️ Si hay muchos errores en logs
-
----
-
-##  SEGURIDAD
-
-### 1. Desactivar Debug en Producción
-
-```env
-APP_DEBUG=false
-```
-
-### 2. Ocultar Rutas Administrativas
-
-```php
-// routes/web.php - Proteger rutas admin
-Route::middleware(['auth', 'admin'])->group(function () {
-    // Rutas admin
-});
-```
-
-### 3. Rate Limiting
-
-```php
-// En app/Http/Kernel.php o middleware
-RateLimiter::for('login', function (Request $request) {
-    return Limit::perMinute(5)->by($request->email);
-});
-```
-
-### 4. HTTPS Obligatorio
-
-```php
-// config/app.php
-'force_https' => true,
-```
-
----
-
-##  NOTIFICACIONES POR EMAIL
-
-Las notificaciones se configuran automáticamente. Verificar:
-
-```env
-MAIL_DRIVER=smtp
-MAIL_HOST=smtp.mailtrap.io
-MAIL_PORT=2525
-MAIL_USERNAME=***
-MAIL_PASSWORD=***
-MAIL_ENCRYPTION=tls
-```
-
-Para producción, usar servicio real (SendGrid, AWS SES, etc.)
-
----
-
-##  TROUBLESHOOTING
-
-### Las tareas no se ejecutan
-
-**Síntoma:** Logs vacíos, nada se ejecuta
-
-**Solución:**
-```bash
-# 1. Verificar cron está activo
-ps aux | grep cron
-
-# 2. Ejecutar manual para probar
-php artisan mantenimiento:check-umbrales
-
-# 3. Ver qué tareas están programadas
-php artisan schedule:list
-
-# 4. Buscar errores
-tail -100 storage/logs/laravel.log
-```
-
-### Errores de base de datos
-
-**Síntoma:** SQLSTATE[08006]...
-
-**Solución:**
-```bash
-# 1. Verificar conexión
-php artisan tinker
-# Luego: DB::connection()->getPdo();
-
-# 2. Verificar credenciales en .env
-cat .env | grep DB_
-
-# 3. Reiniciar servidor
-php artisan cache:clear
-php artisan config:cache
-```
-
-### Alto consumo de memoria
-
-**Síntoma:** Tareas lentas, timeouts
-
-**Solución:**
-```bash
-# 1. Limitar concurrencia
-php artisan schedule:work --max-duration=3600
-
-# 2. Aumentar memoria en php.ini
-memory_limit = 256M
-
-# 3. Optimizar queries en logs
-# Ver dónde tarda tiempo
-```
-
----
-
-##  ESCALABILIDAD
-
-Para manejo de muchos lotes/máquinas:
-
-### 1. Usar Redis en lugar de Database para Queue
-
-```env
-QUEUE_CONNECTION=redis
-REDIS_HOST=localhost
-REDIS_PORT=6379
-```
-
-### 2. Ejecutar multiple workers
-
-```bash
-# En producción, ejecutar varios workers
-php artisan queue:work --queue=default --daemon
-php artisan queue:work --queue=default --daemon &
-php artisan queue:work --queue=default --daemon &
-```
-
-### 3. Aumentar timeouts
-
-```php
-// routes/console.php
-Schedule::command('mantenimiento:check-umbrales')
-    ->dailyAt('06:30')
-    ->timeout(300) // 5 minutos máximo
-```
-
----
-
-##  SOPORTE Y MANTENIMIENTO
-
-### Actualizaciones de dependencias
-
-```bash
-# Actualizar Laravel y paquetes
-composer update
-
-# Actualizar assets
-npm update
-
-# Rebuild
-npm run build
-```
-
-### Backup automático
-
-```bash
-# Configurar backup diario
-0 2 * * * /usr/bin/mysqldump -u root -p*** rennova | gzip > /backups/rennova_$(date +\%Y\%m\%d).sql.gz
-```
-
-### Monitoreo de performance
-
-Usar herramientas como:
-- **New Relic** - APM y monitoring
-- **DataDog** - Logs y alertas
-- **Sentry** - Error tracking
-- **Grafana** - Dashboards
-
----
-
-##  CONCLUSIÓN
-
-El sistema **Rennova** está 100% listo para producción con:
-
- Automatización completa de procesos  
- Estadísticas en tiempo real con gráficos  
- Notificaciones automáticas  
- Monitoreo y logging  
- Seguridad implementada  
- Escalabilidad considerada  
-
-Estado: listo para desplegar.
-
----
-
-*Última actualización: 5 de Diciembre de 2025*
+Los datos persisten en los volúmenes; el rollback no los borra.
+
+## 9. Troubleshooting
+
+| Síntoma | Diagnóstico / solución |
+|---|---|
+| El contenedor no arranca y espera a la base | `docker compose ... logs app`: si dice "Postgres no responde", revisar `DB_HOST=db` y las credenciales de `db` |
+| Las tareas no corren | `docker compose ... exec app php artisan schedule:list`; luego `tail -100 storage/logs/laravel.log` |
+| Jobs de asignación acumulados | Verificar el worker: `docker compose ... ps` y `logs app \| grep queue` |
+| Error `SQLSTATE[08006]` | La app no llega a Postgres: revisar `DB_*` en `.env.production` |
+| Cambios de código sin efecto | Rebuild: `up -d --build` (la imagen no se actualiza sola) |
+
+## Seguridad
+
+- `APP_DEBUG=false` en producción (lo fuerza el compose).
+- `APP_KEY` estable y guardada en `.env.production`, nunca regenerada en caliente.
+- El contenedor corre Apache como `www-data` (no root) gracias a `gosu`.
+- El puerto 5432 de Postgres **no** está expuesto al host; solo la app lo alcanza.
+- Para HTTPS, poner un reverse proxy (nginx/traefik) delante del puerto 8080 con
+  su certificado; el esquema/dominio va en `APP_URL`.
