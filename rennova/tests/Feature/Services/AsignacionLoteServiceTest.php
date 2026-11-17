@@ -87,3 +87,31 @@ it('permite asignar recursos que estaban en un lote cerrado', function () {
     expect($resultado['empleados_adjuntados'])->toBe([$empleado->id_empleado])
         ->and($loteNuevo->empleados()->count())->toBe(1);
 });
+
+it('pasa un lote activo a en proceso al asignarle recursos', function () {
+    $lote = Lote::factory()->activo()->create();
+    $empleado = Empleado::factory()->create(['fecha_fin_actividades' => null]);
+
+    app(AsignacionLoteService::class)->asignarRecursos(
+        $lote->id_lote,
+        [$empleado->id_empleado],
+        [],
+        datosSolicitudAsignacion()
+    );
+
+    expect($lote->fresh()->estado)->toBe('en_proceso');
+});
+
+it('no cambia el estado de un lote en proceso al reasignar recursos', function () {
+    $lote = Lote::factory()->enProceso()->create();
+    $empleado = Empleado::factory()->create(['fecha_fin_actividades' => null]);
+
+    app(AsignacionLoteService::class)->asignarRecursos(
+        $lote->id_lote,
+        [$empleado->id_empleado],
+        [],
+        datosSolicitudAsignacion()
+    );
+
+    expect($lote->fresh()->estado)->toBe('en_proceso');
+});

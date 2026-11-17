@@ -50,6 +50,13 @@ class AsignacionLoteService
             $lote->empleados()->sync($empleadosIds);
             $lote->maquinarias()->sync($maquinariasIds);
 
+            // Regla del ciclo de vida: asignar recursos a un lote activo lo
+            // pone en proceso. Es el mismo disparador que la confirmación de
+            // una propuesta, para que el flujo manual y el automático coincidan.
+            if ($lote->estado === 'activo') {
+                $lote->update(['estado' => 'en_proceso']);
+            }
+
             $this->registrarAuditoriaAdjuntos($lote, 'empleados', $empleadosAdjuntar, $requestData);
             $this->registrarAuditoriaAdjuntos($lote, 'maquinarias', $maquinariasAdjuntar, $requestData);
             $this->registrarAuditoriaDesvinculados($lote, 'empleados', $empleadosDesvincular, $requestData);
