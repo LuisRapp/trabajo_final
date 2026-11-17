@@ -136,6 +136,30 @@ it('calcula costo fifo manual correctamente', function () {
     expect((float) $lotesConsumidos[1]['costo_parcial'])->toBe(240.00);
 });
 
+it('rechaza la salida cuando el stock disponible no alcanza', function () {
+    LoteInventario::create([
+        'id_insumo' => $this->insumo->id_insumo,
+        'cantidad_inicial' => 10,
+        'cantidad_disponible' => 10,
+        'precio_unitario' => 10.00,
+        'costo_total' => 100.00,
+        'fecha_compra' => '2024-01-10',
+        'agotado' => false,
+    ]);
+
+    expect(fn () => InventarioService::registrarSalida($this->insumo->id_insumo, 15, 'Test'))
+        ->toThrow(\Exception::class, 'Stock insuficiente');
+
+    expect(
+        (float) LoteInventario::query()
+            ->where('id_insumo', $this->insumo->id_insumo)
+            ->sum('cantidad_disponible')
+    )->toBe(10.0)
+        ->and(
+            MovimientoStock::query()->where('id_insumo', $this->insumo->id_insumo)->count()
+        )->toBe(0);
+});
+
 it('consume lote y marca como agotado', function () {
     $lote = LoteInventario::create([
         'id_insumo' => $this->insumo->id_insumo,
