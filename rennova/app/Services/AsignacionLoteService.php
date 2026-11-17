@@ -50,6 +50,14 @@ class AsignacionLoteService
             $lote->empleados()->sync($empleadosIds);
             $lote->maquinarias()->sync($maquinariasIds);
 
+            // Regla del ciclo de vida: asignar recursos a un lote activo lo
+            // pone en proceso. Es el mismo disparador que la confirmación de
+            // una propuesta, para que el flujo manual y el automático coincidan.
+            // No transiciona si la asignación quedó vacía (no hay recursos).
+            if ($lote->estado === 'activo' && ($empleadosIds !== [] || $maquinariasIds !== [])) {
+                $lote->update(['estado' => 'en_proceso']);
+            }
+
             $this->registrarAuditoriaAdjuntos($lote, 'empleados', $empleadosAdjuntar, $requestData);
             $this->registrarAuditoriaAdjuntos($lote, 'maquinarias', $maquinariasAdjuntar, $requestData);
             $this->registrarAuditoriaDesvinculados($lote, 'empleados', $empleadosDesvincular, $requestData);
@@ -110,24 +118,50 @@ class AsignacionLoteService
                 return false;
             }
 
-            $empleadosActuales = $lote->empleados()->pluck('empleados.id_empleado')->toArray();
-            $maquinariasActuales = $lote->maquinarias()->pluck('maquinarias.id_maquinaria')->toArray();
-
             $lote->update(['estado' => 'cerrado']);
-
-            $lote->empleados()->detach();
-            $lote->maquinarias()->detach();
-
-            $this->registrarAuditoriaDesvinculados($lote, 'empleados', $empleadosActuales, $requestData);
-            $this->registrarAuditoriaDesvinculados($lote, 'maquinarias', $maquinariasActuales, $requestData);
-
-            PropuestaAsignacion::query()
-                ->where('id_lote', $loteId)
-                ->whereNull('deleted_at')
-                ->update(['status' => 'closed']);
+            $this->desvincularRecursos($lote, $requestData);
 
             return true;
         });
+    }
+
+    /**
+     * Libera los recursos de un lote sin cambiar su estado: desvincula empleados
+     * y maquinarias con registro de auditoría y cierra sus propuestas.
+     *
+     * Se usa desde finalizar() y desde el cierre/baja del lote por el ABM, para
+     * que un lote cerrado o dado de baja no quede con recursos colgados.
+     *
+     * @param  int  $loteId  Identificador del lote
+     * @param  array  $requestData  Contexto del request para auditoría
+     */
+    public function liberarRecursos(int $loteId, array $requestData): void
+    {
+        DB::transaction(function () use ($loteId, $requestData) {
+            $lote = Lote::findOrFail($loteId);
+
+            $this->desvincularRecursos($lote, $requestData);
+        });
+    }
+
+    /**
+     * Desvincula los recursos de un lote (dentro de una transacción existente).
+     */
+    private function desvincularRecursos(Lote $lote, array $requestData): void
+    {
+        $empleadosActuales = $lote->empleados()->pluck('empleados.id_empleado')->toArray();
+        $maquinariasActuales = $lote->maquinarias()->pluck('maquinarias.id_maquinaria')->toArray();
+
+        $lote->empleados()->detach();
+        $lote->maquinarias()->detach();
+
+        $this->registrarAuditoriaDesvinculados($lote, 'empleados', $empleadosActuales, $requestData);
+        $this->registrarAuditoriaDesvinculados($lote, 'maquinarias', $maquinariasActuales, $requestData);
+
+        PropuestaAsignacion::query()
+            ->where('id_lote', $lote->id_lote)
+            ->whereNull('deleted_at')
+            ->update(['status' => 'closed']);
     }
 
     /**
@@ -304,7 +338,7 @@ class AsignacionLoteService
             return;
         }
 
-        $mensaje = 'No se puede guardar: recursos ya asignados a otros lotes activos.';
+        $mensaje = 'No se puede guardar: recursos ya asignados a otros lotes activos o en proceso.';
 
         if (! empty($conflictosEmpleados)) {
             $mensaje .= ' Empleados: '.implode(', ', $conflictosEmpleados).'.';
@@ -318,7 +352,7 @@ class AsignacionLoteService
     }
 
     /**
-     * Detecta conflictos de empleados ya asignados a otros lotes activos.
+     * Detecta conflictos de empleados ya asignados a otros lotes activos o en proceso.
      *
      * @return array<string>
      */
@@ -329,7 +363,7 @@ class AsignacionLoteService
         }
 
         $conflictos = [];
-        $lotesConflicto = Lote::where('estado', 'activo')
+        $lotesConflicto = Lote::whereIn('estado', ['activo', 'en_proceso'])
             ->where('id_lote', '!=', $loteId)
             ->whereHas('empleados', function ($q) use ($empleadosIds) {
                 $q->whereIn('empleados.id_empleado', $empleadosIds);
@@ -350,7 +384,7 @@ class AsignacionLoteService
     }
 
     /**
-     * Detecta conflictos de maquinarias ya asignadas a otros lotes activos.
+     * Detecta conflictos de maquinarias ya asignadas a otros lotes activos o en proceso.
      *
      * @return array<string>
      */
@@ -361,7 +395,7 @@ class AsignacionLoteService
         }
 
         $conflictos = [];
-        $lotesConflicto = Lote::where('estado', 'activo')
+        $lotesConflicto = Lote::whereIn('estado', ['activo', 'en_proceso'])
             ->where('id_lote', '!=', $loteId)
             ->whereHas('maquinarias', function ($q) use ($maquinariasIds) {
                 $q->whereIn('maquinarias.id_maquinaria', $maquinariasIds);

@@ -108,7 +108,7 @@ class ReporteController extends Controller
             : 'Últimos 30 días';
 
         // Obtener lotes activos del usuario
-        $lotes = Lote::where('estado', 'activo')->get();
+        $lotes = Lote::whereIn('estado', ['activo', 'en_proceso'])->get();
 
         // Si no hay lotes, pasar vacío
         if ($lotes->isEmpty()) {
@@ -425,7 +425,7 @@ class ReporteController extends Controller
                 'indicadores' => $indicadores,
             ]);
         } else {
-            $lotes = Lote::where('estado', 'activo')->get();
+            $lotes = Lote::whereIn('estado', ['activo', 'en_proceso'])->get();
 
             $toneladasPorLote = Carga::selectRaw('id_lote, SUM(peso_neto / 1000.0) as toneladas')
                 ->whereIn('id_lote', $lotes->pluck('id_lote'))

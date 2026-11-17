@@ -304,13 +304,13 @@ class AsignacionCandidatosService
     }
 
     /**
-     * Obtiene IDs de empleados ocupados en lotes en proceso
+     * Obtiene IDs de empleados ocupados en lotes activos o en proceso
      */
     private function busyEmployeeIds(): array
     {
         return DB::table('lote_empleado')
             ->join('lotes', 'lotes.id_lote', '=', 'lote_empleado.id_lote')
-            ->whereIn('lotes.estado', ['en_proceso'])
+            ->whereIn('lotes.estado', ['activo', 'en_proceso'])
             ->pluck('lote_empleado.id_empleado')
             ->map(fn ($v) => (int) $v)
             ->unique()
@@ -319,13 +319,13 @@ class AsignacionCandidatosService
     }
 
     /**
-     * Obtiene IDs de maquinarias ocupadas en lotes en proceso
+     * Obtiene IDs de maquinarias ocupadas en lotes activos o en proceso
      */
     private function busyMaquinariaIds(): array
     {
         return DB::table('lote_maquinaria')
             ->join('lotes', 'lotes.id_lote', '=', 'lote_maquinaria.id_lote')
-            ->whereIn('lotes.estado', ['en_proceso'])
+            ->whereIn('lotes.estado', ['activo', 'en_proceso'])
             ->pluck('lote_maquinaria.id_maquinaria')
             ->map(fn ($v) => (int) $v)
             ->unique()

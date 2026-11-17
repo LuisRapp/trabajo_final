@@ -1,7 +1,81 @@
 
 # Reglas de Negocio Estrictas de Rennova
 
-mira asi quedo, elimine las reglas de negocio porque no estan claras todavia
+> Documento único de reglas de negocio (F7). Lo que el sistema ya aplica y lo
+> implementado en F7 está acá; lo que sigue sin definirse se marca como deuda.
+
+## Ciclo de vida de lotes
+
+- Estados: `activo`, `en_proceso`, `inactivo`, `cerrado`, `baja`.
+- **`activo` → `en_proceso`**: un lote pasa a `en_proceso` cuando se le asignan
+  recursos (empleados o maquinarias), por asignación manual o por confirmación
+  de una propuesta. `en_proceso` significa "hay recursos asignados, operando".
+- **`en_proceso` → `cerrado`**: pasa por `finalizar` (liberar), que desvincula
+  recursos y cierra las propuestas del lote.
+- **Cerrar o dar de baja** (por `finalizar` o por el formulario de edición)
+  desvincula los recursos y cierra las propuestas del lote: un lote cerrado no
+  puede quedar con recursos colgados.
+- Un recurso (empleado o maquinaria) no puede estar asignado a dos lotes
+  activos/en_proceso a la vez.
+
+## Inventario
+
+- Nunca stock negativo: toda salida valida disponibilidad antes de confirmar.
+- Costo FIFO: `calcular_costo_fifo()` en PostgreSQL, cálculo manual en SQLite.
+- Todo movimiento registra fecha/hora, origen, destino y usuario responsable.
+- **Insumos críticos**: los necesarios para los kits de mantenimiento preventivo
+  y todo insumo combustible (identificado hoy por nombre: `combustible`,
+  `diesel`, `nafta`).
+
+## Mantenimiento
+
+- La maquinaria acumula toneladas; al superar `umbral_toneladas` se genera la
+  orden preventiva (`mantenimiento:check-umbrales`).
+- **Las órdenes se programan en días de lluvia** (ventana de 72 h): el
+  mantenimiento aprovecha el día no productivo. Si no hay lluvia en la ventana,
+  se agenda al día siguiente.
+- Estados: `programado` → `en curso` → `completado`; `vencido` si no se
+  confirma a tiempo.
+- Al aprobar, se verifica el stock del kit; si falta, se genera propuesta de
+  compra.
+- Notificaciones (umbral, recordatorio, stock): best-effort, fuera de la
+  transacción; el invariante es la orden, no el aviso.
+
+## Pagos y adelantos
+
+- **El total de adelantos pendientes + el nuevo no puede superar el 50% del
+  promedio de liquidaciones del empleado** (LCT art. 130). Sin liquidaciones, el
+  tope es 0: no se puede adelantar.
+- La liquidación descuenta los adelantos pendientes; el monto neto no puede
+  quedar negativo.
+
+## Ventas
+
+- Al registrar una venta, la carga pasa a `facturada`; al darla de baja, la
+  carga vuelve a `pendiente`.
+
+## Indicadores financieros
+
+- Costo/tn = `costo_total_dia ÷ toneladas` (una sola definición en todo el
+  sistema).
+- Punto de equilibrio = jornales de días caídos (costo fijo) ÷ margen de
+  contribución, en tn/día.
+- tn/día operativo = toneladas ÷ días con al menos una carga.
+- Tendencia mes vs mes compara **solo meses cerrados**; el mes en curso se marca
+  parcial.
+
+## Permisos
+
+- `ver-<modulo>` bloquea la página a nivel ruta (no solo oculta el link del
+  sidebar).
+- Las rutas de formulario legadas de Cargas y Choferes (`create`/`edit`/
+  `store`/`update`/`destroy`) se gatearon con `ver-`/`crear-`/`editar-`/
+  `eliminar-<modulo>`. La UI real usa los componentes Livewire, ya cubiertos por
+  los `authorize()` de F3.
+
+## Deuda explícita (pendiente de definición)
+
+- _(ninguna al cierre de F7 — ver `odd/tasks/cierre-produccion.md` F7)_
 # AGENTS.md - Estándares de Desarrollo Rennova
 
 ## Tecnologías

@@ -6,6 +6,7 @@ use App\Models\Lote;
 use App\Models\LoteTarea;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 
@@ -48,7 +49,7 @@ class LoteService
      *
      * @throws ValidationException
      */
-    public function crearOActualizar(?int $id, array $datos): array
+    public function crearOActualizar(?int $id, array $datos, array $requestData = []): array
     {
         $validator = Validator::make($datos, $this->reglas());
 
@@ -57,25 +58,34 @@ class LoteService
         }
 
         $campos = Arr::only($datos, ['propietario', 'ubicacion', 'superficie', 'estado', 'condicion_compra', 'especie', 'latitud', 'longitud', 'main_task_type']);
-        $tareasActivas = null;
 
-        if ($id) {
-            $lote = Lote::findOrFail($id);
-            $estadoAnterior = $lote->estado;
-            $lote->update($campos);
+        return DB::transaction(function () use ($id, $campos, $requestData) {
+            $tareasActivas = null;
 
-            if ($estadoAnterior !== 'en_proceso' && $lote->estado === 'en_proceso') {
-                $tareasActivas = $this->contarTareasActivas($lote->id_lote);
+            if ($id) {
+                $lote = Lote::findOrFail($id);
+                $estadoAnterior = $lote->estado;
+                $lote->update($campos);
+
+                if ($estadoAnterior !== 'en_proceso' && $lote->estado === 'en_proceso') {
+                    $tareasActivas = $this->contarTareasActivas($lote->id_lote);
+                }
+
+                // Cerrar o dar de baja un lote libera sus recursos, igual que
+                // finalizar(): un lote cerrado no puede quedar con recursos colgados.
+                if ($estadoAnterior !== $lote->estado && in_array($lote->estado, ['cerrado', 'baja'], true)) {
+                    app(AsignacionLoteService::class)->liberarRecursos($lote->id_lote, $requestData);
+                }
+            } else {
+                $lote = Lote::create($campos);
+
+                if ($lote->estado === 'en_proceso') {
+                    $tareasActivas = 0;
+                }
             }
-        } else {
-            $lote = Lote::create($campos);
 
-            if ($lote->estado === 'en_proceso') {
-                $tareasActivas = 0;
-            }
-        }
-
-        return ['lote' => $lote, 'tareas_activas' => $tareasActivas];
+            return ['lote' => $lote, 'tareas_activas' => $tareasActivas];
+        });
     }
 
     private function contarTareasActivas(int $loteId): int

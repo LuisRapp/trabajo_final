@@ -35,6 +35,12 @@ class ControllerHttpTest extends TestCase
         parent::setUp();
 
         $this->usuario = Usuario::factory()->create();
+
+        foreach (['ver-lotes', 'ver-maquinarias', 'ver-empleados', 'ver-insumos', 'ver-mantenimientos'] as $permiso) {
+            \Spatie\Permission\Models\Permission::firstOrCreate(['name' => $permiso, 'guard_name' => 'web']);
+        }
+        $this->usuario->givePermissionTo(['ver-lotes', 'ver-maquinarias', 'ver-empleados', 'ver-insumos', 'ver-mantenimientos']);
+
         $this->actingAs($this->usuario);
 
         $this->tipoMaquinaria = TipoMaquinaria::create([

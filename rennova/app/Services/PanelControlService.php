@@ -32,7 +32,7 @@ class PanelControlService
 
     private function hayLotesActivos(): bool
     {
-        return Lote::where('estado', 'activo')->exists();
+        return Lote::whereIn('estado', ['activo', 'en_proceso'])->exists();
     }
 
     private function toneladasExtraidas(int $mes, int $anio): float

@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Livewire\Auditorias;
-use App\Models\Usuario;
 
 test('los invitados son redirigidos al login desde auditorias', function () {
     $response = $this->get(route('auditorias.index'));
@@ -9,7 +8,7 @@ test('los invitados son redirigidos al login desde auditorias', function () {
 });
 
 test('un usuario autenticado puede visitar auditorias', function () {
-    $user = Usuario::factory()->create();
+    $user = usuarioConPermisos(['ver-auditoria']);
     $this->actingAs($user);
 
     $response = $this->get(route('auditorias.index'));

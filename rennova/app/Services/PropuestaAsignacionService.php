@@ -465,7 +465,7 @@ class PropuestaAsignacionService
     }
 
     /**
-     * Busca empleados ya asignados a otros lotes en proceso.
+     * Busca empleados ya asignados a otros lotes activos o en proceso.
      *
      * @param  array<int>  $empleadosIds
      * @return array<int>
@@ -478,7 +478,7 @@ class PropuestaAsignacionService
 
         return DB::table('lote_empleado as le')
             ->join('lotes as l', 'l.id_lote', '=', 'le.id_lote')
-            ->where('l.estado', 'en_proceso')
+            ->whereIn('l.estado', ['activo', 'en_proceso'])
             ->where('l.id_lote', '!=', $loteActualId)
             ->whereIn('le.id_empleado', $empleadosIds)
             ->pluck('le.id_empleado')
@@ -488,7 +488,7 @@ class PropuestaAsignacionService
     }
 
     /**
-     * Busca maquinarias ya asignadas a otros lotes en proceso.
+     * Busca maquinarias ya asignadas a otros lotes activos o en proceso.
      *
      * @param  array<int>  $maquinariasIds
      * @return array<int>
@@ -501,7 +501,7 @@ class PropuestaAsignacionService
 
         return DB::table('lote_maquinaria as lm')
             ->join('lotes as l', 'l.id_lote', '=', 'lm.id_lote')
-            ->where('l.estado', 'en_proceso')
+            ->whereIn('l.estado', ['activo', 'en_proceso'])
             ->where('l.id_lote', '!=', $loteActualId)
             ->whereIn('lm.id_maquinaria', $maquinariasIds)
             ->pluck('lm.id_maquinaria')

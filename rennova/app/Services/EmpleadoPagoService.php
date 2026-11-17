@@ -316,4 +316,55 @@ class EmpleadoPagoService
             throw $e;
         }
     }
+
+    /**
+     * Promedio de liquidaciones (recibos) de un empleado.
+     *
+     * Base del tope de adelanto: la ley argentina (LCT art. 130) no permite
+     * adelantar más de la mitad de la remuneración del período. Como no hay un
+     * campo de sueldo fijo, el tope se calcula sobre el promedio de lo que el
+     * empleado cobró (recibos emitidos).
+     */
+    public static function promedioLiquidaciones(Empleado $empleado): float
+    {
+        return round((float) Recibo::query()
+            ->where('id_empleado', $empleado->id_empleado)
+            ->avg('monto'), 2);
+    }
+
+    /**
+     * Suma de adelantos pendientes de un empleado (estado 'pendiente').
+     *
+     * @param  int|null  $excluirId  Adelanto a excluir (al editar, para no
+     *                               contar el propio monto contra sí mismo)
+     */
+    public static function adelantosPendientes(Empleado $empleado, ?int $excluirId = null): float
+    {
+        $query = Adelanto::query()
+            ->where('id_empleado', $empleado->id_empleado)
+            ->where('estado', 'pendiente');
+
+        if ($excluirId !== null) {
+            $query->where('id_adelanto', '!=', $excluirId);
+        }
+
+        return round((float) $query->sum('monto'), 2);
+    }
+
+    /**
+     * Tope de adelanto: 50% del promedio de liquidaciones del empleado.
+     *
+     * Es el monto máximo que puede pedir de nuevo, ya descontados los adelantos
+     * pendientes: (nuevo adelanto + pendientes) no puede superar el 50% del
+     * promedio. Sin recibos el promedio es 0, así que el tope es 0.
+     *
+     * @param  int|null  $excluirId  Adelanto a excluir (al editar)
+     */
+    public static function montoMaximoAdelanto(Empleado $empleado, ?int $excluirId = null): float
+    {
+        $disponible = round(self::promedioLiquidaciones($empleado) * 0.5, 2)
+            - self::adelantosPendientes($empleado, $excluirId);
+
+        return max(0, round($disponible, 2));
+    }
 }

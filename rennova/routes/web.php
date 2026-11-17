@@ -70,27 +70,27 @@ Route::middleware(['auth'])->group(function () {
         )
         ->name('two-factor.show');
 
-    // --- ABMs PRINCIPALES (Ahora protegidos) ---
-    Route::get('/lotes', [LoteController::class, 'index'])->name('lotes.index');
+    // --- ABMs PRINCIPALES (Ahora protegidos por ver-*) ---
+    Route::get('/lotes', [LoteController::class, 'index'])->middleware(['permission:ver-lotes'])->name('lotes.index');
     Route::get('/lotes/{loteId}/recomendaciones', function ($loteId) {
         return view('lotes.recomendaciones', ['loteId' => (int) $loteId]);
-    })->name('lotes.recomendaciones');
+    })->middleware(['permission:ver-lotes'])->name('lotes.recomendaciones');
     Route::get('/lotes/{loteId}/tareas', function ($loteId) {
         return view('lotes.planificar-tareas', ['loteId' => (int) $loteId]);
-    })->name('lotes.tareas');
-    Route::get('/clientes', [ClienteController::class, 'index'])->name('clientes.index');
-    Route::get('/proveedores', [ProveedorController::class, 'index'])->name('proveedores.index');
-    Route::get('/categorias-madera', [CategoriaMaderaController::class, 'index'])->name('categorias-madera.index');
-    Route::get('/unidades-medida', [UnidadMedidaController::class, 'index'])->name('unidades-medida.index');
-    Route::get('/tipos-maquinaria', [TipoMaquinariaController::class, 'index'])->name('tipos-maquinaria.index');
-    Route::get('/roles-laborales', [RolLaboralController::class, 'index'])->name('roles-laborales.index');
-    Route::get('/insumos', [InsumoController::class, 'index'])->name('insumos.index');
-    Route::get('/maquinarias', [MaquinariaController::class, 'index'])->name('maquinarias.index');
-    Route::get('/empleados', [EmpleadoController::class, 'index'])->name('empleados.index');
+    })->middleware(['permission:ver-lotes'])->name('lotes.tareas');
+    Route::get('/clientes', [ClienteController::class, 'index'])->middleware(['permission:ver-clientes'])->name('clientes.index');
+    Route::get('/proveedores', [ProveedorController::class, 'index'])->middleware(['permission:ver-proveedores'])->name('proveedores.index');
+    Route::get('/categorias-madera', [CategoriaMaderaController::class, 'index'])->middleware(['permission:ver-categorias-madera'])->name('categorias-madera.index');
+    Route::get('/unidades-medida', [UnidadMedidaController::class, 'index'])->middleware(['permission:ver-unidades-medida'])->name('unidades-medida.index');
+    Route::get('/tipos-maquinaria', [TipoMaquinariaController::class, 'index'])->middleware(['permission:ver-tipos-maquinaria'])->name('tipos-maquinaria.index');
+    Route::get('/roles-laborales', [RolLaboralController::class, 'index'])->middleware(['permission:ver-roles-laborales'])->name('roles-laborales.index');
+    Route::get('/insumos', [InsumoController::class, 'index'])->middleware(['permission:ver-insumos'])->name('insumos.index');
+    Route::get('/maquinarias', [MaquinariaController::class, 'index'])->middleware(['permission:ver-maquinarias'])->name('maquinarias.index');
+    Route::get('/empleados', [EmpleadoController::class, 'index'])->middleware(['permission:ver-empleados'])->name('empleados.index');
     Route::get('/usuarios', [UsuarioController::class, 'index'])->middleware(['permission:gestionar-usuarios'])->name('usuarios.index');
 
     // Mantenimientos - Componente Livewire y endpoints de gestión
-    Route::view('/mantenimientos', 'mantenimientos.index')->name('mantenimientos.index');
+    Route::view('/mantenimientos', 'mantenimientos.index')->middleware(['permission:ver-mantenimientos'])->name('mantenimientos.index');
     Route::post('/mantenimientos/{id}/aprobar', [MantenimientoController::class, 'aprobar'])
         ->middleware(['permission:confirmar-mantenimiento'])
         ->name('mantenimientos.aprobar');
@@ -114,22 +114,22 @@ Route::middleware(['auth'])->group(function () {
     // Programar Mantenimiento (alta de orden) o confirmar orden generada por notificacion
     Route::get('/programar-mantenimiento/{notificacionId?}', function ($notificacionId = null) {
         return view('programar-mantenimiento.index', ['notificacionId' => $notificacionId ?? null]);
-    })->name('programar-mantenimiento');
+    })->middleware(['permission:ver-mantenimientos'])->name('programar-mantenimiento');
 
     // Configuración de Kits de Mantenimiento Preventivo (UI original)
-    Route::view('/kits-mantenimiento', 'kits-mantenimiento.index')->name('kits-mantenimiento.index');
+    Route::view('/kits-mantenimiento', 'kits-mantenimiento.index')->middleware(['permission:ver-kits-mantenimiento'])->name('kits-mantenimiento.index');
 
-    Route::get('/partes-diarios', [ParteDiarioController::class, 'index'])->name('partes-diarios.index');
-    Route::get('/ventas', [VentaController::class, 'index'])->name('ventas.index');
+    Route::get('/partes-diarios', [ParteDiarioController::class, 'index'])->middleware(['permission:ver-partes-diarios'])->name('partes-diarios.index');
+    Route::get('/ventas', [VentaController::class, 'index'])->middleware(['permission:ver-ventas'])->name('ventas.index');
     Route::get('/adelantos', [AdelantoController::class, 'index'])->middleware(['permission:ver-adelantos'])->name('adelantos.index');
-    Route::get('/recibos', [ReciboController::class, 'index'])->name('recibos.index');
+    Route::get('/recibos', [ReciboController::class, 'index'])->middleware(['permission:ver-recibos'])->name('recibos.index');
 
-    Route::get('/historico-costos-maquinarias', [HistoricoCostosMaquinariaController::class, 'index'])->name('historico-costos-maquinarias.index');
-    Route::view('/historico-roles-laborales', 'historico-roles-laborales.index')->name('historico-roles-laborales.index');
-    Route::view('/lista-precios', 'lista-precios.index')->name('lista-precios.index');
+    Route::get('/historico-costos-maquinarias', [HistoricoCostosMaquinariaController::class, 'index'])->middleware(['permission:ver-historico-costos-maquinarias'])->name('historico-costos-maquinarias.index');
+    Route::view('/historico-roles-laborales', 'historico-roles-laborales.index')->middleware(['permission:ver-roles-laborales'])->name('historico-roles-laborales.index');
+    Route::view('/lista-precios', 'lista-precios.index')->middleware(['permission:ver-lista-precios'])->name('lista-precios.index');
 
     // Auditorías
-    Route::view('/auditorias', 'auditorias.index')->name('auditorias.index');
+    Route::view('/auditorias', 'auditorias.index')->middleware(['permission:ver-auditoria'])->name('auditorias.index');
 
     // Estado de procesos automatizados (monitoreo: clima, cola, tareas programadas)
     Route::view('/estado-procesos', 'estado-procesos.index')
@@ -137,37 +137,37 @@ Route::middleware(['auth'])->group(function () {
         ->name('estado-procesos.index');
 
     // Reportes - Estadísticas Forestales
-    Route::get('/reportes/estadisticas-forestales', [ReporteController::class, 'estadisticasForestales'])->name('reportes.estadisticas-forestales');
-    Route::get('/reportes/estadisticas-forestales/pdf', [ReporteController::class, 'estadisticasForestalesPdf'])->name('reportes.estadisticas-forestales.pdf');
-    Route::get('/reportes/clima-lluvias/pdf', [ReporteController::class, 'climaLluviasPdf'])->name('reportes.clima-lluvias.pdf');
+    Route::get('/reportes/estadisticas-forestales', [ReporteController::class, 'estadisticasForestales'])->middleware(['permission:ver-reportes'])->name('reportes.estadisticas-forestales');
+    Route::get('/reportes/estadisticas-forestales/pdf', [ReporteController::class, 'estadisticasForestalesPdf'])->middleware(['permission:ver-reportes'])->name('reportes.estadisticas-forestales.pdf');
+    Route::get('/reportes/clima-lluvias/pdf', [ReporteController::class, 'climaLluviasPdf'])->middleware(['permission:ver-reportes'])->name('reportes.clima-lluvias.pdf');
 
     // Liquidación de Pagos
-    Route::view('/liquidacion-pagos', 'liquidacion-pagos.index')->name('liquidacion-pagos.index');
+    Route::view('/liquidacion-pagos', 'liquidacion-pagos.index')->middleware(['permission:ver-liquidacion-pagos'])->name('liquidacion-pagos.index');
 
     // Asignaciones por Lote (Empleados y Maquinaria)
-    Route::view('/asignaciones-lote', 'asignaciones-lote.index')->name('asignaciones-lote.index');
+    Route::view('/asignaciones-lote', 'asignaciones-lote.index')->middleware(['permission:ver-asignaciones-lote'])->name('asignaciones-lote.index');
 
     // Propuestas automáticas de asignación (basadas en histórico)
-    Route::view('/propuestas-asignacion', 'propuestas-asignacion.index')->name('propuestas-asignacion.index');
+    Route::view('/propuestas-asignacion', 'propuestas-asignacion.index')->middleware(['permission:ver-propuestas-asignacion'])->name('propuestas-asignacion.index');
 
     // Gestión de Stock (FIFO) dentro del módulo Operaciones
-    Route::view('/modulos/operaciones/gestionstock', 'modulos.operaciones.gestionstock')->name('modulos.operaciones.gestionstock');
+    Route::view('/modulos/operaciones/gestionstock', 'modulos.operaciones.gestionstock')->middleware(['permission:ver-gestion-stock'])->name('modulos.operaciones.gestionstock');
 
     // ABM Cargas
-    Route::get('/cargas', [CargaController::class, 'index'])->name('cargas.index');
-    Route::get('/cargas/create', [CargaController::class, 'create'])->name('cargas.create');
-    Route::post('/cargas', [CargaController::class, 'store'])->name('cargas.store');
-    Route::get('/cargas/{carga}/edit', [CargaController::class, 'edit'])->name('cargas.edit');
-    Route::put('/cargas/{carga}', [CargaController::class, 'update'])->name('cargas.update');
-    Route::delete('/cargas/{carga}', [CargaController::class, 'destroy'])->name('cargas.destroy');
+    Route::get('/cargas', [CargaController::class, 'index'])->middleware(['permission:ver-cargas'])->name('cargas.index');
+    Route::get('/cargas/create', [CargaController::class, 'create'])->middleware(['permission:crear-cargas'])->name('cargas.create');
+    Route::post('/cargas', [CargaController::class, 'store'])->middleware(['permission:crear-cargas'])->name('cargas.store');
+    Route::get('/cargas/{carga}/edit', [CargaController::class, 'edit'])->middleware(['permission:editar-cargas'])->name('cargas.edit');
+    Route::put('/cargas/{carga}', [CargaController::class, 'update'])->middleware(['permission:editar-cargas'])->name('cargas.update');
+    Route::delete('/cargas/{carga}', [CargaController::class, 'destroy'])->middleware(['permission:eliminar-cargas'])->name('cargas.destroy');
 
     // ABM Choferes
-    Route::get('/choferes', [ChoferController::class, 'index'])->name('choferes.index');
-    Route::get('/choferes/create', [ChoferController::class, 'create'])->name('choferes.create');
-    Route::post('/choferes', [ChoferController::class, 'store'])->name('choferes.store');
-    Route::get('/choferes/{chofer}/edit', [ChoferController::class, 'edit'])->name('choferes.edit');
-    Route::put('/choferes/{chofer}', [ChoferController::class, 'update'])->name('choferes.update');
-    Route::delete('/choferes/{chofer}', [ChoferController::class, 'destroy'])->name('choferes.destroy');
+    Route::get('/choferes', [ChoferController::class, 'index'])->middleware(['permission:ver-choferes'])->name('choferes.index');
+    Route::get('/choferes/create', [ChoferController::class, 'create'])->middleware(['permission:crear-choferes'])->name('choferes.create');
+    Route::post('/choferes', [ChoferController::class, 'store'])->middleware(['permission:crear-choferes'])->name('choferes.store');
+    Route::get('/choferes/{chofer}/edit', [ChoferController::class, 'edit'])->middleware(['permission:editar-choferes'])->name('choferes.edit');
+    Route::put('/choferes/{chofer}', [ChoferController::class, 'update'])->middleware(['permission:editar-choferes'])->name('choferes.update');
+    Route::delete('/choferes/{chofer}', [ChoferController::class, 'destroy'])->middleware(['permission:eliminar-choferes'])->name('choferes.destroy');
 
     // --- RUTAS DE ADMINISTRACIÓN (Protegidas por Permiso) ---
     // Esta ruta ya estaba protegida, la mantenemos dentro del grupo auth.
