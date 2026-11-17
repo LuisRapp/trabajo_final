@@ -23,7 +23,7 @@ Test runner: `php artisan test` (Pest) + `vendor/bin/pint --test`.
 - F3 (S3) — Autorizacion server-side: chequeo de permiso dentro de cada accion mutadora de `app/Http/Livewire/`, middleware de permiso en `/adelantos`, y tests por dominio. _inline_. ✅ commit c3a402d. Suite `632 passed / 9 skipped`.
 - F4 (S4) — Dependencias + D12/D6/D1/D2. _inline_. ✅ commits f132b27, 77b6110, 54931a1, e18b13d, 3afa773. Auditoria de composer en cero; suite `639 passed / 9 skipped`; `pint --dirty` OK.
 - F5 (S5) — Verificacion visual de T3 + tn/dia operativo + tendencia mes vs mes. _inline_. ✅ commits cdb1250, 4207e75. Suite `648 passed / 9 skipped`.
-- F6 (S6) — Documentacion de entrega: `.env.example`, guia de despliegue, README raiz. Pendiente.
+- F6 (S6) — Documentacion de entrega: `.env.example`, guia de despliegue, README raiz. _inline_. ✅ commit 6e84658.
 - F7 (S7) — Reglas de negocio en conjunto con el usuario. Pendiente. Ultima fase por decision del usuario.
 - F8 (S8) — DEUDA_TECNICA + judgment day. Pendiente.
 
@@ -203,6 +203,34 @@ Dos defectos que la verificacion destapo:
 
 El hook pre-commit ahora corre con un modelo free y bloqueo sobre **deuda preexistente** fuera del alcance de F5: `DB::raw` de aritmetica `peso_neto / 1000.0` en `ReporteController` (relacionado con D3), el metodo `buildChartImage` con nombre en ingles, y las fechas `desde`/`hasta` sin validar en los reportes. Se commiteo con `--no-verify` (patron ya registrado en L6) y se anota en el parking para F8.
 
+## F6 — Documentacion de entrega (2026-11-17)
+
+### `.env.example` real
+
+`rennova/.env.example` era el stock de Laravel (`APP_NAME=Laravel`, `DB_CONNECTION=sqlite`, locale `en`). Queda como configuracion local real de Rennova:
+
+- `APP_NAME=Rennova`, `APP_TIMEZONE=America/Argentina/Buenos_Aires`, locale `es`/`es_AR`.
+- `DB_CONNECTION=pgsql` con `DB_HOST=127.0.0.1`, `DB_PORT=5432`, `DB_DATABASE=rennova` (el setup local real).
+- Variables propias de la app que antes solo usaban su default en `config/`: `MAIL_ADMIN_EMAIL` y `PURCHASE_ORDER_EMAILS` (avisos de compras y liquidacion) y `MAILTRAP_API_TOKEN` (config/mailtrap.php).
+
+Los defaults de `config/app.php` (`APP_TIMEZONE`, locale) y de `config/mail.php` (`admin_email`, `purchase_order_emails`) ya apuntaban bien; el `.env.example` ahora los hace explicitos.
+
+### Guia de despliegue coherente con Docker
+
+`GUIA_DESPLIEGUE_PRODUCCION.md` describia un despliegue **nativo** (nginx, crontab, systemd, `chmod`, certbot) que contradecia la decision de F2 (Docker). Se reescribio entera para el artefacto real:
+
+- Variables: `.env.production.example` + nota de por que `APP_KEY` no se regenera en caliente.
+- Levantar con `docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build`.
+- Que hace el entrypoint en orden (key:generate, storage:link, espera a Postgres, `migrate --force` sin `|| true`, cron, worker).
+- Las 5 tareas programadas reales (leidas de `routes/console.php`, no inventadas): `clima:real`, `clima:analizar --dias=7`, `clima:decisiones`, `mantenimiento:check-umbrales`, `mantenimiento:check-programados`.
+- Worker de cola obligatorio (propuestas de asignacion).
+- Backup/restore con `pg_dump` (antes decia `mysqldump`, y el proyecto es PostgreSQL).
+- Redeploy, rollback y troubleshooting por contenedor.
+
+### README raiz
+
+`README.md` estaba vacio. Ahora tiene: que es Rennova, stack, estructura del repo, requisitos, setup local (composer/npm/.env/migrate/seed con el usuario demo `demo@example.com`/`demo1234`), tests, y despliegue apuntando a la guia.
+
 ## Gate de entrega (antes de entregar, despues de F8)
 
 Se instala Docker **una sola vez**, al final del plan, para no abrir cambios de alcance a mitad de camino. Esto NO es deuda: es un paso obligatorio y verificable.
@@ -241,4 +269,5 @@ Todo lo que aparezca durante F2-F8 y no sea un defecto de la fase en curso se an
 - L11 (2026-11-17): F4 cerrada. Auditoria de dependencias: 18 paquetes con advisory, 16 en runtime. Se resolvio con `composer update -W` de la lista afectada, no con un update general, para que el diff del lock sea auditable. Solo dos entradas de `composer.json` cambiaron: `dompdf/dompdf` de `2.0` a `^3.1.6` (el rango viejo no permitia el fix) y `pest` de `^3.8` a `^3.8.7` (3.8.4 conflictua con `phpunit >11.5.33`). Resultado: `composer audit` en cero, tambien con `--no-dev`. El unico salto con riesgo real era dompdf 2.0 → 3.1.6; se valido con los 55 tests de `LiquidacionPagos` (que renderizan el comprobante y llaman a `output()`) y con un render real del bloque de `ReporteController` que usa `getCanvas()->page_script()`: `%PDF-`, 12.234 bytes. Se agrego `composer audit` al job `quality` para que un advisory nuevo corte el build.
 - L12 (2026-11-17): D12 con desvio justificado. La decision registrada decia `DB::afterCommit()`; con `RefreshDatabase` los callbacks de `afterCommit` nunca se ejecutan (cada test corre en una transaccion que no commitea), asi que las notificaciones no se crearian en tests y los tests existentes de umbral y vencidos fallarian. Se implemento la llamada despues del bloque `DB::transaction`, que es el mismo precedente que ya usaba el email y da la misma semantica para los dos llamadores actuales (ninguno abre una transaccion externa). D6: la ruta FIFO manual valida el total disponible antes de consumir, con tolerancia `1e-6`. D1: la regla de exclusividad pasa a `AsignacionLoteService`, que bloquea las filas de los recursos con `lockForUpdate` (ordenadas por id) y valida dentro de la transaccion; un lock sobre los lotes no servia porque el conflicto esta en el pivote. D2: `AsignacionesLote` ya no consulta Eloquent; `Lotes` ya delegaba todo en `LoteService`. Tests nuevos en `CheckMantenimientoUmbralesTest`, `CheckMantenimientosProgramadosTest`, `InventarioServiceFifoTest` y `AsignacionLoteServiceTest`. Suite `639 passed / 9 skipped`; `pint --dirty` OK. Queda en el parking que `LoteService::listar` usa `ILIKE` (solo PostgreSQL).
 - L13 (2026-11-17): F5 cerrada. La verificacion visual de T3 se convirtio en test (`ReporteEstadisticasForestalesTest`) y destapo dos defectos: `DATE_TRUNC` era solo PostgreSQL (imposible verificar la vista con datos en SQLite) y el PDF no mostraba Ingresos Totales ni Margen Bruto. Se reemplazo `DATE_TRUNC` por `primerDiaDelMes()` portable, validado contra PostgreSQL real. Indicadores nuevos en `ForestalStatsService`: `getTnDiaOperativo`/`getTnDiaOperativoGlobal` (dia operativo = dia con al menos una carga) y `getTendenciaProduccionMensual` (solo meses cerrados; el mes en curso se marca parcial). Vista y PDF muestran los indicadores nuevos. Suite `648 passed / 9 skipped`. El hook `gga run` ahora corre con un modelo free y bloqueo sobre deuda preexistente (`DB::raw`, `buildChartImage`, fechas sin validar); se commiteo con `--no-verify` y quedo anotado en el parking. Definiciones asumidas y documentadas: tendencia = toneladas producidas (no ingresos), y dia operativo = dia con carga; si el usuario prefiere otra metrica, es un cambio puntual.
+- L14 (2026-11-17): F6 cerrada. Tres entregables: `.env.example` real (deja de ser el stock de Laravel), `GUIA_DESPLIEGUE_PRODUCCION.md` reescrita de nativo a Docker (coherente con `docker-compose.prod.yml` y el entrypoint; las 5 tareas programadas salen de `routes/console.php`; el backup paso de `mysqldump` a `pg_dump`), y `README.md` raiz (antes vacio) con setup local, tests y despliegue. Cambio solo de documentacion, sin tocar codigo.
 
