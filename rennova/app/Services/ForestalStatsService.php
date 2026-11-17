@@ -361,6 +361,153 @@ class ForestalStatsService
     }
 
     /**
+     * Producción por día operativo (tn/día) de un lote.
+     *
+     * Un día operativo es un día con al menos una carga de producción. Cierra el
+     * circuito con el punto de equilibrio, que también se mide en tn/día.
+     *
+     * @return float Toneladas por día operativo; 0 si no hubo días con carga
+     */
+    public function getTnDiaOperativo(Lote $lote, ?string $desde = null, ?string $hasta = null): float
+    {
+        $fechaDesde = $desde ? Carbon::parse($desde) : Carbon::now()->subMonths(6);
+        $fechaHasta = $hasta ? Carbon::parse($hasta) : Carbon::now();
+        $cacheKey = "stats.tn_dia_operativo.{$lote->id_lote}.{$fechaDesde->format('Ymd')}.{$fechaHasta->format('Ymd')}";
+
+        return Cache::remember(
+            $cacheKey,
+            self::CACHE_TTL,
+            function () use ($lote, $fechaDesde, $fechaHasta) {
+                $desde = $fechaDesde->toDateString();
+                $hasta = $fechaHasta->toDateString();
+
+                $toneladas = (float) DB::table('cargas')
+                    ->where('id_lote', $lote->id_lote)
+                    ->whereNull('cargas.deleted_at')
+                    ->whereBetween('fecha_carga', [$desde, $hasta])
+                    ->sum(DB::raw('peso_neto / 1000.0'));
+
+                $diasOperativos = (int) DB::table('cargas')
+                    ->where('id_lote', $lote->id_lote)
+                    ->whereNull('cargas.deleted_at')
+                    ->whereBetween('fecha_carga', [$desde, $hasta])
+                    ->selectRaw('COUNT(DISTINCT DATE(fecha_carga)) as dias')
+                    ->value('dias');
+
+                if ($diasOperativos <= 0) {
+                    return 0.0;
+                }
+
+                return round($toneladas / $diasOperativos, 2);
+            }
+        );
+    }
+
+    /**
+     * Producción por día operativo global (tn/día).
+     *
+     * El denominador es la cantidad de días distintos con al menos una carga
+     * entre todos los lotes del rango, no la suma de los días por lote.
+     *
+     * @param  array<int>  $lotesIds
+     * @return float Toneladas por día operativo; 0 si no hubo días con carga
+     */
+    public function getTnDiaOperativoGlobal(array $lotesIds, ?string $desde = null, ?string $hasta = null): float
+    {
+        if ($lotesIds === []) {
+            return 0.0;
+        }
+
+        $fechaDesde = $desde ? Carbon::parse($desde) : Carbon::now()->subMonths(6);
+        $fechaHasta = $hasta ? Carbon::parse($hasta) : Carbon::now();
+
+        $desde = $fechaDesde->toDateString();
+        $hasta = $fechaHasta->toDateString();
+
+        $toneladas = (float) DB::table('cargas')
+            ->whereIn('id_lote', $lotesIds)
+            ->whereNull('cargas.deleted_at')
+            ->whereBetween('fecha_carga', [$desde, $hasta])
+            ->sum(DB::raw('peso_neto / 1000.0'));
+
+        $diasOperativos = (int) DB::table('cargas')
+            ->whereIn('id_lote', $lotesIds)
+            ->whereNull('cargas.deleted_at')
+            ->whereBetween('fecha_carga', [$desde, $hasta])
+            ->selectRaw('COUNT(DISTINCT DATE(fecha_carga)) as dias')
+            ->value('dias');
+
+        if ($diasOperativos <= 0) {
+            return 0.0;
+        }
+
+        return round($toneladas / $diasOperativos, 2);
+    }
+
+    /**
+     * Tendencia mensual de producción (toneladas) mes contra mes.
+     *
+     * Solo se comparan meses cerrados: el mes en curso se marca como parcial y
+     * no se compara contra un mes completo. Un mes es cerrado cuando ya terminó;
+     * el mes que contiene hoy es parcial. La variación es porcentual contra el
+     * mes cerrado inmediatamente anterior (nula para el primer mes y cuando el
+     * mes anterior no tuvo producción).
+     *
+     * @param  array<int>  $lotesIds
+     * @return array<int, array{periodo: string, label: string, toneladas: float, variacion_pct: ?float, parcial: bool}>
+     */
+    public function getTendenciaProduccionMensual(array $lotesIds, ?string $desde = null, ?string $hasta = null): array
+    {
+        if ($lotesIds === []) {
+            return [];
+        }
+
+        $fechaDesde = $desde ? Carbon::parse($desde)->startOfMonth() : Carbon::now()->subMonths(5)->startOfMonth();
+        $fechaHasta = $hasta ? Carbon::parse($hasta) : Carbon::now();
+
+        $rows = DB::table('cargas')
+            ->whereIn('id_lote', $lotesIds)
+            ->whereNull('cargas.deleted_at')
+            ->whereBetween('fecha_carga', [$fechaDesde->toDateString(), $fechaHasta->toDateString()])
+            ->selectRaw($this->claveMes('fecha_carga').' as periodo')
+            ->selectRaw('SUM(peso_neto / 1000.0) as toneladas')
+            ->groupBy('periodo')
+            ->orderBy('periodo')
+            ->get()
+            ->keyBy('periodo');
+
+        $hoy = Carbon::now();
+        $tendencia = [];
+        $toneladasPrevia = null;
+        $cursor = $fechaDesde->copy()->startOfMonth();
+        $fin = $fechaHasta->copy()->startOfMonth();
+
+        while ($cursor->lessThanOrEqualTo($fin)) {
+            $periodo = $cursor->format('Y-m');
+            $parcial = $cursor->isSameMonth($hoy);
+            $toneladas = round((float) ($rows[$periodo]->toneladas ?? 0), 2);
+
+            $variacion = null;
+            if (! $parcial && $toneladasPrevia !== null && $toneladasPrevia > 0) {
+                $variacion = round(($toneladas - $toneladasPrevia) / $toneladasPrevia * 100, 2);
+            }
+
+            $tendencia[] = [
+                'periodo' => $periodo,
+                'label' => $cursor->isoFormat('MMM YYYY'),
+                'toneladas' => $toneladas,
+                'variacion_pct' => $variacion,
+                'parcial' => $parcial,
+            ];
+
+            $toneladasPrevia = $toneladas;
+            $cursor->addMonth();
+        }
+
+        return $tendencia;
+    }
+
+    /**
      * Suma de gastos, opcionalmente solo fijos (es_fijo = true si existe)
      */
     private function dateTrunc(string $column, string $granularity): string
@@ -376,5 +523,25 @@ class ForestalStatsService
 
         // SQLite
         return "strftime('%Y-%m-01', {$column})";
+    }
+
+    /**
+     * Expresión de mes canónica (YYYY-MM) portable entre motores.
+     *
+     * Devuelve un string estable "YYYY-MM" para agrupar por mes sin depender
+     * del formato de salida de DATE_TRUNC/strftime.
+     */
+    private function claveMes(string $column): string
+    {
+        $driver = DB::getDriverName();
+        if ($driver === 'pgsql') {
+            return "TO_CHAR({$column}, 'YYYY-MM')";
+        }
+        if ($driver === 'mysql') {
+            return "DATE_FORMAT({$column}, '%Y-%m')";
+        }
+
+        // SQLite
+        return "strftime('%Y-%m', {$column})";
     }
 }

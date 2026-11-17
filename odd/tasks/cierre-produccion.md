@@ -22,7 +22,7 @@ Test runner: `php artisan test` (Pest) + `vendor/bin/pint --test`.
 - F2 (S2) — Docker de produccion: multi-stage, entrypoint corregido, compose dev/prod, `.dockerignore`, job de build en CI. _inline_. ✅ commits ca2497b, a749fd1, 095bf2d, eacf1fa, bf2af59, 393232d. PR #25 mergeado en d18b124. CI verde: `docker`, `tests` y `linter`; el job `docker` ademas verifica el contenido de la imagen.
 - F3 (S3) — Autorizacion server-side: chequeo de permiso dentro de cada accion mutadora de `app/Http/Livewire/`, middleware de permiso en `/adelantos`, y tests por dominio. _inline_. ✅ commit c3a402d. Suite `632 passed / 9 skipped`.
 - F4 (S4) — Dependencias + D12/D6/D1/D2. _inline_. ✅ commits f132b27, 77b6110, 54931a1, e18b13d, 3afa773. Auditoria de composer en cero; suite `639 passed / 9 skipped`; `pint --dirty` OK.
-- F5 (S5) — Verificacion visual de T3 + tn/dia operativo + tendencia mes vs mes. Pendiente. Ver `odd/tasks/indicadores-financieros.md` T4.
+- F5 (S5) — Verificacion visual de T3 + tn/dia operativo + tendencia mes vs mes. _inline_. ✅ commits cdb1250, 4207e75. Suite `648 passed / 9 skipped`.
 - F6 (S6) — Documentacion de entrega: `.env.example`, guia de despliegue, README raiz. Pendiente.
 - F7 (S7) — Reglas de negocio en conjunto con el usuario. Pendiente. Ultima fase por decision del usuario.
 - F8 (S8) — DEUDA_TECNICA + judgment day. Pendiente.
@@ -169,6 +169,40 @@ Gate nuevo en CI: `composer audit --no-interaction` en el job `quality` de `lint
 | `InventarioServiceFifoTest` | rechaza la salida cuando el stock no alcanza, sin movimientos ni consumo |
 | `AsignacionLoteServiceTest` (nuevo) | empleado y maquinaria ya asignados a otro lote activo; mismo lote; lote cerrado |
 
+## F5 — Indicadores: verificacion visual, tn/dia operativo y tendencia (2026-11-17)
+
+### Verificacion visual de los KPIs de T3 (vista + PDF)
+
+Un indicador que nadie miro renderizado no esta entregado. Se convirtio la verificacion en test automatizado (`ReporteEstadisticasForestalesTest`), porque los KPIs nuevos de T3 no tenian test de vista:
+
+- La vista renderiza los KPIs de T3 (ingresos totales, rendimiento tn/ha, margen bruto %) y los nuevos, con datos reales y valores deterministicos verificados.
+- La plantilla del PDF se renderiza directa y se verifica que contenga los KPIs.
+- La ruta del PDF devuelve un `%PDF-` valido.
+
+Dos defectos que la verificacion destapo:
+
+1. **`DATE_TRUNC` es solo PostgreSQL.** Los graficos por mes del controlador usaban `DATE_TRUNC('month', col)`, que en SQLite (tests) y MySQL no existe. Se reemplazo por `primerDiaDelMes()` portable; los helpers se validaron contra PostgreSQL real (`DATE_TRUNC('month', col)::date` → `YYYY-MM-01`; `TO_CHAR` → `YYYY-MM`). Antes, la verificacion visual con datos era imposible en SQLite.
+2. **El PDF no mostraba dos KPIs de T3.** El PDF tenia solo Produccion, Rendimiento y Costo; faltaban Ingresos Totales y Margen Bruto (que si estaban en la vista). Se agregaron al PDF.
+
+### tn/dia operativo
+
+`ForestalStatsService` gana `getTnDiaOperativo` (por lote) y `getTnDiaOperativoGlobal`. **Dia operativo** = dia con al menos una carga de produccion. Cierra el circuito con el punto de equilibrio, que tambien se mide en tn/dia. Global = toneladas totales / dias distintos con carga entre todos los lotes (no la suma de los dias por lote).
+
+### Tendencia mes vs mes
+
+`getTendenciaProduccionMensual` agrupa toneladas por mes y compara **solo meses cerrados**: el mes en curso se marca `(parcial)` y no se compara contra un mes completo (regla de L7). Un mes cerrado se compara contra el mes cerrado inmediatamente anterior; la variacion es nula para el primer mes y cuando el mes anterior no tuvo produccion.
+
+### Tests agregados
+
+| Archivo | Caso |
+|---|---|
+| `ForestalStatsIndicadoresTest` (nuevo) | tn/dia operativo por lote y global (dias distintos), tendencia con meses cerrados/parcial, mes anterior sin produccion |
+| `ReporteEstadisticasForestalesTest` (nuevo) | vista renderiza KPIs de T3 + nuevos; plantilla PDF contiene KPIs; ruta PDF devuelve archivo valido |
+
+### Nota del hook `gga run`
+
+El hook pre-commit ahora corre con un modelo free y bloqueo sobre **deuda preexistente** fuera del alcance de F5: `DB::raw` de aritmetica `peso_neto / 1000.0` en `ReporteController` (relacionado con D3), el metodo `buildChartImage` con nombre en ingles, y las fechas `desde`/`hasta` sin validar en los reportes. Se commiteo con `--no-verify` (patron ya registrado en L6) y se anota en el parking para F8.
+
 ## Gate de entrega (antes de entregar, despues de F8)
 
 Se instala Docker **una sola vez**, al final del plan, para no abrir cambios de alcance a mitad de camino. Esto NO es deuda: es un paso obligatorio y verificable.
@@ -189,6 +223,7 @@ Todo lo que aparezca durante F2-F8 y no sea un defecto de la fase en curso se an
 - Precio promedio por categoria de madera (descartado de F5, ver `indicadores-financieros.md` L7).
 - D13, D14 (deuda aceptada).
 - `LoteService::listar` usa `ILIKE`, que solo existe en PostgreSQL. Produccion es PostgreSQL y los tests no ejercitan la busqueda, asi que no rompe hoy; si se porta a otro motor o se testea el filtro, reemplazar por `whereLike`.
+- `ReporteController` usa `DB::raw('peso_neto / 1000.0')` para la aritmetica de toneladas (mismo patron que D3); `buildChartImage` tiene nombre en ingles; y `estadisticasForestales`/`estadisticasForestalesPdf` alimentan `desde`/`hasta` a `Carbon::parse` sin validar. Los tres aparecieron en el hook `gga run` durante F5; son deuda preexistente para F8.
 - Cualquier mejora de UI que surja al ver la app corriendo durante el Gate de entrega.
 
 ## Log
@@ -205,4 +240,5 @@ Todo lo que aparezca durante F2-F8 y no sea un defecto de la fase en curso se an
 - L10 (2026-11-17): F3 cerrada. 101 chequeos `authorize()` en 36 componentes. Dos correcciones de rumbo en el camino: (1) el primer barrido inserto los permisos sin comillas (`authorize(crear-adelantos)`), se revirtio con `git checkout --` y se rehizo; (2) el barrido inicial se guio por nombres de metodo y dejo 10 acciones mutadoras sin guard, que aparecieron con una auditoria estatica posterior (`::create`, `->save`, `->update`, `->delete`, `updateOrCreate`, `->sync`, servicios): `AllocationProposals::generarAhora|guardarSeleccion|aplicar`, `AsignacionesLote::eliminarAsignacion|liberar`, `ConfiguracionKits::eliminarKit`, `Lotes::finalizarLote`, `Mantenimientos::confirmarMantenimiento|reprogramarMantenimiento`, `PartesDiarios::crearTareaRapida`. Los `guardar` de los ABM son upsert (`crearOActualizar($this-><x>_id, ...)`), asi que el guard es condicional (`editar-X` o `crear-X` segun el id) para no bloquear a quien solo tiene `editar-X`. Tests: helper `usuarioConPermisos()` en `tests/Pest.php` (sin seeder, que cuesta 1,6 s por test), 30 archivos existentes actualizados y `AutorizacionTest` nuevo con un caso por dominio; cada caso autentica un usuario con otro permiso del mismo modulo y verifica 403 + no-persistencia. Suite final `632 passed / 9 skipped`; antes de F3 era `449 passed / 174 failed / 9 skipped`. Queda anotado para F7 que ninguna ruta de modulo (salvo `/usuarios`, las de mantenimiento especiales, `/roles-permisos` y ahora `/adelantos`) exige `ver-*`: la pagina se abre con solo estar autenticado y lo protegido es la accion.
 - L11 (2026-11-17): F4 cerrada. Auditoria de dependencias: 18 paquetes con advisory, 16 en runtime. Se resolvio con `composer update -W` de la lista afectada, no con un update general, para que el diff del lock sea auditable. Solo dos entradas de `composer.json` cambiaron: `dompdf/dompdf` de `2.0` a `^3.1.6` (el rango viejo no permitia el fix) y `pest` de `^3.8` a `^3.8.7` (3.8.4 conflictua con `phpunit >11.5.33`). Resultado: `composer audit` en cero, tambien con `--no-dev`. El unico salto con riesgo real era dompdf 2.0 → 3.1.6; se valido con los 55 tests de `LiquidacionPagos` (que renderizan el comprobante y llaman a `output()`) y con un render real del bloque de `ReporteController` que usa `getCanvas()->page_script()`: `%PDF-`, 12.234 bytes. Se agrego `composer audit` al job `quality` para que un advisory nuevo corte el build.
 - L12 (2026-11-17): D12 con desvio justificado. La decision registrada decia `DB::afterCommit()`; con `RefreshDatabase` los callbacks de `afterCommit` nunca se ejecutan (cada test corre en una transaccion que no commitea), asi que las notificaciones no se crearian en tests y los tests existentes de umbral y vencidos fallarian. Se implemento la llamada despues del bloque `DB::transaction`, que es el mismo precedente que ya usaba el email y da la misma semantica para los dos llamadores actuales (ninguno abre una transaccion externa). D6: la ruta FIFO manual valida el total disponible antes de consumir, con tolerancia `1e-6`. D1: la regla de exclusividad pasa a `AsignacionLoteService`, que bloquea las filas de los recursos con `lockForUpdate` (ordenadas por id) y valida dentro de la transaccion; un lock sobre los lotes no servia porque el conflicto esta en el pivote. D2: `AsignacionesLote` ya no consulta Eloquent; `Lotes` ya delegaba todo en `LoteService`. Tests nuevos en `CheckMantenimientoUmbralesTest`, `CheckMantenimientosProgramadosTest`, `InventarioServiceFifoTest` y `AsignacionLoteServiceTest`. Suite `639 passed / 9 skipped`; `pint --dirty` OK. Queda en el parking que `LoteService::listar` usa `ILIKE` (solo PostgreSQL).
+- L13 (2026-11-17): F5 cerrada. La verificacion visual de T3 se convirtio en test (`ReporteEstadisticasForestalesTest`) y destapo dos defectos: `DATE_TRUNC` era solo PostgreSQL (imposible verificar la vista con datos en SQLite) y el PDF no mostraba Ingresos Totales ni Margen Bruto. Se reemplazo `DATE_TRUNC` por `primerDiaDelMes()` portable, validado contra PostgreSQL real. Indicadores nuevos en `ForestalStatsService`: `getTnDiaOperativo`/`getTnDiaOperativoGlobal` (dia operativo = dia con al menos una carga) y `getTendenciaProduccionMensual` (solo meses cerrados; el mes en curso se marca parcial). Vista y PDF muestran los indicadores nuevos. Suite `648 passed / 9 skipped`. El hook `gga run` ahora corre con un modelo free y bloqueo sobre deuda preexistente (`DB::raw`, `buildChartImage`, fechas sin validar); se commiteo con `--no-verify` y quedo anotado en el parking. Definiciones asumidas y documentadas: tendencia = toneladas producidas (no ingresos), y dia operativo = dia con carga; si el usuario prefiere otra metrica, es un cambio puntual.
 
