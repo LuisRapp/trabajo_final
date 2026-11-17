@@ -61,6 +61,51 @@ test('puede editar un adelanto', function () {
     expect((float) $adelanto->fresh()->monto)->toBe(2500.0);
 });
 
+test('rechaza un adelanto cuando el total con los pendientes supera el 50%', function () {
+    $empleado = crearEmpleadoValido();
+    crearLiquidaciones($empleado, [5000, 3000]); // promedio 4000, tope 2000
+
+    // Ya tiene un adelanto pendiente de 1500
+    Adelanto::factory()->create([
+        'id_empleado' => $empleado->id_empleado,
+        'monto' => 1500,
+        'estado' => 'pendiente',
+    ]);
+
+    // Pedir 1000 mas -> total 2500 > 2000, se rechaza
+    Livewire::actingAs(usuarioConPermisos(['crear-adelantos', 'editar-adelantos', 'eliminar-adelantos']))
+        ->test(Adelantos::class)
+        ->set('id_empleado', $empleado->id_empleado)
+        ->set('monto', 1000)
+        ->set('fecha_emision', '2026-01-15')
+        ->call('guardar')
+        ->assertHasErrors(['monto']);
+
+    expect(Adelanto::where('id_empleado', $empleado->id_empleado)->count())->toBe(1);
+});
+
+test('permite un adelanto cuando el total con los pendientes no supera el 50%', function () {
+    $empleado = crearEmpleadoValido();
+    crearLiquidaciones($empleado, [5000, 3000]); // promedio 4000, tope 2000
+
+    Adelanto::factory()->create([
+        'id_empleado' => $empleado->id_empleado,
+        'monto' => 1500,
+        'estado' => 'pendiente',
+    ]);
+
+    // Pedir 400 mas -> total 1900 <= 2000, se acepta
+    Livewire::actingAs(usuarioConPermisos(['crear-adelantos', 'editar-adelantos', 'eliminar-adelantos']))
+        ->test(Adelantos::class)
+        ->set('id_empleado', $empleado->id_empleado)
+        ->set('monto', 400)
+        ->set('fecha_emision', '2026-01-15')
+        ->call('guardar')
+        ->assertHasNoErrors();
+
+    expect(Adelanto::where('id_empleado', $empleado->id_empleado)->count())->toBe(2);
+});
+
 test('rechaza un adelanto que supera el 50% del promedio de liquidaciones', function () {
     $empleado = crearEmpleadoValido();
     crearLiquidaciones($empleado, [5000, 3000]); // promedio 4000, tope 2000

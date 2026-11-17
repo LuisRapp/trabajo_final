@@ -74,11 +74,14 @@ class Adelantos extends Component
         $this->authorize($this->adelanto_id ? 'editar-adelantos' : 'crear-adelantos');
         $this->validate();
 
-        // Regla: el adelanto no puede superar el 50% del promedio de
-        // liquidaciones del empleado (LCT art. 130).
-        $maximo = EmpleadoPagoService::montoMaximoAdelanto(Empleado::findOrFail($this->id_empleado));
+        // Regla: el adelanto, sumado a los adelantos pendientes, no puede
+        // superar el 50% del promedio de liquidaciones del empleado (LCT art. 130).
+        $maximo = EmpleadoPagoService::montoMaximoAdelanto(
+            Empleado::findOrFail($this->id_empleado),
+            $this->adelanto_id ? (int) $this->adelanto_id : null
+        );
         if ((float) $this->monto > $maximo) {
-            $this->addError('monto', "El adelanto no puede superar el 50% del promedio de liquidaciones del empleado (tope: {$maximo}).");
+            $this->addError('monto', "El total de adelantos pendientes no puede superar el 50% del promedio de liquidaciones del empleado (disponible: {$maximo}).");
 
             return;
         }

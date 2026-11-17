@@ -333,12 +333,38 @@ class EmpleadoPagoService
     }
 
     /**
+     * Suma de adelantos pendientes de un empleado (estado 'pendiente').
+     *
+     * @param  int|null  $excluirId  Adelanto a excluir (al editar, para no
+     *                               contar el propio monto contra sí mismo)
+     */
+    public static function adelantosPendientes(Empleado $empleado, ?int $excluirId = null): float
+    {
+        $query = Adelanto::query()
+            ->where('id_empleado', $empleado->id_empleado)
+            ->where('estado', 'pendiente');
+
+        if ($excluirId !== null) {
+            $query->where('id_adelanto', '!=', $excluirId);
+        }
+
+        return round((float) $query->sum('monto'), 2);
+    }
+
+    /**
      * Tope de adelanto: 50% del promedio de liquidaciones del empleado.
      *
-     * Sin recibos el promedio es 0, así que el tope es 0 (no se puede adelantar).
+     * Es el monto máximo que puede pedir de nuevo, ya descontados los adelantos
+     * pendientes: (nuevo adelanto + pendientes) no puede superar el 50% del
+     * promedio. Sin recibos el promedio es 0, así que el tope es 0.
+     *
+     * @param  int|null  $excluirId  Adelanto a excluir (al editar)
      */
-    public static function montoMaximoAdelanto(Empleado $empleado): float
+    public static function montoMaximoAdelanto(Empleado $empleado, ?int $excluirId = null): float
     {
-        return round(self::promedioLiquidaciones($empleado) * 0.5, 2);
+        $disponible = round(self::promedioLiquidaciones($empleado) * 0.5, 2)
+            - self::adelantosPendientes($empleado, $excluirId);
+
+        return max(0, round($disponible, 2));
     }
 }
