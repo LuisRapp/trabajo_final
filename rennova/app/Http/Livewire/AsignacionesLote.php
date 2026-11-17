@@ -3,9 +3,6 @@
 namespace App\Http\Livewire;
 
 use App\Http\Livewire\Traits\MensajesErrorUsuario;
-use App\Models\Empleado;
-use App\Models\Lote;
-use App\Models\Maquinaria;
 use App\Services\AsignacionLoteService;
 use Livewire\Component;
 
@@ -37,6 +34,8 @@ class AsignacionesLote extends Component
 
     public $busqueda_maquinaria = '';
 
+    protected AsignacionLoteService $servicio;
+
     protected $rules = [
         'id_lote' => 'required|exists:lotes,id_lote',
         'empleados_seleccionados' => 'array',
@@ -48,13 +47,18 @@ class AsignacionesLote extends Component
         'id_lote.exists' => 'El lote seleccionado no existe',
     ];
 
+    public function boot(): void
+    {
+        $this->servicio = app(AsignacionLoteService::class);
+    }
+
     public function mount()
     {
-        $this->lotes = Lote::orderBy('id_lote', 'desc')->get();
-        $this->empleados = Empleado::with('rolLaboral')
-            ->whereNull('fecha_fin_actividades')
-            ->orderBy('apellido')->orderBy('nombre')->get();
-        $this->maquinarias = Maquinaria::with('tipoMaquinaria')->orderBy('modelo')->get();
+        $datos = $this->servicio->obtenerDatosFormulario();
+
+        $this->lotes = $datos['lotes'];
+        $this->empleados = $datos['empleados'];
+        $this->maquinarias = $datos['maquinarias'];
         $this->cargarHistorial();
     }
 
@@ -71,27 +75,15 @@ class AsignacionesLote extends Component
             return;
         }
 
-        $lote = Lote::with(['empleados:id_empleado', 'maquinarias:id_maquinaria'])
-            ->find($this->id_lote);
-        if (! $lote) {
-            return;
-        }
+        $asignaciones = $this->servicio->obtenerAsignaciones((int) $this->id_lote);
 
-        $this->empleados_seleccionados = $lote->empleados->pluck('id_empleado')->toArray();
-        $this->maquinarias_seleccionadas = $lote->maquinarias->pluck('id_maquinaria')->toArray();
+        $this->empleados_seleccionados = $asignaciones['empleados'];
+        $this->maquinarias_seleccionadas = $asignaciones['maquinarias'];
     }
 
     public function cargarHistorial()
     {
-        $this->historial = Lote::with(['empleados' => function ($q) {
-            $q->select('empleados.id_empleado', 'apellido', 'nombre');
-        }, 'maquinarias' => function ($q) {
-            $q->select('maquinarias.id_maquinaria', 'modelo');
-        }])
-            ->has('empleados') // Solo lotes con al menos un empleado asignado
-            ->orHas('maquinarias') // O al menos una maquinaria
-            ->orderBy('id_lote', 'desc')
-            ->get();
+        $this->historial = $this->servicio->obtenerHistorial();
     }
 
     public function guardar()
@@ -118,9 +110,8 @@ class AsignacionesLote extends Component
                 return;
             }
 
-            $servicio = app(AsignacionLoteService::class);
-            $servicio->asignarRecursos(
-                $this->id_lote,
+            $this->servicio->asignarRecursos(
+                (int) $this->id_lote,
                 $this->empleados_seleccionados ?? [],
                 $this->maquinarias_seleccionadas ?? [],
                 $this->datosSolicitud()
@@ -148,8 +139,7 @@ class AsignacionesLote extends Component
     {
         $this->authorize('eliminar-asignaciones-lote');
         try {
-            $servicio = app(AsignacionLoteService::class);
-            $servicio->eliminarAsignaciones($loteId, $this->datosSolicitud());
+            $this->servicio->eliminarAsignaciones((int) $loteId, $this->datosSolicitud());
 
             $this->cargarHistorial();
             session()->flash('message', 'Asignaciones eliminadas correctamente.');
@@ -162,7 +152,7 @@ class AsignacionesLote extends Component
     {
         $this->authorize('editar-asignaciones-lote');
         try {
-            $finalizado = app(AsignacionLoteService::class)->finalizar((int) $loteId, $this->datosSolicitud());
+            $finalizado = $this->servicio->finalizar((int) $loteId, $this->datosSolicitud());
 
             if ($finalizado) {
                 session()->flash('message', 'Lote finalizado y recursos liberados.');
@@ -231,7 +221,7 @@ class AsignacionesLote extends Component
      */
     private function detectarConflictosEmpleados(): array
     {
-        return app(AsignacionLoteService::class)->detectarConflictosEmpleados($this->id_lote, $this->empleados_seleccionados);
+        return $this->servicio->detectarConflictosEmpleados((int) $this->id_lote, $this->empleados_seleccionados);
     }
 
     /**
@@ -241,7 +231,7 @@ class AsignacionesLote extends Component
      */
     private function detectarConflictosMaquinarias(): array
     {
-        return app(AsignacionLoteService::class)->detectarConflictosMaquinarias($this->id_lote, $this->maquinarias_seleccionadas);
+        return $this->servicio->detectarConflictosMaquinarias((int) $this->id_lote, $this->maquinarias_seleccionadas);
     }
 
     /**
