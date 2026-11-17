@@ -59,6 +59,7 @@ class Clientes extends Component
 
     public function guardar()
     {
+        $this->authorize($this->cliente_id ? 'editar-clientes' : 'crear-clientes');
         $this->validate();
 
         $this->servicio->crearOActualizar($this->cliente_id, [
@@ -76,6 +77,7 @@ class Clientes extends Component
 
     public function editar($id)
     {
+        $this->authorize('editar-clientes');
         $this->tab_activo = 'nuevo';
         $cliente = $this->servicio->obtener($id);
         $this->cliente_id = $cliente->id_cliente;
@@ -87,6 +89,7 @@ class Clientes extends Component
 
     public function eliminar($id)
     {
+        $this->authorize('eliminar-clientes');
         $this->servicio->eliminar($id);
         session()->flash('message', 'Cliente eliminado correctamente.');
     }

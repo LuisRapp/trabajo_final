@@ -170,6 +170,7 @@ class ConfiguracionKits extends Component
 
     public function eliminarKit($maquinariaId)
     {
+        $this->authorize('eliminar-kits-mantenimiento');
         try {
             // Soft delete de todos los items del kit por maquinaria
             KitMantenimientoPreventivo::where('id_maquinaria', $maquinariaId)->delete();
@@ -217,6 +218,7 @@ class ConfiguracionKits extends Component
 
     public function guardar()
     {
+        $this->authorize($this->item_id ? 'editar-kits-mantenimiento' : 'crear-kits-mantenimiento');
         $this->validate();
 
         try {
@@ -274,6 +276,7 @@ class ConfiguracionKits extends Component
 
     public function eliminar($itemId)
     {
+        $this->authorize('eliminar-kits-mantenimiento');
         try {
             $item = KitMantenimientoPreventivo::findOrFail($itemId);
             $item->delete(); // Soft delete
@@ -288,6 +291,7 @@ class ConfiguracionKits extends Component
 
     public function restaurar($itemId)
     {
+        $this->authorize('editar-kits-mantenimiento');
         try {
             $item = KitMantenimientoPreventivo::withTrashed()->findOrFail($itemId);
             if ($item->trashed()) {

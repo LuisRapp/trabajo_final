@@ -3,11 +3,10 @@
 use App\Http\Livewire\Choferes;
 use App\Models\Chofer;
 use App\Models\Cliente;
-use App\Models\Usuario;
 use Livewire\Livewire;
 
 test('usuario autenticado puede renderizar', function () {
-    Livewire::actingAs(Usuario::factory()->create())
+    Livewire::actingAs(usuarioConPermisos(['crear-choferes', 'editar-choferes', 'eliminar-choferes']))
         ->test(Choferes::class)
         ->assertStatus(200);
 });
@@ -15,7 +14,7 @@ test('usuario autenticado puede renderizar', function () {
 test('puede crear un chofer', function () {
     $cliente = Cliente::factory()->create();
 
-    Livewire::actingAs(Usuario::factory()->create())
+    Livewire::actingAs(usuarioConPermisos(['crear-choferes', 'editar-choferes', 'eliminar-choferes']))
         ->test(Choferes::class)
         ->set('id_cliente', $cliente->id_cliente)
         ->set('apellido', 'Perez')
@@ -39,7 +38,7 @@ test('puede editar un chofer', function () {
         'estado' => true,
     ]);
 
-    Livewire::actingAs(Usuario::factory()->create())
+    Livewire::actingAs(usuarioConPermisos(['crear-choferes', 'editar-choferes', 'eliminar-choferes']))
         ->test(Choferes::class)
         ->call('editar', $chofer->id_chofer)
         ->set('apellido', 'Gomez')
@@ -59,7 +58,7 @@ test('puede eliminar un chofer (soft delete)', function () {
         'estado' => true,
     ]);
 
-    Livewire::actingAs(Usuario::factory()->create())
+    Livewire::actingAs(usuarioConPermisos(['crear-choferes', 'editar-choferes', 'eliminar-choferes']))
         ->test(Choferes::class)
         ->call('eliminar', $chofer->id_chofer);
 
@@ -67,7 +66,7 @@ test('puede eliminar un chofer (soft delete)', function () {
 });
 
 test('valida campos obligatorios al crear', function () {
-    Livewire::actingAs(Usuario::factory()->create())
+    Livewire::actingAs(usuarioConPermisos(['crear-choferes', 'editar-choferes', 'eliminar-choferes']))
         ->test(Choferes::class)
         ->call('guardar')
         ->assertHasErrors(['id_cliente', 'apellido', 'nombre', 'dni']);

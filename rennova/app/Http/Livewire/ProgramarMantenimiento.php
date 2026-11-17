@@ -111,6 +111,7 @@ class ProgramarMantenimiento extends Component
 
     public function programarOrden()
     {
+        $this->authorize('crear-mantenimientos');
         $this->validate();
 
         $resultado = app(MantenimientoService::class)->guardarMantenimiento([
@@ -134,6 +135,7 @@ class ProgramarMantenimiento extends Component
 
     public function guardarFecha()
     {
+        $this->authorize('reprogramar-mantenimiento');
         $this->validate();
 
         $resultado = app(MantenimientoService::class)->guardarMantenimiento(

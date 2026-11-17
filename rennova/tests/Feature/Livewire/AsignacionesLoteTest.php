@@ -22,7 +22,7 @@ class AsignacionesLoteTest extends TestCase
     {
         parent::setUp();
 
-        $this->usuario = Usuario::factory()->create();
+        $this->usuario = usuarioConPermisos(['crear-asignaciones-lote', 'editar-asignaciones-lote', 'eliminar-asignaciones-lote']);
     }
 
     // =========================================================================

@@ -38,6 +38,7 @@ class ConfiguracionNotificacionesMantenimiento extends Component
 
     public function guardarConfiguracion()
     {
+        $this->authorize('configurar-notificaciones-mantenimiento');
         try {
             $this->notificacionService->guardarConfiguracionMantenimiento(
                 $this->usuariosUmbral ?? [],

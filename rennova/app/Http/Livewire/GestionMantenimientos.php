@@ -94,6 +94,7 @@ class GestionMantenimientos extends Component
 
     public function aprobarOrden()
     {
+        $this->authorize('confirmar-mantenimiento');
         try {
             if (! $this->orden_seleccionada) {
                 throw new \Exception('No hay orden seleccionada');
@@ -200,6 +201,7 @@ class GestionMantenimientos extends Component
 
     public function completarMantenimiento()
     {
+        $this->authorize('completar-mantenimiento');
         // Validaciones
         $this->validate([
             'costo_mano_obra' => 'required|numeric|min:0',

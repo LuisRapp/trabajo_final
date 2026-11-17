@@ -62,6 +62,7 @@ class Proveedores extends Component
 
     public function guardar()
     {
+        $this->authorize($this->proveedor_id ? 'editar-proveedores' : 'crear-proveedores');
         $this->validate();
 
         $this->servicio->crearOActualizar($this->proveedor_id, [
@@ -80,6 +81,7 @@ class Proveedores extends Component
 
     public function editar($id)
     {
+        $this->authorize('editar-proveedores');
         $this->tab_activo = 'nuevo';
         $proveedor = $this->servicio->obtener($id);
         $this->proveedor_id = $proveedor->id_proveedor;
@@ -92,6 +94,7 @@ class Proveedores extends Component
 
     public function eliminar($id)
     {
+        $this->authorize('eliminar-proveedores');
         $this->servicio->eliminar($id);
         session()->flash('message', 'Proveedor eliminado correctamente.');
     }

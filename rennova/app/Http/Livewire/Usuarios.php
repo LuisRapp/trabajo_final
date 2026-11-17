@@ -68,6 +68,7 @@ class Usuarios extends Component
 
     public function guardar()
     {
+        $this->authorize($this->usuario_id ? 'editar-usuarios' : 'crear-usuarios');
         $this->validate();
 
         $this->servicio->crearOActualizar($this->usuario_id, [
@@ -88,6 +89,7 @@ class Usuarios extends Component
 
     public function editar($id)
     {
+        $this->authorize('editar-usuarios');
         $this->tab_activo = 'nuevo';
         $usuario = $this->servicio->obtener($id);
         $this->usuario_id = $usuario->id;
@@ -100,6 +102,7 @@ class Usuarios extends Component
 
     public function eliminar($id)
     {
+        $this->authorize('eliminar-usuarios');
         $this->servicio->eliminar($id);
         session()->flash('message', 'Usuario eliminado correctamente.');
     }

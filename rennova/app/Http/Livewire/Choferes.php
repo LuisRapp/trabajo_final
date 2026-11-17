@@ -63,6 +63,7 @@ class Choferes extends Component
 
     public function guardar()
     {
+        $this->authorize($this->chofer_id ? 'editar-choferes' : 'crear-choferes');
         $this->validate();
 
         $this->servicio->crearOActualizar($this->chofer_id, [
@@ -83,6 +84,7 @@ class Choferes extends Component
 
     public function editar($id)
     {
+        $this->authorize('editar-choferes');
         $this->tab_activo = 'nuevo';
         $chofer = $this->servicio->obtener($id);
         $this->chofer_id = $chofer->id_chofer;
@@ -97,6 +99,7 @@ class Choferes extends Component
 
     public function eliminar($id)
     {
+        $this->authorize('eliminar-choferes');
         $this->servicio->eliminar($id);
         session()->flash('message', 'Chofer eliminado correctamente.');
         $this->resetCampos();

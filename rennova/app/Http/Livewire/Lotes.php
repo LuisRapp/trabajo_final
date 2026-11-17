@@ -87,6 +87,7 @@ class Lotes extends Component
 
     public function guardar()
     {
+        $this->authorize($this->lote_id ? 'editar-lotes' : 'crear-lotes');
         $this->validate();
 
         try {
@@ -135,6 +136,7 @@ class Lotes extends Component
 
     public function editar($id)
     {
+        $this->authorize('editar-lotes');
         $lote = $this->servicio->obtener($id);
         $this->lote_id = $lote->id_lote;
         $this->propietario = $lote->propietario;
@@ -150,6 +152,7 @@ class Lotes extends Component
 
     public function eliminar($id)
     {
+        $this->authorize('eliminar-lotes');
         $this->servicio->eliminar($id);
         session()->flash('message', 'Lote eliminado correctamente.');
         $this->resetCampos();
@@ -157,6 +160,7 @@ class Lotes extends Component
 
     public function finalizarLote($id)
     {
+        $this->authorize('editar-lotes');
         try {
             $finalizado = app(AsignacionLoteService::class)->finalizar((int) $id, $this->datosSolicitud());
 

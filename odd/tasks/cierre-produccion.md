@@ -20,7 +20,7 @@ Test runner: `php artisan test` (Pest) + `vendor/bin/pint --test`.
 - F0 (checkpoint) — Commit del cambio PHP y push de los commits pendientes. _inline_. ✅ commit 48af635.
 - F1 (S1) — Mover workflows a la raiz con `working-directory`, quitar credenciales Flux inexistentes, versionar `storage/framework/views`, corregir Pint y el `tearDownAfterClass` que forzaba exit code 2. _inline_. ✅ commits 1bb1ce6, 9493ebd, a747c1e, d7887c4. CI verde en PHP 8.4.27.
 - F2 (S2) — Docker de produccion: multi-stage, entrypoint corregido, compose dev/prod, `.dockerignore`, job de build en CI. _inline_. ✅ commits ca2497b, a749fd1, 095bf2d, eacf1fa, bf2af59, 393232d. PR #25 mergeado en d18b124. CI verde: `docker`, `tests` y `linter`; el job `docker` ademas verifica el contenido de la imagen.
-- F3 (S3) — Autorizacion server-side por dominio (adelantos, ventas, lotes/asignaciones, mantenimientos, insumos, usuarios/roles). Pendiente.
+- F3 (S3) — Autorizacion server-side: chequeo de permiso dentro de cada accion mutadora de `app/Http/Livewire/`, middleware de permiso en `/adelantos`, y tests por dominio. _inline_. ✅ commit c3a402d. Suite `632 passed / 9 skipped`.
 - F4 (S4) — Dependencias + D12/D6/D1/D2. Pendiente.
 - F5 (S5) — Verificacion visual de T3 + tn/dia operativo + tendencia mes vs mes. Pendiente. Ver `odd/tasks/indicadores-financieros.md` T4.
 - F6 (S6) — Documentacion de entrega: `.env.example`, guia de despliegue, README raiz. Pendiente.
@@ -33,6 +33,95 @@ Test runner: `php artisan test` (Pest) + `vendor/bin/pint --test`.
 - **D12**: best-effort post-commit. Las notificaciones salen de la transaccion (via `DB::afterCommit()`) con log de contexto; se documenta que son no atomicas **por diseno**. El invariante es la orden de mantenimiento, no el aviso. Ya existe el precedente en el mismo archivo: el email se manda fuera de la transaccion (linea 136).
 - **Estrategia de entrega**: una rama + un PR por fase. Razon: el PR #24 se mergeo con 106 archivos y +3.597 lineas sin revision humana real; con un solo desarrollador el PR es checkpoint, y su valor es poder revertir un slice sin perder el resto.
 - **Destino de produccion**: imagen de produccion + compose prod, porque sirve tanto para VPS propio como para entrega de repo y elimina la deriva de entorno. El destino concreto todavia no esta definido. Hallazgo: hoy la documentacion y el compose se contradicen — `docker-compose.yml` es de desarrollo (bind mount del codigo, `postgres/postgres` hardcodeado, puerto 5432 expuesto, sin `APP_ENV`/`APP_KEY`) y `GUIA_DESPLIEGUE_PRODUCCION.md` describe un despliegue nativo (PHP, nginx, crontab, systemd). Se elige Docker; la guia nativa se reescribe o se retira.
+
+## F3 — Mapa de autorizacion (2026-11-17)
+
+Hallazgo: los componentes Livewire viven en `app/Http/Livewire/` (namespace legado, no `App\Livewire`): 42 componentes y 4 traits. **Ninguno** valida permisos en PHP. La autorizacion existe solo en Blade (`@can`, y `:canEdit="auth()->user()->can(...)"` en los componentes de tabla), que oculta el boton pero no protege el endpoint. `Livewire\Component` ya incluye `AuthorizesRequests`, asi que la solucion es `$this->authorize('permiso')` como primera linea de cada accion mutadora: es la via nativa de Laravel y no agrega abstracciones.
+
+Las vistas ya declaran el permiso de cada operacion, asi que el mapeo sale de ahi; no se inventan permisos nuevos.
+
+### ABM estandar: `guardar` → `crear-<modulo>`, `editar` → `editar-<modulo>`, `eliminar` → `eliminar-<modulo>`
+
+| Componente | Modulo |
+|---|---|
+| `Adelantos` | `adelantos` |
+| `Cargas` | `cargas` |
+| `CategoriasMadera` | `categorias-madera` |
+| `Choferes` | `choferes` |
+| `Clientes` | `clientes` |
+| `Empleados` | `empleados` |
+| `HistoricoCostosMaquinarias` | `historico-costos-maquinarias` |
+| `HistoricoRolesLaborales` | `historico-roles-laborales` |
+| `Insumos` | `insumos` |
+| `ListaPrecios` | `lista-precios` |
+| `Lotes` | `lotes` |
+| `Mantenimientos` | `mantenimientos` |
+| `Maquinarias` | `maquinarias` |
+| `PartesDiarios` | `partes-diarios` |
+| `Proveedores` | `proveedores` |
+| `Recibos` | `recibos` |
+| `RolesLaborales` | `roles-laborales` |
+| `TipoMantenimiento` | `tipos-mantenimiento` |
+| `TiposMaquinaria` | `tipos-maquinaria` |
+| `UnidadesMedida` | `unidades-medida` |
+| `Usuarios` | `usuarios` |
+
+### Acciones de operacion (permiso ya declarado en la vista)
+
+| Componente | Accion | Permiso |
+|---|---|---|
+| `Ventas` | `guardarVenta` / `guardarEdicion` / `darDeBaja` | `crear-ventas` / `editar-ventas` / `eliminar-ventas` |
+| `AsignacionesLote` | `guardar` / `cancelar` | `crear-asignaciones-lote` / `editar-asignaciones-lote` |
+| `AllocationProposals` | `confirmar` | `crear-propuestas-asignacion` |
+| `GestionStock` | `guardar` | `crear-gestion-stock` |
+| `ConfiguracionKits` | `guardar` / `eliminar` / `restaurar` | `crear-` o `editar-kits-mantenimiento` segun `item_id` / `eliminar-kits-mantenimiento` / `editar-kits-mantenimiento` |
+| `LiquidacionPagos` | `calcularLiquidacion`, `liquidarTodos` / `generarRecibo` | `crear-liquidacion-pagos` / `crear-recibos` |
+| `GestionMantenimientos` | `aprobarOrden` / `completarMantenimiento` | `confirmar-mantenimiento` / `completar-mantenimiento` |
+| `CompletarOrdenModal` | `completarOrden` | `completar-mantenimiento` |
+| `ProgramarMantenimiento` | `programarOrden` / `guardarFecha` | `crear-mantenimientos` / `reprogramar-mantenimiento` |
+| `ConfiguracionMantenimiento` | `guardarConfiguracion`, `ejecutarVerificacionUmbrales`, `ejecutarVerificacionProgramados` | `configurar-mantenimiento` |
+| `ConfiguracionNotificacionesMantenimiento` | `guardarConfiguracion` | `configurar-notificaciones-mantenimiento` |
+| `NotificacionesCampana` | `programarMantenimiento` | `reprogramar-mantenimiento` |
+| `RolesPermisos` | `createRole`, `deleteRole`, `updateRolePermissions`, `updateUserRoles` | `gestionar-permisos` |
+| `LotePlanificacionTareas` | `guardar` | `editar-lotes` |
+| `AllocationProposals` | `generarAhora` / `guardarSeleccion` / `aplicar` | `crear-propuestas-asignacion` / `editar-propuestas-asignacion` / `editar-propuestas-asignacion` |
+| `AsignacionesLote` | `eliminarAsignacion` / `liberar` | `eliminar-asignaciones-lote` / `editar-asignaciones-lote` |
+| `ConfiguracionKits` | `eliminarKit` | `eliminar-kits-mantenimiento` |
+| `Lotes` | `finalizarLote` | `editar-lotes` |
+| `Mantenimientos` | `confirmarMantenimiento` / `reprogramarMantenimiento` | `confirmar-mantenimiento` / `reprogramar-mantenimiento` |
+| `PartesDiarios` | `crearTareaRapida` | `crear-partes-diarios` |
+
+Las seis ultimas filas salieron de una **auditoria estatica posterior** al primer barrido: un script busca `::create`, `->save`, `->update`, `->delete`, `updateOrCreate`, `->sync` y llamadas a Servicios dentro de cada metodo publico y marca los que no tienen `authorize(`. El primer barrido se habia guiado por nombres de metodo y por eso las dejo pasar. Total final: **101 chequeos en 36 archivos**; la auditoria solo deja acciones de lectura, filtros, estado local del modal o notificaciones propias, todas listadas abajo.
+
+### Tests
+
+- Helper `usuarioConPermisos(array $permisos)` en `tests/Pest.php`: crea el usuario y los permisos con `Permission::firstOrCreate` + `givePermissionTo`, limpiando el cache de Spatie. Se usa en lugar del seeder completo (1,6 s por test).
+- 30 archivos de test existentes actualizados: los tests de camino feliz ahora otorgan el permiso que la accion exige. Los tests de denegacion que ya existian (`UsuariosTest`, `RolesPermisosTest`) siguen creando el usuario sin permisos y verifican el 403.
+- `tests/Feature/Livewire/AutorizacionTest.php` (nuevo, 9 tests): un caso por dominio (adelantos, ventas, lotes, asignaciones, mantenimientos, insumos, usuarios, roles) mas la ruta `/adelantos`. Cada uno autentica un usuario **con otro permiso del mismo modulo** (para probar que el 403 es por el permiso faltante, no por falta de todo), llama la accion y verifica el 403 junto con la no-persistencia (conteo en 0, pivote vacio, registro inexistente).
+- Resultado: `632 passed / 9 skipped` (641 tests), sin fallos. Antes de F3 la linea base era `449 passed / 174 failed / 9 skipped`.
+
+### Hallazgo pendiente para F7: paginas sin `ver-*` a nivel ruta
+
+Ninguna ruta de modulo (salvo `/usuarios`, las de mantenimiento especiales, `/roles-permisos` y ahora `/adelantos`) tiene middleware `permission:ver-<modulo>`. Las paginas Livewire se pueden abrir con solo estar autenticado; lo que queda protegido es cada accion mutadora. Cerrar eso exige decidir en F7 si `ver-*` bloquea la pagina o solo el sidebar, porque hoy el sidebar oculta el link pero la URL directa funciona. Se documenta como decision de negocio, no como defecto de F3.
+
+### Formularios hijos: no se protegen porque no persisten
+
+`CargaForm`, `JornalForm` y `MovimientoForm` agregan items a una lista local (`::create`, `->save` y `->delete` no aparecen en esos archivos). La persistencia ocurre en el `guardar` del componente padre, que si queda protegido. Un chequeo ahi seria ruido sin proteccion.
+
+### Acciones que no se protegen
+
+- `NotificacionesCampana` y `NotificacionesSistema`: marcar leida o accionada cambia solo el estado de las notificaciones del propio usuario.
+- `Auditorias`, `EstadoProcesos`, `SelectorLote` y los traits: solo filtros, calculos o lectura.
+
+### Supuestos a confirmar en F7 (reglas de negocio)
+
+- `ProgramarMantenimiento::programarOrden` usa `crear-mantenimientos`, no `reprogramar-mantenimiento`: este ultimo es para reprogramar, y usarlo aca le quitaria la accion al Operador y al Supervisor, que hoy pueden programar.
+- `LotePlanificacionTareas::guardar` usa `editar-lotes` porque no existe un modulo de tareas.
+- `/adelantos` usa `permission:ver-adelantos`, coherente con el sidebar, que ya oculta el link con ese permiso.
+- `Cargas`, `PartesDiarios` y otros modulos solo tienen `ver-`/`crear-`/`editar-` en algunos roles; los chequeos usan el permiso que la vista ya exige, asi que no cambian quien puede operar.
+- `AllocationProposals::guardarSeleccion` y `aplicar` usan `editar-propuestas-asignacion` (modifican una propuesta existente); `generarAhora` y `confirmar` usan `crear-propuestas-asignacion`. La vista acepta `@canany` de ambos; hoy solo el Administrador tiene los dos, asi que no cambia quien opera. Confirmar en F7.
+- `PartesDiarios::crearTareaRapida` usa `crear-partes-diarios`, no `editar-lotes`: la accion vive en el flujo del parte diario y la usa el Operador, que no tiene `editar-lotes`. Confirmar en F7.
+- `Mantenimientos::reprogramarMantenimiento` llama internamente a `editar($id)` (que exige `editar-mantenimientos`) cuando el servicio responde bien. Hoy solo el Administrador tiene `reprogramar-mantenimiento`, asi que no se ve; si F7 se lo da a otro rol, hay que alinear ambos permisos.
 
 ## Gate de entrega (antes de entregar, despues de F8)
 
@@ -66,3 +155,4 @@ Todo lo que aparezca durante F2-F8 y no sea un defecto de la fase en curso se an
 - L7 (2026-11-15): (verbatim) "sobre esto de que no voy a poder verificar por uso. si me instalo docker voy a poder ver y corroborar, no tiene sentido hacer eso ahora que esta todo tan roto". Se verifica y la objecion es correcta por un motivo mas fuerte: el `Dockerfile` anterior no copiaba el codigo, dependia del bind mount `./rennova` de `docker-compose.yml`, y ese montaje hacia que `key:generate --force` reescribiera el `.env` real del working copy en cada arranque. Levantar Docker antes de F2 no mostraba la app: atacaba el entorno local.
 - L8 (2026-11-15): (verbatim) "na chill, no te parece que mejor terminemos el plan que tenemos de las 8 fases y qe de ahi me instale docker, sino voy a ir queriendo meter cambios y se arma un embole". Docker se instala una sola vez al final; se agregan las secciones Gate de entrega y Backlog post-entrega. F2 se cierra con build verde en CI, no con verificacion por uso.
 - L9 (2026-11-15): F2 cerrada. El primer build fallo en `npm run build` (`Can't resolve '../../vendor/livewire/flux/dist/flux.css'`): `resources/css/app.css` importa el CSS de Flux y usa `@source` sobre los stubs de Flux y las vistas de paginacion de Laravel, asi que la etapa de assets necesita `vendor/`. Se resolvio con una etapa `vendor` (`composer install --no-dev --no-scripts`) compartida por `assets` y `runtime`, y una etapa `base` con las extensiones para no compilarlas dos veces. Otros tres defectos detectados en el camino: `docker-php-ext-install pdo` recompilaba una extension ya incluida ("pdo is already loaded"); el entrypoint corria `migrate` y el worker como root mientras Apache escribe como `www-data`, lo que dejaba `laravel.log` sin permiso para `www-data` (se resolvio con `gosu`, y `USUARIO_APP` permite que el compose de desarrollo siga usando root sobre el bind mount); y el job de CI solo construia, sin comprobar que la imagen contuviera el codigo, el vendor y los assets (se agrego `load: true` y una verificacion estructural). Verificado: 95 paquetes de produccion con `dist` (no hace falta `git`), 13 `ext-*` ya compiladas en la imagen oficial, `opcache` ya habilitado por la imagen base.
+- L10 (2026-11-17): F3 cerrada. 101 chequeos `authorize()` en 36 componentes. Dos correcciones de rumbo en el camino: (1) el primer barrido inserto los permisos sin comillas (`authorize(crear-adelantos)`), se revirtio con `git checkout --` y se rehizo; (2) el barrido inicial se guio por nombres de metodo y dejo 10 acciones mutadoras sin guard, que aparecieron con una auditoria estatica posterior (`::create`, `->save`, `->update`, `->delete`, `updateOrCreate`, `->sync`, servicios): `AllocationProposals::generarAhora|guardarSeleccion|aplicar`, `AsignacionesLote::eliminarAsignacion|liberar`, `ConfiguracionKits::eliminarKit`, `Lotes::finalizarLote`, `Mantenimientos::confirmarMantenimiento|reprogramarMantenimiento`, `PartesDiarios::crearTareaRapida`. Los `guardar` de los ABM son upsert (`crearOActualizar($this-><x>_id, ...)`), asi que el guard es condicional (`editar-X` o `crear-X` segun el id) para no bloquear a quien solo tiene `editar-X`. Tests: helper `usuarioConPermisos()` en `tests/Pest.php` (sin seeder, que cuesta 1,6 s por test), 30 archivos existentes actualizados y `AutorizacionTest` nuevo con un caso por dominio; cada caso autentica un usuario con otro permiso del mismo modulo y verifica 403 + no-persistencia. Suite final `632 passed / 9 skipped`; antes de F3 era `449 passed / 174 failed / 9 skipped`. Queda anotado para F7 que ninguna ruta de modulo (salvo `/usuarios`, las de mantenimiento especiales, `/roles-permisos` y ahora `/adelantos`) exige `ver-*`: la pagina se abre con solo estar autenticado y lo protegido es la accion.

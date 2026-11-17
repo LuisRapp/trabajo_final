@@ -83,6 +83,7 @@ class LiquidacionPagos extends Component
 
     public function calcularLiquidacion()
     {
+        $this->authorize('crear-liquidacion-pagos');
         if ($this->liquidar_todos) {
             $this->liquidarTodos();
 
@@ -144,6 +145,7 @@ class LiquidacionPagos extends Component
 
     public function liquidarTodos()
     {
+        $this->authorize('crear-liquidacion-pagos');
         $this->validate([
             'fecha_inicio' => 'required|date',
             'fecha_fin' => 'required|date|after_or_equal:fecha_inicio',
@@ -235,6 +237,7 @@ class LiquidacionPagos extends Component
 
     public function generarRecibo()
     {
+        $this->authorize('crear-recibos');
         $this->validate([
             'monto_bruto' => 'required|numeric|min:0',
             'descuentos' => 'nullable|numeric|min:0',

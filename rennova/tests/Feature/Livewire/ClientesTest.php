@@ -2,14 +2,7 @@
 
 use App\Http\Livewire\Clientes;
 use App\Models\Cliente;
-use App\Models\Usuario;
 use Livewire\Livewire;
-use Spatie\Permission\Models\Permission;
-
-beforeEach(function () {
-    Permission::firstOrCreate(['name' => 'crear-clientes', 'guard_name' => 'web']);
-    Permission::firstOrCreate(['name' => 'editar-clientes', 'guard_name' => 'web']);
-});
 
 test('invitado es redirigido al login', function () {
     $this->get('/clientes')
@@ -17,7 +10,7 @@ test('invitado es redirigido al login', function () {
 });
 
 test('usuario autenticado puede renderizar componente', function () {
-    $user = Usuario::factory()->create();
+    $user = usuarioConPermisos(['crear-clientes', 'editar-clientes', 'eliminar-clientes']);
 
     Livewire::actingAs($user)
         ->test(Clientes::class)
@@ -25,7 +18,7 @@ test('usuario autenticado puede renderizar componente', function () {
 });
 
 test('puede crear un cliente', function () {
-    $user = Usuario::factory()->create();
+    $user = usuarioConPermisos(['crear-clientes', 'editar-clientes', 'eliminar-clientes']);
 
     Livewire::actingAs($user)
         ->test(Clientes::class)
@@ -40,7 +33,7 @@ test('puede crear un cliente', function () {
 });
 
 test('puede editar un cliente manteniendo el cuit', function () {
-    $user = Usuario::factory()->create();
+    $user = usuarioConPermisos(['crear-clientes', 'editar-clientes', 'eliminar-clientes']);
     $cliente = Cliente::factory()->create(['razon_social' => 'Viejo Nombre']);
 
     Livewire::actingAs($user)
@@ -57,7 +50,7 @@ test('puede editar un cliente manteniendo el cuit', function () {
 });
 
 test('puede eliminar un cliente', function () {
-    $user = Usuario::factory()->create();
+    $user = usuarioConPermisos(['crear-clientes', 'editar-clientes', 'eliminar-clientes']);
     $cliente = Cliente::factory()->create();
 
     Livewire::actingAs($user)

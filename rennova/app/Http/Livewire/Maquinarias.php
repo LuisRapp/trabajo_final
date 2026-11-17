@@ -72,6 +72,7 @@ class Maquinarias extends Component
 
     public function guardar()
     {
+        $this->authorize($this->maquinaria_id ? 'editar-maquinarias' : 'crear-maquinarias');
         $this->validate();
 
         $this->servicio->crearOActualizar($this->maquinaria_id, [
@@ -91,6 +92,7 @@ class Maquinarias extends Component
 
     public function editar($id)
     {
+        $this->authorize('editar-maquinarias');
         $this->tab_activo = 'nuevo';
         $maquinaria = $this->servicio->obtener($id);
         $this->maquinaria_id = $maquinaria->id_maquinaria;
@@ -104,6 +106,7 @@ class Maquinarias extends Component
 
     public function eliminar($id)
     {
+        $this->authorize('eliminar-maquinarias');
         $this->servicio->eliminar($id);
         session()->flash('message', 'Maquinaria eliminada correctamente.');
     }

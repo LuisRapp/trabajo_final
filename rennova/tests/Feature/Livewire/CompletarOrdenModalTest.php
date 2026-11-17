@@ -24,7 +24,7 @@ class CompletarOrdenModalTest extends TestCase
     {
         parent::setUp();
 
-        $this->usuario = Usuario::factory()->create();
+        $this->usuario = usuarioConPermisos(['completar-mantenimiento']);
     }
 
     // =========================================================================

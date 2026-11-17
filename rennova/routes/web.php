@@ -121,7 +121,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/partes-diarios', [ParteDiarioController::class, 'index'])->name('partes-diarios.index');
     Route::get('/ventas', [VentaController::class, 'index'])->name('ventas.index');
-    Route::get('/adelantos', [AdelantoController::class, 'index'])->name('adelantos.index');
+    Route::get('/adelantos', [AdelantoController::class, 'index'])->middleware(['permission:ver-adelantos'])->name('adelantos.index');
     Route::get('/recibos', [ReciboController::class, 'index'])->name('recibos.index');
 
     Route::get('/historico-costos-maquinarias', [HistoricoCostosMaquinariaController::class, 'index'])->name('historico-costos-maquinarias.index');

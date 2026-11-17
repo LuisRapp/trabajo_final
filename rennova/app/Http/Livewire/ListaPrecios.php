@@ -76,6 +76,7 @@ class ListaPrecios extends Component
 
     public function guardar()
     {
+        $this->authorize($this->precio_id ? 'editar-lista-precios' : 'crear-lista-precios');
         $this->validate();
 
         try {
@@ -104,6 +105,7 @@ class ListaPrecios extends Component
 
     public function editar($id)
     {
+        $this->authorize('editar-lista-precios');
         $precioItem = $this->servicio->obtener($id);
         $this->precio_id = $precioItem->id;
         $this->cliente_id = $precioItem->cliente_id;
@@ -115,6 +117,7 @@ class ListaPrecios extends Component
 
     public function eliminar($id)
     {
+        $this->authorize('eliminar-lista-precios');
         $this->servicio->eliminar($id);
         session()->flash('message', 'Precio eliminado correctamente.');
     }

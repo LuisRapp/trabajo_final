@@ -78,6 +78,7 @@ class Cargas extends Component
 
     public function guardar()
     {
+        $this->authorize($this->carga_id ? 'editar-cargas' : 'crear-cargas');
         $this->validate();
 
         $this->servicio->crearOActualizar($this->carga_id, [
@@ -102,6 +103,7 @@ class Cargas extends Component
 
     public function editar($id)
     {
+        $this->authorize('editar-cargas');
         $this->tab_activo = 'nuevo';
         $carga = $this->servicio->obtener($id);
         $this->carga_id = $carga->id_carga;
@@ -119,6 +121,7 @@ class Cargas extends Component
 
     public function eliminar($id)
     {
+        $this->authorize('eliminar-cargas');
         $this->servicio->eliminar($id);
         session()->flash('message', 'Carga eliminada correctamente.');
         $this->resetCampos();

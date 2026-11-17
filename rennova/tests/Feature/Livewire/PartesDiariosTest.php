@@ -61,7 +61,7 @@ class PartesDiariosTest extends TestCase
 
         Queue::fake();
 
-        $this->usuario = Usuario::factory()->create();
+        $this->usuario = usuarioConPermisos(['crear-partes-diarios', 'editar-partes-diarios', 'eliminar-partes-diarios']);
 
         $this->lote = Lote::create([
             'propietario' => 'Test Owner SA',

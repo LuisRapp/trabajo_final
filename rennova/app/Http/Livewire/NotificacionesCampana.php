@@ -123,6 +123,7 @@ class NotificacionesCampana extends Component
 
     public function programarMantenimiento()
     {
+        $this->authorize('reprogramar-mantenimiento');
         $this->validate([
             'fechaProgramada' => [
                 'required',

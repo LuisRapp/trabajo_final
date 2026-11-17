@@ -2,14 +2,7 @@
 
 use App\Http\Livewire\Proveedores;
 use App\Models\Proveedor;
-use App\Models\Usuario;
 use Livewire\Livewire;
-use Spatie\Permission\Models\Permission;
-
-beforeEach(function () {
-    Permission::firstOrCreate(['name' => 'crear-proveedores', 'guard_name' => 'web']);
-    Permission::firstOrCreate(['name' => 'editar-proveedores', 'guard_name' => 'web']);
-});
 
 test('invitado es redirigido al login', function () {
     $this->get('/proveedores')
@@ -17,7 +10,7 @@ test('invitado es redirigido al login', function () {
 });
 
 test('usuario autenticado puede renderizar componente', function () {
-    $user = Usuario::factory()->create();
+    $user = usuarioConPermisos(['crear-proveedores', 'editar-proveedores', 'eliminar-proveedores']);
 
     Livewire::actingAs($user)
         ->test(Proveedores::class)
@@ -25,7 +18,7 @@ test('usuario autenticado puede renderizar componente', function () {
 });
 
 test('puede crear un proveedor', function () {
-    $user = Usuario::factory()->create();
+    $user = usuarioConPermisos(['crear-proveedores', 'editar-proveedores', 'eliminar-proveedores']);
 
     Livewire::actingAs($user)
         ->test(Proveedores::class)
@@ -41,7 +34,7 @@ test('puede crear un proveedor', function () {
 });
 
 test('puede editar un proveedor manteniendo el cuit', function () {
-    $user = Usuario::factory()->create();
+    $user = usuarioConPermisos(['crear-proveedores', 'editar-proveedores', 'eliminar-proveedores']);
     $proveedor = Proveedor::factory()->create(['razon_social' => 'Viejo Nombre']);
 
     Livewire::actingAs($user)
@@ -59,7 +52,7 @@ test('puede editar un proveedor manteniendo el cuit', function () {
 });
 
 test('puede eliminar un proveedor', function () {
-    $user = Usuario::factory()->create();
+    $user = usuarioConPermisos(['crear-proveedores', 'editar-proveedores', 'eliminar-proveedores']);
     $proveedor = Proveedor::factory()->create();
 
     Livewire::actingAs($user)

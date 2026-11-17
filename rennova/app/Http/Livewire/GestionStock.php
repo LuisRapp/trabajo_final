@@ -188,6 +188,7 @@ class GestionStock extends Component
 
     public function guardar()
     {
+        $this->authorize('crear-gestion-stock');
         $this->validate();
 
         try {

@@ -52,6 +52,7 @@ class CategoriasMadera extends Component
 
     public function guardar()
     {
+        $this->authorize($this->categoria_id ? 'editar-categorias-madera' : 'crear-categorias-madera');
         $this->validate();
 
         $this->servicio->crearOActualizar($this->categoria_id, [
@@ -67,6 +68,7 @@ class CategoriasMadera extends Component
 
     public function editar($id)
     {
+        $this->authorize('editar-categorias-madera');
         $this->tab_activo = 'nuevo';
         $categoria = $this->servicio->obtener($id);
         $this->categoria_id = $categoria->id_categoria_madera;
@@ -76,6 +78,7 @@ class CategoriasMadera extends Component
 
     public function eliminar($id)
     {
+        $this->authorize('eliminar-categorias-madera');
         $this->servicio->eliminar($id);
         session()->flash('message', 'Categoría eliminada correctamente.');
     }

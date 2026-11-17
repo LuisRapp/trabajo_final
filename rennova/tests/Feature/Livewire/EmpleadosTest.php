@@ -3,11 +3,10 @@
 use App\Http\Livewire\Empleados;
 use App\Models\Empleado;
 use App\Models\RolLaboral;
-use App\Models\Usuario;
 use Livewire\Livewire;
 
 test('usuario autenticado puede renderizar', function () {
-    Livewire::actingAs(Usuario::factory()->create())
+    Livewire::actingAs(usuarioConPermisos(['crear-empleados', 'editar-empleados', 'eliminar-empleados']))
         ->test(Empleados::class)
         ->assertStatus(200);
 });
@@ -15,7 +14,7 @@ test('usuario autenticado puede renderizar', function () {
 test('puede crear un empleado', function () {
     $rol = RolLaboral::factory()->create();
 
-    Livewire::actingAs(Usuario::factory()->create())
+    Livewire::actingAs(usuarioConPermisos(['crear-empleados', 'editar-empleados', 'eliminar-empleados']))
         ->test(Empleados::class)
         ->set('id_rol_laboral', $rol->id_rol_laboral)
         ->set('dni', '12345678')
@@ -38,7 +37,7 @@ test('puede editar un empleado', function () {
         'fecha_inicio_actividades' => '2020-03-01',
     ]);
 
-    Livewire::actingAs(Usuario::factory()->create())
+    Livewire::actingAs(usuarioConPermisos(['crear-empleados', 'editar-empleados', 'eliminar-empleados']))
         ->test(Empleados::class)
         ->call('editar', $empleado->id_empleado)
         ->set('apellido', 'Gomez')
@@ -52,7 +51,7 @@ test('puede eliminar un empleado (soft delete)', function () {
     $rol = RolLaboral::factory()->create();
     $empleado = Empleado::factory()->create(['id_rol_laboral' => $rol->id_rol_laboral]);
 
-    Livewire::actingAs(Usuario::factory()->create())
+    Livewire::actingAs(usuarioConPermisos(['crear-empleados', 'editar-empleados', 'eliminar-empleados']))
         ->test(Empleados::class)
         ->call('eliminar', $empleado->id_empleado);
 
@@ -60,7 +59,7 @@ test('puede eliminar un empleado (soft delete)', function () {
 });
 
 test('valida campos obligatorios al crear', function () {
-    Livewire::actingAs(Usuario::factory()->create())
+    Livewire::actingAs(usuarioConPermisos(['crear-empleados', 'editar-empleados', 'eliminar-empleados']))
         ->test(Empleados::class)
         ->call('guardar')
         ->assertHasErrors(['id_rol_laboral', 'dni', 'apellido', 'nombre']);

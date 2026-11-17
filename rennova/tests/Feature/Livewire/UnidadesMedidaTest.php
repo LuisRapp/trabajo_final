@@ -2,17 +2,16 @@
 
 use App\Http\Livewire\UnidadesMedida;
 use App\Models\UnidadMedida;
-use App\Models\Usuario;
 use Livewire\Livewire;
 
 test('usuario autenticado puede renderizar', function () {
-    Livewire::actingAs(Usuario::factory()->create())
+    Livewire::actingAs(usuarioConPermisos(['crear-unidades-medida', 'editar-unidades-medida', 'eliminar-unidades-medida']))
         ->test(UnidadesMedida::class)
         ->assertStatus(200);
 });
 
 test('puede crear una unidad de medida', function () {
-    Livewire::actingAs(Usuario::factory()->create())
+    Livewire::actingAs(usuarioConPermisos(['crear-unidades-medida', 'editar-unidades-medida', 'eliminar-unidades-medida']))
         ->test(UnidadesMedida::class)
         ->set('nombre', 'Metro cúbico')
         ->set('abreviatura', 'm3')
@@ -25,7 +24,7 @@ test('puede crear una unidad de medida', function () {
 test('puede editar una unidad de medida', function () {
     $unidad = UnidadMedida::factory()->create(['nombre' => 'Viejo']);
 
-    Livewire::actingAs(Usuario::factory()->create())
+    Livewire::actingAs(usuarioConPermisos(['crear-unidades-medida', 'editar-unidades-medida', 'eliminar-unidades-medida']))
         ->test(UnidadesMedida::class)
         ->call('editar', $unidad->id_unidad_medida)
         ->set('nombre', 'Nuevo')
@@ -39,7 +38,7 @@ test('puede editar una unidad de medida', function () {
 test('puede eliminar una unidad de medida (soft delete)', function () {
     $unidad = UnidadMedida::factory()->create();
 
-    Livewire::actingAs(Usuario::factory()->create())
+    Livewire::actingAs(usuarioConPermisos(['crear-unidades-medida', 'editar-unidades-medida', 'eliminar-unidades-medida']))
         ->test(UnidadesMedida::class)
         ->call('eliminar', $unidad->id_unidad_medida);
 
@@ -47,7 +46,7 @@ test('puede eliminar una unidad de medida (soft delete)', function () {
 });
 
 test('valida nombre y abreviatura obligatorios', function () {
-    Livewire::actingAs(Usuario::factory()->create())
+    Livewire::actingAs(usuarioConPermisos(['crear-unidades-medida', 'editar-unidades-medida', 'eliminar-unidades-medida']))
         ->test(UnidadesMedida::class)
         ->set('nombre', '')
         ->set('abreviatura', '')

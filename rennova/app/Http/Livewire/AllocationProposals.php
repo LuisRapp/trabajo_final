@@ -89,6 +89,7 @@ class AllocationProposals extends Component
 
     public function generarAhora()
     {
+        $this->authorize('crear-propuestas-asignacion');
         $loteId = $this->loteId ?: (int) $this->filter_lote_id;
         if (! $loteId) {
             session()->flash('error', 'Seleccione un lote para generar propuestas.');
@@ -185,6 +186,7 @@ class AllocationProposals extends Component
 
     public function guardarSeleccion()
     {
+        $this->authorize('editar-propuestas-asignacion');
         if (! $this->selected_proposal_id) {
             return;
         }
@@ -211,6 +213,7 @@ class AllocationProposals extends Component
 
     public function confirmar()
     {
+        $this->authorize('crear-propuestas-asignacion');
         if (! $this->selected_proposal_id) {
             return;
         }
@@ -247,6 +250,7 @@ class AllocationProposals extends Component
 
     public function aplicar()
     {
+        $this->authorize('editar-propuestas-asignacion');
         if (! $this->selected_proposal_id) {
             return;
         }

@@ -26,7 +26,7 @@ class LotesTest extends TestCase
 
         Queue::fake();
 
-        $this->usuario = Usuario::factory()->create();
+        $this->usuario = usuarioConPermisos(['crear-lotes', 'editar-lotes', 'eliminar-lotes']);
     }
 
     // =========================================================================

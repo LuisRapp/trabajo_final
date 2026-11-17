@@ -96,6 +96,7 @@ class CompletarOrdenModal extends Component
 
     public function completarOrden(): void
     {
+        $this->authorize('completar-mantenimiento');
         try {
             $orden = app(MantenimientoService::class)
                 ->obtenerOrdenParaCompletar($this->orden_completar_id);

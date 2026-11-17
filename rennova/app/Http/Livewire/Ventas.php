@@ -113,6 +113,7 @@ class Ventas extends Component
 
     public function guardarVenta()
     {
+        $this->authorize('crear-ventas');
         if (empty($this->detalle_cargas)) {
             session()->flash('error', 'No hay cargas para facturar.');
 
@@ -195,6 +196,7 @@ class Ventas extends Component
 
     public function guardarEdicion()
     {
+        $this->authorize('editar-ventas');
         if (! $this->venta_seleccionada) {
             session()->flash('error', 'No hay venta seleccionada.');
 
@@ -223,6 +225,7 @@ class Ventas extends Component
 
     public function darDeBaja($id_recibo)
     {
+        $this->authorize('eliminar-ventas');
         try {
             VentaService::darDeBaja($id_recibo);
 

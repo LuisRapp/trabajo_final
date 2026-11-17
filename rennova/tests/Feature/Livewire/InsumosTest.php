@@ -4,14 +4,7 @@ use App\Http\Livewire\Insumos;
 use App\Models\Insumo;
 use App\Models\Proveedor;
 use App\Models\UnidadMedida;
-use App\Models\Usuario;
 use Livewire\Livewire;
-use Spatie\Permission\Models\Permission;
-
-beforeEach(function () {
-    Permission::firstOrCreate(['name' => 'crear-insumos', 'guard_name' => 'web']);
-    Permission::firstOrCreate(['name' => 'editar-insumos', 'guard_name' => 'web']);
-});
 
 test('invitado es redirigido al login', function () {
     $this->get('/insumos')
@@ -19,7 +12,7 @@ test('invitado es redirigido al login', function () {
 });
 
 test('usuario autenticado puede renderizar componente', function () {
-    $user = Usuario::factory()->create();
+    $user = usuarioConPermisos(['crear-insumos', 'editar-insumos', 'eliminar-insumos']);
 
     Livewire::actingAs($user)
         ->test(Insumos::class)
@@ -27,7 +20,7 @@ test('usuario autenticado puede renderizar componente', function () {
 });
 
 test('puede crear un insumo', function () {
-    $user = Usuario::factory()->create();
+    $user = usuarioConPermisos(['crear-insumos', 'editar-insumos', 'eliminar-insumos']);
     $unidad = UnidadMedida::factory()->create();
     $proveedor = Proveedor::factory()->create();
 
@@ -44,7 +37,7 @@ test('puede crear un insumo', function () {
 });
 
 test('puede editar un insumo', function () {
-    $user = Usuario::factory()->create();
+    $user = usuarioConPermisos(['crear-insumos', 'editar-insumos', 'eliminar-insumos']);
     $proveedor = Proveedor::factory()->create();
     $insumo = Insumo::factory()->create([
         'nombre' => 'Viejo Nombre',
@@ -65,7 +58,7 @@ test('puede editar un insumo', function () {
 });
 
 test('puede eliminar un insumo', function () {
-    $user = Usuario::factory()->create();
+    $user = usuarioConPermisos(['crear-insumos', 'editar-insumos', 'eliminar-insumos']);
     $insumo = Insumo::factory()->create();
 
     Livewire::actingAs($user)

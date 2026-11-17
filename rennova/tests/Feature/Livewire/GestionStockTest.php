@@ -22,7 +22,7 @@ class GestionStockTest extends TestCase
     {
         parent::setUp();
 
-        $this->usuario = Usuario::factory()->create();
+        $this->usuario = usuarioConPermisos(['crear-gestion-stock']);
     }
 
     // =========================================================================

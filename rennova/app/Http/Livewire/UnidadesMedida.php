@@ -54,6 +54,7 @@ class UnidadesMedida extends Component
 
     public function guardar()
     {
+        $this->authorize($this->unidad_id ? 'editar-unidades-medida' : 'crear-unidades-medida');
         $this->validate();
 
         $this->servicio->crearOActualizar($this->unidad_id, [
@@ -69,6 +70,7 @@ class UnidadesMedida extends Component
 
     public function editar($id)
     {
+        $this->authorize('editar-unidades-medida');
         $this->tab_activo = 'nuevo';
         $unidad = $this->servicio->obtener($id);
         $this->unidad_id = $unidad->id_unidad_medida;
@@ -78,6 +80,7 @@ class UnidadesMedida extends Component
 
     public function eliminar($id)
     {
+        $this->authorize('eliminar-unidades-medida');
         $this->servicio->eliminar($id);
         session()->flash('message', 'Unidad eliminada correctamente.');
     }
