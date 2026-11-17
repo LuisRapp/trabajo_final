@@ -226,7 +226,7 @@ class ReporteController extends Controller
         // GRÁFICO 3: Evolución costo por tonelada últimos 6 meses
         $evolucion_costos = ParteDiario::whereIn('id_lote', $lotes->pluck('id_lote'))
             ->whereBetween('fecha', [$filtroDesde, $filtroHasta])
-            ->selectRaw($this->monthFirstDay('fecha').' as mes')
+            ->selectRaw($this->primerDiaDelMes('fecha').' as mes')
             ->selectRaw('AVG(costo_unitario_calculado) as costo_promedio')
             ->groupBy('mes')
             ->orderBy('mes')
@@ -317,7 +317,7 @@ class ReporteController extends Controller
 
             $produccionMensual = Carga::where('id_lote', $lote->id_lote)
                 ->whereBetween('fecha_carga', [$fechaDesde->toDateString(), $fechaHasta->toDateString()])
-                ->selectRaw($this->monthFirstDay('fecha_carga').' as mes')
+                ->selectRaw($this->primerDiaDelMes('fecha_carga').' as mes')
                 ->selectRaw('SUM(peso_neto / 1000.0) as toneladas')
                 ->groupBy('mes')
                 ->orderBy('mes')
@@ -325,7 +325,7 @@ class ReporteController extends Controller
 
             $costosMensual = ParteDiario::where('id_lote', $lote->id_lote)
                 ->whereBetween('fecha', [$fechaDesde->toDateString(), $fechaHasta->toDateString()])
-                ->selectRaw($this->monthFirstDay('fecha').' as mes')
+                ->selectRaw($this->primerDiaDelMes('fecha').' as mes')
                 ->selectRaw('SUM(COALESCE(costo_total_dia, 0)) as costo_total')
                 ->groupBy('mes')
                 ->orderBy('mes')
@@ -476,7 +476,7 @@ class ReporteController extends Controller
 
             $produccionMensualGlobal = Carga::whereIn('id_lote', $lotes->pluck('id_lote'))
                 ->whereBetween('fecha_carga', [$fechaDesde->toDateString(), $fechaHasta->toDateString()])
-                ->selectRaw($this->monthFirstDay('fecha_carga').' as mes')
+                ->selectRaw($this->primerDiaDelMes('fecha_carga').' as mes')
                 ->selectRaw('SUM(peso_neto / 1000.0) as toneladas')
                 ->groupBy('mes')
                 ->orderBy('mes')
@@ -484,7 +484,7 @@ class ReporteController extends Controller
 
             $costosMensualGlobal = ParteDiario::whereIn('id_lote', $lotes->pluck('id_lote'))
                 ->whereBetween('fecha', [$fechaDesde->toDateString(), $fechaHasta->toDateString()])
-                ->selectRaw($this->monthFirstDay('fecha').' as mes')
+                ->selectRaw($this->primerDiaDelMes('fecha').' as mes')
                 ->selectRaw('SUM(COALESCE(costo_total_dia, 0)) as costo_total')
                 ->groupBy('mes')
                 ->orderBy('mes')
@@ -747,7 +747,7 @@ class ReporteController extends Controller
      * Reemplaza el DATE_TRUNC específico de PostgreSQL para que los gráficos por
      * mes funcionen también en SQLite (tests) y MySQL.
      */
-    private function monthFirstDay(string $column): string
+    private function primerDiaDelMes(string $column): string
     {
         $driver = DB::getDriverName();
         if ($driver === 'pgsql') {
