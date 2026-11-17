@@ -70,8 +70,10 @@ class ProcesoMantenimientoService
      * Caso de uso del proceso automático por umbral para una maquinaria.
      *
      * Si supera el umbral y no tiene orden abierta: resuelve la fecha por clima,
-     * crea la orden en transacción (personal, stock del kit, propuesta de compra
-     * y notificación interna) y envía el email con adjuntos después del commit.
+     * crea la orden en transacción (personal, stock del kit y propuesta de compra)
+     * y, ya confirmada la transacción, registra la notificación interna y envía
+     * el email con adjuntos. Ambos avisos son best-effort: el invariante es la
+     * orden, no el aviso.
      *
      * @param  Maquinaria  $maquinaria  Maquinaria a verificar
      * @param  TipoMantenimiento  $tipoPreventivo  Tipo preventivo del catálogo
@@ -99,7 +101,7 @@ class ProcesoMantenimientoService
 
         $programacion = $this->resolverFechaProgramadaPorClima($maquinaria);
 
-        [$faltaStock, $insumosConProblema, $propuesta, $mantenimiento] = DB::transaction(function () use ($maquinaria, $tipoPreventivo, $programacion, $toneladasDesdeUltimo) {
+        [$faltaStock, $insumosConProblema, $propuesta, $mantenimiento, $asignacion] = DB::transaction(function () use ($maquinaria, $tipoPreventivo, $programacion) {
             $mantenimiento = $this->mantenimientoService->crearMantenimiento([
                 'id_maquinaria' => $maquinaria->id_maquinaria,
                 'id_tipo_mantenimiento' => $tipoPreventivo->id_tipo_mantenimiento,
@@ -122,16 +124,16 @@ class ProcesoMantenimientoService
                 $propuesta = $this->propuestaCompraService->crearPropuesta($mantenimiento, $insumosConProblema);
             }
 
-            $this->crearNotificacionInterna(
-                mantenimiento: $mantenimiento,
-                maquinaria: $maquinaria,
-                toneladasDesdeUltimo: $toneladasDesdeUltimo,
-                programacion: $programacion,
-                asignacion: $asignacion
-            );
-
-            return [$faltaStock, $insumosConProblema, $propuesta, $mantenimiento];
+            return [$faltaStock, $insumosConProblema, $propuesta, $mantenimiento, $asignacion];
         });
+
+        $this->crearNotificacionInterna(
+            mantenimiento: $mantenimiento,
+            maquinaria: $maquinaria,
+            toneladasDesdeUltimo: $toneladasDesdeUltimo,
+            programacion: $programacion,
+            asignacion: $asignacion
+        );
 
         $this->propuestaCompraService->enviarCorreoOrden($mantenimiento, $propuesta);
 
@@ -183,8 +185,11 @@ class ProcesoMantenimientoService
     }
 
     /**
-     * Marca como vencidos los mantenimientos no confirmados cuya fecha pasó
-     * y crea la notificación interna de respaldo para los usuarios configurados.
+     * Marca como vencidos los mantenimientos no confirmados cuya fecha pasó y
+     * crea la notificación interna de respaldo para los usuarios configurados.
+     *
+     * El cambio de estado es transaccional; la notificación se crea después del
+     * commit y es best-effort: si falla, la orden queda vencida igual.
      *
      * @param  string  $hoy  Fecha de hoy (Y-m-d)
      * @return Collection<int, Mantenimiento> Mantenimientos marcados como vencidos
@@ -203,7 +208,6 @@ class ProcesoMantenimientoService
         DB::transaction(function () use ($vencidos) {
             foreach ($vencidos as $mantenimiento) {
                 $mantenimiento->update(['estado' => 'vencido']);
-                $this->crearNotificacionVencido($mantenimiento);
 
                 Log::warning('Mantenimiento vencido', [
                     'id_mantenimiento' => $mantenimiento->id_mantenimiento,
@@ -212,6 +216,10 @@ class ProcesoMantenimientoService
                 ]);
             }
         });
+
+        foreach ($vencidos as $mantenimiento) {
+            $this->crearNotificacionVencido($mantenimiento);
+        }
 
         return $vencidos;
     }
@@ -483,6 +491,9 @@ class ProcesoMantenimientoService
     /**
      * Crea la notificación interna de umbral alcanzado (canal de registro)
      * para los usuarios configurados.
+     *
+     * Best-effort: corre fuera de la transacción de la orden y cualquier fallo
+     * se registra con el contexto necesario para reprocesarlo a mano.
      */
     private function crearNotificacionInterna(
         Mantenimiento $mantenimiento,
@@ -496,7 +507,10 @@ class ProcesoMantenimientoService
                 ->cargarConfiguracionMantenimiento()['umbral'];
 
             if (empty($idsUsuarios)) {
-                Log::warning('No hay usuarios configurados para notificacion interna de umbral.');
+                Log::warning('No hay usuarios configurados para notificacion interna de umbral.', [
+                    'id_mantenimiento' => $mantenimiento->id_mantenimiento,
+                    'id_maquinaria' => $maquinaria->id_maquinaria,
+                ]);
 
                 return;
             }
@@ -523,13 +537,20 @@ class ProcesoMantenimientoService
                 ]);
             }
         } catch (\Throwable $e) {
-            Log::error('Error en crearNotificacionInterna', ['error' => $e->getMessage()]);
+            Log::error('Error creando notificacion interna de umbral alcanzado', [
+                'id_mantenimiento' => $mantenimiento->id_mantenimiento,
+                'id_maquinaria' => $maquinaria->id_maquinaria,
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 
     /**
      * Crea la notificación interna de mantenimiento vencido (respaldo del
      * recordatorio por email) para los usuarios configurados.
+     *
+     * Best-effort: corre fuera de la transacción de estado y cualquier fallo se
+     * registra con el contexto necesario para reprocesarlo a mano.
      */
     private function crearNotificacionVencido(Mantenimiento $mantenimiento): void
     {
@@ -556,7 +577,11 @@ class ProcesoMantenimientoService
                 ]);
             }
         } catch (\Throwable $e) {
-            Log::error('Error creando notificacion de mantenimiento vencido', ['error' => $e->getMessage()]);
+            Log::error('Error creando notificacion de mantenimiento vencido', [
+                'id_mantenimiento' => $mantenimiento->id_mantenimiento,
+                'id_maquinaria' => $mantenimiento->id_maquinaria,
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 }

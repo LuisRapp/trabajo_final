@@ -11,6 +11,8 @@ use App\Models\TipoMantenimiento;
 use App\Models\Usuario;
 use App\Services\ClimaDecisionService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Log;
 
 beforeEach(function () {
     TipoMantenimiento::factory()->preventivo()->create();
@@ -46,6 +48,47 @@ test('check-umbrales genera orden y notificacion interna al superarse el umbral'
             ->where('tipo', 'umbral_alcanzado')
             ->count()
     )->toBe(1);
+});
+
+test('check-umbrales registra el contexto de la orden cuando falla la notificacion interna', function () {
+    $usuario = Usuario::factory()->create();
+    DB::table('configuracion_notificaciones_mantenimiento')->insert([
+        'user_id' => $usuario->id,
+        'tipo_notificacion' => 'umbral',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $maquinaria = Maquinaria::factory()->create([
+        'estado' => 'disponible',
+        'umbral_toneladas' => 1000,
+        'toneladas_acumuladas' => 1500,
+    ]);
+
+    Log::spy();
+    Event::listen('eloquent.creating: '.NotificacionSistema::class, function () {
+        throw new RuntimeException('fallo simulado de notificacion');
+    });
+
+    $this->artisan('mantenimiento:check-umbrales')->assertExitCode(0);
+
+    $orden = Mantenimiento::query()
+        ->where('id_maquinaria', $maquinaria->id_maquinaria)
+        ->first();
+
+    expect($orden)->not->toBeNull()
+        ->and($orden->estado)->toBe('programado')
+        ->and(
+            NotificacionSistema::query()->where('tipo', 'umbral_alcanzado')->count()
+        )->toBe(0);
+
+    Log::shouldHaveReceived('error')
+        ->withArgs(function (string $mensaje, array $contexto = []) use ($orden, $maquinaria) {
+            return ($contexto['id_mantenimiento'] ?? null) === $orden->id_mantenimiento
+                && ($contexto['id_maquinaria'] ?? null) === $maquinaria->id_maquinaria
+                && str_contains((string) ($contexto['error'] ?? ''), 'fallo simulado');
+        })
+        ->once();
 });
 
 test('check-umbrales no genera orden cuando ya existe una orden abierta', function () {
