@@ -3,11 +3,10 @@
 use App\Http\Livewire\Maquinarias;
 use App\Models\Maquinaria;
 use App\Models\TipoMaquinaria;
-use App\Models\Usuario;
 use Livewire\Livewire;
 
 test('usuario autenticado puede renderizar', function () {
-    Livewire::actingAs(Usuario::factory()->create())
+    Livewire::actingAs(usuarioConPermisos(['crear-maquinarias', 'editar-maquinarias', 'eliminar-maquinarias']))
         ->test(Maquinarias::class)
         ->assertStatus(200);
 });
@@ -15,7 +14,7 @@ test('usuario autenticado puede renderizar', function () {
 test('puede crear una maquinaria', function () {
     $tipo = TipoMaquinaria::factory()->create();
 
-    Livewire::actingAs(Usuario::factory()->create())
+    Livewire::actingAs(usuarioConPermisos(['crear-maquinarias', 'editar-maquinarias', 'eliminar-maquinarias']))
         ->test(Maquinarias::class)
         ->set('id_tipo_maquinaria', $tipo->id_tipo_maquinaria)
         ->set('modelo', 'JD-5500')
@@ -32,7 +31,7 @@ test('puede crear una maquinaria', function () {
 test('puede editar una maquinaria', function () {
     $maquinaria = Maquinaria::factory()->create();
 
-    Livewire::actingAs(Usuario::factory()->create())
+    Livewire::actingAs(usuarioConPermisos(['crear-maquinarias', 'editar-maquinarias', 'eliminar-maquinarias']))
         ->test(Maquinarias::class)
         ->call('editar', $maquinaria->id_maquinaria)
         ->set('modelo', 'JD-9999')
@@ -45,7 +44,7 @@ test('puede editar una maquinaria', function () {
 test('puede eliminar una maquinaria (soft delete)', function () {
     $maquinaria = Maquinaria::factory()->create();
 
-    Livewire::actingAs(Usuario::factory()->create())
+    Livewire::actingAs(usuarioConPermisos(['crear-maquinarias', 'editar-maquinarias', 'eliminar-maquinarias']))
         ->test(Maquinarias::class)
         ->call('eliminar', $maquinaria->id_maquinaria);
 
@@ -53,7 +52,7 @@ test('puede eliminar una maquinaria (soft delete)', function () {
 });
 
 test('valida campos obligatorios al crear', function () {
-    Livewire::actingAs(Usuario::factory()->create())
+    Livewire::actingAs(usuarioConPermisos(['crear-maquinarias', 'editar-maquinarias', 'eliminar-maquinarias']))
         ->test(Maquinarias::class)
         ->call('guardar')
         ->assertHasErrors(['id_tipo_maquinaria', 'modelo', 'estado']);

@@ -3,14 +3,7 @@
 use App\Http\Livewire\Recibos;
 use App\Models\Empleado;
 use App\Models\Recibo;
-use App\Models\Usuario;
 use Livewire\Livewire;
-use Spatie\Permission\Models\Permission;
-
-beforeEach(function () {
-    Permission::firstOrCreate(['name' => 'crear-recibos', 'guard_name' => 'web']);
-    Permission::firstOrCreate(['name' => 'editar-recibos', 'guard_name' => 'web']);
-});
 
 test('invitado es redirigido al login', function () {
     $this->get('/recibos')
@@ -18,7 +11,7 @@ test('invitado es redirigido al login', function () {
 });
 
 test('usuario autenticado puede renderizar componente', function () {
-    $user = Usuario::factory()->create();
+    $user = usuarioConPermisos(['crear-recibos', 'editar-recibos', 'eliminar-recibos']);
 
     Livewire::actingAs($user)
         ->test(Recibos::class)
@@ -26,7 +19,7 @@ test('usuario autenticado puede renderizar componente', function () {
 });
 
 test('puede crear un recibo', function () {
-    $user = Usuario::factory()->create();
+    $user = usuarioConPermisos(['crear-recibos', 'editar-recibos', 'eliminar-recibos']);
     $empleado = Empleado::factory()->create();
 
     Livewire::actingAs($user)
@@ -43,7 +36,7 @@ test('puede crear un recibo', function () {
 });
 
 test('puede editar un recibo', function () {
-    $user = Usuario::factory()->create();
+    $user = usuarioConPermisos(['crear-recibos', 'editar-recibos', 'eliminar-recibos']);
     $recibo = Recibo::factory()->create(['monto_bruto' => 5000, 'descuentos' => 0]);
 
     Livewire::actingAs($user)
@@ -62,7 +55,7 @@ test('puede editar un recibo', function () {
 });
 
 test('puede eliminar un recibo', function () {
-    $user = Usuario::factory()->create();
+    $user = usuarioConPermisos(['crear-recibos', 'editar-recibos', 'eliminar-recibos']);
     $recibo = Recibo::factory()->create();
 
     Livewire::actingAs($user)

@@ -2,17 +2,16 @@
 
 use App\Http\Livewire\TiposMaquinaria;
 use App\Models\TipoMaquinaria;
-use App\Models\Usuario;
 use Livewire\Livewire;
 
 test('usuario autenticado puede renderizar', function () {
-    Livewire::actingAs(Usuario::factory()->create())
+    Livewire::actingAs(usuarioConPermisos(['crear-tipos-maquinaria', 'editar-tipos-maquinaria', 'eliminar-tipos-maquinaria']))
         ->test(TiposMaquinaria::class)
         ->assertStatus(200);
 });
 
 test('puede crear un tipo de maquinaria', function () {
-    Livewire::actingAs(Usuario::factory()->create())
+    Livewire::actingAs(usuarioConPermisos(['crear-tipos-maquinaria', 'editar-tipos-maquinaria', 'eliminar-tipos-maquinaria']))
         ->test(TiposMaquinaria::class)
         ->set('nombre', 'Motosierra')
         ->call('guardar')
@@ -24,7 +23,7 @@ test('puede crear un tipo de maquinaria', function () {
 test('puede editar un tipo de maquinaria', function () {
     $tipo = TipoMaquinaria::factory()->create(['nombre' => 'Viejo']);
 
-    Livewire::actingAs(Usuario::factory()->create())
+    Livewire::actingAs(usuarioConPermisos(['crear-tipos-maquinaria', 'editar-tipos-maquinaria', 'eliminar-tipos-maquinaria']))
         ->test(TiposMaquinaria::class)
         ->call('editar', $tipo->id_tipo_maquinaria)
         ->set('nombre', 'Nuevo')
@@ -37,7 +36,7 @@ test('puede editar un tipo de maquinaria', function () {
 test('puede eliminar un tipo de maquinaria (soft delete)', function () {
     $tipo = TipoMaquinaria::factory()->create();
 
-    Livewire::actingAs(Usuario::factory()->create())
+    Livewire::actingAs(usuarioConPermisos(['crear-tipos-maquinaria', 'editar-tipos-maquinaria', 'eliminar-tipos-maquinaria']))
         ->test(TiposMaquinaria::class)
         ->call('eliminar', $tipo->id_tipo_maquinaria);
 
@@ -45,7 +44,7 @@ test('puede eliminar un tipo de maquinaria (soft delete)', function () {
 });
 
 test('valida nombre obligatorio', function () {
-    Livewire::actingAs(Usuario::factory()->create())
+    Livewire::actingAs(usuarioConPermisos(['crear-tipos-maquinaria', 'editar-tipos-maquinaria', 'eliminar-tipos-maquinaria']))
         ->test(TiposMaquinaria::class)
         ->set('nombre', '')
         ->call('guardar')

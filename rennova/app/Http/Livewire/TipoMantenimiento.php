@@ -50,6 +50,7 @@ class TipoMantenimiento extends Component
 
     public function guardar()
     {
+        $this->authorize($this->tipo_id ? 'editar-tipos-mantenimiento' : 'crear-tipos-mantenimiento');
         $this->validate();
 
         $this->servicio->crearOActualizar($this->tipo_id, [
@@ -64,6 +65,7 @@ class TipoMantenimiento extends Component
 
     public function editar($id)
     {
+        $this->authorize('editar-tipos-mantenimiento');
         $this->tab_activo = 'nuevo';
         $tipo = $this->servicio->obtener($id);
         $this->tipo_id = $tipo->id_tipo_mantenimiento;
@@ -72,6 +74,7 @@ class TipoMantenimiento extends Component
 
     public function eliminar($id)
     {
+        $this->authorize('eliminar-tipos-mantenimiento');
         $this->servicio->eliminar($id);
         session()->flash('message', 'Tipo de mantenimiento dado de baja.');
     }

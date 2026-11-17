@@ -22,7 +22,7 @@ class ProgramarMantenimientoTest extends TestCase
     {
         parent::setUp();
 
-        $this->usuario = Usuario::factory()->create();
+        $this->usuario = usuarioConPermisos(['crear-mantenimientos', 'reprogramar-mantenimiento']);
     }
 
     // =========================================================================

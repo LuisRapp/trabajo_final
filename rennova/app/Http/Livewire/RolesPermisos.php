@@ -100,6 +100,7 @@ class RolesPermisos extends Component
 
     public function updateRolePermissions()
     {
+        $this->authorize('gestionar-permisos');
         if (! $this->selectedRole) {
             session()->flash('error', 'Debe seleccionar un rol');
 
@@ -114,6 +115,7 @@ class RolesPermisos extends Component
 
     public function createRole()
     {
+        $this->authorize('gestionar-permisos');
         $this->validate([
             'newRoleName' => 'required|unique:roles,name|min:3',
         ], [
@@ -130,6 +132,7 @@ class RolesPermisos extends Component
 
     public function deleteRole($roleId)
     {
+        $this->authorize('gestionar-permisos');
         $role = Role::find($roleId);
 
         if ($role->name === 'Administrador') {
@@ -163,6 +166,7 @@ class RolesPermisos extends Component
 
     public function updateUserRoles()
     {
+        $this->authorize('gestionar-permisos');
         if (! $this->selectedUser) {
             session()->flash('error', 'Debe seleccionar un usuario');
 

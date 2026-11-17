@@ -83,6 +83,7 @@ class Recibos extends Component
 
     public function guardar()
     {
+        $this->authorize($this->recibo_id ? 'editar-recibos' : 'crear-recibos');
         $this->validate();
 
         $this->calcularMontoNeto();
@@ -102,6 +103,7 @@ class Recibos extends Component
 
     public function editar($id)
     {
+        $this->authorize('editar-recibos');
         $recibo = $this->servicio->obtener($id);
         $this->recibo_id = $recibo->id_recibo;
         $this->id_empleado = $recibo->id_empleado;
@@ -114,6 +116,7 @@ class Recibos extends Component
 
     public function eliminar($id)
     {
+        $this->authorize('eliminar-recibos');
         $this->servicio->eliminar($id);
         session()->flash('message', 'Recibo dado de baja correctamente.');
     }

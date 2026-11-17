@@ -41,7 +41,24 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+function usuarioConPermisos(array $permisos = []): \App\Models\Usuario
 {
-    // ..
+    $usuario = \App\Models\Usuario::factory()->create();
+
+    if ($permisos === []) {
+        return $usuario;
+    }
+
+    app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+
+    foreach ($permisos as $permiso) {
+        \Spatie\Permission\Models\Permission::firstOrCreate([
+            'name' => $permiso,
+            'guard_name' => 'web',
+        ]);
+    }
+
+    $usuario->givePermissionTo($permisos);
+
+    return $usuario;
 }

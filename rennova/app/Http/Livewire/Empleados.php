@@ -74,6 +74,7 @@ class Empleados extends Component
 
     public function guardar()
     {
+        $this->authorize($this->empleado_id ? 'editar-empleados' : 'crear-empleados');
         $this->validate();
 
         $this->servicio->crearOActualizar($this->empleado_id, [
@@ -94,6 +95,7 @@ class Empleados extends Component
 
     public function editar($id)
     {
+        $this->authorize('editar-empleados');
         $this->tab_activo = 'nuevo';
         $empleado = $this->servicio->obtener($id);
         $this->empleado_id = $empleado->id_empleado;
@@ -108,6 +110,7 @@ class Empleados extends Component
 
     public function eliminar($id)
     {
+        $this->authorize('eliminar-empleados');
         $this->servicio->eliminar($id);
         session()->flash('message', 'Empleado eliminado correctamente.');
         $this->resetPage();

@@ -9,7 +9,6 @@ use App\Models\Maquinaria;
 use App\Models\PropuestaAsignacion;
 use App\Models\PropuestaAsignacionEmpleado;
 use App\Models\PropuestaAsignacionMaquinaria;
-use App\Models\Usuario;
 use App\Services\AutomaticAllocationService;
 use Illuminate\Support\Facades\Notification;
 use Livewire\Livewire;
@@ -17,7 +16,7 @@ use Livewire\Livewire;
 beforeEach(function () {
     Notification::fake();
 
-    $this->usuario = Usuario::factory()->create();
+    $this->usuario = usuarioConPermisos(['crear-propuestas-asignacion', 'editar-propuestas-asignacion']);
 });
 
 // =========================================================================

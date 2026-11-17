@@ -65,6 +65,7 @@ class HistoricoCostosMaquinarias extends Component
 
     public function guardar()
     {
+        $this->authorize($this->historico_id ? 'editar-historico-costos-maquinarias' : 'crear-historico-costos-maquinarias');
         $this->validate();
 
         $this->servicio->crearOActualizar($this->historico_id, [
@@ -82,6 +83,7 @@ class HistoricoCostosMaquinarias extends Component
 
     public function editar($id)
     {
+        $this->authorize('editar-historico-costos-maquinarias');
         $historico = $this->servicio->obtener($id);
         $this->tab_activo = 'nuevo';
         $this->historico_id = $historico->id_costo;
@@ -93,6 +95,7 @@ class HistoricoCostosMaquinarias extends Component
 
     public function eliminar($id)
     {
+        $this->authorize('eliminar-historico-costos-maquinarias');
         $this->servicio->eliminar($id);
         session()->flash('message', 'Histórico eliminado correctamente.');
     }

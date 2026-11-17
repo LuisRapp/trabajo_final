@@ -130,6 +130,7 @@ class Mantenimientos extends Component
 
     public function guardar()
     {
+        $this->authorize($this->mantenimiento_id ? 'editar-mantenimientos' : 'crear-mantenimientos');
         $this->validate();
 
         $servicio = app(MantenimientoService::class);
@@ -164,6 +165,7 @@ class Mantenimientos extends Component
 
     public function editar($id)
     {
+        $this->authorize('editar-mantenimientos');
         $mantenimiento = app(MantenimientoService::class)->obtenerMantenimientoParaEditar($id);
 
         $this->mantenimiento_id = $mantenimiento->id_mantenimiento;
@@ -177,6 +179,7 @@ class Mantenimientos extends Component
 
     public function eliminar($id)
     {
+        $this->authorize('eliminar-mantenimientos');
         app(MantenimientoService::class)->eliminarMantenimiento($id);
         session()->flash('message', 'Mantenimiento eliminado correctamente.');
     }
@@ -201,6 +204,7 @@ class Mantenimientos extends Component
 
     public function confirmarMantenimiento($id)
     {
+        $this->authorize('confirmar-mantenimiento');
         $resultado = app(MantenimientoService::class)->confirmarMantenimiento($id, Auth::id());
 
         if ($resultado['success']) {
@@ -214,6 +218,7 @@ class Mantenimientos extends Component
 
     public function reprogramarMantenimiento($id)
     {
+        $this->authorize('reprogramar-mantenimiento');
         $resultado = app(MantenimientoService::class)->reprogramarMantenimiento($id);
 
         if ($resultado['success']) {

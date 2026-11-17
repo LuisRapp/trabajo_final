@@ -4,7 +4,6 @@ use App\Http\Livewire\Adelantos;
 use App\Models\Adelanto;
 use App\Models\Empleado;
 use App\Models\RolLaboral;
-use App\Models\Usuario;
 use Livewire\Livewire;
 
 function crearEmpleadoValido(): Empleado
@@ -15,7 +14,7 @@ function crearEmpleadoValido(): Empleado
 }
 
 test('usuario autenticado puede renderizar', function () {
-    Livewire::actingAs(Usuario::factory()->create())
+    Livewire::actingAs(usuarioConPermisos(['crear-adelantos', 'editar-adelantos', 'eliminar-adelantos']))
         ->test(Adelantos::class)
         ->assertStatus(200);
 });
@@ -23,7 +22,7 @@ test('usuario autenticado puede renderizar', function () {
 test('puede crear un adelanto', function () {
     $empleado = crearEmpleadoValido();
 
-    Livewire::actingAs(Usuario::factory()->create())
+    Livewire::actingAs(usuarioConPermisos(['crear-adelantos', 'editar-adelantos', 'eliminar-adelantos']))
         ->test(Adelantos::class)
         ->set('id_empleado', $empleado->id_empleado)
         ->set('monto', 1500)
@@ -42,7 +41,7 @@ test('puede editar un adelanto', function () {
         'fecha_emision' => '2026-01-15',
     ]);
 
-    Livewire::actingAs(Usuario::factory()->create())
+    Livewire::actingAs(usuarioConPermisos(['crear-adelantos', 'editar-adelantos', 'eliminar-adelantos']))
         ->test(Adelantos::class)
         ->call('editar', $adelanto->id_adelanto)
         ->set('monto', 2500)
@@ -55,7 +54,7 @@ test('puede editar un adelanto', function () {
 test('puede eliminar un adelanto (soft delete)', function () {
     $adelanto = Adelanto::factory()->create();
 
-    Livewire::actingAs(Usuario::factory()->create())
+    Livewire::actingAs(usuarioConPermisos(['crear-adelantos', 'editar-adelantos', 'eliminar-adelantos']))
         ->test(Adelantos::class)
         ->call('eliminar', $adelanto->id_adelanto);
 
@@ -63,7 +62,7 @@ test('puede eliminar un adelanto (soft delete)', function () {
 });
 
 test('valida campos obligatorios al crear', function () {
-    Livewire::actingAs(Usuario::factory()->create())
+    Livewire::actingAs(usuarioConPermisos(['crear-adelantos', 'editar-adelantos', 'eliminar-adelantos']))
         ->test(Adelantos::class)
         ->call('guardar')
         ->assertHasErrors(['id_empleado', 'monto', 'fecha_emision']);

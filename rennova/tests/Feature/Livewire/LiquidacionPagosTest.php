@@ -13,7 +13,6 @@ use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Livewire\Livewire;
-use Spatie\Permission\Models\Permission;
 use Tests\TestCase;
 
 class LiquidacionPagosTest extends TestCase
@@ -32,17 +31,13 @@ class LiquidacionPagosTest extends TestCase
 
         Mail::fake();
 
-        // Create permissions needed for the view's @canany directives
-        $permVer = Permission::firstOrCreate(['name' => 'ver-liquidacion-pagos', 'guard_name' => 'web']);
-        $permCrear = Permission::firstOrCreate(['name' => 'crear-liquidacion-pagos', 'guard_name' => 'web']);
-        $permEditar = Permission::firstOrCreate(['name' => 'editar-liquidacion-pagos', 'guard_name' => 'web']);
-
-        $this->usuario = Usuario::factory()->create([
-            'nombre' => 'Admin',
-            'apellido' => 'Test',
+        $this->usuario = usuarioConPermisos([
+            'ver-liquidacion-pagos',
+            'crear-liquidacion-pagos',
+            'editar-liquidacion-pagos',
+            'crear-recibos',
         ]);
-
-        $this->usuario->givePermissionTo([$permVer, $permCrear, $permEditar]);
+        $this->usuario->update(['nombre' => 'Admin', 'apellido' => 'Test']);
 
         $this->rolLaboral = RolLaboral::create([
             'nombre' => 'Operario',

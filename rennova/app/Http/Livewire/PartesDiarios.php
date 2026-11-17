@@ -203,6 +203,7 @@ class PartesDiarios extends Component
 
     public function crearTareaRapida()
     {
+        $this->authorize('crear-partes-diarios');
         if (! $this->id_lote) {
             session()->flash('error', 'Seleccione un lote antes de crear una tarea.');
 
@@ -380,6 +381,7 @@ class PartesDiarios extends Component
 
     public function guardar()
     {
+        $this->authorize($this->parte_id ? 'editar-partes-diarios' : 'crear-partes-diarios');
         $this->validate();
 
         // Guard adicional: bloquear fecha futura por seguridad
@@ -489,6 +491,7 @@ class PartesDiarios extends Component
 
     public function editar($id): void
     {
+        $this->authorize('editar-partes-diarios');
         $datos = PartesDiariosService::cargarParaEdicion($id);
 
         $this->parte_id = $datos['parte_id'];
@@ -510,6 +513,7 @@ class PartesDiarios extends Component
 
     public function eliminar($id)
     {
+        $this->authorize('eliminar-partes-diarios');
         ParteDiario::findOrFail($id)->delete();
         // $this->cargarPartes();
         session()->flash('message', 'Parte diario eliminado correctamente.');

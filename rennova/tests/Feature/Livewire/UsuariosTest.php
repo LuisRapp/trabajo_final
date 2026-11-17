@@ -24,8 +24,7 @@ test('usuario sin permiso no puede acceder', function () {
 });
 
 test('usuario con permiso puede renderizar componente', function () {
-    $user = Usuario::factory()->create();
-    $user->givePermissionTo('gestionar-usuarios');
+    $user = usuarioConPermisos(['gestionar-usuarios', 'crear-usuarios', 'editar-usuarios', 'eliminar-usuarios']);
 
     Livewire::actingAs($user)
         ->test(Usuarios::class)
@@ -33,8 +32,7 @@ test('usuario con permiso puede renderizar componente', function () {
 });
 
 test('puede crear un usuario', function () {
-    $user = Usuario::factory()->create();
-    $user->givePermissionTo('gestionar-usuarios');
+    $user = usuarioConPermisos(['gestionar-usuarios', 'crear-usuarios', 'editar-usuarios', 'eliminar-usuarios']);
 
     Livewire::actingAs($user)
         ->test(Usuarios::class)
@@ -52,8 +50,7 @@ test('puede crear un usuario', function () {
 });
 
 test('puede editar un usuario', function () {
-    $admin = Usuario::factory()->create();
-    $admin->givePermissionTo('gestionar-usuarios');
+    $admin = usuarioConPermisos(['gestionar-usuarios', 'crear-usuarios', 'editar-usuarios', 'eliminar-usuarios']);
     $target = Usuario::factory()->create(['nombre' => 'Ana', 'apellido' => 'García']);
 
     Livewire::actingAs($admin)
@@ -70,8 +67,7 @@ test('puede editar un usuario', function () {
 });
 
 test('puede eliminar un usuario', function () {
-    $admin = Usuario::factory()->create();
-    $admin->givePermissionTo('gestionar-usuarios');
+    $admin = usuarioConPermisos(['gestionar-usuarios', 'crear-usuarios', 'editar-usuarios', 'eliminar-usuarios']);
     $target = Usuario::factory()->create();
 
     Livewire::actingAs($admin)

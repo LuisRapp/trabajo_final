@@ -24,7 +24,7 @@ class GestionMantenimientosTest extends TestCase
     {
         parent::setUp();
 
-        $this->usuario = Usuario::factory()->create();
+        $this->usuario = usuarioConPermisos(['confirmar-mantenimiento', 'completar-mantenimiento']);
     }
 
     private function mockService(): \Mockery\MockInterface

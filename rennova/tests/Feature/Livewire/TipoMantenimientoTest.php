@@ -2,17 +2,16 @@
 
 use App\Http\Livewire\TipoMantenimiento;
 use App\Models\TipoMantenimiento as TipoMantenimientoModel;
-use App\Models\Usuario;
 use Livewire\Livewire;
 
 test('usuario autenticado puede renderizar', function () {
-    Livewire::actingAs(Usuario::factory()->create())
+    Livewire::actingAs(usuarioConPermisos(['crear-tipos-mantenimiento', 'editar-tipos-mantenimiento', 'eliminar-tipos-mantenimiento']))
         ->test(TipoMantenimiento::class)
         ->assertStatus(200);
 });
 
 test('puede crear un tipo de mantenimiento', function () {
-    Livewire::actingAs(Usuario::factory()->create())
+    Livewire::actingAs(usuarioConPermisos(['crear-tipos-mantenimiento', 'editar-tipos-mantenimiento', 'eliminar-tipos-mantenimiento']))
         ->test(TipoMantenimiento::class)
         ->set('nombre', 'Preventivo')
         ->call('guardar')
@@ -24,7 +23,7 @@ test('puede crear un tipo de mantenimiento', function () {
 test('puede editar un tipo de mantenimiento', function () {
     $tipo = TipoMantenimientoModel::factory()->create(['nombre' => 'Viejo']);
 
-    Livewire::actingAs(Usuario::factory()->create())
+    Livewire::actingAs(usuarioConPermisos(['crear-tipos-mantenimiento', 'editar-tipos-mantenimiento', 'eliminar-tipos-mantenimiento']))
         ->test(TipoMantenimiento::class)
         ->call('editar', $tipo->id_tipo_mantenimiento)
         ->set('nombre', 'Nuevo')
@@ -37,7 +36,7 @@ test('puede editar un tipo de mantenimiento', function () {
 test('puede eliminar un tipo de mantenimiento (soft delete)', function () {
     $tipo = TipoMantenimientoModel::factory()->create();
 
-    Livewire::actingAs(Usuario::factory()->create())
+    Livewire::actingAs(usuarioConPermisos(['crear-tipos-mantenimiento', 'editar-tipos-mantenimiento', 'eliminar-tipos-mantenimiento']))
         ->test(TipoMantenimiento::class)
         ->call('eliminar', $tipo->id_tipo_mantenimiento);
 
@@ -45,7 +44,7 @@ test('puede eliminar un tipo de mantenimiento (soft delete)', function () {
 });
 
 test('valida nombre obligatorio', function () {
-    Livewire::actingAs(Usuario::factory()->create())
+    Livewire::actingAs(usuarioConPermisos(['crear-tipos-mantenimiento', 'editar-tipos-mantenimiento', 'eliminar-tipos-mantenimiento']))
         ->test(TipoMantenimiento::class)
         ->set('nombre', '')
         ->call('guardar')

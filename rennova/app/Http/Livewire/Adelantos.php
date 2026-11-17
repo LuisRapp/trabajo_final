@@ -70,6 +70,7 @@ class Adelantos extends Component
 
     public function guardar()
     {
+        $this->authorize($this->adelanto_id ? 'editar-adelantos' : 'crear-adelantos');
         $this->validate();
 
         Adelanto::updateOrCreate(
@@ -88,6 +89,7 @@ class Adelantos extends Component
 
     public function editar($id)
     {
+        $this->authorize('editar-adelantos');
         $adelanto = Adelanto::findOrFail($id);
         $this->adelanto_id = $adelanto->id_adelanto;
         $this->id_empleado = $adelanto->id_empleado;
@@ -98,6 +100,7 @@ class Adelantos extends Component
 
     public function eliminar($id)
     {
+        $this->authorize('eliminar-adelantos');
         Adelanto::findOrFail($id)->delete();
         session()->flash('message', 'Adelanto eliminado correctamente.');
         $this->resetPage();

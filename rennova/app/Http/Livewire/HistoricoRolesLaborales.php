@@ -69,6 +69,7 @@ class HistoricoRolesLaborales extends Component
 
     public function guardar()
     {
+        $this->authorize($this->historico_id ? 'editar-historico-roles-laborales' : 'crear-historico-roles-laborales');
         $this->validate();
 
         $this->servicio->crearOActualizar($this->historico_id, [
@@ -88,6 +89,7 @@ class HistoricoRolesLaborales extends Component
 
     public function editar($id)
     {
+        $this->authorize('editar-historico-roles-laborales');
         $historico = $this->servicio->obtener($id);
         $this->tab_activo = 'nuevo';
         $this->historico_id = $historico->id;
@@ -101,6 +103,7 @@ class HistoricoRolesLaborales extends Component
 
     public function eliminar($id)
     {
+        $this->authorize('eliminar-historico-roles-laborales');
         $this->servicio->eliminar($id);
         session()->flash('message', 'Histórico eliminado correctamente.');
         $this->resetCampos();

@@ -21,7 +21,7 @@ class ConfiguracionKitsTest extends TestCase
     {
         parent::setUp();
 
-        $this->usuario = Usuario::factory()->create();
+        $this->usuario = usuarioConPermisos(['crear-kits-mantenimiento', 'editar-kits-mantenimiento', 'eliminar-kits-mantenimiento']);
     }
 
     // =========================================================================

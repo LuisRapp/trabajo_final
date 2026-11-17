@@ -84,6 +84,7 @@ class LotePlanificacionTareas extends Component
 
     public function guardar(): void
     {
+        $this->authorize('editar-lotes');
         $this->guardando = true;
 
         try {

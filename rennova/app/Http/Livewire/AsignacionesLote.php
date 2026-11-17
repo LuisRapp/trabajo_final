@@ -96,6 +96,7 @@ class AsignacionesLote extends Component
 
     public function guardar()
     {
+        $this->authorize('crear-asignaciones-lote');
         $this->validate();
         $this->guardando = true;
 
@@ -145,6 +146,7 @@ class AsignacionesLote extends Component
 
     public function eliminarAsignacion($loteId)
     {
+        $this->authorize('eliminar-asignaciones-lote');
         try {
             $servicio = app(AsignacionLoteService::class);
             $servicio->eliminarAsignaciones($loteId, $this->datosSolicitud());
@@ -158,6 +160,7 @@ class AsignacionesLote extends Component
 
     public function liberar($loteId)
     {
+        $this->authorize('editar-asignaciones-lote');
         try {
             $finalizado = app(AsignacionLoteService::class)->finalizar((int) $loteId, $this->datosSolicitud());
 
@@ -182,6 +185,7 @@ class AsignacionesLote extends Component
 
     public function cancelar()
     {
+        $this->authorize('editar-asignaciones-lote');
         $this->resetCampos();
         $this->mostrar_historial = true;
     }

@@ -4,14 +4,7 @@ use App\Http\Livewire\ListaPrecios;
 use App\Models\CategoriaClientePrecio;
 use App\Models\CategoriaMadera;
 use App\Models\Cliente;
-use App\Models\Usuario;
 use Livewire\Livewire;
-use Spatie\Permission\Models\Permission;
-
-beforeEach(function () {
-    Permission::firstOrCreate(['name' => 'crear-lista-precios', 'guard_name' => 'web']);
-    Permission::firstOrCreate(['name' => 'editar-lista-precios', 'guard_name' => 'web']);
-});
 
 test('invitado es redirigido al login', function () {
     $this->get('/lista-precios')
@@ -19,7 +12,7 @@ test('invitado es redirigido al login', function () {
 });
 
 test('usuario autenticado puede renderizar componente', function () {
-    $user = Usuario::factory()->create();
+    $user = usuarioConPermisos(['crear-lista-precios', 'editar-lista-precios', 'eliminar-lista-precios']);
 
     Livewire::actingAs($user)
         ->test(ListaPrecios::class)
@@ -27,7 +20,7 @@ test('usuario autenticado puede renderizar componente', function () {
 });
 
 test('puede crear un precio', function () {
-    $user = Usuario::factory()->create();
+    $user = usuarioConPermisos(['crear-lista-precios', 'editar-lista-precios', 'eliminar-lista-precios']);
     $cliente = Cliente::factory()->create();
     $categoria = CategoriaMadera::factory()->create();
 
@@ -47,7 +40,7 @@ test('puede crear un precio', function () {
 });
 
 test('puede editar un precio', function () {
-    $user = Usuario::factory()->create();
+    $user = usuarioConPermisos(['crear-lista-precios', 'editar-lista-precios', 'eliminar-lista-precios']);
     $precio = CategoriaClientePrecio::factory()->create(['precio' => 100]);
 
     Livewire::actingAs($user)
@@ -64,7 +57,7 @@ test('puede editar un precio', function () {
 });
 
 test('puede eliminar un precio', function () {
-    $user = Usuario::factory()->create();
+    $user = usuarioConPermisos(['crear-lista-precios', 'editar-lista-precios', 'eliminar-lista-precios']);
     $precio = CategoriaClientePrecio::factory()->create();
 
     Livewire::actingAs($user)

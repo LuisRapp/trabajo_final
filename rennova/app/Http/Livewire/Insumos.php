@@ -67,6 +67,7 @@ class Insumos extends Component
 
     public function guardar()
     {
+        $this->authorize($this->insumo_id ? 'editar-insumos' : 'crear-insumos');
         $this->validate();
 
         $this->servicio->crearOActualizar($this->insumo_id, [
@@ -84,6 +85,7 @@ class Insumos extends Component
 
     public function editar($id)
     {
+        $this->authorize('editar-insumos');
         $this->tab_activo = 'nuevo';
         $insumo = $this->servicio->obtener($id);
         $this->insumo_id = $insumo->id_insumo;
@@ -95,6 +97,7 @@ class Insumos extends Component
 
     public function eliminar($id)
     {
+        $this->authorize('eliminar-insumos');
         $this->servicio->eliminar($id);
         session()->flash('message', 'Insumo eliminado correctamente.');
     }

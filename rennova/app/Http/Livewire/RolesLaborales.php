@@ -50,6 +50,7 @@ class RolesLaborales extends Component
 
     public function guardar()
     {
+        $this->authorize($this->rol_id ? 'editar-roles-laborales' : 'crear-roles-laborales');
         $this->validate();
 
         $this->servicio->crearOActualizar($this->rol_id, [
@@ -64,6 +65,7 @@ class RolesLaborales extends Component
 
     public function editar($id)
     {
+        $this->authorize('editar-roles-laborales');
         $this->tab_activo = 'nuevo';
         $rol = $this->servicio->obtener($id);
         $this->rol_id = $rol->id_rol_laboral;
@@ -72,6 +74,7 @@ class RolesLaborales extends Component
 
     public function eliminar($id)
     {
+        $this->authorize('eliminar-roles-laborales');
         $this->servicio->eliminar($id);
         session()->flash('message', 'Rol eliminado correctamente.');
     }

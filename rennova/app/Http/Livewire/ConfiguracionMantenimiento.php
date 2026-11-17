@@ -28,6 +28,7 @@ class ConfiguracionMantenimiento extends Component
 
     public function guardarConfiguracion()
     {
+        $this->authorize('configurar-mantenimiento');
         $this->validate([
             'hora_recordatorio' => 'required|date_format:H:i',
             'expresion_cron' => 'required|string',
@@ -61,6 +62,7 @@ class ConfiguracionMantenimiento extends Component
 
     public function ejecutarVerificacionUmbrales()
     {
+        $this->authorize('configurar-mantenimiento');
         try {
             Artisan::call('mantenimiento:check-umbrales');
             $output = Artisan::output();
@@ -73,6 +75,7 @@ class ConfiguracionMantenimiento extends Component
 
     public function ejecutarVerificacionProgramados()
     {
+        $this->authorize('configurar-mantenimiento');
         try {
             Artisan::call('mantenimiento:check-programados');
             $output = Artisan::output();

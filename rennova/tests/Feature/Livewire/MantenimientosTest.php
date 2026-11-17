@@ -24,7 +24,7 @@ class MantenimientosTest extends TestCase
     {
         parent::setUp();
 
-        $this->usuario = Usuario::factory()->create();
+        $this->usuario = usuarioConPermisos(['crear-mantenimientos', 'editar-mantenimientos', 'eliminar-mantenimientos', 'confirmar-mantenimiento', 'reprogramar-mantenimiento']);
     }
 
     // =========================================================================
