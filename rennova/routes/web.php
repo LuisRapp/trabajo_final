@@ -114,7 +114,7 @@ Route::middleware(['auth'])->group(function () {
     // Programar Mantenimiento (alta de orden) o confirmar orden generada por notificacion
     Route::get('/programar-mantenimiento/{notificacionId?}', function ($notificacionId = null) {
         return view('programar-mantenimiento.index', ['notificacionId' => $notificacionId ?? null]);
-    })->name('programar-mantenimiento');
+    })->middleware(['permission:ver-mantenimientos'])->name('programar-mantenimiento');
 
     // Configuración de Kits de Mantenimiento Preventivo (UI original)
     Route::view('/kits-mantenimiento', 'kits-mantenimiento.index')->middleware(['permission:ver-kits-mantenimiento'])->name('kits-mantenimiento.index');
@@ -125,7 +125,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/recibos', [ReciboController::class, 'index'])->middleware(['permission:ver-recibos'])->name('recibos.index');
 
     Route::get('/historico-costos-maquinarias', [HistoricoCostosMaquinariaController::class, 'index'])->middleware(['permission:ver-historico-costos-maquinarias'])->name('historico-costos-maquinarias.index');
-    Route::view('/historico-roles-laborales', 'historico-roles-laborales.index')->middleware(['permission:ver-historico-roles-laborales'])->name('historico-roles-laborales.index');
+    Route::view('/historico-roles-laborales', 'historico-roles-laborales.index')->middleware(['permission:ver-roles-laborales'])->name('historico-roles-laborales.index');
     Route::view('/lista-precios', 'lista-precios.index')->middleware(['permission:ver-lista-precios'])->name('lista-precios.index');
 
     // Auditorías
