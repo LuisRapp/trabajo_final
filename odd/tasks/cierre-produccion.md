@@ -248,7 +248,7 @@ porque no están claras".
 
 ### Cambios de código
 
-1. **`ver-*` a nivel ruta** (849133a): toda ruta de módulo exige `permission:ver-<modulo>`. Hallazgo en el camino: **Cargas y Choferes son controladores, no Livewire**, así que F3 no les puso `authorize()`; se les agrega `ver-/crear-/editar-/eliminar-` en sus rutas. Test nuevo `VerPermisoRutasTest` (50 casos).
+1. **`ver-*` a nivel ruta** (849133a): toda ruta de módulo exige `permission:ver-<modulo>`. Hallazgo en el camino: **Cargas y Choferes tienen rutas de formulario legadas** (create/edit/store/update/destroy, controladores) que no estaban gateadas — la UI real usa los componentes Livewire, que F3 ya cubrió con `authorize()`. Se gatearon también esas rutas legadas (defensa en profundidad, no se linkean desde la UI). Test nuevo `VerPermisoRutasTest` (52 casos).
 2. **Adelantos al 50%** (b120d5b): `EmpleadoPagoService::montoMaximoAdelanto()` (50% del promedio de recibos del empleado); el componente `Adelantos::guardar` valida contra el tope. **Edge case documentado**: sin liquidaciones, el tope es 0 (no se adelanta).
 3. **`activo` → `en_proceso`** (89a9793): asignar recursos a un lote activo lo pone `en_proceso`, igual que la confirmación de una propuesta. Cierra la inconsistencia (antes la propuesta transicionaba y la asignación manual no).
 

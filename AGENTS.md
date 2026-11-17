@@ -64,8 +64,10 @@
 
 - `ver-<modulo>` bloquea la página a nivel ruta (no solo oculta el link del
   sidebar).
-- Cargas y Choferes (controladores, no Livewire) usan `ver-`/`crear-`/
-  `editar-`/`eliminar-<modulo>` en sus rutas.
+- Las rutas de formulario legadas de Cargas y Choferes (`create`/`edit`/
+  `store`/`update`/`destroy`) se gatearon con `ver-`/`crear-`/`editar-`/
+  `eliminar-<modulo>`. La UI real usa los componentes Livewire, ya cubiertos por
+  los `authorize()` de F3.
 
 ## Deuda explícita (pendiente de definición)
 
