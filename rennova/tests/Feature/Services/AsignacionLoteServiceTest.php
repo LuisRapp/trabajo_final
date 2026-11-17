@@ -15,6 +15,40 @@ function datosSolicitudAsignacion(): array
     ];
 }
 
+it('rechaza asignar un empleado ya asignado a un lote en proceso', function () {
+    $loteEnProceso = Lote::factory()->enProceso()->create();
+    $loteNuevo = Lote::factory()->activo()->create();
+    $empleado = Empleado::factory()->create(['fecha_fin_actividades' => null]);
+
+    $loteEnProceso->empleados()->attach($empleado->id_empleado);
+
+    expect(fn () => app(AsignacionLoteService::class)->asignarRecursos(
+        $loteNuevo->id_lote,
+        [$empleado->id_empleado],
+        [],
+        datosSolicitudAsignacion()
+    ))->toThrow(\RuntimeException::class, 'ya asignado');
+
+    expect($loteNuevo->empleados()->count())->toBe(0);
+});
+
+it('rechaza asignar una maquinaria ya asignada a un lote en proceso', function () {
+    $loteEnProceso = Lote::factory()->enProceso()->create();
+    $loteNuevo = Lote::factory()->activo()->create();
+    $maquinaria = Maquinaria::factory()->create();
+
+    $loteEnProceso->maquinarias()->attach($maquinaria->id_maquinaria);
+
+    expect(fn () => app(AsignacionLoteService::class)->asignarRecursos(
+        $loteNuevo->id_lote,
+        [],
+        [$maquinaria->id_maquinaria],
+        datosSolicitudAsignacion()
+    ))->toThrow(\RuntimeException::class, 'ya asignada');
+
+    expect($loteNuevo->maquinarias()->count())->toBe(0);
+});
+
 it('rechaza asignar un empleado ya asignado a otro lote activo', function () {
     $loteActivo = Lote::factory()->activo()->create();
     $loteNuevo = Lote::factory()->activo()->create();
@@ -114,4 +148,17 @@ it('no cambia el estado de un lote en proceso al reasignar recursos', function (
     );
 
     expect($lote->fresh()->estado)->toBe('en_proceso');
+});
+
+it('no transiciona a en proceso si la asignacion queda vacia', function () {
+    $lote = Lote::factory()->activo()->create();
+
+    app(AsignacionLoteService::class)->asignarRecursos(
+        $lote->id_lote,
+        [],
+        [],
+        datosSolicitudAsignacion()
+    );
+
+    expect($lote->fresh()->estado)->toBe('activo');
 });

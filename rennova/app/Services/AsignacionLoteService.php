@@ -53,7 +53,8 @@ class AsignacionLoteService
             // Regla del ciclo de vida: asignar recursos a un lote activo lo
             // pone en proceso. Es el mismo disparador que la confirmación de
             // una propuesta, para que el flujo manual y el automático coincidan.
-            if ($lote->estado === 'activo') {
+            // No transiciona si la asignación quedó vacía (no hay recursos).
+            if ($lote->estado === 'activo' && ($empleadosIds !== [] || $maquinariasIds !== [])) {
                 $lote->update(['estado' => 'en_proceso']);
             }
 
@@ -311,7 +312,7 @@ class AsignacionLoteService
             return;
         }
 
-        $mensaje = 'No se puede guardar: recursos ya asignados a otros lotes activos.';
+        $mensaje = 'No se puede guardar: recursos ya asignados a otros lotes activos o en proceso.';
 
         if (! empty($conflictosEmpleados)) {
             $mensaje .= ' Empleados: '.implode(', ', $conflictosEmpleados).'.';
@@ -325,7 +326,7 @@ class AsignacionLoteService
     }
 
     /**
-     * Detecta conflictos de empleados ya asignados a otros lotes activos.
+     * Detecta conflictos de empleados ya asignados a otros lotes activos o en proceso.
      *
      * @return array<string>
      */
@@ -336,7 +337,7 @@ class AsignacionLoteService
         }
 
         $conflictos = [];
-        $lotesConflicto = Lote::where('estado', 'activo')
+        $lotesConflicto = Lote::whereIn('estado', ['activo', 'en_proceso'])
             ->where('id_lote', '!=', $loteId)
             ->whereHas('empleados', function ($q) use ($empleadosIds) {
                 $q->whereIn('empleados.id_empleado', $empleadosIds);
@@ -357,7 +358,7 @@ class AsignacionLoteService
     }
 
     /**
-     * Detecta conflictos de maquinarias ya asignadas a otros lotes activos.
+     * Detecta conflictos de maquinarias ya asignadas a otros lotes activos o en proceso.
      *
      * @return array<string>
      */
@@ -368,7 +369,7 @@ class AsignacionLoteService
         }
 
         $conflictos = [];
-        $lotesConflicto = Lote::where('estado', 'activo')
+        $lotesConflicto = Lote::whereIn('estado', ['activo', 'en_proceso'])
             ->where('id_lote', '!=', $loteId)
             ->whereHas('maquinarias', function ($q) use ($maquinariasIds) {
                 $q->whereIn('maquinarias.id_maquinaria', $maquinariasIds);
