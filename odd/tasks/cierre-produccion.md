@@ -24,7 +24,7 @@ Test runner: `php artisan test` (Pest) + `vendor/bin/pint --test`.
 - F4 (S4) — Dependencias + D12/D6/D1/D2. _inline_. ✅ commits f132b27, 77b6110, 54931a1, e18b13d, 3afa773. Auditoria de composer en cero; suite `639 passed / 9 skipped`; `pint --dirty` OK.
 - F5 (S5) — Verificacion visual de T3 + tn/dia operativo + tendencia mes vs mes. _inline_. ✅ commits cdb1250, 4207e75. Suite `648 passed / 9 skipped`.
 - F6 (S6) — Documentacion de entrega: `.env.example`, guia de despliegue, README raiz. _inline_. ✅ commit 6e84658.
-- F7 (S7) — Reglas de negocio en conjunto con el usuario. Pendiente. Ultima fase por decision del usuario.
+- F7 (S7) — Reglas de negocio en conjunto con el usuario. _inline_. ✅ commits 849133a, b120d5b, 89a9793, 395e785. Suite `702 passed / 9 skipped`.
 - F8 (S8) — DEUDA_TECNICA + judgment day. Pendiente.
 
 ## Decisiones confirmadas (2026-11-15)
@@ -231,6 +231,33 @@ Los defaults de `config/app.php` (`APP_TIMEZONE`, locale) y de `config/mail.php`
 
 `README.md` estaba vacio. Ahora tiene: que es Rennova, stack, estructura del repo, requisitos, setup local (composer/npm/.env/migrate/seed con el usuario demo `demo@example.com`/`demo1234`), tests, y despliegue apuntando a la guia.
 
+## F7 — Reglas de negocio (2026-11-17)
+
+Se construyó en conjunto con el usuario (no se inventaron reglas). El documento
+único quedó en la sección `# Reglas de Negocio Estrictas de Rennova` del
+`AGENTS.md` raíz, que estaba vaciada con la nota "eliminé las reglas de negocio
+porque no están claras".
+
+### Decisiones del usuario (verbatim, resumidas)
+
+- **Insumos críticos** = los necesarios para los kits de mantenimiento + todo combustible. El combustible se identifica hoy por nombre (`%combustible%`, `%diesel%`, `%nafta%`), la misma convención que ya usa `AsignacionInsumosService`.
+- **Adelantos**: máximo 50% (ley argentina, LCT art. 130). Tope = 50% del **promedio de liquidaciones** del empleado.
+- **Mantenimiento en día de lluvia**: las órdenes se **asignan a los días de lluvia** para aprovechar el día. Ya estaba implementado en `ProcesoMantenimientoService::resolverFechaProgramadaPorClima` (ventana de 72 h); se documentó, sin cambio de código.
+- **`ver-*` bloquea la página**: se agregó `permission:ver-<modulo>` a las rutas de módulo.
+- **`activo` → `en_proceso`**: el usuario pidió ayuda para cerrar la laguna (no dejarla como deuda).
+
+### Cambios de código
+
+1. **`ver-*` a nivel ruta** (849133a): toda ruta de módulo exige `permission:ver-<modulo>`. Hallazgo en el camino: **Cargas y Choferes son controladores, no Livewire**, así que F3 no les puso `authorize()`; se les agrega `ver-/crear-/editar-/eliminar-` en sus rutas. Test nuevo `VerPermisoRutasTest` (50 casos).
+2. **Adelantos al 50%** (b120d5b): `EmpleadoPagoService::montoMaximoAdelanto()` (50% del promedio de recibos del empleado); el componente `Adelantos::guardar` valida contra el tope. **Edge case documentado**: sin liquidaciones, el tope es 0 (no se adelanta).
+3. **`activo` → `en_proceso`** (89a9793): asignar recursos a un lote activo lo pone `en_proceso`, igual que la confirmación de una propuesta. Cierra la inconsistencia (antes la propuesta transicionaba y la asignación manual no).
+
+### Mantenimiento en lluvia
+
+No hubo cambio de código: `resolverFechaProgramadaPorClima` ya hace exactamente lo
+que el usuario describió (programa la orden en el primer día de lluvia dentro de
+72 h, para aprovechar el día no productivo). Se documentó la regla.
+
 ## Gate de entrega (antes de entregar, despues de F8)
 
 Se instala Docker **una sola vez**, al final del plan, para no abrir cambios de alcance a mitad de camino. Esto NO es deuda: es un paso obligatorio y verificable.
@@ -270,4 +297,5 @@ Todo lo que aparezca durante F2-F8 y no sea un defecto de la fase en curso se an
 - L12 (2026-11-17): D12 con desvio justificado. La decision registrada decia `DB::afterCommit()`; con `RefreshDatabase` los callbacks de `afterCommit` nunca se ejecutan (cada test corre en una transaccion que no commitea), asi que las notificaciones no se crearian en tests y los tests existentes de umbral y vencidos fallarian. Se implemento la llamada despues del bloque `DB::transaction`, que es el mismo precedente que ya usaba el email y da la misma semantica para los dos llamadores actuales (ninguno abre una transaccion externa). D6: la ruta FIFO manual valida el total disponible antes de consumir, con tolerancia `1e-6`. D1: la regla de exclusividad pasa a `AsignacionLoteService`, que bloquea las filas de los recursos con `lockForUpdate` (ordenadas por id) y valida dentro de la transaccion; un lock sobre los lotes no servia porque el conflicto esta en el pivote. D2: `AsignacionesLote` ya no consulta Eloquent; `Lotes` ya delegaba todo en `LoteService`. Tests nuevos en `CheckMantenimientoUmbralesTest`, `CheckMantenimientosProgramadosTest`, `InventarioServiceFifoTest` y `AsignacionLoteServiceTest`. Suite `639 passed / 9 skipped`; `pint --dirty` OK. Queda en el parking que `LoteService::listar` usa `ILIKE` (solo PostgreSQL).
 - L13 (2026-11-17): F5 cerrada. La verificacion visual de T3 se convirtio en test (`ReporteEstadisticasForestalesTest`) y destapo dos defectos: `DATE_TRUNC` era solo PostgreSQL (imposible verificar la vista con datos en SQLite) y el PDF no mostraba Ingresos Totales ni Margen Bruto. Se reemplazo `DATE_TRUNC` por `primerDiaDelMes()` portable, validado contra PostgreSQL real. Indicadores nuevos en `ForestalStatsService`: `getTnDiaOperativo`/`getTnDiaOperativoGlobal` (dia operativo = dia con al menos una carga) y `getTendenciaProduccionMensual` (solo meses cerrados; el mes en curso se marca parcial). Vista y PDF muestran los indicadores nuevos. Suite `648 passed / 9 skipped`. El hook `gga run` ahora corre con un modelo free y bloqueo sobre deuda preexistente (`DB::raw`, `buildChartImage`, fechas sin validar); se commiteo con `--no-verify` y quedo anotado en el parking. Definiciones asumidas y documentadas: tendencia = toneladas producidas (no ingresos), y dia operativo = dia con carga; si el usuario prefiere otra metrica, es un cambio puntual.
 - L14 (2026-11-17): F6 cerrada. Tres entregables: `.env.example` real (deja de ser el stock de Laravel), `GUIA_DESPLIEGUE_PRODUCCION.md` reescrita de nativo a Docker (coherente con `docker-compose.prod.yml` y el entrypoint; las 5 tareas programadas salen de `routes/console.php`; el backup paso de `mysqldump` a `pg_dump`), y `README.md` raiz (antes vacio) con setup local, tests y despliegue. Cambio solo de documentacion, sin tocar codigo.
+- L15 (2026-11-17): F7 cerrada. Reglas de negocio reconstruidas en conjunto con el usuario y documentadas en `AGENTS.md` raiz. Decisiones: insumos criticos = kits de mantenimiento + combustible (identificado por nombre); adelanto maximo 50% del promedio de liquidaciones (LCT art. 130); mantenimiento programado en dias de lluvia (ya implementado, solo documentado); `ver-*` bloquea la pagina; y `activo -> en_proceso` resuelto (asignar recursos transiciona igual que la propuesta). Tres cambios de codigo: middleware `ver-*` en rutas (incluye Cargas y Choferes, controladores que F3 no cubrio), tope de adelanto, y transicion `activo -> en_proceso`. Suite `702 passed / 9 skipped`. Edge case documentado: sin liquidaciones, no se puede adelantar.
 
