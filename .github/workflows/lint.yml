@@ -33,5 +33,10 @@ jobs:
       - name: Install Dependencies
         run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
 
+      # Corta el build si reaparece un advisory en runtime o en dev. El lock es
+      # el artefacto que se despliega, asi que el gate mira el lock y no el rango.
+      - name: Auditar dependencias
+        run: composer audit --no-interaction
+
       - name: Run Pint
         run: vendor/bin/pint --test

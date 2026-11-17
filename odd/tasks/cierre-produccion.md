@@ -21,7 +21,7 @@ Test runner: `php artisan test` (Pest) + `vendor/bin/pint --test`.
 - F1 (S1) — Mover workflows a la raiz con `working-directory`, quitar credenciales Flux inexistentes, versionar `storage/framework/views`, corregir Pint y el `tearDownAfterClass` que forzaba exit code 2. _inline_. ✅ commits 1bb1ce6, 9493ebd, a747c1e, d7887c4. CI verde en PHP 8.4.27.
 - F2 (S2) — Docker de produccion: multi-stage, entrypoint corregido, compose dev/prod, `.dockerignore`, job de build en CI. _inline_. ✅ commits ca2497b, a749fd1, 095bf2d, eacf1fa, bf2af59, 393232d. PR #25 mergeado en d18b124. CI verde: `docker`, `tests` y `linter`; el job `docker` ademas verifica el contenido de la imagen.
 - F3 (S3) — Autorizacion server-side: chequeo de permiso dentro de cada accion mutadora de `app/Http/Livewire/`, middleware de permiso en `/adelantos`, y tests por dominio. _inline_. ✅ commit c3a402d. Suite `632 passed / 9 skipped`.
-- F4 (S4) — Dependencias + D12/D6/D1/D2. Pendiente.
+- F4 (S4) — Dependencias + D12/D6/D1/D2. _inline_. ✅ commits f132b27, 77b6110, 54931a1, e18b13d, 3afa773. Auditoria de composer en cero; suite `639 passed / 9 skipped`; `pint --dirty` OK.
 - F5 (S5) — Verificacion visual de T3 + tn/dia operativo + tendencia mes vs mes. Pendiente. Ver `odd/tasks/indicadores-financieros.md` T4.
 - F6 (S6) — Documentacion de entrega: `.env.example`, guia de despliegue, README raiz. Pendiente.
 - F7 (S7) — Reglas de negocio en conjunto con el usuario. Pendiente. Ultima fase por decision del usuario.
@@ -123,6 +123,52 @@ Ninguna ruta de modulo (salvo `/usuarios`, las de mantenimiento especiales, `/ro
 - `PartesDiarios::crearTareaRapida` usa `crear-partes-diarios`, no `editar-lotes`: la accion vive en el flujo del parte diario y la usa el Operador, que no tiene `editar-lotes`. Confirmar en F7.
 - `Mantenimientos::reprogramarMantenimiento` llama internamente a `editar($id)` (que exige `editar-mantenimientos`) cuando el servicio responde bien. Hoy solo el Administrador tiene `reprogramar-mantenimiento`, asi que no se ve; si F7 se lo da a otro rol, hay que alinear ambos permisos.
 
+## F4 — Dependencias y deuda D12/D6/D1/D2 (2026-11-17)
+
+### Dependencias
+
+`composer audit` inicial: **18 paquetes con advisory** (16 en runtime). Se resolvio con `composer update --with-all-dependencies` de los paquetes afectados, no con un update general, para que el diff del lock sea auditable.
+
+Solo dos cambios en `composer.json`:
+
+| Paquete | Antes | Despues | Motivo |
+|---|---|---|---|
+| `dompdf/dompdf` | `2.0` (v2.0.0) | `^3.1.6` (v3.1.6) | 9 advisories, incluido remote file inclusion y chroot bypass; el rango `2.0` no permitia el fix |
+| `pestphp/pest` | `^3.8` (v3.8.4) | `^3.8.7` (v3.8.7) | 3.8.4 conflictua con `phpunit/phpunit >11.5.33`; 3.8.7 destraba el parche |
+
+El resto se movio por resolucion de dependencias dentro de los rangos ya declarados: `laravel/framework` 12.32.5 → 12.73.0, `symfony/*` 7.3 → 7.4.23, `livewire/livewire` 3.6.4 → 3.8.11, `guzzlehttp/guzzle` 7.10.0 → 7.16.3, `guzzlehttp/psr7` 2.8.0 → 2.13.4, `league/commonmark` 2.7.1 → 2.10.7, `league/flysystem` 3.30.0 → 3.36.0, `psy/psysh` 0.12.12 → 0.12.24, `symfony/polyfill-intl-idn` 1.33.0 → 1.43.0, `phpunit/phpunit` 11.5.33 → 11.5.56. `phenx/php-svg-lib` y `phenx/php-font-lib` desaparecen: dompdf 3 usa sus propios forks (`dompdf/php-svg-lib`, `dompdf/php-font-lib`).
+
+Verificacion del salto de major de dompdf, que es el unico cambio con riesgo real:
+- Los 55 tests de `LiquidacionPagosTest` pasan: `generarRecibo` renderiza el comprobante y llama a `output()`.
+- Render real con el mismo bloque de `ReporteController` (`Options` + `getCanvas()->page_script()` con `$fontMetrics`, `$pdf->get_width()` y `$pdf->text()`): `%PDF-`, 12.234 bytes. `page_script` sigue aceptando el callback como string en 3.1.6.
+
+Gate nuevo en CI: `composer audit --no-interaction` en el job `quality` de `lint.yml`. Mira el lock, que es lo que se despliega, y acepta tambien los advisories de dev (hoy cero en ambos).
+
+### D12 — Notificaciones fuera de la transaccion
+
+`crearNotificacionInterna` y `crearNotificacionVencido` se llamaban dentro de `DB::transaction`. Pasan a llamarse despues del commit, igual que el email que ya se enviaba fuera de la transaccion (linea 136). El invariante es la orden; el aviso es best-effort. Los `catch` ahora registran `id_mantenimiento`, `id_maquinaria` y el error.
+
+**Desvio de la decision registrada**: no se uso `DB::afterCommit()`. Con `RefreshDatabase` cada test corre dentro de una transaccion que nunca commitea, asi que los callbacks de `afterCommit` no se ejecutan nunca: las notificaciones no se crearian en tests y los tests existentes de `CheckMantenimientoUmbrales` y `CheckMantenimientosProgramados` fallarian. La llamada posterior al bloque `DB::transaction` da la misma semantica en los dos llamadores actuales (los comandos no abren una transaccion externa) y se puede verificar.
+
+### D6 — Stock en la ruta FIFO manual
+
+`calcularCostoFifoManual` ahora suma `cantidad_disponible` de los lotes disponibles y rechaza antes de consumir si no alcanza, con tolerancia de `1e-6` para no fallar por redondeo de floats. Antes confirmaba una salida parcial sin error; PostgreSQL ya lo validaba en `calcular_costo_fifo()`.
+
+### D1 y D2 — Conflictos y queries fuera de los componentes
+
+- `AsignacionLoteService::asignarRecursos` valida la regla de exclusividad dentro de la transaccion. Bloquea las filas de los recursos (`Empleado` y `Maquinaria`, ordenadas por id para evitar deadlocks) con `lockForUpdate` y recien despues detecta conflictos: dos asignaciones concurrentes del mismo recurso se serializan en esa fila y la segunda ve la asignacion commiteada. Un lock sobre los lotes no alcanza: el conflicto se materializa en el pivote, no en el lote.
+- `AsignacionesLote` pierde las consultas de `mount`, `cargarAsignaciones` y `cargarHistorial`; pasan a `obtenerDatosFormulario()`, `obtenerAsignaciones()` y `obtenerHistorial()` del servicio. El componente conserva el prechequeo de conflictos solo para mostrar la lista legible; el servicio es el que bloquea.
+- `Lotes` ya delegaba todo en `LoteService` (ABM y transicion a `en_proceso`), asi que D2 estaba resuelto de ese lado.
+
+### Tests agregados
+
+| Archivo | Caso |
+|---|---|
+| `CheckMantenimientoUmbralesTest` | la orden queda creada aunque falle la notificacion, y el log lleva el contexto |
+| `CheckMantenimientosProgramadosTest` | el lote queda vencido aunque falle la notificacion, y el log lleva el contexto |
+| `InventarioServiceFifoTest` | rechaza la salida cuando el stock no alcanza, sin movimientos ni consumo |
+| `AsignacionLoteServiceTest` (nuevo) | empleado y maquinaria ya asignados a otro lote activo; mismo lote; lote cerrado |
+
 ## Gate de entrega (antes de entregar, despues de F8)
 
 Se instala Docker **una sola vez**, al final del plan, para no abrir cambios de alcance a mitad de camino. Esto NO es deuda: es un paso obligatorio y verificable.
@@ -142,6 +188,7 @@ Todo lo que aparezca durante F2-F8 y no sea un defecto de la fase en curso se an
 
 - Precio promedio por categoria de madera (descartado de F5, ver `indicadores-financieros.md` L7).
 - D13, D14 (deuda aceptada).
+- `LoteService::listar` usa `ILIKE`, que solo existe en PostgreSQL. Produccion es PostgreSQL y los tests no ejercitan la busqueda, asi que no rompe hoy; si se porta a otro motor o se testea el filtro, reemplazar por `whereLike`.
 - Cualquier mejora de UI que surja al ver la app corriendo durante el Gate de entrega.
 
 ## Log
@@ -156,3 +203,6 @@ Todo lo que aparezca durante F2-F8 y no sea un defecto de la fase en curso se an
 - L8 (2026-11-15): (verbatim) "na chill, no te parece que mejor terminemos el plan que tenemos de las 8 fases y qe de ahi me instale docker, sino voy a ir queriendo meter cambios y se arma un embole". Docker se instala una sola vez al final; se agregan las secciones Gate de entrega y Backlog post-entrega. F2 se cierra con build verde en CI, no con verificacion por uso.
 - L9 (2026-11-15): F2 cerrada. El primer build fallo en `npm run build` (`Can't resolve '../../vendor/livewire/flux/dist/flux.css'`): `resources/css/app.css` importa el CSS de Flux y usa `@source` sobre los stubs de Flux y las vistas de paginacion de Laravel, asi que la etapa de assets necesita `vendor/`. Se resolvio con una etapa `vendor` (`composer install --no-dev --no-scripts`) compartida por `assets` y `runtime`, y una etapa `base` con las extensiones para no compilarlas dos veces. Otros tres defectos detectados en el camino: `docker-php-ext-install pdo` recompilaba una extension ya incluida ("pdo is already loaded"); el entrypoint corria `migrate` y el worker como root mientras Apache escribe como `www-data`, lo que dejaba `laravel.log` sin permiso para `www-data` (se resolvio con `gosu`, y `USUARIO_APP` permite que el compose de desarrollo siga usando root sobre el bind mount); y el job de CI solo construia, sin comprobar que la imagen contuviera el codigo, el vendor y los assets (se agrego `load: true` y una verificacion estructural). Verificado: 95 paquetes de produccion con `dist` (no hace falta `git`), 13 `ext-*` ya compiladas en la imagen oficial, `opcache` ya habilitado por la imagen base.
 - L10 (2026-11-17): F3 cerrada. 101 chequeos `authorize()` en 36 componentes. Dos correcciones de rumbo en el camino: (1) el primer barrido inserto los permisos sin comillas (`authorize(crear-adelantos)`), se revirtio con `git checkout --` y se rehizo; (2) el barrido inicial se guio por nombres de metodo y dejo 10 acciones mutadoras sin guard, que aparecieron con una auditoria estatica posterior (`::create`, `->save`, `->update`, `->delete`, `updateOrCreate`, `->sync`, servicios): `AllocationProposals::generarAhora|guardarSeleccion|aplicar`, `AsignacionesLote::eliminarAsignacion|liberar`, `ConfiguracionKits::eliminarKit`, `Lotes::finalizarLote`, `Mantenimientos::confirmarMantenimiento|reprogramarMantenimiento`, `PartesDiarios::crearTareaRapida`. Los `guardar` de los ABM son upsert (`crearOActualizar($this-><x>_id, ...)`), asi que el guard es condicional (`editar-X` o `crear-X` segun el id) para no bloquear a quien solo tiene `editar-X`. Tests: helper `usuarioConPermisos()` en `tests/Pest.php` (sin seeder, que cuesta 1,6 s por test), 30 archivos existentes actualizados y `AutorizacionTest` nuevo con un caso por dominio; cada caso autentica un usuario con otro permiso del mismo modulo y verifica 403 + no-persistencia. Suite final `632 passed / 9 skipped`; antes de F3 era `449 passed / 174 failed / 9 skipped`. Queda anotado para F7 que ninguna ruta de modulo (salvo `/usuarios`, las de mantenimiento especiales, `/roles-permisos` y ahora `/adelantos`) exige `ver-*`: la pagina se abre con solo estar autenticado y lo protegido es la accion.
+- L11 (2026-11-17): F4 cerrada. Auditoria de dependencias: 18 paquetes con advisory, 16 en runtime. Se resolvio con `composer update -W` de la lista afectada, no con un update general, para que el diff del lock sea auditable. Solo dos entradas de `composer.json` cambiaron: `dompdf/dompdf` de `2.0` a `^3.1.6` (el rango viejo no permitia el fix) y `pest` de `^3.8` a `^3.8.7` (3.8.4 conflictua con `phpunit >11.5.33`). Resultado: `composer audit` en cero, tambien con `--no-dev`. El unico salto con riesgo real era dompdf 2.0 → 3.1.6; se valido con los 55 tests de `LiquidacionPagos` (que renderizan el comprobante y llaman a `output()`) y con un render real del bloque de `ReporteController` que usa `getCanvas()->page_script()`: `%PDF-`, 12.234 bytes. Se agrego `composer audit` al job `quality` para que un advisory nuevo corte el build.
+- L12 (2026-11-17): D12 con desvio justificado. La decision registrada decia `DB::afterCommit()`; con `RefreshDatabase` los callbacks de `afterCommit` nunca se ejecutan (cada test corre en una transaccion que no commitea), asi que las notificaciones no se crearian en tests y los tests existentes de umbral y vencidos fallarian. Se implemento la llamada despues del bloque `DB::transaction`, que es el mismo precedente que ya usaba el email y da la misma semantica para los dos llamadores actuales (ninguno abre una transaccion externa). D6: la ruta FIFO manual valida el total disponible antes de consumir, con tolerancia `1e-6`. D1: la regla de exclusividad pasa a `AsignacionLoteService`, que bloquea las filas de los recursos con `lockForUpdate` (ordenadas por id) y valida dentro de la transaccion; un lock sobre los lotes no servia porque el conflicto esta en el pivote. D2: `AsignacionesLote` ya no consulta Eloquent; `Lotes` ya delegaba todo en `LoteService`. Tests nuevos en `CheckMantenimientoUmbralesTest`, `CheckMantenimientosProgramadosTest`, `InventarioServiceFifoTest` y `AsignacionLoteServiceTest`. Suite `639 passed / 9 skipped`; `pint --dirty` OK. Queda en el parking que `LoteService::listar` usa `ILIKE` (solo PostgreSQL).
+

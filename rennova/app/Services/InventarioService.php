@@ -232,12 +232,34 @@ class InventarioService
         return $lote->save();
     }
 
+    /**
+     * Calcula el consumo FIFO manual para SQLite/testing.
+     *
+     * Valida el stock total disponible antes de consumir: en PostgreSQL lo hace
+     * calcular_costo_fifo(), pero la ruta manual no puede confirmar una salida
+     * parcial sin error.
+     *
+     * @param  int  $idInsumo  Identificador del insumo
+     * @param  float  $cantidad  Cantidad solicitada
+     * @return array<int, array{id_lote_inventario: int, cantidad_consumida: float, precio_unitario: float, costo_parcial: float}>
+     *
+     * @throws \Exception Si el stock disponible no alcanza para la cantidad solicitada
+     */
     private static function calcularCostoFifoManual($idInsumo, $cantidad)
     {
         $lotes = LoteInventario::porInsumo($idInsumo)
             ->disponibles()
             ->orderBy('fecha_compra')
             ->get();
+
+        $disponible = (float) $lotes->sum('cantidad_disponible');
+
+        if ((float) $cantidad > $disponible + 0.000001) {
+            throw new \Exception(
+                "Stock insuficiente para el insumo {$idInsumo}. ".
+                "Solicitado: {$cantidad}. Disponible: {$disponible}"
+            );
+        }
 
         $cantidadRestante = $cantidad;
         $lotesConsumidos = [];

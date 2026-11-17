@@ -17,16 +17,26 @@ class AsignacionLoteService
      * Sincroniza las relaciones de muchos a muchos y registra auditoría
      * de recursos adjuntados y desvinculados, todo dentro de una transacción.
      *
+     * La regla "un recurso no puede estar en dos lotes activos a la vez" se
+     * valida acá: es la única puerta de entrada, así que ningún llamador puede
+     * saltearla. Los recursos se bloquean con lockForUpdate antes de detectar
+     * conflictos para serializar asignaciones concurrentes del mismo recurso.
+     *
      * @param  int  $loteId  Identificador del lote al cual asignar recursos
      * @param  array<int>  $empleadosIds  Identificadores de empleados a asignar
      * @param  array<int>  $maquinariasIds  Identificadores de maquinarias a asignar
      * @param  array  $requestData  Contexto del request: user_id, ip_address, user_agent, url
      * @return array{empleados_adjuntados: array<int>, empleados_desvinculados: array<int>, maquinarias_adjuntadas: array<int>, maquinarias_desvinculadas: array<int>}
+     *
+     * @throws \RuntimeException Si un recurso ya está asignado a otro lote activo
      */
     public function asignarRecursos(int $loteId, array $empleadosIds, array $maquinariasIds, array $requestData): array
     {
         return DB::transaction(function () use ($loteId, $empleadosIds, $maquinariasIds, $requestData) {
             $lote = Lote::findOrFail($loteId);
+
+            $this->bloquearRecursos($empleadosIds, $maquinariasIds);
+            $this->validarConflictos($lote->id_lote, $empleadosIds, $maquinariasIds);
 
             $empleadosActuales = $lote->empleados()->pluck('empleados.id_empleado')->toArray();
             $maquinariasActuales = $lote->maquinarias()->pluck('maquinarias.id_maquinaria')->toArray();
@@ -194,6 +204,117 @@ class AsignacionLoteService
             'user_agent' => $requestData['user_agent'],
             'url' => $requestData['url'],
         ]);
+    }
+
+    /**
+     * Datos de apoyo del formulario de asignaciones.
+     *
+     * @return array{lotes: \Illuminate\Database\Eloquent\Collection<int, Lote>, empleados: \Illuminate\Database\Eloquent\Collection<int, Empleado>, maquinarias: \Illuminate\Database\Eloquent\Collection<int, Maquinaria>}
+     */
+    public function obtenerDatosFormulario(): array
+    {
+        return [
+            'lotes' => Lote::orderBy('id_lote', 'desc')->get(),
+            'empleados' => Empleado::with('rolLaboral')
+                ->whereNull('fecha_fin_actividades')
+                ->orderBy('apellido')
+                ->orderBy('nombre')
+                ->get(),
+            'maquinarias' => Maquinaria::with('tipoMaquinaria')->orderBy('modelo')->get(),
+        ];
+    }
+
+    /**
+     * Recursos ya asignados a un lote, para precargar el formulario.
+     *
+     * @return array{empleados: array<int>, maquinarias: array<int>}
+     */
+    public function obtenerAsignaciones(int $loteId): array
+    {
+        $lote = Lote::with(['empleados:id_empleado', 'maquinarias:id_maquinaria'])->find($loteId);
+
+        if (! $lote) {
+            return ['empleados' => [], 'maquinarias' => []];
+        }
+
+        return [
+            'empleados' => $lote->empleados->pluck('id_empleado')->toArray(),
+            'maquinarias' => $lote->maquinarias->pluck('id_maquinaria')->toArray(),
+        ];
+    }
+
+    /**
+     * Lotes con al menos un recurso asignado, para el historial.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection<int, Lote>
+     */
+    public function obtenerHistorial(): \Illuminate\Database\Eloquent\Collection
+    {
+        return Lote::with(['empleados' => function ($q) {
+            $q->select('empleados.id_empleado', 'apellido', 'nombre');
+        }, 'maquinarias' => function ($q) {
+            $q->select('maquinarias.id_maquinaria', 'modelo');
+        }])
+            ->has('empleados')
+            ->orHas('maquinarias')
+            ->orderBy('id_lote', 'desc')
+            ->get();
+    }
+
+    /**
+     * Bloquea las filas de los recursos a asignar para serializar asignaciones
+     * concurrentes del mismo empleado o maquinaria.
+     *
+     * @param  array<int>  $empleadosIds
+     * @param  array<int>  $maquinariasIds
+     */
+    private function bloquearRecursos(array $empleadosIds, array $maquinariasIds): void
+    {
+        if ($empleadosIds !== []) {
+            Empleado::query()
+                ->whereIn('id_empleado', $empleadosIds)
+                ->orderBy('id_empleado')
+                ->lockForUpdate()
+                ->get(['id_empleado']);
+        }
+
+        if ($maquinariasIds !== []) {
+            Maquinaria::query()
+                ->whereIn('id_maquinaria', $maquinariasIds)
+                ->orderBy('id_maquinaria')
+                ->lockForUpdate()
+                ->get(['id_maquinaria']);
+        }
+    }
+
+    /**
+     * Aplica la regla de exclusividad de recursos entre lotes activos.
+     *
+     * @param  array<int>  $empleadosIds
+     * @param  array<int>  $maquinariasIds
+     *
+     * @throws \RuntimeException Si algún recurso ya está en otro lote activo
+     */
+    private function validarConflictos(int $loteId, array $empleadosIds, array $maquinariasIds): void
+    {
+        $conflictosEmpleados = $this->detectarConflictosEmpleados($loteId, $empleadosIds);
+        $conflictosMaquinarias = $this->detectarConflictosMaquinarias($loteId, $maquinariasIds);
+
+        if (empty($conflictosEmpleados) && empty($conflictosMaquinarias)) {
+            return;
+        }
+
+        $mensaje = 'No se puede guardar: recursos ya asignados a otros lotes activos.';
+
+        if (! empty($conflictosEmpleados)) {
+            $mensaje .= ' Empleados: '.implode(', ', $conflictosEmpleados).'.';
+        }
+
+        if (! empty($conflictosMaquinarias)) {
+            $mensaje .= ' Maquinarias: '.implode(', ', $conflictosMaquinarias).'.';
+        }
+
+        throw new \RuntimeException($mensaje);
     }
 
     /**
