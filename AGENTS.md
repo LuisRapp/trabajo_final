@@ -12,6 +12,9 @@
   de una propuesta. `en_proceso` significa "hay recursos asignados, operando".
 - **`en_proceso` → `cerrado`**: pasa por `finalizar` (liberar), que desvincula
   recursos y cierra las propuestas del lote.
+- **Cerrar o dar de baja** (por `finalizar` o por el formulario de edición)
+  desvincula los recursos y cierra las propuestas del lote: un lote cerrado no
+  puede quedar con recursos colgados.
 - Un recurso (empleado o maquinaria) no puede estar asignado a dos lotes
   activos/en_proceso a la vez.
 
@@ -40,8 +43,9 @@
 
 ## Pagos y adelantos
 
-- **Adelanto ≤ 50% del promedio de liquidaciones del empleado** (LCT art. 130).
-  Sin liquidaciones, el tope es 0: no se puede adelantar.
+- **El total de adelantos pendientes + el nuevo no puede superar el 50% del
+  promedio de liquidaciones del empleado** (LCT art. 130). Sin liquidaciones, el
+  tope es 0: no se puede adelantar.
 - La liquidación descuenta los adelantos pendientes; el monto neto no puede
   quedar negativo.
 
