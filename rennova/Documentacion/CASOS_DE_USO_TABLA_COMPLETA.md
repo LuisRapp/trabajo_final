@@ -1,6 +1,6 @@
 # Casos de Uso del Sistema (Tabla Completa)
 
-Fuente: `rennova/Documentacion/DOCUMENTACION_PROYECTO_REQUISITOS.md`, seccion "Listado de Casos de Uso".
+Fuente: `../../1-Requisitos.docx.md` (raíz del repo), seccion "Listado de Casos de Uso".
 
 ## Observaciones de consistencia
 

@@ -16,9 +16,8 @@ la version vigente (alineada con el sistema post F0-F7):
 - Analisis: `../2.-Análisis.docx.md`
 - Diseño: `../3.-Diseño.doc.md`
 
-Las versiones viejas `DOCUMENTACION_PROYECTO_REQUISITOS.md`,
-`DOCUMENTACION_PROYECTO_ANALISIS.md` y `DOCUMENTACION_PROYECTO_DISENO.md`
-(de aca o de la raiz) quedaron **obsoletas**: no usar como base.
+Las versiones viejas `DOCUMENTACION_PROYECTO_*.md` y los PDF exportados
+fueron **eliminados** del repo.
 
 ## Guias de Uso
 - Gestion de mantenimientos (flujo y UI): `./GUIA_MANTENIMIENTOS_USO.md`
