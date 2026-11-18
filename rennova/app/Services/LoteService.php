@@ -71,9 +71,10 @@ class LoteService
                     $tareasActivas = $this->contarTareasActivas($lote->id_lote);
                 }
 
-                // Cerrar o dar de baja un lote libera sus recursos, igual que
-                // finalizar(): un lote cerrado no puede quedar con recursos colgados.
-                if ($estadoAnterior !== $lote->estado && in_array($lote->estado, ['cerrado', 'baja'], true)) {
+                // Salir de los estados operativos (inactivo, cerrado o baja)
+                // libera los recursos, igual que finalizar(): un lote pausado,
+                // cerrado o dado de baja no retiene empleados ni maquinarias.
+                if ($estadoAnterior !== $lote->estado && in_array($lote->estado, ['inactivo', 'cerrado', 'baja'], true)) {
                     app(AsignacionLoteService::class)->liberarRecursos($lote->id_lote, $requestData);
                 }
             } else {
@@ -101,8 +102,16 @@ class LoteService
         return Lote::findOrFail($id);
     }
 
-    public function eliminar(int $id): void
+    public function eliminar(int $id, array $requestData = []): void
     {
-        Lote::destroy($id);
+        DB::transaction(function () use ($id, $requestData) {
+            $lote = Lote::findOrFail($id);
+
+            // Borrar un lote libera sus recursos y cierra sus propuestas:
+            // no pueden quedar empleados/maquinarias colgados de un lote borrado.
+            app(AsignacionLoteService::class)->liberarRecursos($lote->id_lote, $requestData);
+
+            $lote->delete();
+        });
     }
 }

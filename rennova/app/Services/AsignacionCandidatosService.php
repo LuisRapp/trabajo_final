@@ -310,6 +310,7 @@ class AsignacionCandidatosService
     {
         return DB::table('lote_empleado')
             ->join('lotes', 'lotes.id_lote', '=', 'lote_empleado.id_lote')
+            ->whereNull('lotes.deleted_at')
             ->whereIn('lotes.estado', ['activo', 'en_proceso'])
             ->pluck('lote_empleado.id_empleado')
             ->map(fn ($v) => (int) $v)
@@ -325,6 +326,7 @@ class AsignacionCandidatosService
     {
         return DB::table('lote_maquinaria')
             ->join('lotes', 'lotes.id_lote', '=', 'lote_maquinaria.id_lote')
+            ->whereNull('lotes.deleted_at')
             ->whereIn('lotes.estado', ['activo', 'en_proceso'])
             ->pluck('lote_maquinaria.id_maquinaria')
             ->map(fn ($v) => (int) $v)
