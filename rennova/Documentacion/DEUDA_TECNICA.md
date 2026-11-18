@@ -1,120 +1,104 @@
 # Deuda Técnica Dimensionada
 
-Ultima actualizacion: 21 de septiembre de 2026.
+Ultima actualizacion: 18 de noviembre de 2026.
 
-Estado del trabajo validado al cierre: `php artisan test` = **511 passed, 9 skipped**. Los fixes criticos de las sesiones de refactor (cierres unificados, split de servicios, eliminacion de hard deletes y estados invalidos) fueron verificados como conformes por el review del hook.
-
-Esta documento dimensiona lo que queda: severidad, esfuerzo estimado y riesgo. Es el insumo para planificar las proximas sesiones junto con el plan de 2 sesiones ya guardado en memoria.
+Estado del trabajo validado al cierre de F8: `php artisan test` = **711 passed, 9 skipped**. Este documento dimensiona lo que queda: severidad, esfuerzo estimado y riesgo. Es el insumo para planificar refactors a demanda.
 
 ---
 
 ## Resuelto y verificado (no rehacer)
 
-- Cierre de mantenimiento unificado en `MantenimientoService::completarMantenimiento` (FIFO, snapshot del odometro, costo_mano_obra, guard anti-doble-cierre, fecha opcional). El reviewer confirma conformidad.
-- Cierre de lotes unificado en `AsignacionLoteService::finalizar` (detach con auditoria, estado 'cerrado' valido, guard en el servicio). El hard delete de pivotes y el estado invalido 'terminado' fueron eliminados.
+- Cierre de mantenimiento unificado en `MantenimientoService::completarMantenimiento` (FIFO, snapshot del odometro, costo_mano_obra, guard anti-doble-cierre, fecha opcional).
+- Cierre de lotes unificado en `AsignacionLoteService::finalizar` (detach con auditoria, estado 'cerrado' valido, guard en el servicio).
 - Split de `MantenimientoService` en core + `ProcesoMantenimientoService` (PA-01) + `PropuestaCompraMantenimientoService` + `MailMantenimientoService`.
-- Delegacion completa de `CompletarOrdenModal` y `GestionMantenimientos` a servicios (queries, reglas preventivo/correctivo, aprobacion por servicio).
-- Renombre de tablas/PKs/estados de propuestas de compra al espanol (migracion `2026_09_21_010000`).
-- SoftDeletes verificados en `Carga`, `Mantenimiento`, `Lote`, `PropuestaAsignacion`, `MovimientoStock`: todos los `delete()` sobre ellos son logicos.
+- Delegacion completa de `CompletarOrdenModal` y `GestionMantenimientos` a servicios.
+- Renombre de tablas/PKs/estados de propuestas de compra al espanol.
+- SoftDeletes verificados en `Carga`, `Mantenimiento`, `Lote`, `PropuestaAsignacion`, `MovimientoStock`.
 - Excepcion PostgreSQL (funciones `calcular_costo_fifo`, `obtener_stock_disponible`, `obtener_precio_promedio`) usada conforme: desde Servicio, documentada, con fallback.
+
+### Resueltas en F4 (2026-11-17)
+
+- **D12 — Notificaciones fuera de la transaccion**: `crearNotificacionInterna` y `crearNotificacionVencido` pasan a llamarse despues del `DB::transaction`, igual que el email. El invariante es la orden; el aviso es best-effort con contexto en el log (`id_mantenimiento`, `id_maquinaria`, `error`). Se descarto `DB::afterCommit()`: con `RefreshDatabase` los callbacks nunca se ejecutan.
+- **D6 — Stock en la ruta FIFO manual**: `calcularCostoFifoManual` valida el total disponible antes de consumir (tolerancia `1e-6`).
+- **D1 — Conflictos de asignacion en el Servicio**: `AsignacionLoteService::asignarRecursos` valida la exclusividad dentro de la transaccion con `lockForUpdate` sobre las filas de los recursos. El componente conserva el prechequeo solo para mostrar conflictos. Nota F7: la exclusividad ahora cubre lotes `activo` **y** `en_proceso`.
+- **D2 — Queries fuera de los componentes**: `AsignacionesLote` delega `mount`/`cargarAsignaciones`/`cargarHistorial` a `AsignacionLoteService`; `Lotes` ya delegaba en `LoteService`.
+
+### Resueltas en F7 (2026-11-17)
+
+- **Exclusividad activo/en_proceso**: los 6 metodos que chequeaban "recurso ocupado" (manual, propuesta, candidatos) usaban estados inconsistentes; unificados a `['activo', 'en_proceso']`.
+- **Estados operativos**: `hayLotesActivos()` del panel y el filtro de lotes del reporte de estadisticas solo miraban `activo`; ahora incluyen `en_proceso`.
+- **Cierre de lote por ABM**: `crearOActualizar` libera recursos al pasar a `cerrado`/`baja` (antes quedaban colgados).
 
 ---
 
 ## Pendiente — prioridad ALTA
 
-### D1. Validacion de conflictos de asignacion fuera del Servicio
-- **Donde:** `app/Services/AsignacionLoteService::asignarRecursos` (la regla de "recurso ya asignado a otro lote activo" vive solo en el componente `AsignacionesLote::detectarConflictosEmpleados/Maquinarias`).
-- **Riesgo:** cualquier llamador directo del servicio puede crear dobles asignaciones. Regla critica sin validar en la capa de Servicios (viola el estandar).
-- **Fix:** mover la deteccion al servicio, dentro de la transaccion con `lockForUpdate`.
-- **Esfuerzo:** ~2 h (con tests).
-
-### D2. Queries y reglas de negocio en `AsignacionesLote` y `Lotes`
-- **Donde:** `AsignacionesLote` (mount/cargarAsignaciones/cargarHistorial ~ lineas 50-92, detectarConflictos ~ 246-303), `Lotes` (cargarLotes/guardar/editar/eliminar ~ 51-158, transicion de estado a en_proceso en guardar).
-- **Riesgo:** violacion directa de las prohibiciones arquitectonicas (ERROR del gate). Es lo que bloquea el commit con review.
-- **Fix:** delegar a `AsignacionLoteService` (obtenerRecursosAsignables, detectarConflictos) y a un servicio de lotes para el ABM + transicion de estado.
-- **Esfuerzo:** ~3-4 h (con tests). Incluye D1 naturalmente.
-
 ### D3. SQL crudo en `InventarioService::queryInsumosConStockYPrecio`
-- **Donde:** lineas ~352-374: `selectRaw('COALESCE(SUM(...))')` y `selectRaw('CASE WHEN ...')`.
+- **Donde:** `selectRaw('COALESCE(SUM(...))')` y `selectRaw('CASE WHEN ...')`.
 - **Riesgo:** ERROR del gate (no entra en la excepcion de funciones PostgreSQL).
-- **Fix:** Query Builder con `withSum`/subqueries.
-- **Esfuerzo:** ~1 h.
+- **Fix:** Query Builder con `withSum`/subqueries. **Esfuerzo:** ~1 h.
 
 ---
 
 ## Pendiente — prioridad MEDIA
 
 ### D4. `VentaService`: SQL crudo
-- **Donde:** `buscarCargasPendientes` (~195-215, `DB::raw` para categoria/ROUND/COALESCE) y `listarVentas` (~292, `orWhereRaw` con LOWER/CAST).
-- **Fix:** Query Builder / `whereLike`. **Esfuerzo:** ~1 h. (Sus docblocks en ingles se revertieron a HEAD a proposito para no ampliar el scope del gate; traducir junto con este fix.)
+- **Donde:** `buscarCargasPendientes` (`DB::raw` para categoria/ROUND/COALESCE) y `listarVentas` (`orWhereRaw` con LOWER/CAST).
+- **Fix:** Query Builder / `whereLike`. **Esfuerzo:** ~1 h.
 
 ### D5. Renombre de `AutomaticAllocationService` al espanol
-- **Donde:** clase + metodos `proposeForLotAndTask`, `proposeForLoteTarea`, `ensureWeek1SupplyEstimates`, `findBestFallback` + variables en ingles en `PropuestaAsignacionService` (`$employeeSelected`, `$proposalId`, `$editData`, etc.).
-- **Callers a actualizar:** 2 Jobs (`GenerateAllocationProposalsForLote`, `ProcessAllocationProposal`), `LotePlanificacionTareas`, comandos `allocation:*`, tests, `ARQUITECTURA_ASIGNACION_AUTOMATICA_RECURSOS.md`.
-- **Esfuerzo:** ~2 h. Nota: las tablas `allocation_proposals*` siguen con nombre en ingles (mismo criterio de `D3`-docs: renombrar en una migracion dedicada junto con este trabajo).
-
-### D6. Validacion de stock en la ruta FIFO manual
-- **Donde:** `InventarioService::calcularCostoFifoManual` (no verifica stock total antes de confirmar; en la ruta no-PostgreSQL puede confirmar una salida parcial sin error).
-- **Riesgo:** viola "toda salida de stock debe validar existencia disponible". Solo afecta SQLite/testing (en PG valida la funcion), pero es una regla critica.
-- **Esfuerzo:** ~30 min.
+- **Donde:** clase + metodos `proposeForLotAndTask`, `proposeForLoteTarea`, `ensureWeek1SupplyEstimates`, `findBestFallback` + variables en ingles en `PropuestaAsignacionService`.
+- **Callers:** 2 Jobs, `LotePlanificacionTareas`, comandos `allocation:*`, tests, `ARQUITECTURA_ASIGNACION_AUTOMATICA_RECURSOS.md`.
+- **Esfuerzo:** ~2 h. Las tablas `allocation_proposals*` siguen en ingles (renombrar en migracion dedicada junto con este trabajo).
 
 ---
 
 ## Pendiente — prioridad BAJA (deuda aceptada, planificar a demanda)
 
 ### D7. Transacciones manuales → `DB::transaction()`
-`InventarioService` (registrarSalida/registrarEntrada), `EmpleadoPagoService` (generarRecibo/liquidarTodos), `PartesDiariosService::guardar`, `VentaService` (registrarVenta/darDeBaja/editarVenta). ~1 h mecanico (verificar retornos tempranos antes de convertir, como se hizo en MantenimientoService).
+`InventarioService` (registrarSalida/registrarEntrada), `EmpleadoPagoService` (generarRecibo/liquidarTodos), `PartesDiariosService::guardar`, `VentaService` (registrarVenta/darDeBaja/editarVenta). ~1 h mecanico.
 
 ### D8. N+1 y colecciones en memoria
-- `AnalizarRiesgoClimatico::calcularCostoEstructuralDiario`: por lote carga TODOS los empleados activos y maquinarias alquiladas; ademas la consulta de empleados no filtra por lote pese al comentario.
+- `AnalizarRiesgoClimatico::calcularCostoEstructuralDiario`: por lote carga TODOS los empleados activos y maquinarias alquiladas.
 - `EmpleadoPagoService::calcularPagoRango`: `exists()` por cada parte diario del rango.
 - `MantenimientoService::obtenerInsumosParaCierre`: 2 consultas por insumo.
-- `PartesDiariosService::buscarJornalVigente`: consulta por empleado dentro del bucle.
-- ~2-3 h en total.
+- `PartesDiariosService::buscarJornalVigente`: consulta por empleado dentro del bucle. ~2-3 h.
 
 ### D9. Regla climatica duplicada y calculo hardcodeado
-`AnalizarRiesgoClimatico`: `const UMBRAL_LLUVIA` duplicada con `ClimaDecisionService` y estimacion "10 tn/dia" hardcodeada. Mover el calculo de costo estructural a un servicio. ~30 min.
+`AnalizarRiesgoClimatico`: `const UMBRAL_LLUVIA` duplicada con `ClimaDecisionService` y estimacion "10 tn/dia" hardcodeada. ~30 min.
 
 ### D10. Tamanos/metodos > 80 lineas y servicios con multiples responsabilidades
-- `AnalizarDecisionesClimaticas::handle` (~100), `AnalizarRiesgoClimatico::handle` (~90), `EmpleadoPagoService::calcularPagoRango` (~90).
-- `MantenimientoService` (~600 lineas): candidato a `MantenimientoCierreService` / `MantenimientoConsultaService`.
-- `ProcesoMantenimientoService`: mezcla umbrales + clima + personal + notificaciones (candidato a dividir si crece).
-- Refactor estructural futuro; no urgente.
+- `AnalizarDecisionesClimaticas::handle`, `AnalizarRiesgoClimatico::handle`, `EmpleadoPagoService::calcularPagoRango` (~90).
+- `MantenimientoService` (~600 lineas): candidato a `MantenimientoCierreService` / `MantenimientoConsultaService`. Refactor estructural futuro; no urgente.
 
 ### D11. Menores
-- `Lotes.php` linea ~54: operador `ILIKE` directo (tolerable en PostgreSQL-only; alinear a `whereLike` cuando se toque el archivo).
+- `LoteService::listar` usa `ILIKE` directo (tolerable en PostgreSQL-only; alinear a `whereLike`).
 - `LoteInventario::estaProximoAgotar()` deprecated: eliminar cuando se migren los usos.
+
+### D13. Reglas de clima y "tipo preventivo" duplicadas (MEDIA)
+- **Donde:** `obtenerTipoPreventivo()` re-implementa `whereLike('nombre','%preventivo%')` en vez de `MantenimientoService::esTipoPreventivo()`. `resolverFechaProgramadaPorClima` re-deriva la decision de lluvia (`UMBRAL_LLUVIA` + `str_contains($razon,'lluvia')`) en vez de consumir `ClimaAnalisisService::mapearDiasInactivos()`.
+- **Fix:** delegar en los metodos canonicos. **Esfuerzo:** ~2 h.
+
+### D14. Identificadores en ingles y dedup en memoria (BAJA)
+- `$fallbackDate`, `$fechaRaw`, `$keyword`, `$correoAdmin`; `->get()->unique('mantenimiento_id')->values()`.
+- **Fix:** renombrar a espanol y deduplicar a nivel query. **Esfuerzo:** ~30 min.
 
 ---
 
-## Deuda nueva — detectada por el gate en `ProcesoMantenimientoService` (2026-11-05)
+## Deuda nueva — detectada en F5-F7 (2026-11-17)
 
-Apareció al intentar commitear el checkpoint de kits/indicadores. Es deuda **pre-existente** del archivo, no de esos cambios. Se commiteó con `--no-verify` para no bloquear la etapa financiera.
-
-### D12. Notificaciones que tragan excepciones y rompen la atomicidad (ALTA)
-- **Donde:** `ProcesoMantenimientoService::crearNotificacionInterna` (~494-527) y `crearNotificacionVencido` (~536-560), invocadas dentro de transacciones (102-134 y 203-214).
-- **Riesgo:** el `catch (\Throwable)` solo loguea; la excepcion no propaga, asi que `DB::transaction()` nunca hace rollback: la orden se commitea aunque las notificaciones no se hayan escrito.
-- **Fix:** re-lanzar la excepcion dentro de la transaccion, o mover la creacion de notificaciones fuera de la misma (como se hace con el email en la linea 136).
-- **Esfuerzo:** ~1 h.
-
-### D13. Reglas de clima y "tipo preventivo" duplicadas (MEDIA)
-- **Donde:** `obtenerTipoPreventivo()` (~62-67) re-implementa `whereLike('nombre','%preventivo%')` en vez de usar `MantenimientoService::esTipoPreventivo()`. `resolverFechaProgramadaPorClima` (~327-366) re-deriva la decision de lluvia (`UMBRAL_LLUVIA` + `str_contains($razon,'lluvia')`) en vez de consumir `ClimaAnalisisService::mapearDiasInactivos()`.
-- **Riesgo:** dos copias divergentes de la misma regla (viola la prohibicion de duplicacion de reglas en multiples capas).
-- **Fix:** delegar en los metodos canonicos ya existentes.
-- **Esfuerzo:** ~2 h (cambia la logica de programacion por clima).
-
-### D14. Identificadores en ingles y dedup en memoria (BAJA)
-- **Donde:** `$fallbackDate`, `$fechaRaw`, `$keyword`, `$correoAdmin` (lineas 302, 315, 319, 335, 339, 371, 375, 434); `->get()->unique('mantenimiento_id')->values()` (~180-182).
-- **Fix:** renombrar a espanol y deduplicar a nivel query.
-- **Esfuerzo:** ~30 min.
+- **`ReporteController`**: `DB::raw('peso_neto / 1000.0')` para aritmetica de toneladas, `buildChartImage` con nombre en ingles, y `desde`/`hasta` alimentados a `Carbon::parse` sin validar. Aparecio en el hook `gga run` durante F5.
+- **`contarInsumosCriticos()`** (codigo muerto): cuenta TODOS los insumos bajo umbral, pero la regla documentada es "kits de mantenimiento + combustible" (identificado por nombre). Si se conecta, no va a coincidir.
+- **`completarMantenimiento()`** no exige pasar por "en curso": se puede completar una orden desde "programado" o "vencido". Pre-existente; requiere decision de regla de negocio.
+- **`ReporteController::buildChartImage`** usa `quickchart.io` con `Http::get` sin fake en algunos flujos de test (acoplado a red externa).
 
 ---
 
 ## Sugerencia de orden para la proxima sesion de refactor
 
-1. D2 + D1 juntos (mismo dominio, desbloquea el gate).
-2. D3 + D4 + D6 (SQL crudo + stock, mismo archivo InventarioService/VentaService).
+1. D3 + D4 (SQL crudo, InventarioService/VentaService, desbloquean el gate).
+2. D13 (duplicacion de reglas de clima/tipo, toca la programacion por clima).
 3. D5 (renombre, mecanico pero transversal).
-4. D7-D11 a demanda.
+4. D7-D14 a demanda.
 
-Despues de cada bloque: commit con gate (deberia pasar), y al final del plan: auditoria formal con jueces (judgment day, doble ciego) sobre el acumulado.
+Despues de cada bloque: commit con gate (deberia pasar), y al final: auditoria formal con jueces (judgment day, doble ciego) sobre el acumulado.
