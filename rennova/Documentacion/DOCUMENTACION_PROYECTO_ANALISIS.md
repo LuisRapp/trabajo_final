@@ -1,3 +1,5 @@
+> ⚠️ **OBSOLETO** — reemplazado por la versión canónica: `../2.-Análisis.docx.md` (ver `INDEX.md`).
+
 # Gestion Rennova
 ## Fase II - Analisis del Modelo Conceptual
 - Plan de Iteracion: [Codificacion]

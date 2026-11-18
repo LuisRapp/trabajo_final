@@ -1,4 +1,6 @@
-﻿# Gestion Rennova
+> ⚠️ **OBSOLETO** — reemplazado por la versión canónica: `../1-Requisitos.docx.md` (ver `INDEX.md`).
+
+# Gestion Rennova
 ## Documento de Requisitos del Sistema
 - Iteracion: 1
 - Version: 00.01

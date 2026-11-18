@@ -1,4 +1,6 @@
-﻿# Gestión Rennova — Documentación de Análisis (Fuente de Verdad)
+> ⚠️ **OBSOLETO** — reemplazado por la versión canónica: `2.-Análisis.docx.md` (ver `INDEX.md`).
+
+# Gestión Rennova — Documentación de Análisis (Fuente de Verdad)
 ## Fase II - Análisis del Modelo Conceptual y Alineamiento con Código
 - Última actualización: 2026-05-03
 - Propósito: reconstruir el documento integrado con la implementación real (código) y documentar desalineamientos frente al diseño GRASP/ requisitos.

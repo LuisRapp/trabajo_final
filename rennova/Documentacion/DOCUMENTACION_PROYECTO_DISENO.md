@@ -1,3 +1,5 @@
+> ⚠️ **OBSOLETO** — reemplazado por la versión canónica: `../3.-Diseño.doc.md` (ver `INDEX.md`).
+
 Diseno - Fase de Diseno (UP)
 
 Casos de Usos Reales
