@@ -256,7 +256,9 @@ class AsignacionLoteService
     public function obtenerDatosFormulario(): array
     {
         return [
-            'lotes' => Lote::orderBy('id_lote', 'desc')->get(),
+            // Solo lotes operativos: el formulario asigna recursos y un lote
+            // inactivo/cerrado/baja no los recibe (coherente con asignarRecursos).
+            'lotes' => Lote::whereIn('estado', ['activo', 'en_proceso'])->orderBy('id_lote', 'desc')->get(),
             'empleados' => Empleado::with('rolLaboral')
                 ->whereNull('fecha_fin_actividades')
                 ->orderBy('apellido')
