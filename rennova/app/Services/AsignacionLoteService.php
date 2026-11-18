@@ -35,6 +35,12 @@ class AsignacionLoteService
         return DB::transaction(function () use ($loteId, $empleadosIds, $maquinariasIds, $requestData) {
             $lote = Lote::findOrFail($loteId);
 
+            // Regla del ciclo de vida: solo se asignan recursos a lotes
+            // operativos. Un lote inactivo, cerrado o de baja no recibe recursos.
+            if (! in_array($lote->estado, ['activo', 'en_proceso'], true)) {
+                throw new \RuntimeException("No se pueden asignar recursos a un lote {$lote->estado}.");
+            }
+
             $this->bloquearRecursos($empleadosIds, $maquinariasIds);
             $this->validarConflictos($lote->id_lote, $empleadosIds, $maquinariasIds);
 
@@ -114,7 +120,9 @@ class AsignacionLoteService
         return DB::transaction(function () use ($loteId, $requestData) {
             $lote = Lote::findOrFail($loteId);
 
-            if ($lote->estado === 'cerrado') {
+            // Un lote cerrado o dado de baja ya está en un estado terminal:
+            // no se puede finalizar (ni reabrir) desde ahí.
+            if (in_array($lote->estado, ['cerrado', 'baja'], true)) {
                 return false;
             }
 

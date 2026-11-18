@@ -97,7 +97,7 @@ class PanelControlService
 
     private function mantenimientosPendientes(): int
     {
-        return Mantenimiento::where('estado', 'pendiente')->count();
+        return Mantenimiento::whereIn('estado', ['programado', 'en curso'])->count();
     }
 
     private function proyeccionVsEquilibrio(): array

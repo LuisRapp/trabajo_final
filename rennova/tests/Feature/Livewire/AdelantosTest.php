@@ -151,3 +151,18 @@ test('valida campos obligatorios al crear', function () {
         ->call('guardar')
         ->assertHasErrors(['id_empleado', 'monto', 'fecha_emision']);
 });
+
+test('rechaza un adelanto de monto cero', function () {
+    $empleado = crearEmpleadoValido();
+    crearLiquidaciones($empleado, [5000, 3000]); // tope 2000
+
+    Livewire::actingAs(usuarioConPermisos(['crear-adelantos', 'editar-adelantos', 'eliminar-adelantos']))
+        ->test(Adelantos::class)
+        ->set('id_empleado', $empleado->id_empleado)
+        ->set('monto', 0)
+        ->set('fecha_emision', '2026-01-15')
+        ->call('guardar')
+        ->assertHasErrors(['monto']);
+
+    expect(Adelanto::where('id_empleado', $empleado->id_empleado)->count())->toBe(0);
+});

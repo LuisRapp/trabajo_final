@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Jobs\GenerateAllocationProposalsForLote;
+use App\Models\Empleado;
+use App\Models\Maquinaria;
 use App\Models\PropuestaAsignacion;
 use App\Models\PropuestaAsignacionEmpleado;
 use App\Models\PropuestaAsignacionInsumo;
@@ -205,9 +207,20 @@ class PropuestaAsignacionService
                     return;
                 }
 
+                if ($proposal->status === 'closed') {
+                    throw new \RuntimeException('La propuesta está cerrada y no puede aplicarse.');
+                }
+
                 $lote = $proposal->lote;
                 if (! $lote) {
                     throw new \RuntimeException('La propuesta no tiene lote asociado.');
+                }
+
+                // Regla del ciclo de vida: solo se asignan recursos a lotes
+                // operativos. Un lote inactivo, cerrado o de baja no recibe
+                // asignaciones (la propuesta no puede reabrirlo).
+                if (! in_array($lote->estado, ['activo', 'en_proceso'], true)) {
+                    throw new \RuntimeException("El lote está {$lote->estado} y no puede recibir asignaciones.");
                 }
 
                 $meta = $proposal->meta ?? [];
@@ -241,6 +254,11 @@ class PropuestaAsignacionService
                     ->values()
                     ->toArray();
 
+                // Serializa la asignación concurrente del mismo recurso: bloquea
+                // las filas de empleados y maquinarias antes de verificar
+                // ocupación, igual que el flujo manual (AsignacionLoteService).
+                self::bloquearRecursos($empleadosIds, $maquinariasIds);
+
                 $busyEmployees = self::buscarEmpleadosOcupados($empleadosIds, (int) $lote->id_lote);
                 if (! empty($busyEmployees)) {
                     throw new \RuntimeException('Algunos empleados ya estan asignados a otros lotes en proceso.');
@@ -263,7 +281,9 @@ class PropuestaAsignacionService
                 $proposal->applied_at = now();
                 $proposal->save();
 
-                if ($lote->estado !== 'en_proceso') {
+                // Regla del ciclo de vida: solo un lote activo pasa a en_proceso,
+                // y únicamente si la propuesta asigna al menos un recurso.
+                if ($lote->estado === 'activo' && ($empleadosIds !== [] || $maquinariasIds !== [])) {
                     $lote->update(['estado' => 'en_proceso']);
                 }
             });
@@ -465,6 +485,32 @@ class PropuestaAsignacionService
     }
 
     /**
+     * Bloquea las filas de los recursos a asignar para serializar asignaciones
+     * concurrentes del mismo empleado o maquinaria (igual que el flujo manual).
+     *
+     * @param  array<int>  $empleadosIds
+     * @param  array<int>  $maquinariasIds
+     */
+    private static function bloquearRecursos(array $empleadosIds, array $maquinariasIds): void
+    {
+        if ($empleadosIds !== []) {
+            Empleado::query()
+                ->whereIn('id_empleado', $empleadosIds)
+                ->orderBy('id_empleado')
+                ->lockForUpdate()
+                ->get(['id_empleado']);
+        }
+
+        if ($maquinariasIds !== []) {
+            Maquinaria::query()
+                ->whereIn('id_maquinaria', $maquinariasIds)
+                ->orderBy('id_maquinaria')
+                ->lockForUpdate()
+                ->get(['id_maquinaria']);
+        }
+    }
+
+    /**
      * Busca empleados ya asignados a otros lotes activos o en proceso.
      *
      * @param  array<int>  $empleadosIds
@@ -478,6 +524,7 @@ class PropuestaAsignacionService
 
         return DB::table('lote_empleado as le')
             ->join('lotes as l', 'l.id_lote', '=', 'le.id_lote')
+            ->whereNull('l.deleted_at')
             ->whereIn('l.estado', ['activo', 'en_proceso'])
             ->where('l.id_lote', '!=', $loteActualId)
             ->whereIn('le.id_empleado', $empleadosIds)
@@ -501,6 +548,7 @@ class PropuestaAsignacionService
 
         return DB::table('lote_maquinaria as lm')
             ->join('lotes as l', 'l.id_lote', '=', 'lm.id_lote')
+            ->whereNull('l.deleted_at')
             ->whereIn('l.estado', ['activo', 'en_proceso'])
             ->where('l.id_lote', '!=', $loteActualId)
             ->whereIn('lm.id_maquinaria', $maquinariasIds)

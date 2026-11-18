@@ -26,14 +26,14 @@ class Adelantos extends Component
 
     protected $rules = [
         'id_empleado' => 'required|exists:empleados,id_empleado',
-        'monto' => 'required|numeric|min:0',
+        'monto' => 'required|numeric|min:0.01',
         'fecha_emision' => 'required|date',
     ];
 
     protected $messages = [
         'id_empleado.required' => 'Debe seleccionar un empleado.',
         'monto.required' => 'El monto es obligatorio.',
-        'monto.min' => 'El monto debe ser mayor o igual a 0.',
+        'monto.min' => 'El monto debe ser mayor a 0.',
         'fecha_emision.required' => 'La fecha de adelanto es obligatoria.',
     ];
 

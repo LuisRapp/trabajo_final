@@ -153,7 +153,7 @@ class Lotes extends Component
     public function eliminar($id)
     {
         $this->authorize('eliminar-lotes');
-        $this->servicio->eliminar($id);
+        $this->servicio->eliminar($id, $this->datosSolicitud());
         session()->flash('message', 'Lote eliminado correctamente.');
         $this->resetCampos();
     }
