@@ -25,7 +25,7 @@ Test runner: `php artisan test` (Pest) + `vendor/bin/pint --test`.
 - F5 (S5) — Verificacion visual de T3 + tn/dia operativo + tendencia mes vs mes. _inline_. ✅ commits cdb1250, 4207e75. Suite `648 passed / 9 skipped`.
 - F6 (S6) — Documentacion de entrega: `.env.example`, guia de despliegue, README raiz. _inline_. ✅ commit 6e84658.
 - F7 (S7) — Reglas de negocio en conjunto con el usuario. _inline_. ✅ commits 849133a, b120d5b, 89a9793, 395e785. Suite `702 passed / 9 skipped`.
-- F8 (S8) — DEUDA_TECNICA + judgment day. Pendiente.
+- F8 (S8) — DEUDA_TECNICA + judgment day. _inline_. ✅ commits 65e4edd, ec312af, 27439f7. Veredicto judgment day: APPROVED. Suite `719 passed / 9 skipped`.
 
 ## Decisiones confirmadas (2026-11-15)
 
@@ -258,6 +258,30 @@ No hubo cambio de código: `resolverFechaProgramadaPorClima` ya hace exactamente
 que el usuario describió (programa la orden en el primer día de lluvia dentro de
 72 h, para aprovechar el día no productivo). Se documentó la regla.
 
+## F8 — Deuda técnica + judgment day (2026-11-18)
+
+### DEUDA_TECNICA.md
+
+Actualizada: D1, D2, D6, D12 (resueltas en F4) y las de F7 (exclusividad activo/en_proceso, estados operativos, cierre de lote por ABM) pasaron a "Resuelto". Agregada la deuda nueva de F5-F7. Reorganizadas las prioridades.
+
+### Judgment day (doble ciego)
+
+Dos jueces independientes (`gentle-ai-verify`) revisaron 14 archivos de alto riesgo del acumulado F3-F7.
+
+**Ronda 1** — 7 hallazgos, todos corregidos (ninguno quedó como deuda):
+
+1. `asignarRecursos` permitía colgar recursos en lotes `cerrado`/`baja`/`inactivo` → ahora rechaza lotes no operativos.
+2. `confirmar()` resucitaba lotes cerrados/baja → rechaza propuestas `closed` y lotes no operativos; solo `activo → en_proceso` con selección no vacía.
+3. Race condition: `confirmar()` no hacía `lockForUpdate` sobre recursos → ahora `bloquearRecursos()`, igual que el flujo manual.
+4. Soft-delete: `eliminar()` no liberaba recursos y los joins de "ocupados" no filtraban `deleted_at` → libera antes del delete y filtra `deleted_at`. (Viola la regla explícita de borrado lógico + liberación.)
+5. `finalizar()` revertía `baja` → `cerrado` → ahora rechaza `baja`.
+6. Adelanto de monto 0 → `min:0.01`.
+7. `mantenimientosPendientes()` usaba el estado inexistente `'pendiente'` (siempre daba 0) → `programado` + `en curso`.
+
+**Ronda 2 (re-judgment)** — Judge A limpio; Judge B una SUGGESTION (dropdown mostraba lotes no operativos), también corregida (`obtenerDatosFormulario` filtra a `activo`/`en_proceso`).
+
+**Veredicto: APPROVED ✅**
+
 ## Gate de entrega (antes de entregar, despues de F8)
 
 Se instala Docker **una sola vez**, al final del plan, para no abrir cambios de alcance a mitad de camino. Esto NO es deuda: es un paso obligatorio y verificable.
@@ -299,4 +323,5 @@ Todo lo que aparezca durante F2-F8 y no sea un defecto de la fase en curso se an
 - L14 (2026-11-17): F6 cerrada. Tres entregables: `.env.example` real (deja de ser el stock de Laravel), `GUIA_DESPLIEGUE_PRODUCCION.md` reescrita de nativo a Docker (coherente con `docker-compose.prod.yml` y el entrypoint; las 5 tareas programadas salen de `routes/console.php`; el backup paso de `mysqldump` a `pg_dump`), y `README.md` raiz (antes vacio) con setup local, tests y despliegue. Cambio solo de documentacion, sin tocar codigo.
 - L15 (2026-11-17): F7 cerrada. Reglas de negocio reconstruidas en conjunto con el usuario y documentadas en `AGENTS.md` raiz. Decisiones: insumos criticos = kits de mantenimiento + combustible (identificado por nombre); adelanto maximo 50% del promedio de liquidaciones (LCT art. 130); mantenimiento programado en dias de lluvia (ya implementado, solo documentado); `ver-*` bloquea la pagina; y `activo -> en_proceso` resuelto (asignar recursos transiciona igual que la propuesta). Tres cambios de codigo: middleware `ver-*` en rutas (incluye Cargas y Choferes, controladores que F3 no cubrio), tope de adelanto, y transicion `activo -> en_proceso`. Suite `702 passed / 9 skipped`. Edge case documentado: sin liquidaciones, no se puede adelantar.
 - L16 (2026-11-17): Revision profunda de F7 (permisos + logica) a pedido del usuario. Encontradas y corregidas varias lagunas: (1) **exclusividad de recursos rota entre flujos** — el manual chequeaba solo `activo`, la propuesta y los candidatos solo `en_proceso`; con la transicion `activo -> en_proceso` de F7 un recurso en lote en_proceso quedaba invisible y se podia asignar a dos lotes; los 6 metodos ahora chequean `['activo','en_proceso']`. (2) **estados operativos inconsistentes** — `hayLotesActivos()` del panel y el filtro de lotes del reporte de estadisticas solo miraban `activo`, omitiendo lotes en_proceso (los que realmente operan). (3) Asignar con cero recursos ya no pasa a en_proceso. Dos decisiones del usuario implementadas: **adelanto acumulado** (pendientes + nuevo <= 50% del promedio) y **cerrar/baja libera recursos** desde el ABM. Suite `711 passed / 9 skipped`. Quedan anotados para F8: `contarInsumosCriticos` (codigo muerto) cuenta todos los insumos, no "kits + combustible" como dice la regla; y `completarMantenimiento` no exige pasar por "en curso".
+- L17 (2026-11-18): F8 cerrada. `DEUDA_TECNICA.md` actualizada (D1/D2/D6/D12 resueltas, deuda nueva de F5-F7 agregada). Judgment day doble ciego sobre el acumulado F3-F7: dos jueces independientes, ronda 1 encontro 7 hallazgos (todos corregidos, ninguno como deuda) y ronda 2 volvio limpia salvo una SUGGESTION tambien corregida. **Veredicto APPROVED.** Los 7 bugs: asignar recursos a lote no operativo, confirmar resucitando lotes cerrados, race condition sin lock, soft-delete sin liberar recursos (viola regla explicita), finalizar revirtiendo baja, adelanto monto 0, y mantenimientosPendientes con estado inexistente 'pendiente'. Suite `719 passed / 9 skipped`. El plan F0-F8 queda completo; resta solo el Gate de entrega (Docker).
 
