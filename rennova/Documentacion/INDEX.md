@@ -6,9 +6,18 @@ Indice curado de la documentacion vigente del sistema.
 ## Vision General
 - Resumen ejecutivo, arquitectura, modulos, flujos y BD: `./RESUMEN_PROYECTO.md`
 - Arquitectura de asignacion automatica: `./ARQUITECTURA_ASIGNACION_AUTOMATICA_RECURSOS.md`
-- Requisitos del sistema: `./DOCUMENTACION_PROYECTO_REQUISITOS.md`
-- Analisis del modelo conceptual: `./DOCUMENTACION_PROYECTO_ANALISIS.md`
-- Fase de diseno (UP): `./DOCUMENTACION_PROYECTO_DISENO.md`
+
+### Documentos de catedra (canonicos, en la raiz del repo)
+
+Los tres documentos entregables de la catedra viven en la **raiz del repo** y son
+la version vigente (alineada con el sistema post F0-F7):
+
+- Requisitos: `../1-Requisitos.docx.md`
+- Analisis: `../2.-Análisis.docx.md`
+- Diseño: `../3.-Diseño.doc.md`
+
+Las versiones viejas `DOCUMENTACION_PROYECTO_*.md` y los PDF exportados
+fueron **eliminados** del repo.
 
 ## Guias de Uso
 - Gestion de mantenimientos (flujo y UI): `./GUIA_MANTENIMIENTOS_USO.md`
