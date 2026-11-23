@@ -286,12 +286,64 @@ Dos jueces independientes (`gentle-ai-verify`) revisaron 14 archivos de alto rie
 
 Se instala Docker **una sola vez**, al final del plan, para no abrir cambios de alcance a mitad de camino. Esto NO es deuda: es un paso obligatorio y verificable.
 
-- [ ] Instalar Docker y agregar el usuario al grupo `docker`.
-- [ ] Clonar el repo en un directorio limpio (no el working copy).
-- [ ] `docker compose -f docker-compose.prod.yml up --build` sin tocar nada a mano.
+- [x] Instalar Docker y agregar el usuario al grupo `docker`. (2026-11-20: `usermod -aG docker rluis` + `newgrp docker`; DNS resuelto en `/etc/docker/daemon.json`.)
+- [x] Clonar el repo en un directorio limpio (no el working copy). (`/home/rluis/rennova-entrega`, `.env.production` propio con `APP_KEY` generada y password de DB aleatoria.)
+- [x] `docker compose -f docker-compose.prod.yml up --build` sin tocar nada a mano. (Build multi-stage verde; `rennova_app` Up, `rennova_db` Up healthy; migraciones todas `Ran`.)
 - [ ] Verificar: la app responde, el login funciona, las migraciones corrieron, el queue worker procesa un job y el cron esta programado.
-- [ ] Verificar que el `.env` del working copy **no se modifico** (la APP_KEY local queda intacta).
+  - [x] La app responde y el login funciona. (2026-11-21: fix `f170bd0`, faltaba `meta csrf-token` en `partials/head.blade.php`.)
+  - [x] Migraciones corridas (todas `Ran`).
+  - [x] **Queue worker procesa un job** (2026-11-23): job despachado dentro del contenedor y consumido por el worker; `jobs` volvio a 0 y quedo la marca en `storage/logs/`. Worker corriendo como `www-data` (`queue:work --sleep=3 --tries=3 --timeout=90`).
+  - [x] **Cron programado y disparando** (2026-11-23): `/etc/cron.d/laravel-cron` presente; `schedule:list` muestra 5 tareas (umbrales, decisiones climaticas, riesgo climatico, clima real, mantenimientos programados); sonda de un minuto ejecutada por cron y removida.
+- [x] Verificar que el `.env` del working copy **no se modifico** (2026-11-23: `rennova/.env` con mtime 2026-06-03, anterior a todo el trabajo de Docker; `APP_KEY` local intacta; `git status` limpio).
+- [ ] **Probar funcionalmente la app en el deploy** (guion abajo). Es lo unico que falta para cerrar el gate.
 - [ ] Recien con eso verde: entregar.
+
+### Guion de prueba funcional (deploy en Docker)
+
+Se prueba contra `http://localhost:8080` con el admin creado a mano. Orden pensado
+para que cada modulo tenga los datos que necesita el siguiente.
+
+**Paso 0 - Rebuild con los fixes de UI.** `git pull` + `up -d --build` (Alpine.js
+en `app.js` y redaccion/localizacion de settings). Sin esto el dashboard queda en
+blanco y las tablas con menu desplegable se rompen.
+
+**1. Catalogos base** (una vez, cada uno crear + editar + eliminar):
+categorias de madera, unidades de medida, tipos de maquinaria, roles laborales,
+clientes, proveedores, insumos, kits de mantenimiento.
+
+**2. Recursos**: maquinaria (con costo horario) y empleado (con rol laboral y
+jornal). Verificar que aparecen en los listados y que el buscador filtra.
+
+**3. Ciclo de lote**: crear lote (con coordenadas) -> asignar empleado y
+maquinaria -> el lote pasa a `en_proceso` -> intentar asignar el mismo recurso a
+otro lote y confirmar que lo rechaza (exclusividad) -> finalizar el lote -> los
+recursos quedan liberados y el lote cierra sin recursos colgados.
+
+**4. Produccion**: parte diario / cargas sobre el lote en proceso -> venta de la
+carga (pasa a `facturada`) -> dar de baja la venta (la carga vuelve a
+`pendiente`) -> recibo y adelanto al empleado.
+
+**5. Reglas de negocio de F0-F8** (lo que cambio en el plan):
+- Adelanto: el total pendiente + el nuevo no puede superar el 50% del promedio de
+  liquidaciones; sin liquidaciones el tope es 0.
+- Inventario: una salida mayor al stock se rechaza (nunca stock negativo) y el
+  costo sale por FIFO.
+- Mantenimiento: al superar `umbral_toneladas` se genera la orden preventiva, y
+  queda programada en dia de lluvia o al dia siguiente.
+- Indicadores: costo/tn, punto de equilibrio, tn/dia operativo y tendencia mes vs
+  mes (el mes en curso se marca parcial).
+- Reportes: estadisticas forestales y PDF de clima descargan bien.
+
+**6. Permisos**: crear un usuario con un rol limitado (sin `ver-empleados`) y
+entrar con el; abrir `/empleados` por URL directa debe dar 403, no la pagina.
+
+**7. UI**: dashboard (selector de lote, proyeccion global, mensaje de equilibrio),
+menu de acciones de la tabla de lotes sin romper la tabla, `/settings/profile`
+en espanol.
+
+Cuando algo falla, el log se mira con
+`docker-compose -f docker-compose.prod.yml --env-file .env.production logs --tail=50 app`
+o `... exec -T app tail -50 storage/logs/laravel.log`.
 
 Si algo falla aca, se corrige y se vuelve a correr el gate completo. No se entrega con el gate parcialmente verificado.
 
