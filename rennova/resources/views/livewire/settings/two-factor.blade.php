@@ -157,22 +157,22 @@ new class extends Component {
             return [
                 'title' => __('Two-Factor Authentication Enabled'),
                 'description' => __('Two-factor authentication is now enabled. Scan the QR code or enter the setup key in your authenticator app.'),
-                'buttonText' => __('Close'),
+                'buttonText' => __('Cerrar'),
             ];
         }
 
         if ($this->showVerificationStep) {
             return [
                 'title' => __('Verify Authentication Code'),
-                'description' => __('Enter the 6-digit code from your authenticator app.'),
-                'buttonText' => __('Continue'),
+                'description' => __('Ingresá el código de 6 dígitos de tu app de autenticación.'),
+                'buttonText' => __('Continuar'),
             ];
         }
 
         return [
-            'title' => __('Enable Two-Factor Authentication'),
+            'title' => __('Activar autenticación de doble factor'),
             'description' => __('To finish enabling two-factor authentication, scan the QR code or enter the setup key in your authenticator app.'),
-            'buttonText' => __('Continue'),
+            'buttonText' => __('Continuar'),
         ];
     }
 } ?>
@@ -182,13 +182,13 @@ new class extends Component {
 
     <x-settings.layout
         :heading="__('Two Factor Authentication')"
-        :subheading="__('Manage your two-factor authentication settings')"
+        :subheading="__('Administrá tu autenticación de doble factor')"
     >
         <div class="flex flex-col w-full mx-auto space-y-6 text-sm" wire:cloak>
             @if ($twoFactorEnabled)
                 <div class="space-y-4">
                     <div class="flex items-center gap-3">
-                        <x-ui.badge variant="success">{{ __('Enabled') }}</x-ui.badge>
+                        <x-ui.badge variant="success">{{ __('Activado') }}</x-ui.badge>
                     </div>
 
                     <flux:text>
@@ -204,14 +204,14 @@ new class extends Component {
                             icon:variant="outline"
                             wire:click="disable"
                         >
-                            {{ __('Disable 2FA') }}
+                            {{ __('Desactivar doble factor') }}
                         </flux:button>
                     </div>
                 </div>
             @else
                 <div class="space-y-4">
                     <div class="flex items-center gap-3">
-                        <x-ui.badge variant="danger">{{ __('Disabled') }}</x-ui.badge>
+                        <x-ui.badge variant="danger">{{ __('Desactivado') }}</x-ui.badge>
                     </div>
 
                     <flux:text variant="subtle">
@@ -224,7 +224,7 @@ new class extends Component {
                         icon:variant="outline"
                         wire:click="enable"
                     >
-                        {{ __('Enable 2FA') }}
+                        {{ __('Activar doble factor') }}
                     </flux:button>
                 </div>
             @endif
@@ -285,7 +285,7 @@ new class extends Component {
                             class="flex-1"
                             wire:click="resetVerification"
                         >
-                            {{ __('Back') }}
+                            {{ __('Volver') }}
                         </flux:button>
 
                         <flux:button
@@ -294,7 +294,7 @@ new class extends Component {
                             wire:click="confirmTwoFactor"
                             x-bind:disabled="$wire.code.length < 6"
                         >
-                            {{ __('Confirm') }}
+                            {{ __('Confirmar') }}
                         </flux:button>
                     </div>
                 </div>
@@ -332,7 +332,7 @@ new class extends Component {
                     <div class="relative flex items-center justify-center w-full">
                         <div class="absolute inset-0 w-full h-px top-1/2 bg-arena dark:bg-corteza"></div>
                         <span class="relative px-2 text-sm bg-blanco dark:bg-tinta text-tinta-suave dark:text-arena">
-                            {{ __('or, enter the code manually') }}
+                            {{ __('o ingresá el código manualmente') }}
                         </span>
                     </div>
 
