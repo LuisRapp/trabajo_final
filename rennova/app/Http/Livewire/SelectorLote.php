@@ -83,7 +83,7 @@ class SelectorLote extends Component
                     $estado = $dia['estado'] ?? 'OPERATIVO';
 
                     $pronosticoFormateado[] = [
-                        'label' => ucfirst(substr($dia['dia_semana'], 0, 3)).' ('.$dia['fecha_str'].')',
+                        'label' => ucfirst(mb_substr($dia['dia_semana'], 0, 3, 'UTF-8')).' ('.$dia['fecha_str'].')',
                         'estado' => $estado === 'INACTIVO' ? 'NO OPERATIVO' : ($estado === 'OPERATIVO_CONDICIONAL' ? 'OPERATIVO COND.' : 'OPERATIVO'),
                         'icono' => $iconMap[$estado] ?? 'sun',
                         'inactivo' => $estado === 'INACTIVO',

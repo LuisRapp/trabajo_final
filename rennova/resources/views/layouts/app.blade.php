@@ -90,7 +90,8 @@
         }
     </script>
 
-    <!-- Livewire Scripts (incluye Alpine.js automáticamente en v3) -->
+    <!-- Livewire + Flux: unica fuente de Alpine.js (no bundlear otra copia) -->
     @livewireScripts
+    @fluxScripts
 </body>
 </html>

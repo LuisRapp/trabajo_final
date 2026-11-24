@@ -35,6 +35,14 @@ class ConfiguracionKitsTest extends TestCase
             ->assertStatus(200);
     }
 
+    public function test_arranca_en_el_listado_de_kits(): void
+    {
+        Livewire::actingAs($this->usuario)
+            ->test(ConfiguracionKits::class)
+            ->assertSet('activeTab', 'listado')
+            ->assertSee('Listado de Kits');
+    }
+
     public function test_mount_carga_kits_registrados(): void
     {
         $maquinaria = Maquinaria::factory()->create();

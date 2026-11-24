@@ -24,7 +24,7 @@ class ConfiguracionKits extends Component
     public $kits_registrados = [];
 
     // Tab control
-    public $activeTab = 'nuevo';
+    public $activeTab = 'listado';
 
     // Umbral de toneladas
     public $umbral_toneladas = 0;
