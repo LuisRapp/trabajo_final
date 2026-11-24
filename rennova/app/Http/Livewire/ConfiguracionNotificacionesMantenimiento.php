@@ -19,11 +19,16 @@ class ConfiguracionNotificacionesMantenimiento extends Component
 
     public $usuarios;
 
-    private NotificacionService $notificacionService;
+    protected NotificacionService $notificacionService;
 
-    public function mount(NotificacionService $notificacionService)
+    public function boot(NotificacionService $notificacionService): void
     {
+        // boot() corre en cada request; mount() solo en el primero.
         $this->notificacionService = $notificacionService;
+    }
+
+    public function mount(): void
+    {
         $this->usuarios = Usuario::orderBy('nombre')->get();
         $this->cargarConfiguracion();
     }

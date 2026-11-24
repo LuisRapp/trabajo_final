@@ -15,11 +15,17 @@ class SelectorLote extends Component
 
     public $pronosticoData = null;
 
-    protected $climaService;
+    protected ClimaDecisionService $climaService;
 
-    public function mount(ClimaDecisionService $climaService)
+    public function boot(ClimaDecisionService $climaService): void
     {
+        // En boot(), no en mount(): mount solo corre en el primer render y
+        // cualquier request posterior (cambio de lote) encontraba la propiedad nula.
         $this->climaService = $climaService;
+    }
+
+    public function mount(): void
+    {
         // Cargar solo lotes activos
         $this->lotes = Lote::whereIn('estado', ['activo', 'en_proceso'])
             ->orderByDesc('created_at')
@@ -75,29 +81,40 @@ class SelectorLote extends Component
 
             if (is_array($diasDetalle)) {
                 foreach ($diasDetalle as $dia) {
-                    $iconMap = [
-                        'OPERATIVO' => 'sun',
-                        'OPERATIVO_CONDICIONAL' => 'cloud',
-                        'INACTIVO' => isset($dia['razon']) && strpos($dia['razon'], 'Lluvia') !== false ? 'storm' : 'cloud',
-                    ];
+                    $fechaDia = isset($dia['fecha']) ? Carbon::parse($dia['fecha']) : null;
+                    // El servicio marca el fin de semana como INACTIVO, pero no es un
+                    // dia perdido por clima: es no laboral. No debe contar como tal.
+                    $noLaboral = $fechaDia?->isWeekend() ?? false;
                     $estado = $dia['estado'] ?? 'OPERATIVO';
+                    $inactivoPorClima = ! $noLaboral && $estado === 'INACTIVO';
+
+                    $icono = match (true) {
+                        $noLaboral => 'calendar',
+                        $estado === 'OPERATIVO' => 'sun',
+                        $estado === 'OPERATIVO_CONDICIONAL' => 'cloud',
+                        default => isset($dia['razon']) && str_contains($dia['razon'], 'Lluvia') ? 'storm' : 'cloud',
+                    };
 
                     $pronosticoFormateado[] = [
                         'label' => ucfirst(mb_substr($dia['dia_semana'], 0, 3, 'UTF-8')).' ('.$dia['fecha_str'].')',
-                        'estado' => $estado === 'INACTIVO' ? 'NO OPERATIVO' : ($estado === 'OPERATIVO_CONDICIONAL' ? 'OPERATIVO COND.' : 'OPERATIVO'),
-                        'icono' => $iconMap[$estado] ?? 'sun',
-                        'inactivo' => $estado === 'INACTIVO',
+                        'estado' => match (true) {
+                            $noLaboral => 'NO LABORAL',
+                            $estado === 'INACTIVO' => 'NO OPERATIVO',
+                            $estado === 'OPERATIVO_CONDICIONAL' => 'OPERATIVO COND.',
+                            default => 'OPERATIVO',
+                        },
+                        'icono' => $icono,
+                        'inactivo' => $inactivoPorClima,
+                        'no_laboral' => $noLaboral,
                         'suelo' => $dia['razon'] ?? null,
                     ];
                 }
             }
 
-            $diasPerdidos = 0;
-            foreach ($diasDetalle as $dia) {
-                if (($dia['estado'] ?? null) === 'INACTIVO') {
-                    $diasPerdidos++;
-                }
-            }
+            $diasPerdidos = count(array_filter(
+                $pronosticoFormateado,
+                fn (array $dia): bool => $dia['inactivo']
+            ));
 
             $nivelUrgencia = $climaData['nivel_urgencia'] ?? 'BAJA';
             $tipoAlerta = match ($nivelUrgencia) {

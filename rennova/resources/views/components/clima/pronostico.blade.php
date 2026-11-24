@@ -36,26 +36,28 @@
         'storm' => 'cloud-arrow-down',
         'fog' => 'cloud',
         'cloud' => 'cloud',
+        'calendar' => 'calendar',
     ];
 
     // Calcular la ventana de trabajo
     $diasOperativos = 0;
     $diasPerdidos = $analisisImpacto['diasPerdidos'] ?? 0;
     foreach ($pronostico as $dia) {
-        if (!($dia['inactivo'] ?? false)) {
+        if (!($dia['inactivo'] ?? false) && !($dia['no_laboral'] ?? false)) {
             $diasOperativos++;
         }
     }
-    $ventana = $diasOperativos . ' dias' ?? '2 dias';
+    $ventana = $diasOperativos . ' dias';
 
-    // Encontrar el día crítico
-    $diaCritico = 'Desconocido';
+    // Encontrar el primer día perdido por clima (el fin de semana no lo es)
+    $diaCritico = null;
     foreach ($pronostico as $dia) {
         if ($dia['inactivo'] ?? false) {
             $diaCritico = ucfirst($dia['label'] ?? 'proximamente');
             break;
         }
     }
+    $diaCritico ??= 'Sin lluvia';
 @endphp
 
 <div class="w-full space-y-3">
@@ -111,10 +113,11 @@
             <div class="grid grid-cols-7 divide-x divide-arena/50">
                 @foreach($pronostico as $dia)
                     @php
-                        $isInactivo = $dia['inactivo'] ?? false;
-                        $bgCell = $isInactivo ? 'bg-tierra-suave/50' : 'bg-blanco';
-                        $textColor = $isInactivo ? 'text-tierra' : 'text-musgo';
-                        $dotColor = $isInactivo ? 'bg-tierra' : 'bg-musgo';
+                        $esNoLaboral = $dia['no_laboral'] ?? false;
+                        $isInactivo = ($dia['inactivo'] ?? false) && ! $esNoLaboral;
+                        $bgCell = $esNoLaboral ? 'bg-corteza-suave/40' : ($isInactivo ? 'bg-tierra-suave/50' : 'bg-blanco');
+                        $textColor = $esNoLaboral ? 'text-tinta-suave' : ($isInactivo ? 'text-tierra' : 'text-musgo');
+                        $dotColor = $esNoLaboral ? 'bg-arena-oscura' : ($isInactivo ? 'bg-tierra' : 'bg-musgo');
                     @endphp
                     <div class="px-2 py-3 {{ $bgCell }} text-center">
                         <div class="text-xs font-medium text-tinta-suave">{{ $dia['label'] }}</div>
