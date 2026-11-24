@@ -259,7 +259,7 @@
                                         <div class="max-h-[320px] overflow-y-auto border border-arena rounded-sm p-3">
                                             @foreach($selectedProposal->proposedEmployees as $row)
                                                 <div class="flex items-center gap-2 py-1" wire:key="emp-{{ $row->id_allocation_proposal_employee }}">
-                                                    <input
+                                                    <input autocomplete="off"
                                                         class="rounded border-arena text-pino focus:ring-pino"
                                                         type="checkbox"
                                                         id="ape-{{ $row->id_allocation_proposal_employee }}"
@@ -293,7 +293,7 @@
                                         <div class="max-h-[320px] overflow-y-auto border border-arena rounded-sm p-3">
                                             @foreach($selectedProposal->proposedMaquinarias as $row)
                                                 <div class="flex items-center gap-2 py-1" wire:key="maq-{{ $row->id_allocation_proposal_maquinaria }}">
-                                                    <input
+                                                    <input autocomplete="off"
                                                         class="rounded border-arena text-pino focus:ring-pino"
                                                         type="checkbox"
                                                         id="apm-{{ $row->id_allocation_proposal_maquinaria }}"
@@ -328,7 +328,7 @@
                                             @foreach($selectedProposal->proposedInsumos as $row)
                                                 <div class="flex items-start gap-2 py-1" wire:key="insumo-{{ $row->id_allocation_proposal_insumo }}">
                                                     <div class="pt-0.5">
-                                                        <input
+                                                        <input autocomplete="off"
                                                             class="rounded border-arena text-pino focus:ring-pino"
                                                             type="checkbox"
                                                             id="api-{{ $row->id_allocation_proposal_insumo }}"

@@ -44,7 +44,7 @@
                 </h5>
             </div>
             <div class="p-6">
-                <form wire:submit.prevent="programarOrden">
+                <form autocomplete="off" wire:submit.prevent="programarOrden">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                         <div>
                             <label for="id_maquinaria" class="block text-sm font-semibold text-tinta mb-2">
@@ -89,7 +89,7 @@
                                 <flux:icon.calendar-date-range class="size-4" />
                                 Fecha Programada <span class="text-tierra">*</span>
                             </label>
-                            <input
+                            <input autocomplete="off"
                                 type="date"
                                 id="fechaProgramada"
                                 class="form-input @error('fechaProgramada') border-tierra bg-tierra-suave @enderror"
@@ -169,14 +169,14 @@
                     </div>
                 </div>
                 <hr class="border-arena my-6">
-                <form wire:submit.prevent="guardarFecha">
+                <form autocomplete="off" wire:submit.prevent="guardarFecha">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                         <div>
                             <label for="fechaProgramada" class="block text-sm font-semibold text-tinta mb-1.5 flex items-center gap-2">
                                 <flux:icon.calendar-date-range class="size-4" />
                                 Fecha Programada <span class="text-tierra">*</span>
                             </label>
-                            <input
+                            <input autocomplete="off"
                                 type="date"
                                 id="fechaProgramada"
                                 class="form-input @error('fechaProgramada') border-tierra bg-tierra-suave @enderror"

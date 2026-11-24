@@ -23,18 +23,18 @@
                     </h5>
                 </div>
                 <div class="p-4">
-                    <form wire:submit.prevent="guardar">
+                    <form autocomplete="off" wire:submit.prevent="guardar">
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                             <div class="md:col-span-2">
                                 <label for="nombre" class="block text-xs font-semibold text-tinta mb-1.5">Nombre <span class="text-tierra">*</span></label>
-                                <input type="text" id="nombre" wire:model="nombre"
+                                <input autocomplete="off" type="text" id="nombre" wire:model="nombre"
                                     class="form-input @error('nombre') border-tierra bg-tierra-suave @enderror"
                                     placeholder="Nombre de la unidad de medida">
                                 @error('nombre') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                             </div>
                             <div>
                                 <label for="abreviatura" class="block text-xs font-semibold text-tinta mb-1.5">Abreviatura <span class="text-tierra">*</span></label>
-                                <input type="text" id="abreviatura" wire:model="abreviatura"
+                                <input autocomplete="off" type="text" id="abreviatura" wire:model="abreviatura"
                                     class="form-input @error('abreviatura') border-tierra bg-tierra-suave @enderror"
                                     placeholder="Ej: kg, lt, m3">
                                 @error('abreviatura') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror

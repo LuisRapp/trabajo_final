@@ -35,7 +35,7 @@ new class extends Component {
     </flux:modal.trigger>
 
     <flux:modal name="confirm-user-deletion" :show="$errors->isNotEmpty()" focusable class="max-w-lg">
-        <form method="POST" wire:submit="deleteUser" class="space-y-6">
+        <form autocomplete="off" method="POST" wire:submit="deleteUser" class="space-y-6">
             <div>
                 <flux:heading size="lg">{{ __('¿Estás seguro de que querés eliminar tu cuenta?') }}</flux:heading>
 

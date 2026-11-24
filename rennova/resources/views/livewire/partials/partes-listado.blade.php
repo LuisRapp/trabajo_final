@@ -8,11 +8,11 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <div>
                     <label class="block text-sm font-semibold text-tinta mb-2">Buscar por Propietario</label>
-                    <input type="text" wire:model.live.debounce.400ms="busqueda" class="form-input" placeholder="Ej: Juan Pérez...">
+                    <input autocomplete="off" type="text" wire:model.live.debounce.400ms="busqueda" class="form-input" placeholder="Ej: Juan Pérez...">
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-tinta mb-2">Buscar por Fecha</label>
-                    <input type="date" wire:model.live="busqueda_fecha" class="form-input">
+                    <input autocomplete="off" type="date" wire:model.live="busqueda_fecha" class="form-input">
                 </div>
             </div>
 

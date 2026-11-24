@@ -37,6 +37,18 @@ class VentasTest extends TestCase
             ->assertStatus(200);
     }
 
+    public function test_muestra_el_motivo_cuando_falta_el_cliente_en_el_filtro(): void
+    {
+        // Regresion: el filtro validaba id_cliente pero la vista no imprimia el
+        // error, asi que el boton "Buscar" no hacia nada y no explicaba por que.
+        Livewire::actingAs($this->usuario)
+            ->test(Ventas::class)
+            ->set('tab_activo', 'nuevo')
+            ->call('buscarCargasPendientes')
+            ->assertHasErrors(['id_cliente'])
+            ->assertSee('El cliente seleccionado no es válido.');
+    }
+
     public function test_mount_setea_fechas_ultimos_7_dias(): void
     {
         $component = Livewire::actingAs($this->usuario)

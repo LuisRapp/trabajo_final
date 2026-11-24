@@ -207,7 +207,7 @@
                             <div class="p-6">
                                 @if($id_lote)
                                     <div class="mb-3">
-                                        <input type="text"
+                                        <input autocomplete="off" type="text"
                                                class="form-input"
                                                placeholder="Buscar empleado..."
                                                wire:model.live="busqueda_empleado">
@@ -215,7 +215,7 @@
                                     <div class="max-h-[300px] overflow-y-auto border border-arena rounded-sm p-3">
                                         @forelse($this->empleadosFiltrados as $emp)
                                             <div class="flex items-center gap-2 py-1" wire:key="item-{{ $emp->id_empleado }}">
-                                                <input class="rounded border-arena text-pino focus:ring-pino"
+                                                <input autocomplete="off" class="rounded border-arena text-pino focus:ring-pino"
                                                        type="checkbox"
                                                        value="{{ $emp->id_empleado }}"
                                                        id="emp-{{ $emp->id_empleado }}"
@@ -253,7 +253,7 @@
                             <div class="p-6">
                                 @if($id_lote)
                                     <div class="mb-3">
-                                        <input type="text"
+                                        <input autocomplete="off" type="text"
                                                class="form-input"
                                                placeholder="Buscar maquinaria..."
                                                wire:model.live="busqueda_maquinaria">
@@ -261,7 +261,7 @@
                                     <div class="max-h-[300px] overflow-y-auto border border-arena rounded-sm p-3">
                                         @forelse($this->maquinariasFiltrada as $maq)
                                             <div class="flex items-center gap-2 py-1" wire:key="item-{{ $maq->id_maquinaria }}">
-                                                <input class="rounded border-arena text-pino focus:ring-pino"
+                                                <input autocomplete="off" class="rounded border-arena text-pino focus:ring-pino"
                                                        type="checkbox"
                                                        value="{{ $maq->id_maquinaria }}"
                                                        id="maq-{{ $maq->id_maquinaria }}"

@@ -28,7 +28,7 @@
                         <label class="block text-xs font-semibold text-tinta mb-1.5">Buscar</label>
                         <div class="flex items-center gap-2 px-3 py-2 border border-arena rounded-sm bg-white">
                             <flux:icon.magnifying-glass class="size-4 text-tinta-suave" />
-                            <input type="text" wire:model.live.debounce.400ms="busqueda"
+                            <input autocomplete="off" type="text" wire:model.live.debounce.400ms="busqueda"
                                 class="flex-1 bg-transparent border-0 focus:ring-0 focus:outline-none text-sm text-tinta placeholder:text-tinta-suave"
                                 placeholder="URL, IP o tag...">
                         </div>
@@ -64,11 +64,11 @@
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                     <div>
                         <label class="block text-xs font-semibold text-tinta mb-1.5">Desde</label>
-                        <input type="date" wire:model.live="filtroFechaDesde" class="form-input">
+                        <input autocomplete="off" type="date" wire:model.live="filtroFechaDesde" class="form-input">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-tinta mb-1.5">Hasta</label>
-                        <input type="date" wire:model.live="filtroFechaHasta" class="form-input">
+                        <input autocomplete="off" type="date" wire:model.live="filtroFechaHasta" class="form-input">
                     </div>
                     <div class="flex items-end">
                         <x-ui.button type="button" variant="secondary" size="sm" icon="arrow-uturn-left"

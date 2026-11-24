@@ -35,13 +35,13 @@
                         </h6>
                     </div>
                     <div class="p-6">
-                        <form wire:submit.prevent="guardarConfiguracion">
+                        <form autocomplete="off" wire:submit.prevent="guardarConfiguracion">
                             <div class="mb-4">
                                 <label class="block text-sm font-semibold text-tinta mb-1.5">
                                     Hora de Recordatorio Diario
                                     <span class="text-tierra">*</span>
                                 </label>
-                                <input type="time"
+                                <input autocomplete="off" type="time"
                                        wire:model="hora_recordatorio"
                                        class="form-input @error('hora_recordatorio') border-tierra bg-tierra-suave @enderror">
                                 @error('hora_recordatorio')
@@ -80,7 +80,7 @@
 
                             <div class="mb-4 hidden" id="customCronDiv">
                                 <label class="block text-sm font-semibold text-tinta mb-1.5">Expresion Cron Personalizada</label>
-                                <input type="text"
+                                <input autocomplete="off" type="text"
                                        wire:model="expresion_cron"
                                        class="form-input font-mono @error('expresion_cron') border-tierra bg-tierra-suave @enderror"
                                        placeholder="* * * * *"

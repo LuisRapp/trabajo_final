@@ -41,7 +41,7 @@
             </h5>
         </div>
         <div class="p-6">
-            <form wire:submit.prevent="agregarInsumo">
+            <form autocomplete="off" wire:submit.prevent="agregarInsumo">
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div class="md:col-span-2">
                         <label class="block text-sm font-semibold text-tinta mb-1.5">Insumo <span class="text-tierra">*</span></label>
@@ -58,7 +58,7 @@
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-tinta mb-1.5">Cantidad Necesaria <span class="text-tierra">*</span></label>
-                        <input type="number" step="0.1" min="0" wire:model="cantidad_necesaria"
+                        <input autocomplete="off" type="number" step="0.1" min="0" wire:model="cantidad_necesaria"
                             class="form-input @error('cantidad_necesaria') border-tierra bg-tierra-suave @enderror"
                             placeholder="0.00">
                         @error('cantidad_necesaria') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror

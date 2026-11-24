@@ -44,7 +44,7 @@
                 </h5>
             </div>
             <div class="p-6">
-                <form wire:submit.prevent="guardar">
+                <form autocomplete="off" wire:submit.prevent="guardar">
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                         <div>
                             <label for="id_empleado" class="block text-sm font-semibold text-tinta mb-1.5">Empleado <span class="text-tierra">*</span></label>
@@ -61,7 +61,7 @@
                             <label for="monto" class="block text-sm font-semibold text-tinta mb-1.5">Monto <span class="text-tierra">*</span></label>
                             <div class="flex items-center gap-0">
                                 <span class="px-3 py-2 bg-corteza-suave border border-r-0 border-arena rounded-l-sm text-tinta-suave font-semibold text-sm">$</span>
-                                <input type="number" id="monto" wire:model="monto" step="0.1" min="0"
+                                <input autocomplete="off" type="number" id="monto" wire:model="monto" step="0.1" min="0"
                                     class="form-input rounded-l-none @error('monto') border-tierra bg-tierra-suave @enderror"
                                     placeholder="0.00">
                             </div>
@@ -69,7 +69,7 @@
                         </div>
                         <div>
                             <label for="fecha_emision" class="block text-sm font-semibold text-tinta mb-1.5">Fecha de Adelanto <span class="text-tierra">*</span></label>
-                            <input type="date" id="fecha_emision" wire:model="fecha_emision"
+                            <input autocomplete="off" type="date" id="fecha_emision" wire:model="fecha_emision"
                                 class="form-input @error('fecha_emision') border-tierra bg-tierra-suave @enderror">
                             @error('fecha_emision') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
@@ -102,7 +102,7 @@
                 <div class="mb-6">
                     <div class="flex items-center gap-2 px-3 py-2 border border-arena rounded-sm bg-corteza-suave">
                         <flux:icon.magnifying-glass class="size-4 text-tinta-suave" />
-                        <input type="text"
+                        <input autocomplete="off" type="text"
                             class="flex-1 bg-transparent border-0 focus:ring-0 focus:outline-none text-sm text-tinta placeholder:text-tinta-suave"
                             placeholder="Buscar por empleado, monto o fecha..."
                             wire:model.live="busqueda">

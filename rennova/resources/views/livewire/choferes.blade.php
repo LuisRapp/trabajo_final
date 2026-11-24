@@ -44,7 +44,7 @@
                 </h5>
             </div>
             <div class="p-6">
-                <form wire:submit.prevent="guardar">
+                <form autocomplete="off" wire:submit.prevent="guardar">
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                         <div>
                             <label for="id_cliente" class="block text-sm font-semibold text-tinta mb-1.5">Cliente <span class="text-tierra">*</span></label>
@@ -59,14 +59,14 @@
                         </div>
                         <div>
                             <label for="apellido" class="block text-sm font-semibold text-tinta mb-1.5">Apellido <span class="text-tierra">*</span></label>
-                            <input type="text" id="apellido" wire:model="apellido"
+                            <input autocomplete="off" type="text" id="apellido" wire:model="apellido"
                                 class="form-input @error('apellido') border-tierra bg-tierra-suave @enderror"
                                 placeholder="Apellido">
                             @error('apellido') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label for="nombre" class="block text-sm font-semibold text-tinta mb-1.5">Nombre <span class="text-tierra">*</span></label>
-                            <input type="text" id="nombre" wire:model="nombre"
+                            <input autocomplete="off" type="text" id="nombre" wire:model="nombre"
                                 class="form-input @error('nombre') border-tierra bg-tierra-suave @enderror"
                                 placeholder="Nombre">
                             @error('nombre') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
@@ -75,21 +75,21 @@
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                         <div>
                             <label for="dni" class="block text-sm font-semibold text-tinta mb-1.5">DNI <span class="text-tierra">*</span></label>
-                            <input type="text" id="dni" wire:model="dni"
+                            <input autocomplete="off" type="text" id="dni" wire:model="dni"
                                 class="form-input @error('dni') border-tierra bg-tierra-suave @enderror"
                                 placeholder="12345678">
                             @error('dni') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label for="telefono" class="block text-sm font-semibold text-tinta mb-1.5">Teléfono</label>
-                            <input type="text" id="telefono" wire:model="telefono"
+                            <input autocomplete="off" type="text" id="telefono" wire:model="telefono"
                                 class="form-input"
                                 placeholder="Teléfono">
                             @error('telefono') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label for="direccion" class="block text-sm font-semibold text-tinta mb-1.5">Dirección</label>
-                            <input type="text" id="direccion" wire:model="direccion"
+                            <input autocomplete="off" type="text" id="direccion" wire:model="direccion"
                                 class="form-input"
                                 placeholder="Dirección">
                             @error('direccion') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
@@ -117,7 +117,7 @@
                 <div class="mb-6">
                     <div class="flex items-center gap-2 px-3 py-2 border border-arena rounded-sm bg-corteza-suave">
                         <flux:icon.magnifying-glass class="size-4 text-tinta-suave" />
-                        <input type="text"
+                        <input autocomplete="off" type="text"
                             class="flex-1 bg-transparent border-0 focus:ring-0 focus:outline-none text-sm text-tinta placeholder:text-tinta-suave"
                             placeholder="Buscar por apellido, nombre, DNI, cliente..."
                             wire:model.live="busqueda">

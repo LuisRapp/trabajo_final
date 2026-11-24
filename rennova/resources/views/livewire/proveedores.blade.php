@@ -23,18 +23,18 @@
                     </h5>
                 </div>
                 <div class="p-4">
-                    <form wire:submit.prevent="guardar">
+                    <form autocomplete="off" wire:submit.prevent="guardar">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <div>
                                 <label for="razon_social" class="block text-xs font-semibold text-tinta mb-1.5">Razon Social <span class="text-tierra">*</span></label>
-                                <input type="text" id="razon_social" wire:model="razon_social"
+                                <input autocomplete="off" type="text" id="razon_social" wire:model="razon_social"
                                     class="form-input @error('razon_social') border-tierra bg-tierra-suave @enderror"
                                     placeholder="Nombre del proveedor">
                                 @error('razon_social') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                             </div>
                             <div>
                                 <label for="cuit" class="block text-xs font-semibold text-tinta mb-1.5">CUIT <span class="text-tierra">*</span></label>
-                                <input type="text" id="cuit" wire:model="cuit"
+                                <input autocomplete="off" type="text" id="cuit" wire:model="cuit"
                                     class="form-input @error('cuit') border-tierra bg-tierra-suave @enderror"
                                     placeholder="XX-XXXXXXXX-X">
                                 @error('cuit') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
@@ -43,21 +43,21 @@
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                             <div>
                                 <label for="direccion" class="block text-xs font-semibold text-tinta mb-1.5">Direccion</label>
-                                <input type="text" id="direccion" wire:model="direccion"
+                                <input autocomplete="off" type="text" id="direccion" wire:model="direccion"
                                     class="form-input"
                                     placeholder="Direccion completa">
                                 @error('direccion') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                             </div>
                             <div>
                                 <label for="telefono" class="block text-xs font-semibold text-tinta mb-1.5">Telefono</label>
-                                <input type="text" id="telefono" wire:model="telefono"
+                                <input autocomplete="off" type="text" id="telefono" wire:model="telefono"
                                     class="form-input"
                                     placeholder="+54 9 11 1234-5678">
                                 @error('telefono') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                             </div>
                             <div>
                                 <label for="email" class="block text-xs font-semibold text-tinta mb-1.5">Email</label>
-                                <input type="email" id="email" wire:model="email"
+                                <input autocomplete="off" type="email" id="email" wire:model="email"
                                     class="form-input"
                                     placeholder="correo@ejemplo.com">
                                 @error('email') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror

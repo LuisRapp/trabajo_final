@@ -86,7 +86,7 @@
                                     @enderror
                                 </td>
                                 <td>
-                                    <input type="number" step="0.01" min="0"
+                                    <input autocomplete="off" type="number" step="0.01" min="0"
                                         class="form-input text-right"
                                         wire:model.live="tareas.{{ $i }}.superficie_afectada_ha" placeholder="(opcional)" @if($guardando) disabled @endif>
                                     @error('tareas.' . $i . '.superficie_afectada_ha')
@@ -94,7 +94,7 @@
                                     @enderror
                                 </td>
                                 <td>
-                                    <input type="text"
+                                    <input autocomplete="off" type="text"
                                         class="form-input"
                                         wire:model.live="tareas.{{ $i }}.observaciones" placeholder="Opcional" @if($guardando) disabled @endif>
                                     @error('tareas.' . $i . '.observaciones')

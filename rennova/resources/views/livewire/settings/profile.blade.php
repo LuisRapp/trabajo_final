@@ -73,7 +73,7 @@ new class extends Component {
     @include('partials.settings-heading')
 
     <x-settings.layout :heading="__('Perfil')" :subheading="__('Actualizá tu nombre y correo electrónico')">
-        <form wire:submit="updateProfileInformation" class="my-6 w-full space-y-6">
+        <form autocomplete="off" wire:submit="updateProfileInformation" class="my-6 w-full space-y-6">
             <flux:input wire:model="name" :label="__('Nombre')" type="text" required autofocus autocomplete="name" />
 
             <div>

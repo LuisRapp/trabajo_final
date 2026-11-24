@@ -42,18 +42,18 @@
                     </h5>
                 </div>
                 <div class="p-6">
-                    <form wire:submit.prevent="guardar" class="space-y-6">
+                    <form autocomplete="off" wire:submit.prevent="guardar" class="space-y-6">
                         <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                             <div>
                                 <label class="mb-1 block text-sm font-semibold text-tinta">Propietario <span class="text-tierra">*</span></label>
-                                <input type="text" wire:model="propietario"
+                                <input autocomplete="off" type="text" wire:model="propietario"
                                     class="form-input {{ $errors->has('propietario') ? 'ring-2 ring-tierra' : '' }}"
                                     placeholder="Nombre del propietario">
                                 @error('propietario') <p class="mt-1 text-xs text-tierra">{{ $message }}</p> @enderror
                             </div>
                             <div>
                                 <label class="mb-1 block text-sm font-semibold text-tinta">Ubicación <span class="text-tierra">*</span></label>
-                                <input type="text" wire:model="ubicacion"
+                                <input autocomplete="off" type="text" wire:model="ubicacion"
                                     class="form-input {{ $errors->has('ubicacion') ? 'ring-2 ring-tierra' : '' }}"
                                     placeholder="Ubicación del lote">
                                 @error('ubicacion') <p class="mt-1 text-xs text-tierra">{{ $message }}</p> @enderror
@@ -63,14 +63,14 @@
                         <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                             <div>
                                 <label class="mb-1 block text-sm font-semibold text-tinta">Especie</label>
-                                <input type="text" wire:model="especie"
+                                <input autocomplete="off" type="text" wire:model="especie"
                                     class="form-input {{ $errors->has('especie') ? 'ring-2 ring-tierra' : '' }}"
                                     placeholder="Especie de madera">
                                 @error('especie') <p class="mt-1 text-xs text-tierra">{{ $message }}</p> @enderror
                             </div>
                             <div>
                                 <label class="mb-1 block text-sm font-semibold text-tinta">Superficie (ha)</label>
-                                <input type="number" wire:model="superficie" step="0.1" min="0"
+                                <input autocomplete="off" type="number" wire:model="superficie" step="0.1" min="0"
                                     class="form-input {{ $errors->has('superficie') ? 'ring-2 ring-tierra' : '' }}"
                                     placeholder="0.00">
                                 @error('superficie') <p class="mt-1 text-xs text-tierra">{{ $message }}</p> @enderror
@@ -125,7 +125,7 @@
                         <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                             <div>
                                 <label class="mb-1 block text-sm font-semibold text-tinta">Latitud</label>
-                                <input type="number" wire:model="latitud" step="0.00000001" min="-90" max="90"
+                                <input autocomplete="off" type="number" wire:model="latitud" step="0.00000001" min="-90" max="90"
                                     class="form-input {{ $errors->has('latitud') ? 'ring-2 ring-tierra' : '' }}"
                                     placeholder="-27.469771">
                                 @error('latitud') <p class="mt-1 text-xs text-tierra">{{ $message }}</p> @enderror
@@ -133,7 +133,7 @@
                             </div>
                             <div>
                                 <label class="mb-1 block text-sm font-semibold text-tinta">Longitud</label>
-                                <input type="number" wire:model="longitud" step="0.00000001" min="-180" max="180"
+                                <input autocomplete="off" type="number" wire:model="longitud" step="0.00000001" min="-180" max="180"
                                     class="form-input {{ $errors->has('longitud') ? 'ring-2 ring-tierra' : '' }}"
                                     placeholder="-58.832443">
                                 @error('longitud') <p class="mt-1 text-xs text-tierra">{{ $message }}</p> @enderror
@@ -164,7 +164,7 @@
                         <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-tinta-suave">
                             <flux:icon.magnifying-glass class="size-4" />
                         </span>
-                        <input type="text" wire:model.live="busqueda"
+                        <input autocomplete="off" type="text" wire:model.live="busqueda"
                             class="form-input pl-10"
                             placeholder="Buscar por propietario, ubicación o especie...">
                     </div>

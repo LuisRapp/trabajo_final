@@ -67,12 +67,12 @@
 
                 <div>
                     <label class="block text-sm font-semibold text-tinta mb-1.5">Desde</label>
-                    <input type="date" wire:model="filtro_fecha_desde" class="form-input">
+                    <input autocomplete="off" type="date" wire:model="filtro_fecha_desde" class="form-input">
                 </div>
 
                 <div>
                     <label class="block text-sm font-semibold text-tinta mb-1.5">Hasta</label>
-                    <input type="date" wire:model="filtro_fecha_hasta" class="form-input">
+                    <input autocomplete="off" type="date" wire:model="filtro_fecha_hasta" class="form-input">
                 </div>
 
                 <div class="flex items-end">
@@ -285,7 +285,7 @@
                                     @enderror
                                 </td>
                                 <td>
-                                    <input type="number"
+                                    <input autocomplete="off" type="number"
                                            wire:model="insumos_usados.{{ $index }}.cantidad"
                                            class="form-input"
                                            step="0.1" min="0">
@@ -327,7 +327,7 @@
                         <label class="block text-sm font-semibold text-tinta mb-1.5">Costo Mano de Obra</label>
                         <div class="flex">
                             <span class="inline-flex items-center px-3 py-2.5 bg-corteza-suave border border-r-0 border-arena rounded-l-sm text-sm text-tinta-suave">$</span>
-                            <input type="number"
+                            <input autocomplete="off" type="number"
                                    wire:model="costo_mano_obra"
                                    class="flex-1 form-input rounded-l-none"
                                    step="0.1" min="0">

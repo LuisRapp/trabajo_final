@@ -38,7 +38,7 @@
                             <div class="mb-4">
                                 <label class="block text-xs font-semibold text-tinta mb-1.5">Crear Nuevo Rol</label>
                                 <div class="flex gap-2">
-                                    <input type="text" wire:model="newRoleName"
+                                    <input autocomplete="off" type="text" wire:model="newRoleName"
                                         class="form-input @error('newRoleName') border-tierra bg-tierra-suave @enderror"
                                         placeholder="Nombre del rol...">
                                     <x-ui.button variant="primary" icon="plus" wire:click="createRole">
@@ -84,7 +84,7 @@
                         </div>
                         <div class="p-4">
                             @if($selectedRole)
-                                <form wire:submit.prevent="updateRolePermissions">
+                                <form autocomplete="off" wire:submit.prevent="updateRolePermissions">
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         @foreach($permissions as $module => $modulePermissions)
                                             <div wire:key="module-{{ $module }}">
@@ -95,7 +95,7 @@
                                                     <div class="p-3">
                                                         @foreach($modulePermissions as $permission)
                                                             <div class="flex items-center gap-2 py-1" wire:key="perm-{{ $permission->id }}">
-                                                                <input class="rounded border-arena text-pino focus:ring-pino/30"
+                                                                <input autocomplete="off" class="rounded border-arena text-pino focus:ring-pino/30"
                                                                        type="checkbox"
                                                                        wire:model="rolePermissions"
                                                                        value="{{ $permission->name }}"
@@ -170,14 +170,14 @@
                         </div>
                         <div class="p-4">
                             @if($selectedUser)
-                                <form wire:submit.prevent="updateUserRoles">
+                                <form autocomplete="off" wire:submit.prevent="updateUserRoles">
                                     <div class="mb-4">
                                         <p class="text-tinta-suave text-sm mb-4">
                                             Seleccione los roles que desea asignar al usuario:
                                         </p>
                                         @foreach($roles as $role)
                                             <div class="flex items-start gap-2 py-2" wire:key="role-{{ $role->id }}">
-                                                <input class="mt-0.5 rounded border-arena text-pino focus:ring-pino/30"
+                                                <input autocomplete="off" class="mt-0.5 rounded border-arena text-pino focus:ring-pino/30"
                                                        type="checkbox"
                                                        wire:model="userRoles"
                                                        value="{{ $role->name }}"

@@ -16,7 +16,7 @@
 
     <x-ui.card>
         <div class="p-6">
-            <form method="POST" action="{{ route('cargas.update', $carga) }}">
+            <form autocomplete="off" method="POST" action="{{ route('cargas.update', $carga) }}">
                 @csrf
                 @method('PUT')
 

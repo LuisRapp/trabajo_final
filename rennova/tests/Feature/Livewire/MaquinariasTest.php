@@ -57,3 +57,24 @@ test('valida campos obligatorios al crear', function () {
         ->call('guardar')
         ->assertHasErrors(['id_tipo_maquinaria', 'modelo', 'estado']);
 });
+
+test('guarda una maquinaria dejando "Es alquilada" en el valor por defecto', function () {
+    // Regresion: el select muestra "No" pero la propiedad arrancaba en null,
+    // asi que el required fallaba y el form no guardaba ni mostraba el motivo.
+    $tipo = TipoMaquinaria::factory()->create();
+
+    Livewire::actingAs(usuarioConPermisos(['crear-maquinarias', 'editar-maquinarias', 'eliminar-maquinarias']))
+        ->test(Maquinarias::class)
+        ->set('id_tipo_maquinaria', $tipo->id_tipo_maquinaria)
+        ->set('modelo', 'JD-6600')
+        ->set('estado', 'disponible')
+        ->set('fecha_inicio_actividades', '2020-01-01')
+        ->call('guardar')
+        ->assertHasNoErrors()
+        ->assertSet('es_alquilada', 0);
+
+    $maquinaria = Maquinaria::where('modelo', 'JD-6600')->first();
+
+    expect($maquinaria)->not->toBeNull()
+        ->and((bool) $maquinaria->es_alquilada)->toBeFalse();
+});

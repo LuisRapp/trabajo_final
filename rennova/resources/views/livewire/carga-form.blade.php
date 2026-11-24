@@ -53,13 +53,13 @@
                         </div>
                         <div wire:loading.remove wire:target="id_lote">
                             <div class="border border-arena rounded-sm p-3 bg-blanco @error('carga_maquinarias') ring-2 ring-tierra @enderror">
-                                <input type="text" wire:model.live.debounce.300ms="busqueda_maquinaria"
+                                <input autocomplete="off" type="text" wire:model.live.debounce.300ms="busqueda_maquinaria"
                                     class="form-input mb-2"
                                     placeholder="Buscar maquinaria...">
                                 <div class="max-h-32 overflow-y-auto">
                                     @forelse($this->maquinariasCargaFiltrada as $maq)
                                         <div class="flex items-center mb-2" wire:key="item-{{ $maq->id_maquinaria }}">
-                                            <input type="checkbox" value="{{ $maq->id_maquinaria }}" id="maq-{{ $maq->id_maquinaria }}" wire:model="carga_maquinarias" class="h-4 w-4 rounded border-arena text-pino focus:ring-pino">
+                                            <input autocomplete="off" type="checkbox" value="{{ $maq->id_maquinaria }}" id="maq-{{ $maq->id_maquinaria }}" wire:model="carga_maquinarias" class="h-4 w-4 rounded border-arena text-pino focus:ring-pino">
                                             <label for="maq-{{ $maq->id_maquinaria }}" class="ml-2 text-sm text-tinta">
                                                 {{ $maq->modelo }} - <small class="text-tinta-suave">{{ $maq->tipoMaquinaria->nombre ?? 'Sin tipo' }}</small>
                                             </label>
@@ -80,7 +80,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div>
                         <label class="block text-sm font-semibold text-tinta mb-2">Chofer <span class="text-tierra">*</span></label>
-                        <input type="text" wire:model.live.debounce.500ms="busqueda_chofer" class="form-input mb-2 @error('carga_id_chofer') ring-2 ring-tierra @enderror" placeholder="Buscar chofer...">
+                        <input autocomplete="off" type="text" wire:model.live.debounce.500ms="busqueda_chofer" class="form-input mb-2 @error('carga_id_chofer') ring-2 ring-tierra @enderror" placeholder="Buscar chofer...">
                         <select wire:model="carga_id_chofer" class="form-input" size="3">
                             @forelse($this->choferesFiltrados as $chofer)
                                 <option value="{{ $chofer->id_chofer }}" wire:key="option-{{ $chofer->id_chofer }}">{{ $chofer->apellido }}, {{ $chofer->nombre }}</option>
@@ -92,7 +92,7 @@
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-tinta mb-2">Destino (Cliente) <span class="text-tierra">*</span></label>
-                        <input type="text" wire:model.live.debounce.500ms="busqueda_cliente" class="form-input mb-2 @error('carga_destino') ring-2 ring-tierra @enderror" placeholder="Buscar cliente...">
+                        <input autocomplete="off" type="text" wire:model.live.debounce.500ms="busqueda_cliente" class="form-input mb-2 @error('carga_destino') ring-2 ring-tierra @enderror" placeholder="Buscar cliente...">
                         <select wire:model="carga_destino" class="form-input" size="3">
                             @forelse($this->clientesFiltrados as $cliente)
                                 <option value="{{ $cliente->id_cliente }}" wire:key="option-{{ $cliente->id_cliente }}">{{ $cliente->razon_social }}</option>
@@ -108,22 +108,22 @@
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                     <div>
                         <label class="block text-sm font-semibold text-tinta mb-2">Ticket <span class="text-tierra">*</span></label>
-                        <input type="text" wire:model="carga_ticket" class="form-input @error('carga_ticket') ring-2 ring-tierra @enderror" placeholder="TKT-12345">
+                        <input autocomplete="off" type="text" wire:model="carga_ticket" class="form-input @error('carga_ticket') ring-2 ring-tierra @enderror" placeholder="TKT-12345">
                         @error('carga_ticket') <div class="text-tierra text-sm mt-1">{{ $message }}</div> @enderror
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-tinta mb-2">Bruto (Ton) <span class="text-tierra">*</span></label>
-                        <input type="number" wire:model.live="carga_peso_bruto" step="0.1" min="0" class="form-input @error('carga_peso_bruto') ring-2 ring-tierra @enderror" placeholder="0.00">
+                        <input autocomplete="off" type="number" wire:model.live="carga_peso_bruto" step="0.1" min="0" class="form-input @error('carga_peso_bruto') ring-2 ring-tierra @enderror" placeholder="0.00">
                         @error('carga_peso_bruto') <div class="text-tierra text-sm mt-1">{{ $message }}</div> @enderror
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-tinta mb-2">Tara (Ton) <span class="text-tierra">*</span></label>
-                        <input type="number" wire:model.live="carga_tara" step="0.1" min="0" class="form-input @error('carga_tara') ring-2 ring-tierra @enderror {{ $carga_tara > 0 && $carga_peso_bruto > 0 && $carga_tara > $carga_peso_bruto ? 'ring-2 ring-tierra' : '' }}" placeholder="0.00">
+                        <input autocomplete="off" type="number" wire:model.live="carga_tara" step="0.1" min="0" class="form-input @error('carga_tara') ring-2 ring-tierra @enderror {{ $carga_tara > 0 && $carga_peso_bruto > 0 && $carga_tara > $carga_peso_bruto ? 'ring-2 ring-tierra' : '' }}" placeholder="0.00">
                         @error('carga_tara') <div class="text-tierra text-sm mt-1">{{ $message }}</div> @enderror
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-pino mb-2">Neto (Ton) <span class="text-sm">Calculado</span></label>
-                        <input type="text" value="{{ is_numeric($carga_peso_neto) ? number_format((float) $carga_peso_neto, 2, '.', '') : '0.00' }}" class="form-input bg-corteza-suave text-tinta-suave" readonly>
+                        <input autocomplete="off" type="text" value="{{ is_numeric($carga_peso_neto) ? number_format((float) $carga_peso_neto, 2, '.', '') : '0.00' }}" class="form-input bg-corteza-suave text-tinta-suave" readonly>
                         @error('carga_peso_neto') <div class="text-tierra text-sm mt-1 block">{{ $message }}</div> @enderror
                     </div>
                 </div>
@@ -146,13 +146,13 @@
                         </div>
                         <div wire:loading.remove wire:target="id_lote">
                             <div class="border border-arena rounded-sm p-3 bg-blanco @error('carga_empleados') ring-2 ring-tierra @enderror">
-                                <input type="text" wire:model.live.debounce.300ms="busqueda_empleado"
+                                <input autocomplete="off" type="text" wire:model.live.debounce.300ms="busqueda_empleado"
                                     class="form-input mb-2"
                                     placeholder="Buscar empleado...">
                                 <div class="max-h-40 overflow-y-auto">
                                     @forelse($this->empleadosCargaFiltrados as $emp)
                                         <div class="flex items-center mb-2" wire:key="item-{{ $emp->id_empleado }}">
-                                            <input type="checkbox" value="{{ $emp->id_empleado }}" id="emp-{{ $emp->id_empleado }}" wire:model="carga_empleados" class="h-4 w-4 rounded border-arena text-pino focus:ring-pino">
+                                            <input autocomplete="off" type="checkbox" value="{{ $emp->id_empleado }}" id="emp-{{ $emp->id_empleado }}" wire:model="carga_empleados" class="h-4 w-4 rounded border-arena text-pino focus:ring-pino">
                                             <label for="emp-{{ $emp->id_empleado }}" class="ml-2 text-sm text-tinta">
                                                 {{ $emp->apellido }}, {{ $emp->nombre }} - <small class="text-tinta-suave">{{ $emp->rolLaboral->nombre ?? 'Sin rol' }}</small>
                                             </label>

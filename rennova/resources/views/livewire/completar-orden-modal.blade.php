@@ -83,14 +83,14 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                         <div>
                             <label class="block text-sm font-semibold text-tinta mb-2">Fecha Finalizacion <span class="text-tierra">*</span></label>
-                            <input type="date" wire:model="fecha_fin_completar" class="form-input @error('fecha_fin_completar') ring-2 ring-tierra @enderror">
+                            <input autocomplete="off" type="date" wire:model="fecha_fin_completar" class="form-input @error('fecha_fin_completar') ring-2 ring-tierra @enderror">
                             @error('fecha_fin_completar') <p class="mt-1 text-sm text-tierra">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label class="block text-sm font-semibold text-tinta mb-2">Costo Total (opcional)</label>
                             <div class="flex items-center gap-2">
                                 <span class="px-4 py-3 bg-corteza-suave text-tinta-suave rounded-sm border border-arena">$</span>
-                                <input type="number" wire:model="costo_total_completar" step="1" min="0" class="flex-1 form-input @error('costo_total_completar') ring-2 ring-tierra @enderror" placeholder="0.00">
+                                <input autocomplete="off" type="number" wire:model="costo_total_completar" step="1" min="0" class="flex-1 form-input @error('costo_total_completar') ring-2 ring-tierra @enderror" placeholder="0.00">
                             </div>
                             @error('costo_total_completar') <p class="mt-1 text-sm text-tierra">{{ $message }}</p> @enderror
                             <small class="text-tinta-suave text-xs mt-1 block">Costo adicional (ej: mano de obra). El costo de los insumos se calcula automaticamente al momento del cierre.</small>
@@ -121,7 +121,7 @@
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-tinta mb-2">Cantidad a usar</label>
-                                <input type="number" wire:model="insumos_usados.{{ $index }}.cantidad" step="0.1" min="0" class="form-input" placeholder="0">
+                                <input autocomplete="off" type="number" wire:model="insumos_usados.{{ $index }}.cantidad" step="0.1" min="0" class="form-input" placeholder="0">
                                 @if(!empty($insumo['id_insumo']))
                                     @php
                                         $stockDisponible = optional($insumosDisponibles->firstWhere('id_insumo', $insumo['id_insumo']))->stock_disponible ?? 0;
@@ -133,7 +133,7 @@
                                 <label class="block text-xs font-semibold text-tinta mb-2">Precio Unitario</label>
                                 <div class="flex items-center gap-1">
                                     <span class="text-tinta-suave">$</span>
-                                    <input type="number" wire:model="insumos_usados.{{ $index }}.precio_unitario" step="0.01" min="0" class="flex-1 form-input bg-hueso" readonly>
+                                    <input autocomplete="off" type="number" wire:model="insumos_usados.{{ $index }}.precio_unitario" step="0.01" min="0" class="flex-1 form-input bg-hueso" readonly>
                                 </div>
                             </div>
                             <div class="flex items-end justify-end">

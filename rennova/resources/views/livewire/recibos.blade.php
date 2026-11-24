@@ -44,7 +44,7 @@
                 </h5>
             </div>
             <div class="p-6">
-                <form wire:submit.prevent="guardar">
+                <form autocomplete="off" wire:submit.prevent="guardar">
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                         <div class="md:col-span-2">
                             <label for="id_empleado" class="block text-sm font-semibold text-tinta mb-1.5">Empleado <span class="text-tierra">*</span></label>
@@ -59,13 +59,13 @@
                         </div>
                         <div>
                             <label for="fecha_emision" class="block text-sm font-semibold text-tinta mb-1.5">Fecha Emisión <span class="text-tierra">*</span></label>
-                            <input type="date" id="fecha_emision" wire:model="fecha_emision"
+                            <input autocomplete="off" type="date" id="fecha_emision" wire:model="fecha_emision"
                                 class="form-input @error('fecha_emision') border-tierra bg-tierra-suave @enderror">
                             @error('fecha_emision') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label for="monto_bruto" class="block text-sm font-semibold text-tinta mb-1.5">Monto Bruto <span class="text-tierra">*</span></label>
-                            <input type="number" id="monto_bruto" wire:model.live="monto_bruto" step="0.01"
+                            <input autocomplete="off" type="number" id="monto_bruto" wire:model.live="monto_bruto" step="0.01"
                                 class="form-input @error('monto_bruto') border-tierra bg-tierra-suave @enderror"
                                 placeholder="0.00">
                             @error('monto_bruto') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
@@ -74,14 +74,14 @@
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                         <div>
                             <label for="descuentos" class="block text-sm font-semibold text-tinta mb-1.5">Descuentos</label>
-                            <input type="number" id="descuentos" wire:model.live="descuentos" step="0.01"
+                            <input autocomplete="off" type="number" id="descuentos" wire:model.live="descuentos" step="0.01"
                                 class="form-input @error('descuentos') border-tierra bg-tierra-suave @enderror"
                                 placeholder="0.00" value="0">
                             @error('descuentos') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label for="monto" class="block text-sm font-semibold text-tinta mb-1.5">Monto Neto</label>
-                            <input type="text" id="monto"
+                            <input autocomplete="off" type="text" id="monto"
                                 class="form-input bg-corteza-suave text-tinta-suave border-arena"
                                 value="{{ isset($monto) ? '$' . number_format($monto, 2, ',', '.') : '' }}" readonly>
                         </div>
@@ -115,7 +115,7 @@
                 <div class="mb-6">
                     <div class="flex items-center gap-2 px-3 py-2 border border-arena rounded-sm bg-corteza-suave">
                         <flux:icon.magnifying-glass class="size-4 text-tinta-suave" />
-                        <input type="text"
+                        <input autocomplete="off" type="text"
                             class="flex-1 bg-transparent border-0 focus:ring-0 focus:outline-none text-sm text-tinta placeholder:text-tinta-suave"
                             placeholder="Buscar por empleado..."
                             wire:model.live="busqueda">

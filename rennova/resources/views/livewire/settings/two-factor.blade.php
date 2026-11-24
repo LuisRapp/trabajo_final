@@ -357,7 +357,7 @@ new class extends Component {
                                     <flux:icon.loading variant="mini" class="text-arena-oscura"/>
                                 </div>
                             @else
-                                <input
+                                <input autocomplete="off"
                                     type="text"
                                     readonly
                                     value="{{ $manualSetupKey }}"

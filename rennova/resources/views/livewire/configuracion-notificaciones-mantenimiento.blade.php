@@ -39,7 +39,7 @@
                             <label class="block text-sm font-semibold text-tinta mb-1.5">Usuarios a notificar:</label>
                             @foreach($usuarios as $usuario)
                                 <div class="flex items-center gap-2 py-1" wire:key="user-{{ $usuario->id }}">
-                                    <input class="rounded border-arena text-pino focus:ring-pino/20" type="checkbox"
+                                    <input autocomplete="off" class="rounded border-arena text-pino focus:ring-pino/20" type="checkbox"
                                            wire:model="usuariosUmbral"
                                            value="{{ $usuario->id }}"
                                            id="umbral_{{ $usuario->id }}">
@@ -67,7 +67,7 @@
                             <label class="block text-sm font-semibold text-tinta mb-1.5">Usuarios a notificar:</label>
                             @foreach($usuarios as $usuario)
                                 <div class="flex items-center gap-2 py-1" wire:key="user-{{ $usuario->id }}">
-                                    <input class="rounded border-arena text-pino focus:ring-pino/20" type="checkbox"
+                                    <input autocomplete="off" class="rounded border-arena text-pino focus:ring-pino/20" type="checkbox"
                                            wire:model="usuariosStock"
                                            value="{{ $usuario->id }}"
                                            id="stock_{{ $usuario->id }}">
@@ -95,7 +95,7 @@
                             <label class="block text-sm font-semibold text-tinta mb-1.5">Usuarios a notificar:</label>
                             @foreach($usuarios as $usuario)
                                 <div class="flex items-center gap-2 py-1" wire:key="user-{{ $usuario->id }}">
-                                    <input class="rounded border-arena text-pino focus:ring-pino/20" type="checkbox"
+                                    <input autocomplete="off" class="rounded border-arena text-pino focus:ring-pino/20" type="checkbox"
                                            wire:model="usuariosRecordatorio"
                                            value="{{ $usuario->id }}"
                                            id="recordatorio_{{ $usuario->id }}">

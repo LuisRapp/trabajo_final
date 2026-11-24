@@ -38,7 +38,7 @@
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-tinta mb-1.5">Cantidad <span class="text-tierra">*</span></label>
-                        <input type="number" wire:model="movimiento_cantidad" step="0.1" min="0"
+                        <input autocomplete="off" type="number" wire:model="movimiento_cantidad" step="0.1" min="0"
                                @if($stock_disponible_insumo !== null) max="{{ $stock_disponible_insumo }}" @endif
                                class="form-input @error('movimiento_cantidad') border-tierra bg-tierra-suave @enderror" placeholder="0.00">
                         @error('movimiento_cantidad') <div class="text-tierra text-xs mt-1">{{ $message }}</div> @enderror

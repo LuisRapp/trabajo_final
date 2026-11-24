@@ -29,7 +29,7 @@
                     </h5>
                 </div>
                 <div class="p-4">
-                    <form wire:submit.prevent="guardar">
+                    <form autocomplete="off" wire:submit.prevent="guardar">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <div>
                                 <label class="block text-xs font-semibold text-tinta mb-1.5">Cliente <span class="text-tierra">*</span></label>
@@ -57,20 +57,20 @@
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                             <div>
                                 <label class="block text-xs font-semibold text-tinta mb-1.5">Precio <span class="text-tierra">*</span></label>
-                                <input type="number" wire:model="precio" step="0.01"
+                                <input autocomplete="off" type="number" wire:model="precio" step="0.01"
                                     class="form-input @error('precio') border-tierra bg-tierra-suave @enderror"
                                     placeholder="0.00">
                                 @error('precio') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-tinta mb-1.5">Fecha Desde <span class="text-tierra">*</span></label>
-                                <input type="date" wire:model="fecha_desde"
+                                <input autocomplete="off" type="date" wire:model="fecha_desde"
                                     class="form-input @error('fecha_desde') border-tierra bg-tierra-suave @enderror">
                                 @error('fecha_desde') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-tinta mb-1.5">Fecha Hasta</label>
-                                <input type="date" wire:model="fecha_hasta"
+                                <input autocomplete="off" type="date" wire:model="fecha_hasta"
                                     class="form-input @error('fecha_hasta') border-tierra bg-tierra-suave @enderror">
                                 @error('fecha_hasta') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                             </div>

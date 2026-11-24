@@ -16,7 +16,7 @@
 
     <x-ui.card>
         <div class="p-6">
-            <form method="POST" action="{{ route('choferes.store') }}">
+            <form autocomplete="off" method="POST" action="{{ route('choferes.store') }}">
                 @csrf
 
                 <div class="mb-6">

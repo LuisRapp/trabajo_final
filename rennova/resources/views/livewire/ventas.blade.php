@@ -42,23 +42,26 @@
                 <h5 class="text-lg font-semibold text-tinta mb-0">Buscar cargas pendientes</h5>
             </div>
             <div class="p-6">
-                <form wire:submit.prevent="buscarCargasPendientes" class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                <form autocomplete="off" wire:submit.prevent="buscarCargasPendientes" class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
                     <div>
                         <label class="block text-sm font-semibold text-tinta mb-2">Cliente</label>
-                        <select wire:model="id_cliente" class="form-input">
+                        <select wire:model="id_cliente" class="form-input @error('id_cliente') border-tierra bg-tierra-suave @enderror">
                             <option value="">Seleccione cliente</option>
                             @foreach($clientes as $cliente)
                                 <option value="{{ $cliente->id_cliente }}" wire:key="option-{{ $cliente->id_cliente }}">{{ $cliente->razon_social }}</option>
                             @endforeach
                         </select>
+                        @error('id_cliente') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-tinta mb-2">Desde</label>
-                        <input type="date" wire:model="fecha_desde" class="form-input">
+                        <input autocomplete="off" type="date" wire:model="fecha_desde" class="form-input @error('fecha_desde') border-tierra bg-tierra-suave @enderror">
+                        @error('fecha_desde') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-tinta mb-2">Hasta</label>
-                        <input type="date" wire:model="fecha_hasta" class="form-input">
+                        <input autocomplete="off" type="date" wire:model="fecha_hasta" class="form-input @error('fecha_hasta') border-tierra bg-tierra-suave @enderror">
+                        @error('fecha_hasta') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
                     <div class="md:col-span-2 flex gap-2">
                         <x-ui.button variant="primary" icon="magnifying-glass" type="submit" class="flex-1">
@@ -109,7 +112,7 @@
                     </x-ui.table-container>
                 </div>
                 <div class="border-t border-arena px-6 py-4 bg-corteza-suave">
-                    <form wire:submit.prevent="guardarVenta">
+                    <form autocomplete="off" wire:submit.prevent="guardarVenta">
                         <div class="mb-4">
                             <label class="block text-sm font-semibold text-tinta mb-2">Observaciones (opcional)</label>
                             <textarea wire:model="observaciones" class="form-input" rows="3"></textarea>
@@ -135,7 +138,7 @@
                 <h5 class="text-lg font-semibold text-tinta mb-0">Historial de Ventas</h5>
                 <div class="flex items-center gap-2 px-4 py-2 border border-arena rounded-sm bg-blanco max-w-[300px]">
                     <flux:icon.magnifying-glass class="size-4 text-tinta-suave" />
-                    <input type="text" wire:model.live="busqueda" placeholder="Buscar..." class="flex-1 border-0 focus:ring-0 focus:outline-none text-tinta placeholder-tinta-suave bg-blanco">
+                    <input autocomplete="off" type="text" wire:model.live="busqueda" placeholder="Buscar..." class="flex-1 border-0 focus:ring-0 focus:outline-none text-tinta placeholder-tinta-suave bg-blanco">
                     <button class="text-tinta-suave hover:text-tinta" wire:click="$set('busqueda', '')">
                         <flux:icon.x-mark class="size-4" />
                     </button>
@@ -229,7 +232,7 @@
                         <div>
                             @if($modo_edicion)
                                 <label class="block text-sm font-semibold text-tinta mb-1"><strong>Monto:</strong></label>
-                                <input type="number" wire:model="monto_edicion" step="0.1" min="0" class="form-input">
+                                <input autocomplete="off" type="number" wire:model="monto_edicion" step="0.1" min="0" class="form-input">
                             @else
                                 <strong class="block text-sm font-semibold text-tinta mb-1">Monto Total:</strong>
                                 <p class="text-tinta-suave">${{ number_format($venta_seleccionada->monto, 2, ',', '.') }}</p>

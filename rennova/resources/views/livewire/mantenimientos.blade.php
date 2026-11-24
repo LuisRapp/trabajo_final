@@ -65,7 +65,7 @@
                     @endif
                 @endif
 
-                <form wire:submit.prevent="guardar">
+                <form autocomplete="off" wire:submit.prevent="guardar">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                         <div>
                             <label class="block text-sm font-semibold text-tinta mb-2">Maquinaria <span class="text-tierra">*</span></label>
@@ -108,12 +108,12 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                         <div>
                             <label class="block text-sm font-semibold text-tinta mb-2">Fecha Inicio <span class="text-tierra">*</span></label>
-                            <input type="date" wire:model="fecha_inicio" class="form-input @error('fecha_inicio') ring-2 ring-tierra @enderror">
+                            <input autocomplete="off" type="date" wire:model="fecha_inicio" class="form-input @error('fecha_inicio') ring-2 ring-tierra @enderror">
                             @error('fecha_inicio') <p class="mt-1 text-sm text-tierra">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label class="block text-sm font-semibold text-tinta mb-2">Fecha Programada</label>
-                            <input type="date" wire:model="fecha_programada" class="form-input @error('fecha_programada') ring-2 ring-tierra @enderror">
+                            <input autocomplete="off" type="date" wire:model="fecha_programada" class="form-input @error('fecha_programada') ring-2 ring-tierra @enderror">
                             @error('fecha_programada') <p class="mt-1 text-sm text-tierra">{{ $message }}</p> @enderror
                             <small class="text-tinta-suave text-xs mt-1 block">
                                 <flux:icon.information-circle class="size-3 inline" />
@@ -154,7 +154,7 @@
                 <div class="mb-6">
                     <div class="flex items-center gap-2 px-4 py-3 border border-arena rounded-sm bg-hueso">
                         <flux:icon.magnifying-glass class="size-4 text-arena-oscura" />
-                        <input type="text" wire:model.live="busqueda" placeholder="Buscar por maquinaria, tipo, estado o costo..." class="flex-1 bg-transparent border-0 focus:ring-0 focus:outline-none text-tinta placeholder-arena-oscura">
+                        <input autocomplete="off" type="text" wire:model.live="busqueda" placeholder="Buscar por maquinaria, tipo, estado o costo..." class="flex-1 bg-transparent border-0 focus:ring-0 focus:outline-none text-tinta placeholder-arena-oscura">
                     </div>
                 </div>
 

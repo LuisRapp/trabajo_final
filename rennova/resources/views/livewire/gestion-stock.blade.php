@@ -76,11 +76,11 @@
             </div>
             <div>
                 <label class="block text-xs font-semibold text-tinta mb-1.5">Fecha Desde</label>
-                <input type="date" class="form-input" wire:model.live="filtro_fecha_inicio">
+                <input autocomplete="off" type="date" class="form-input" wire:model.live="filtro_fecha_inicio">
             </div>
             <div>
                 <label class="block text-xs font-semibold text-tinta mb-1.5">Fecha Hasta</label>
-                <input type="date" class="form-input" wire:model.live="filtro_fecha_fin">
+                <input autocomplete="off" type="date" class="form-input" wire:model.live="filtro_fecha_fin">
             </div>
             <div>
                 <x-ui.button variant="secondary" size="sm" icon="x-mark" wire:click="limpiarFiltros" class="w-full">
@@ -169,7 +169,7 @@
                     </button>
                 </div>
                 <div class="p-4">
-                    <form wire:submit.prevent="guardar">
+                    <form autocomplete="off" wire:submit.prevent="guardar">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-semibold text-tinta mb-1.5">Insumo <span class="text-tierra">*</span></label>
@@ -197,13 +197,13 @@
 
                             <div>
                                 <label class="block text-xs font-semibold text-tinta mb-1.5">Cantidad <span class="text-tierra">*</span></label>
-                                <input type="number" step="0.1" min="0" class="form-input @error('cantidad') border-tierra bg-tierra-suave @enderror" wire:model.live="cantidad">
+                                <input autocomplete="off" type="number" step="0.1" min="0" class="form-input @error('cantidad') border-tierra bg-tierra-suave @enderror" wire:model.live="cantidad">
                                 @error('cantidad') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                             </div>
 
                             <div>
                                 <label class="block text-xs font-semibold text-tinta mb-1.5">Precio Unitario <span class="text-tierra">*</span></label>
-                                <input type="number" step="0.1" min="0" class="form-input @error('precio_unitario') border-tierra bg-tierra-suave @enderror" wire:model.live="precio_unitario">
+                                <input autocomplete="off" type="number" step="0.1" min="0" class="form-input @error('precio_unitario') border-tierra bg-tierra-suave @enderror" wire:model.live="precio_unitario">
                                 @error('precio_unitario') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                             </div>
 
@@ -216,13 +216,13 @@
 
                             <div>
                                 <label class="block text-xs font-semibold text-tinta mb-1.5">Numero de Factura</label>
-                                <input type="text" class="form-input @error('numero_factura') border-tierra bg-tierra-suave @enderror" wire:model="numero_factura">
+                                <input autocomplete="off" type="text" class="form-input @error('numero_factura') border-tierra bg-tierra-suave @enderror" wire:model="numero_factura">
                                 @error('numero_factura') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                             </div>
 
                             <div>
                                 <label class="block text-xs font-semibold text-tinta mb-1.5">Fecha de Compra <span class="text-tierra">*</span></label>
-                                <input type="date" class="form-input @error('fecha_compra') border-tierra bg-tierra-suave @enderror" wire:model="fecha_compra">
+                                <input autocomplete="off" type="date" class="form-input @error('fecha_compra') border-tierra bg-tierra-suave @enderror" wire:model="fecha_compra">
                                 @error('fecha_compra') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                             </div>
 

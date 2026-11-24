@@ -44,7 +44,7 @@
                 </h5>
             </div>
             <div class="p-6">
-                <form wire:submit.prevent="guardar">
+                <form autocomplete="off" wire:submit.prevent="guardar">
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                         <div>
                             <label for="rol_laboral_id" class="block text-sm font-semibold text-tinta mb-1.5">Rol Laboral <span class="text-tierra">*</span></label>
@@ -59,14 +59,14 @@
                         </div>
                         <div>
                             <label for="precio_tonelada" class="block text-sm font-semibold text-tinta mb-1.5">Precio/Ton <span class="text-tierra">*</span></label>
-                            <input type="number" id="precio_tonelada" wire:model="precio_tonelada" step="0.01"
+                            <input autocomplete="off" type="number" id="precio_tonelada" wire:model="precio_tonelada" step="0.01"
                                 class="form-input @error('precio_tonelada') border-tierra bg-tierra-suave @enderror"
                                 placeholder="0.00">
                             @error('precio_tonelada') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label for="jornal_diario" class="block text-sm font-semibold text-tinta mb-1.5">Jornal Diario <span class="text-tierra">*</span></label>
-                            <input type="number" id="jornal_diario" wire:model="jornal_diario" step="0.01"
+                            <input autocomplete="off" type="number" id="jornal_diario" wire:model="jornal_diario" step="0.01"
                                 class="form-input @error('jornal_diario') border-tierra bg-tierra-suave @enderror"
                                 placeholder="0.00">
                             @error('jornal_diario') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
@@ -75,19 +75,19 @@
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                         <div>
                             <label for="fecha_inicio" class="block text-sm font-semibold text-tinta mb-1.5">Fecha Inicio <span class="text-tierra">*</span></label>
-                            <input type="date" id="fecha_inicio" wire:model="fecha_inicio"
+                            <input autocomplete="off" type="date" id="fecha_inicio" wire:model="fecha_inicio"
                                 class="form-input @error('fecha_inicio') border-tierra bg-tierra-suave @enderror">
                             @error('fecha_inicio') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label for="fecha_fin" class="block text-sm font-semibold text-tinta mb-1.5">Fecha Fin</label>
-                            <input type="date" id="fecha_fin" wire:model="fecha_fin"
+                            <input autocomplete="off" type="date" id="fecha_fin" wire:model="fecha_fin"
                                 class="form-input @error('fecha_fin') border-tierra bg-tierra-suave @enderror">
                             @error('fecha_fin') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label for="motivo_cambio" class="block text-sm font-semibold text-tinta mb-1.5">Motivo del Cambio</label>
-                            <input type="text" id="motivo_cambio" wire:model="motivo_cambio"
+                            <input autocomplete="off" type="text" id="motivo_cambio" wire:model="motivo_cambio"
                                 class="form-input @error('motivo_cambio') border-tierra bg-tierra-suave @enderror"
                                 placeholder="Motivo">
                             @error('motivo_cambio') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
@@ -115,7 +115,7 @@
                 <div class="mb-6">
                     <div class="flex items-center gap-2 px-3 py-2 border border-arena rounded-sm bg-corteza-suave">
                         <flux:icon.magnifying-glass class="size-4 text-tinta-suave" />
-                        <input type="text"
+                        <input autocomplete="off" type="text"
                             class="flex-1 bg-transparent border-0 focus:ring-0 focus:outline-none text-sm text-tinta placeholder:text-tinta-suave"
                             placeholder="Buscar por rol..."
                             wire:model.live="busqueda">

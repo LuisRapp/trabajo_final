@@ -23,11 +23,11 @@
                     </h5>
                 </div>
                 <div class="p-4">
-                    <form wire:submit.prevent="guardar">
+                    <form autocomplete="off" wire:submit.prevent="guardar">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <div>
                                 <label for="nombre" class="block text-xs font-semibold text-tinta mb-1.5">Nombre <span class="text-tierra">*</span></label>
-                                <input type="text" id="nombre" wire:model="nombre"
+                                <input autocomplete="off" type="text" id="nombre" wire:model="nombre"
                                     class="form-input @error('nombre') border-tierra bg-tierra-suave @enderror"
                                     placeholder="Nombre de la categoria">
                                 @error('nombre') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror

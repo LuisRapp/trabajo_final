@@ -32,10 +32,10 @@
                 </h5>
             </div>
             <div class="p-6">
-                <form wire:submit.prevent="guardar">
+                <form autocomplete="off" wire:submit.prevent="guardar">
                     <div class="mb-6">
                         <label for="nombre" class="block text-sm font-semibold text-tinta mb-1.5">Nombre del Rol <span class="text-tierra">*</span></label>
-                        <input type="text" id="nombre" wire:model="nombre"
+                        <input autocomplete="off" type="text" id="nombre" wire:model="nombre"
                             class="form-input @error('nombre') border-tierra bg-tierra-suave @enderror"
                             placeholder="Ej: Operario, Supervisor, Encargado">
                         @error('nombre') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
@@ -62,7 +62,7 @@
                 <div class="mb-6">
                     <div class="flex items-center gap-2 px-3 py-2 border border-arena rounded-sm bg-corteza-suave">
                         <flux:icon.magnifying-glass class="size-4 text-tinta-suave" />
-                        <input type="text"
+                        <input autocomplete="off" type="text"
                             class="flex-1 bg-transparent border-0 focus:ring-0 focus:outline-none text-sm text-tinta placeholder:text-tinta-suave"
                             placeholder="Buscar por nombre..."
                             wire:model.live="busqueda">

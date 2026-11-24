@@ -43,7 +43,7 @@
                 </h5>
             </div>
             <div class="p-6">
-                <form wire:submit.prevent="guardar">
+                <form autocomplete="off" wire:submit.prevent="guardar">
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                         <div>
                             <label for="id_lote" class="block text-sm font-semibold text-tinta mb-1.5">Lote <span class="text-tierra">*</span></label>
@@ -69,7 +69,7 @@
                         </div>
                         <div>
                             <label for="id_chofer" class="block text-sm font-semibold text-tinta mb-1.5">Chofer (ID)</label>
-                            <input type="number" id="id_chofer" wire:model="id_chofer"
+                            <input autocomplete="off" type="number" id="id_chofer" wire:model="id_chofer"
                                 class="form-input @error('id_chofer') border-tierra bg-tierra-suave @enderror">
                             @error('id_chofer') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
@@ -89,25 +89,25 @@
                     <div class="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
                         <div>
                             <label for="ticket" class="block text-sm font-semibold text-tinta mb-1.5">Ticket</label>
-                            <input type="text" id="ticket" wire:model="ticket" maxlength="20"
+                            <input autocomplete="off" type="text" id="ticket" wire:model="ticket" maxlength="20"
                                 class="form-input @error('ticket') border-tierra bg-tierra-suave @enderror">
                             @error('ticket') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label for="peso_bruto" class="block text-sm font-semibold text-tinta mb-1.5">Peso Bruto</label>
-                            <input type="number" id="peso_bruto" wire:model="peso_bruto" step="0.1" min="0"
+                            <input autocomplete="off" type="number" id="peso_bruto" wire:model="peso_bruto" step="0.1" min="0"
                                 class="form-input @error('peso_bruto') border-tierra bg-tierra-suave @enderror">
                             @error('peso_bruto') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label for="tara" class="block text-sm font-semibold text-tinta mb-1.5">Tara</label>
-                            <input type="number" id="tara" wire:model="tara" step="0.1" min="0"
+                            <input autocomplete="off" type="number" id="tara" wire:model="tara" step="0.1" min="0"
                                 class="form-input @error('tara') border-tierra bg-tierra-suave @enderror">
                             @error('tara') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label for="peso_neto" class="block text-sm font-semibold text-tinta mb-1.5">Peso Neto</label>
-                            <input type="number" id="peso_neto" wire:model="peso_neto" step="0.1" min="0"
+                            <input autocomplete="off" type="number" id="peso_neto" wire:model="peso_neto" step="0.1" min="0"
                                 class="form-input @error('peso_neto') border-tierra bg-tierra-suave @enderror">
                             @error('peso_neto') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
@@ -124,7 +124,7 @@
                         </div>
                         <div>
                             <label for="fecha_carga" class="block text-sm font-semibold text-tinta mb-1.5">Fecha Carga <span class="text-tierra">*</span></label>
-                            <input type="date" id="fecha_carga" wire:model="fecha_carga" max="{{ now()->toDateString() }}"
+                            <input autocomplete="off" type="date" id="fecha_carga" wire:model="fecha_carga" max="{{ now()->toDateString() }}"
                                 class="form-input @error('fecha_carga') border-tierra bg-tierra-suave @enderror">
                             @error('fecha_carga') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
@@ -153,7 +153,7 @@
                     <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-tinta-suave">
                         <flux:icon.magnifying-glass class="size-4" />
                     </span>
-                    <input type="text" wire:model.live="busqueda"
+                    <input autocomplete="off" type="text" wire:model.live="busqueda"
                         class="form-input pl-10"
                         placeholder="Buscar por lote, ticket, cliente, chofer o fecha...">
                 </div>

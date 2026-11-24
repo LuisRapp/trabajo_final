@@ -92,7 +92,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                         <div>
                             <label class="block text-sm font-semibold text-tinta mb-2">Fecha <span class="text-tierra">*</span></label>
-                            <input type="date"
+                            <input autocomplete="off" type="date"
                                    wire:model="fecha"
                                    max="{{ date('Y-m-d') }}"
                                    min="{{ date('Y-m-d', strtotime('-7 days')) }}"
@@ -148,7 +148,7 @@
                         <div>
                             <label class="block text-sm font-semibold text-tinta mb-2">Día Caído</label>
                             <div class="flex items-center mt-2">
-                                <input type="checkbox" id="diaCaidoSwitch" wire:model.live="es_dia_caido" class="w-5 h-5 rounded border-arena text-pino focus:ring-pino">
+                                <input autocomplete="off" type="checkbox" id="diaCaidoSwitch" wire:model.live="es_dia_caido" class="w-5 h-5 rounded border-arena text-pino focus:ring-pino">
                                 <label for="diaCaidoSwitch" class="ml-2">
                                     <span class="inline-block px-3 py-1 rounded-sm text-sm font-medium {{ $es_dia_caido ? 'bg-resina-suave text-resina' : 'bg-corteza-suave text-tinta' }}">
                                         {{ $es_dia_caido ? 'SÍ - Jornal' : 'NO - Destajo' }}
@@ -318,7 +318,7 @@
 
                     <div>
                         <label class="block text-sm font-semibold text-tinta mb-2">Superficie (ha)</label>
-                        <input type="number" wire:model.live="nueva_tarea_superficie_afectada_ha" step="0.01" min="0"
+                        <input autocomplete="off" type="number" wire:model.live="nueva_tarea_superficie_afectada_ha" step="0.01" min="0"
                             class="form-input"
                             placeholder="(opcional)">
                     </div>

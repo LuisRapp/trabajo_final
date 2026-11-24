@@ -25,7 +25,7 @@
         <div class="p-6">
             @if (!$mostrar_liquidacion)
                 @canany(['crear-liquidacion-pagos', 'editar-liquidacion-pagos'])
-                <form wire:submit.prevent="calcularLiquidacion" class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                <form autocomplete="off" wire:submit.prevent="calcularLiquidacion" class="grid grid-cols-1 md:grid-cols-12 gap-4">
                     <div class="md:col-span-5">
                         <label for="id_empleado" class="block text-sm font-semibold text-tinta mb-2">Empleado <span class="text-tierra">*</span></label>
                         <select wire:model="id_empleado" id="id_empleado"
@@ -39,21 +39,21 @@
                         </select>
                         @error('id_empleado') <p class="mt-1 text-xs text-tierra">{{ $message }}</p> @enderror
                         <div class="mt-2 flex items-center gap-2 text-sm text-tinta-suave">
-                            <input type="checkbox" id="liquidar_todos" wire:model="liquidar_todos" class="h-4 w-4 rounded border-arena text-pino focus:ring-pino">
+                            <input autocomplete="off" type="checkbox" id="liquidar_todos" wire:model="liquidar_todos" class="h-4 w-4 rounded border-arena text-pino focus:ring-pino">
                             <label for="liquidar_todos">Liquidar a todos los empleados</label>
                         </div>
                     </div>
 
                     <div class="md:col-span-3">
                         <label for="fecha_inicio" class="block text-sm font-semibold text-tinta mb-2">Fecha Inicio <span class="text-tierra">*</span></label>
-                        <input type="date" wire:model="fecha_inicio" id="fecha_inicio"
+                        <input autocomplete="off" type="date" wire:model="fecha_inicio" id="fecha_inicio"
                             class="form-input @error('fecha_inicio') border-tierra bg-tierra-suave @enderror">
                         @error('fecha_inicio') <p class="mt-1 text-xs text-tierra">{{ $message }}</p> @enderror
                     </div>
 
                     <div class="md:col-span-3">
                         <label for="fecha_fin" class="block text-sm font-semibold text-tinta mb-2">Fecha Fin <span class="text-tierra">*</span></label>
-                        <input type="date" wire:model="fecha_fin" id="fecha_fin"
+                        <input autocomplete="off" type="date" wire:model="fecha_fin" id="fecha_fin"
                             class="form-input @error('fecha_fin') border-tierra bg-tierra-suave @enderror">
                         @error('fecha_fin') <p class="mt-1 text-xs text-tierra">{{ $message }}</p> @enderror
                     </div>
@@ -175,10 +175,10 @@
                                 </h6>
                             </div>
                             <div class="p-4">
-                                <form wire:submit.prevent="generarRecibo" class="space-y-4">
+                                <form autocomplete="off" wire:submit.prevent="generarRecibo" class="space-y-4">
                                     <div>
                                         <label for="monto_bruto" class="block text-sm font-semibold text-tinta mb-2">Monto Bruto <span class="text-tierra">*</span></label>
-                                        <input type="number" wire:model.live="monto_bruto" id="monto_bruto" step="0.1" min="0"
+                                        <input autocomplete="off" type="number" wire:model.live="monto_bruto" id="monto_bruto" step="0.1" min="0"
                                             class="form-input @error('monto_bruto') border-tierra bg-tierra-suave @enderror">
                                         @error('monto_bruto') <p class="mt-1 text-xs text-tierra">{{ $message }}</p> @enderror
                                         <p class="mt-1 text-xs text-tinta-suave">Puedes modificar el monto calculado si es necesario</p>
@@ -193,7 +193,7 @@
                                                 </x-ui.badge>
                                             @endif
                                         </label>
-                                        <input type="number" wire:model.live="descuentos" id="descuentos" step="0.1" min="0"
+                                        <input autocomplete="off" type="number" wire:model.live="descuentos" id="descuentos" step="0.1" min="0"
                                             class="form-input @error('descuentos') border-tierra bg-tierra-suave @enderror">
                                         @error('descuentos') <p class="mt-1 text-xs text-tierra">{{ $message }}</p> @enderror
                                         <p class="mt-1 text-xs text-tinta-suave">

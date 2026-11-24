@@ -162,12 +162,12 @@
             </x-ui.card>
 
             <!-- Formulario de programación -->
-            <form wire:submit.prevent="programarMantenimiento">
+            <form autocomplete="off" wire:submit.prevent="programarMantenimiento">
                 <div class="mb-4">
                     <label for="fechaProgramada" class="block text-sm font-semibold text-tinta mb-1.5">
                         Fecha Programada
                     </label>
-                    <input
+                    <input autocomplete="off"
                         type="date"
                         class="form-input @error('fechaProgramada') border-tierra bg-tierra-suave @enderror"
                         id="fechaProgramada"

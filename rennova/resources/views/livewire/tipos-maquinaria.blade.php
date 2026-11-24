@@ -42,10 +42,10 @@
                 </h5>
             </div>
             <div class="p-6">
-                <form wire:submit.prevent="guardar">
+                <form autocomplete="off" wire:submit.prevent="guardar">
                     <div class="mb-6">
                         <label for="nombre" class="block text-sm font-semibold text-tinta mb-1.5">Nombre del Tipo <span class="text-tierra">*</span></label>
-                        <input type="text" id="nombre" wire:model="nombre"
+                        <input autocomplete="off" type="text" id="nombre" wire:model="nombre"
                             class="form-input @error('nombre') border-tierra bg-tierra-suave @enderror"
                             placeholder="Ej: Cosechadora, Tractor...">
                         @error('nombre') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
@@ -72,7 +72,7 @@
                 <div class="mb-6">
                     <div class="flex items-center gap-2 px-4 py-2.5 border border-arena rounded-sm bg-hueso">
                         <flux:icon.magnifying-glass class="size-4 text-arena-oscura" />
-                        <input type="text" wire:model.live="busqueda" placeholder="Buscar por nombre..."
+                        <input autocomplete="off" type="text" wire:model.live="busqueda" placeholder="Buscar por nombre..."
                             class="flex-1 bg-transparent border-0 focus:ring-0 focus:outline-none text-sm text-tinta placeholder-arena-oscura">
                     </div>
                 </div>

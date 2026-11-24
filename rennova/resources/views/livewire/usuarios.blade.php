@@ -26,18 +26,18 @@
                     </h5>
                 </div>
                 <div class="p-4">
-                    <form wire:submit.prevent="guardar">
+                    <form autocomplete="off" wire:submit.prevent="guardar">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <div>
                                 <label for="nombre" class="block text-xs font-semibold text-tinta mb-1.5">Nombre <span class="text-tierra">*</span></label>
-                                <input type="text" id="nombre" wire:model="nombre"
+                                <input autocomplete="off" type="text" id="nombre" wire:model="nombre"
                                     class="form-input @error('nombre') border-tierra bg-tierra-suave @enderror"
                                     placeholder="Nombre">
                                 @error('nombre') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                             </div>
                             <div>
                                 <label for="apellido" class="block text-xs font-semibold text-tinta mb-1.5">Apellido <span class="text-tierra">*</span></label>
-                                <input type="text" id="apellido" wire:model="apellido"
+                                <input autocomplete="off" type="text" id="apellido" wire:model="apellido"
                                     class="form-input @error('apellido') border-tierra bg-tierra-suave @enderror"
                                     placeholder="Apellido">
                                 @error('apellido') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
@@ -47,21 +47,21 @@
                         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                             <div class="md:col-span-2">
                                 <label for="email" class="block text-xs font-semibold text-tinta mb-1.5">Email <span class="text-tierra">*</span></label>
-                                <input type="email" id="email" wire:model="email"
+                                <input autocomplete="off" type="email" id="email" wire:model="email"
                                     class="form-input @error('email') border-tierra bg-tierra-suave @enderror"
                                     placeholder="correo@ejemplo.com">
                                 @error('email') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                             </div>
                             <div>
                                 <label for="password" class="block text-xs font-semibold text-tinta mb-1.5">Contraseña @if(!$usuario_id)<span class="text-tierra">*</span>@endif</label>
-                                <input type="password" id="password" wire:model="password"
+                                <input autocomplete="off" type="password" id="password" wire:model="password"
                                     class="form-input @error('password') border-tierra bg-tierra-suave @enderror"
                                     placeholder="Contraseña">
                                 @error('password') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                             </div>
                             <div>
                                 <label for="password_confirmation" class="block text-xs font-semibold text-tinta mb-1.5">Confirmar Contraseña @if(!$usuario_id)<span class="text-tierra">*</span>@endif</label>
-                                <input type="password" id="password_confirmation" wire:model="password_confirmation"
+                                <input autocomplete="off" type="password" id="password_confirmation" wire:model="password_confirmation"
                                     class="form-input"
                                     placeholder="Confirmar contraseña">
                             </div>
@@ -70,7 +70,7 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <div>
                                 <label for="telefono" class="block text-xs font-semibold text-tinta mb-1.5">Telefono</label>
-                                <input type="text" id="telefono" wire:model="telefono"
+                                <input autocomplete="off" type="text" id="telefono" wire:model="telefono"
                                     class="form-input"
                                     placeholder="Telefono">
                                 @error('telefono') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror

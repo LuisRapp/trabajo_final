@@ -41,7 +41,7 @@ new class extends Component {
     @include('partials.settings-heading')
 
     <x-settings.layout :heading="__('Actualizar contraseña')" :subheading="__('Asegurate de usar una contraseña larga y aleatoria para mantener tu cuenta segura')">
-        <form method="POST" wire:submit="updatePassword" class="mt-6 space-y-6">
+        <form autocomplete="off" method="POST" wire:submit="updatePassword" class="mt-6 space-y-6">
             <flux:input
                 wire:model="current_password"
                 :label="__('Contraseña actual')"

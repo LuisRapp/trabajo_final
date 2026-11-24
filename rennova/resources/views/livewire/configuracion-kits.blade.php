@@ -361,12 +361,12 @@
                     </div>
                     <div class="mb-4">
                         <label class="block text-sm font-semibold text-tinta mb-2">Cantidad Requerida <span class="text-tierra">*</span></label>
-                        <input type="number" wire:model="cantidad_requerida" class="form-input @error('cantidad_requerida') ring-2 ring-tierra @enderror" step="0.1" min="0.01" placeholder="Ej: 10.00">
+                        <input autocomplete="off" type="number" wire:model="cantidad_requerida" class="form-input @error('cantidad_requerida') ring-2 ring-tierra @enderror" step="0.1" min="0.01" placeholder="Ej: 10.00">
                         @error('cantidad_requerida') <p class="mt-1 text-sm text-tierra">{{ $message }}</p> @enderror
                     </div>
                     <div class="mb-4">
                         <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" wire:model="es_obligatorio" class="w-4 h-4 rounded border-arena text-pino focus:ring-pino/20">
+                            <input autocomplete="off" type="checkbox" wire:model="es_obligatorio" class="w-4 h-4 rounded border-arena text-pino focus:ring-pino/20">
                             <span class="text-sm font-semibold text-tinta">¿Es obligatorio?</span>
                         </label>
                         <small class="text-tinta-suave text-xs mt-1 block">Los insumos obligatorios deben estar disponibles para aprobar el mantenimiento</small>

@@ -42,7 +42,7 @@
                 </h5>
             </div>
             <div class="p-6">
-                <form wire:submit.prevent="guardar">
+                <form autocomplete="off" wire:submit.prevent="guardar">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                         <div>
                             <label for="id_maquinaria" class="block text-sm font-semibold text-tinta mb-1.5">Maquinaria <span class="text-tierra">*</span></label>
@@ -57,7 +57,7 @@
                         </div>
                         <div>
                             <label for="costo_por_tonelada" class="block text-sm font-semibold text-tinta mb-1.5">Costo por Tonelada <span class="text-tierra">*</span></label>
-                            <input type="number" id="costo_por_tonelada" wire:model="costo_por_tonelada" step="0.01"
+                            <input autocomplete="off" type="number" id="costo_por_tonelada" wire:model="costo_por_tonelada" step="0.01"
                                 class="form-input @error('costo_por_tonelada') border-tierra bg-tierra-suave @enderror"
                                 placeholder="0.00">
                             @error('costo_por_tonelada') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
@@ -66,13 +66,13 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                         <div>
                             <label for="fecha_inicio_vigencia" class="block text-sm font-semibold text-tinta mb-1.5">Fecha Inicio Vigencia <span class="text-tierra">*</span></label>
-                            <input type="date" id="fecha_inicio_vigencia" wire:model="fecha_inicio_vigencia"
+                            <input autocomplete="off" type="date" id="fecha_inicio_vigencia" wire:model="fecha_inicio_vigencia"
                                 class="form-input @error('fecha_inicio_vigencia') border-tierra bg-tierra-suave @enderror">
                             @error('fecha_inicio_vigencia') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label for="fecha_fin_vigencia" class="block text-sm font-semibold text-tinta mb-1.5">Fecha Fin Vigencia</label>
-                            <input type="date" id="fecha_fin_vigencia" wire:model="fecha_fin_vigencia"
+                            <input autocomplete="off" type="date" id="fecha_fin_vigencia" wire:model="fecha_fin_vigencia"
                                 class="form-input @error('fecha_fin_vigencia') border-tierra bg-tierra-suave @enderror">
                             @error('fecha_fin_vigencia') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                             <small class="text-tinta-suave text-xs mt-1 block">Opcional — dejar en blanco si esta vigente actualmente</small>
@@ -100,7 +100,7 @@
                 <div class="mb-6">
                     <div class="flex items-center gap-2 px-4 py-2.5 border border-arena rounded-sm bg-hueso">
                         <flux:icon.magnifying-glass class="size-4 text-arena-oscura" />
-                        <input type="text" wire:model.live="busqueda" placeholder="Buscar por modelo de maquinaria..."
+                        <input autocomplete="off" type="text" wire:model.live="busqueda" placeholder="Buscar por modelo de maquinaria..."
                             class="flex-1 bg-transparent border-0 focus:ring-0 focus:outline-none text-sm text-tinta placeholder-arena-oscura">
                     </div>
                 </div>

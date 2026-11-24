@@ -42,7 +42,7 @@
                 </h5>
             </div>
             <div class="p-6">
-                <form wire:submit.prevent="guardar">
+                <form autocomplete="off" wire:submit.prevent="guardar">
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                         <div>
                             <label for="id_tipo_maquinaria" class="block text-sm font-semibold text-tinta mb-1.5">Tipo de Maquinaria <span class="text-tierra">*</span></label>
@@ -57,7 +57,7 @@
                         </div>
                         <div>
                             <label for="modelo" class="block text-sm font-semibold text-tinta mb-1.5">Modelo <span class="text-tierra">*</span></label>
-                            <input type="text" id="modelo" wire:model="modelo"
+                            <input autocomplete="off" type="text" id="modelo" wire:model="modelo"
                                 class="form-input @error('modelo') border-tierra bg-tierra-suave @enderror"
                                 placeholder="Modelo de la maquinaria">
                             @error('modelo') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
@@ -77,20 +77,21 @@
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                         <div>
                             <label for="es_alquilada" class="block text-sm font-semibold text-tinta mb-1.5">Es alquilada?</label>
-                            <select id="es_alquilada" wire:model="es_alquilada" class="form-input">
+                            <select id="es_alquilada" wire:model="es_alquilada" class="form-input @error('es_alquilada') border-tierra bg-tierra-suave @enderror">
                                 <option value="0">No</option>
                                 <option value="1">Si</option>
                             </select>
+                            @error('es_alquilada') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label for="fecha_inicio_actividades" class="block text-sm font-semibold text-tinta mb-1.5">Fecha Inicio Actividades <span class="text-tierra">*</span></label>
-                            <input type="date" id="fecha_inicio_actividades" wire:model="fecha_inicio_actividades"
+                            <input autocomplete="off" type="date" id="fecha_inicio_actividades" wire:model="fecha_inicio_actividades"
                                 class="form-input @error('fecha_inicio_actividades') border-tierra bg-tierra-suave @enderror">
                             @error('fecha_inicio_actividades') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label for="umbral_toneladas" class="block text-sm font-semibold text-tinta mb-1.5">Toneladas Mantenimiento</label>
-                            <input type="number" id="umbral_toneladas" wire:model="umbral_toneladas" step="0.01"
+                            <input autocomplete="off" type="number" id="umbral_toneladas" wire:model="umbral_toneladas" step="0.01"
                                 class="form-input @error('umbral_toneladas') border-tierra bg-tierra-suave @enderror"
                                 placeholder="Ej: 1000">
                             @error('umbral_toneladas') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
@@ -121,7 +122,7 @@
                 <div class="mb-6">
                     <div class="flex items-center gap-2 px-4 py-2.5 border border-arena rounded-sm bg-hueso">
                         <flux:icon.magnifying-glass class="size-4 text-arena-oscura" />
-                        <input type="text" wire:model.live="busqueda" placeholder="Buscar por tipo, modelo o estado..."
+                        <input autocomplete="off" type="text" wire:model.live="busqueda" placeholder="Buscar por tipo, modelo o estado..."
                             class="flex-1 bg-transparent border-0 focus:ring-0 focus:outline-none text-sm text-tinta placeholder-arena-oscura">
                     </div>
                 </div>

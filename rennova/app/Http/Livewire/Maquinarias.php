@@ -18,7 +18,7 @@ class Maquinarias extends Component
 
     public $estado;
 
-    public $es_alquilada;
+    public $es_alquilada = 0;
 
     public $fecha_inicio_actividades;
 
@@ -114,5 +114,9 @@ class Maquinarias extends Component
     public function resetCampos()
     {
         $this->reset(['maquinaria_id', 'id_tipo_maquinaria', 'modelo', 'estado', 'es_alquilada', 'fecha_inicio_actividades', 'umbral_toneladas']);
+
+        // El select muestra "No" por defecto: el valor tiene que reflejarlo,
+        // si queda en null el required falla sin que el usuario lo vea.
+        $this->es_alquilada = 0;
     }
 }
