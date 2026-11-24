@@ -108,7 +108,9 @@
                                                 <x-ui.button size="sm" variant="secondary" icon="pencil-square" wire:click="editar({{ $kit->id_kit_preventivo }})" title="Editar" />
                                             @endcan
                                             @can('eliminar-kits-mantenimiento')
-                                                <x-ui.button size="sm" variant="danger" icon="trash" wire:click="eliminar({{ $kit->id_kit_preventivo }})" wire:confirm="¿Esta seguro de eliminar este kit?" title="Eliminar" />
+                                                <x-ui.confirmador accion="eliminar" :parametros="[$kit->id_kit_preventivo]"
+                                                    mensaje="¿Eliminar el kit «{{ $kit->nombre }}»?"
+                                                />
                                             @endcan
                                         </div>
                                     </td>

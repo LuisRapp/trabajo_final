@@ -302,9 +302,12 @@
                             </x-ui.button>
                             @endcan
                             @can('eliminar-ventas')
-                            <x-ui.button variant="danger" icon="trash" wire:click="darDeBaja({{ $venta_seleccionada->id_recibo }})" wire:confirm="¿Está seguro de dar de baja esta venta?">
-                                Dar de Baja
-                            </x-ui.button>
+                            <x-ui.confirmador accion="darDeBaja" :parametros="[$venta_seleccionada->id_recibo]"
+                                mensaje="¿Dar de baja la venta #{{ $venta_seleccionada->id_recibo }}?"
+                                detalle="La carga vuelve a quedar pendiente de venta."
+                                etiqueta="Dar de baja"
+                                texto="Dar de Baja"
+                            />
                             @endcan
                         @endif
                     @endif

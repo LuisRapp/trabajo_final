@@ -97,7 +97,10 @@
                                                 <x-ui.button size="sm" variant="secondary" icon="pencil-square" wire:click="editar({{ $tipo->id_tipo_mantenimiento }})" title="Editar" />
                                             @endcan
                                             @can('eliminar-tipos-mantenimiento')
-                                                <x-ui.button size="sm" variant="danger" icon="trash" wire:click="eliminar({{ $tipo->id_tipo_mantenimiento }})" wire:confirm="¿Esta seguro de dar de baja este tipo?" title="Eliminar" />
+                                                <x-ui.confirmador accion="eliminar" :parametros="[$tipo->id_tipo_mantenimiento]"
+                                                    mensaje="¿Dar de baja el tipo de mantenimiento «{{ $tipo->nombre }}»?"
+                                                    etiqueta="Dar de baja"
+                                                />
                                             @endcan
                                         </div>
                                     </td>

@@ -261,12 +261,15 @@
                                                 </x-ui.button>
 
                                                 @if($esEnProceso)
-                                                    <x-ui.button variant="primary" size="sm" icon="flag"
-                                                        wire:click="finalizarLote({{ $lote->id_lote }})"
-                                                        onclick="return confirm('¿Finalizar este lote? Se liberarán todos los empleados y maquinarias asignadas.')"
-                                                        class="w-24">
-                                                        Finalizar
-                                                    </x-ui.button>
+                                                    <x-ui.confirmador accion="finalizarLote" :parametros="[$lote->id_lote]"
+                                                        variante="primary"
+                                                        icono="flag"
+                                                        mensaje="¿Finalizar el lote «{{ $lote->propietario ?? '#'.$lote->id_lote }}»?"
+                                                        detalle="Se liberan todos los empleados y maquinarias asignadas, y se cierran las propuestas del lote."
+                                                        etiqueta="Finalizar"
+                                                        texto="Finalizar"
+                                                        class="w-24"
+                                                    />
                                                 @endif
                                                 @endcan
                                             @endif
@@ -287,7 +290,13 @@
                                                         </button>
                                                         @endcan
                                                         @can('eliminar-lotes')
-                                                        <button wire:click="eliminar({{ $lote->id_lote }})" onclick="return confirm('¿Está seguro de eliminar este lote?')"
+                                                        <button
+                                                            data-accion="eliminar"
+                                                            data-parametros="{{ json_encode([$lote->id_lote]) }}"
+                                                            data-mensaje="¿Eliminar el lote «{{ $lote->propietario ?? '#'.$lote->id_lote }}»?"
+                                                            data-detalle="Se quitan sus asignaciones y sus cargas dejan de estar disponibles."
+                                                            data-etiqueta="Eliminar"
+                                                            x-on:click="open = false; $dispatch('confirmar-accion', Object.assign({}, $el.dataset))"
                                                             class="flex w-full items-center gap-2 px-4 py-2 text-sm text-tierra hover:bg-tierra-suave">
                                                             <flux:icon.trash class="size-4" /> Eliminar
                                                         </button>

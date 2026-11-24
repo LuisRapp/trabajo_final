@@ -90,6 +90,9 @@
         }
     </script>
 
+    <!-- Dialogo de confirmacion compartido (reemplaza el confirm() nativo) -->
+    <x-ui.confirmacion />
+
     <!-- Livewire + Flux: unica fuente de Alpine.js (no bundlear otra copia) -->
     @livewireScripts
     @fluxScripts

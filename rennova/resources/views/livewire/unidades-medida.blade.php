@@ -83,7 +83,10 @@
                                                 <x-ui.button variant="secondary" size="sm" icon="pencil-square" wire:click="editar({{ $unidad->id_unidad_medida }})" title="Editar" />
                                             @endcan
                                             @can('eliminar-unidades-medida')
-                                                <x-ui.button variant="danger" size="sm" icon="trash" wire:click="eliminar({{ $unidad->id_unidad_medida }})" wire:confirm="¿Esta seguro de eliminar esta unidad?" title="Eliminar" />
+                                                <x-ui.confirmador accion="eliminar" :parametros="[$unidad->id_unidad_medida]"
+                                                    mensaje="¿Eliminar la unidad «{{ $unidad->nombre }}»?"
+                                                    detalle="Abreviatura: {{ $unidad->abreviatura }}."
+                                                />
                                             @endcan
                                         </div>
                                     </td>

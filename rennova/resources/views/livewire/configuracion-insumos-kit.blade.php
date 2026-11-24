@@ -104,12 +104,12 @@
                                     </x-ui.badge>
                                 </td>
                                 <td class="text-right">
-                                    <x-ui.button size="sm" variant="danger" icon="trash"
-                                        wire:click="quitarInsumo({{ $insumo['id_insumo'] }})"
-                                        wire:confirm="¿Esta seguro de quitar este insumo del kit?"
-                                        title="Quitar">
-                                        Quitar
-                                    </x-ui.button>
+                                    <x-ui.confirmador accion="quitarInsumo" :parametros="[$insumo['id_insumo']]"
+                                        mensaje="¿Quitar «{{ $insumo['nombre'] }}» del kit?"
+                                        detalle="El insumo no se borra del inventario."
+                                        etiqueta="Quitar"
+                                        texto="Quitar"
+                                    />
                                 </td>
                             </tr>
                         @empty

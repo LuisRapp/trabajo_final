@@ -100,11 +100,12 @@
                                                 class="rounded-r-none border-r-0" />
                                             @endcan
                                             @can('eliminar-roles-laborales')
-                                            <x-ui.button variant="ghost" size="sm" icon="trash"
-                                                wire:click="eliminar({{ $rol->id_rol_laboral }})"
-                                                wire:confirm="¿Está seguro de eliminar este rol?"
-                                                title="Eliminar"
-                                                class="rounded-l-none" />
+                                            <x-ui.confirmador accion="eliminar" :parametros="[$rol->id_rol_laboral]"
+                                                variante="ghost"
+                                                mensaje="¿Eliminar el rol «{{ $rol->nombre }}»?"
+                                                detalle="Los empleados con este rol no se eliminan."
+                                                class="rounded-l-none"
+                                            />
                                             @endcan
                                         </div>
                                     </td>

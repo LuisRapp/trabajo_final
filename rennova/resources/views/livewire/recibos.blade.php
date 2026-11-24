@@ -153,11 +153,12 @@
                                                 class="rounded-r-none border-r-0" />
                                             @endcan
                                             @can('eliminar-recibos')
-                                            <x-ui.button variant="ghost" size="sm" icon="trash"
-                                                wire:click="eliminar({{ $recibo->id_recibo }})"
-                                                wire:confirm="¿Está seguro de eliminar este recibo?"
-                                                title="Eliminar"
-                                                class="rounded-l-none" />
+                                            <x-ui.confirmador accion="eliminar" :parametros="[$recibo->id_recibo]"
+                                                variante="ghost"
+                                                mensaje="¿Eliminar el recibo de {{ $recibo->empleado?->apellido }}, {{ $recibo->empleado?->nombre }}?"
+                                                detalle="Neto: ${{ number_format($recibo->monto, 2, ',', '.') }}."
+                                                class="rounded-l-none"
+                                            />
                                             @endcan
                                         </div>
                                     </td>

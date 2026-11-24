@@ -124,7 +124,10 @@
                                                 <x-ui.button variant="secondary" size="sm" icon="pencil-square" wire:click="editar({{ $precioItem->id }})" title="Editar" />
                                             @endcan
                                             @can('eliminar-lista-precios')
-                                                <x-ui.button variant="danger" size="sm" icon="trash" wire:click="eliminar({{ $precioItem->id }})" wire:confirm="¿Esta seguro de eliminar este precio? Esta accion no se puede deshacer." title="Eliminar" />
+                                                <x-ui.confirmador accion="eliminar" :parametros="[$precioItem->id]"
+                                                    mensaje="¿Eliminar el precio de «{{ $precioItem->categoriaMadera->nombre ?? 'N/A' }}» para {{ $precioItem->cliente->razon_social ?? 'N/A' }}?"
+                                                    detalle="Esta acción no se puede deshacer."
+                                                />
                                             @endcan
                                         </div>
                                     </td>

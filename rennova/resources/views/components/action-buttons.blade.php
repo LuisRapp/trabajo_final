@@ -1,7 +1,9 @@
 @props([
     'editWireClick' => '',
-    'deleteWireClick' => '',
-    'deleteMessage' => '¿Esta seguro?',
+    'deleteAction' => '',
+    'deleteParams' => [],
+    'deleteMessage' => '¿Eliminar este registro?',
+    'deleteDetalle' => null,
     'canEdit' => true,
     'canDelete' => true,
     'editRoute' => null,
@@ -16,14 +18,12 @@
         @endif
     @endif
 
-    @if($canDelete)
-        <x-ui.button
-            variant="danger"
-            size="sm"
-            icon="trash"
-            wire:click="{{ $deleteWireClick }}"
-            wire:confirm="{{ $deleteMessage }}"
-            title="Eliminar"
+    @if($canDelete && $deleteAction)
+        <x-ui.confirmador
+            :accion="$deleteAction"
+            :parametros="$deleteParams"
+            :mensaje="$deleteMessage"
+            :detalle="$deleteDetalle"
         />
     @endif
 </div>

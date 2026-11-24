@@ -168,11 +168,12 @@
                                                 class="rounded-r-none border-r-0" />
                                             @endcan
                                             @can('eliminar-empleados')
-                                            <x-ui.button variant="ghost" size="sm" icon="trash"
-                                                wire:click="eliminar({{ $empleado->id_empleado }})"
-                                                wire:confirm="¿Está seguro de eliminar este empleado?"
-                                                title="Eliminar"
-                                                class="rounded-l-none" />
+                                            <x-ui.confirmador accion="eliminar" :parametros="[$empleado->id_empleado]"
+                                                variante="ghost"
+                                                mensaje="¿Eliminar el empleado «{{ $empleado->apellido }}, {{ $empleado->nombre }}»?"
+                                                detalle="DNI {{ $empleado->dni }}."
+                                                class="rounded-l-none"
+                                            />
                                             @endcan
                                         </div>
                                     </td>

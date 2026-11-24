@@ -83,7 +83,10 @@
                                                 <x-ui.button variant="secondary" size="sm" icon="pencil-square" wire:click="editar({{ $categoria->id_categoria_madera }})" title="Editar" />
                                             @endcan
                                             @can('eliminar-categorias-madera')
-                                                <x-ui.button variant="danger" size="sm" icon="trash" wire:click="eliminar({{ $categoria->id_categoria_madera }})" wire:confirm="¿Esta seguro de eliminar esta categoria?" title="Eliminar" />
+                                                <x-ui.confirmador accion="eliminar" :parametros="[$categoria->id_categoria_madera]"
+                                                    mensaje="¿Eliminar la categoría «{{ $categoria->nombre }}»?"
+                                                    detalle="Las cargas que la usan no se borran, pero la categoría deja de estar disponible."
+                                                />
                                             @endcan
                                         </div>
                                     </td>

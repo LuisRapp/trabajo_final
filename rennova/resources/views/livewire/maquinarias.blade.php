@@ -165,7 +165,10 @@
                                                 <x-ui.button size="sm" variant="secondary" icon="pencil-square" wire:click="editar({{ $maquinaria->id_maquinaria }})" title="Editar" />
                                             @endcan
                                             @can('eliminar-maquinarias')
-                                                <x-ui.button size="sm" variant="danger" icon="trash" wire:click="eliminar({{ $maquinaria->id_maquinaria }})" wire:confirm="¿Esta seguro de eliminar esta maquinaria?" title="Eliminar" />
+                                                <x-ui.confirmador accion="eliminar" :parametros="[$maquinaria->id_maquinaria]"
+                                                    mensaje="¿Eliminar la maquinaria «{{ $maquinaria->modelo }}»?"
+                                                    detalle="Si tiene kits o mantenimientos asociados, dejan de estar disponibles."
+                                                />
                                             @endcan
                                         </div>
                                     </td>

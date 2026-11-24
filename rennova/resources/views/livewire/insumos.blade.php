@@ -136,7 +136,10 @@
                                                 <x-ui.button variant="secondary" size="sm" icon="pencil-square" wire:click="editar({{ $insumo->id_insumo }})" title="Editar" />
                                             @endcan
                                             @can('eliminar-insumos')
-                                                <x-ui.button variant="danger" size="sm" icon="trash" wire:click="eliminar({{ $insumo->id_insumo }})" wire:confirm="¿Esta seguro de eliminar este insumo?" title="Eliminar" />
+                                                <x-ui.confirmador accion="eliminar" :parametros="[$insumo->id_insumo]"
+                                                    mensaje="¿Eliminar el insumo «{{ $insumo->nombre }}»?"
+                                                    detalle="El historial de movimientos del inventario se conserva."
+                                                />
                                             @endcan
                                         </div>
                                     </td>

@@ -138,8 +138,10 @@
                                     <td class="text-right">
                                         <x-action-buttons
                                             editWireClick="editar({{ $usuario->id }})"
-                                            deleteWireClick="eliminar({{ $usuario->id }})"
-                                            deleteMessage="¿Esta seguro de eliminar este usuario?"
+                                            deleteAction="eliminar"
+                                            :deleteParams="[$usuario->id]"
+                                            deleteMessage="¿Eliminar el usuario «{{ $usuario->name }}»?"
+                                            deleteDetalle="El historial de auditoría conserva sus acciones."
                                             :canEdit="auth()->user()->can('editar-usuarios')"
                                             :canDelete="auth()->user()->can('eliminar-usuarios')" />
                                     </td>

@@ -202,7 +202,11 @@
                                             <x-ui.button variant="ghost" size="sm" icon="pencil-square" wire:click="editar({{ $carga->id_carga }})" title="Editar" />
                                             @endcan
                                             @can('eliminar-cargas')
-                                            <x-ui.button variant="ghost" size="sm" icon="trash" wire:click="eliminar({{ $carga->id_carga }})" onclick="return confirm('¿Eliminar esta carga?')" title="Eliminar" />
+                                            <x-ui.confirmador accion="eliminar" :parametros="[$carga->id_carga]"
+                                                variante="ghost"
+                                                mensaje="¿Eliminar la carga del {{ \Carbon\Carbon::parse($carga->fecha_carga)->format('d/m/Y') }}?"
+                                                detalle="El movimiento queda registrado en la auditoría."
+                                            />
                                             @endcan
                                         </div>
                                     </td>

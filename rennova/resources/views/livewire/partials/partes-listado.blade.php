@@ -49,7 +49,10 @@
                                                 <x-ui.button variant="secondary" size="sm" icon="pencil-square" wire:click.prevent="editar({{ $parte->id_parte_diario }})" title="Editar" />
                                             @endcan
                                             @can('eliminar-partes-diarios')
-                                                <x-ui.button variant="danger" size="sm" icon="trash" wire:click.prevent="eliminar({{ $parte->id_parte_diario }})" wire:confirm="¿Está seguro de eliminar este parte diario?" title="Eliminar" />
+                                                <x-ui.confirmador accion="eliminar" :parametros="[$parte->id_parte_diario]"
+                                                    mensaje="¿Eliminar el parte diario #{{ $parte->id_parte_diario }}?"
+                                                    detalle="Lote: {{ $parte->lote?->propietario ?? '—' }}."
+                                                />
                                             @endcan
                                         </div>
                                     </td>

@@ -232,6 +232,7 @@ class ConfiguracionKits extends Component
         $items = collect($this->items_kit);
 
         return view('livewire.configuracion-kits', [
+            'maquinaria_kit' => $this->maquinariaSeleccionada,
             'maquinarias' => $this->maquinarias,
             'insumos' => $this->insumos,
             'items' => $items,

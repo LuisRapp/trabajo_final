@@ -124,6 +124,34 @@ class ConfiguracionKitsTest extends TestCase
         ]);
     }
 
+    public function test_editar_la_cantidad_conserva_si_el_insumo_es_obligatorio(): void
+    {
+        $maquinaria = Maquinaria::factory()->create();
+        $insumo = Insumo::factory()->create();
+
+        $item = KitMantenimientoPreventivo::create([
+            'id_tipo_maquinaria' => $maquinaria->id_tipo_maquinaria,
+            'id_maquinaria' => $maquinaria->id_maquinaria,
+            'id_insumo' => $insumo->id_insumo,
+            'cantidad_requerida' => 5,
+            'es_obligatorio' => true,
+        ]);
+
+        Livewire::actingAs($this->usuario)
+            ->test(ConfiguracionKits::class)
+            ->set('maquinaria_seleccionada', $maquinaria->id_maquinaria)
+            ->call('editarItem', $item->id_kit)
+            ->assertSet('es_obligatorio', true)
+            ->set('cantidad_requerida', 12)
+            ->call('guardar')
+            ->assertHasNoErrors();
+
+        $item->refresh();
+
+        $this->assertEquals(12, (float) $item->cantidad_requerida);
+        $this->assertTrue((bool) $item->es_obligatorio);
+    }
+
     public function test_duplicado_mismo_insumo_falla(): void
     {
         $maquinaria = Maquinaria::factory()->create();

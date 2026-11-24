@@ -63,8 +63,12 @@
                                         </div>
                                         @if($role->name !== 'Administrador')
                                             <button type="button"
-                                                    wire:click.stop="deleteRole({{ $role->id }})"
-                                                    onclick="return confirm('¿Eliminar rol {{ $role->name }}?')"
+                                                    data-accion="deleteRole"
+                                                    data-parametros="{{ json_encode([$role->id]) }}"
+                                                    data-mensaje="¿Eliminar el rol «{{ $role->name }}»?"
+                                                    data-detalle="Los usuarios que lo tienen pierden los permisos asociados."
+                                                    data-etiqueta="Eliminar"
+                                                    x-on:click.stop="$dispatch('confirmar-accion', Object.assign({}, $el.dataset))"
                                                     class="inline-flex items-center px-2 py-1 rounded-sm text-xs font-medium transition-colors {{ $selectedRole == $role->id ? 'text-white/80 hover:text-white hover:bg-white/20' : 'text-tierra hover:bg-tierra-suave' }}">
                                                 <flux:icon.trash class="size-3.5" />
                                             </button>

@@ -131,7 +131,10 @@
                                                 <x-ui.button size="sm" variant="secondary" icon="pencil-square" wire:click="editar({{ $historico->id_costo }})" title="Editar" />
                                             @endcan
                                             @can('eliminar-historico-costos-maquinarias')
-                                                <x-ui.button size="sm" variant="danger" icon="trash" wire:click="eliminar({{ $historico->id_costo }})" wire:confirm="¿Eliminar este historico?" title="Eliminar" />
+                                                <x-ui.confirmador accion="eliminar" :parametros="[$historico->id_costo]"
+                                                    mensaje="¿Eliminar el costo de «{{ $historico->maquinaria->modelo ?? 'la maquinaria' }}»?"
+                                                    detalle="El resto del histórico de la maquinaria no se modifica."
+                                                />
                                             @endcan
                                         </div>
                                     </td>

@@ -1,58 +1,80 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="dark">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
         @include('partials.head')
     </head>
-    <body class="min-h-screen bg-tinta antialiased">
-        <div class="flex min-h-svh w-screen">
-            <!-- Columna Izquierda - Imagen de Fondo (Solo Desktop) -->
-            <div class="hidden lg:flex lg:w-1/2 relative overflow-hidden flex-shrink-10">
+    <body class="min-h-screen bg-hueso antialiased">
+        <div class="grid min-h-svh lg:grid-cols-2">
+            {{-- Panel de marca: la imagen es fondo absoluto, no compite por el ancho --}}
+            <aside class="relative hidden overflow-hidden bg-pino-oscuro lg:flex lg:flex-col lg:justify-between lg:p-12">
                 <img
                     src="{{ asset('images/welcome.jpeg') }}"
-                    alt="Rennova Background"
-                    class="w-full h-full object-cover"
+                    alt=""
+                    class="absolute inset-0 h-full w-full object-cover opacity-50"
                 />
-                <!-- Overlay Oscuro -->
-                <div class="absolute inset-0 bg-pino-oscuro/60"></div>
+                <div class="absolute inset-0 bg-gradient-to-b from-pino-oscuro/85 via-pino-oscuro/55 to-pino-oscuro"></div>
 
-                <!-- Contenido Decorativo en la Imagen (Opcional) -->
-                <div class="relative flex flex-col items-center justify-center w-full h-full text-hueso p-12">
-                    <div class="text-center max-w-md">
-                        <h1 class="text-5xl font-bold mb-4">Rennova</h1>
-                        <p class="text-lg text-arena">Gestión Forestal Inteligente</p>
-                    </div>
+                <div class="relative flex items-center gap-3 text-hueso">
+                    <span class="flex size-10 items-center justify-center rounded-sm bg-hueso/10 ring-1 ring-hueso/25">
+                        <x-app-logo-icon class="size-6 fill-current text-hueso" />
+                    </span>
+                    <span class="text-lg font-semibold tracking-wide">Rennova</span>
                 </div>
-            </div>
 
-            <!-- Columna Derecha - Formulario de Login -->
-            <div class="w-full lg:w-1/2 flex flex-col items-center justify-center bg-tinta p-6 md:p-10">
-                <div class="w-full max-w-md flex flex-col gap-8">
+                <div class="relative max-w-sm">
+                    <h1 class="text-4xl font-bold leading-tight text-hueso">
+                        Gestión forestal<br>de punta a punta
+                    </h1>
+                    <p class="mt-4 text-sm leading-relaxed text-arena">
+                        Lotes, maquinaria, insumos, personal y pagos en un solo sistema.
+                    </p>
 
-                    <!-- Logo y Título (Visible en móvil y desktop) -->
-                    <div class="flex flex-col items-center gap-6">
-                        <a href="{{ route('welcome') }}" class="flex flex-col items-center gap-3" wire:navigate>
-                            <div class="flex h-12 w-12 items-center justify-center rounded-lg bg-pino p-2">
-                                <x-app-logo-icon class="size-8 fill-current text-hueso" />
-                            </div>
-                            <span class="sr-only">{{ config('app.name', 'Rennova') }}</span>
+                    <ul class="mt-8 space-y-3 text-sm text-arena">
+                        <li class="flex items-center gap-2.5">
+                            <flux:icon.check-circle class="size-4 shrink-0 text-pino-suave" />
+                            Control de inventario con costo FIFO
+                        </li>
+                        <li class="flex items-center gap-2.5">
+                            <flux:icon.check-circle class="size-4 shrink-0 text-pino-suave" />
+                            Mantenimiento preventivo automático
+                        </li>
+                        <li class="flex items-center gap-2.5">
+                            <flux:icon.check-circle class="size-4 shrink-0 text-pino-suave" />
+                            Indicadores operativos y financieros
+                        </li>
+                    </ul>
+                </div>
+
+                <p class="relative text-xs text-arena-oscura">
+                    &copy; {{ date('Y') }} Rapp Luis. Todos los derechos reservados.
+                </p>
+            </aside>
+
+            {{-- Panel de acceso --}}
+            <main class="flex items-center justify-center px-6 py-12">
+                <div class="w-full max-w-sm">
+                    <div class="mb-8 flex flex-col items-center gap-4 lg:items-start">
+                        <a href="{{ route('welcome') }}" wire:navigate class="flex items-center gap-2 lg:hidden">
+                            <span class="flex size-10 items-center justify-center rounded-sm bg-pino">
+                                <x-app-logo-icon class="size-6 fill-current text-hueso" />
+                            </span>
+                            <span class="text-lg font-semibold text-tinta">Rennova</span>
                         </a>
 
-                        <div class="text-center">
-                            <h2 class="text-3xl md:text-4xl font-bold text-hueso mb-2">Bienvenido</h2>
-                            <p class="text-arena text-sm md:text-base">Accede a tu cuenta</p>
+                        <div class="text-center lg:text-left">
+                            <h2 class="text-2xl font-bold text-tinta">Iniciar sesión</h2>
+                            <p class="mt-1 text-sm text-tinta-suave">Accedé con tu cuenta para continuar.</p>
                         </div>
                     </div>
 
-                    <!-- Mensaje de Sesión -->
-                    <x-auth-session-status class="text-center" :status="session('status')" />
+                    <x-auth-session-status class="mb-4" :status="session('status')" />
 
-                    <!-- Formulario -->
-                    <form method="POST" wire:submit="login" class="flex flex-col gap-6">
+                    <form method="POST" wire:submit="login" class="flex flex-col gap-5">
                         @csrf
-                        <!-- Email Address -->
-                        <div class="flex flex-col gap-2">
-                            <label for="email" class="text-sm font-medium text-arena">
-                                {{ __('Correo electrónico') }}
+
+                        <div>
+                            <label for="email" class="mb-1.5 block text-xs font-semibold text-tinta">
+                                Correo electrónico <span class="text-tierra">*</span>
                             </label>
                             <input
                                 id="email"
@@ -62,23 +84,23 @@
                                 required
                                 autofocus
                                 autocomplete="email"
-                                placeholder="admin@rennova.com"
-                                class="px-4 py-3 bg-corteza border border-corteza rounded-lg text-hueso placeholder-arena-oscura focus:outline-hidden focus:border-pino focus:ring-2 focus:ring-pino transition"
+                                placeholder="usuario@rennova.com"
+                                class="form-input @error('email') border-tierra bg-tierra-suave @enderror"
                             />
                             @error('email')
-                                <span class="text-sm text-tierra">{{ $message }}</span>
+                                <p class="mt-1 text-xs text-tierra">{{ $message }}</p>
                             @enderror
                         </div>
 
-                        <!-- Password -->
-                        <div class="flex flex-col gap-2 relative">
-                            <div class="flex items-center justify-between">
-                                <label for="password" class="text-sm font-medium text-arena">
-                                    {{ __('Contraseña') }}
+                        <div>
+                            <div class="mb-1.5 flex items-center justify-between gap-3">
+                                <label for="password" class="block text-xs font-semibold text-tinta">
+                                    Contraseña <span class="text-tierra">*</span>
                                 </label>
+
                                 @if (Route::has('password.request'))
-                                    <a href="{{ route('password.request') }}" wire:navigate class="text-sm text-pino-suave hover:text-hueso transition">
-                                        {{ __('¿Olvidaste tu contraseña?') }}
+                                    <a href="{{ route('password.request') }}" wire:navigate class="text-xs font-medium text-pino hover:text-pino-oscuro hover:underline">
+                                        ¿Olvidaste tu contraseña?
                                     </a>
                                 @endif
                             </div>
@@ -90,35 +112,38 @@
                                 required
                                 autocomplete="current-password"
                                 placeholder="••••••••"
-                                class="px-4 py-3 bg-corteza border border-corteza rounded-lg text-hueso placeholder-arena-oscura focus:outline-hidden focus:border-pino focus:ring-2 focus:ring-pino transition"
+                                class="form-input @error('password') border-tierra bg-tierra-suave @enderror"
                             />
                             @error('password')
-                                <span class="text-sm text-tierra">{{ $message }}</span>
+                                <p class="mt-1 text-xs text-tierra">{{ $message }}</p>
                             @enderror
                         </div>
 
-                        <!-- Remember Me -->
-                        <label class="flex items-center gap-3 cursor-pointer">
+                        <label class="flex cursor-pointer items-center gap-2.5 text-sm text-tinta-suave">
                             <input
                                 type="checkbox"
                                 wire:model="remember"
-                                class="w-4 h-4 accent-pino bg-corteza border border-corteza rounded cursor-pointer"
+                                class="size-4 cursor-pointer rounded-sm border-arena accent-pino"
                             />
-                            <span class="text-sm text-arena">{{ __('Recuérdame') }}</span>
+                            Mantener la sesión iniciada
                         </label>
 
-                        <!-- Botón de Login -->
                         <button
                             type="submit"
                             data-test="login-button"
-                            class="w-full py-3 px-4 bg-pino hover:bg-pino-oscuro text-hueso font-semibold rounded-lg transition duration-200 mt-2"
+                            class="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-sm bg-pino px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-pino-oscuro focus:outline-hidden focus:ring-2 focus:ring-pino/30"
                         >
-                            {{ __('Ingresar') }}
+                            Ingresar
                         </button>
                     </form>
+
+                    <p class="mt-8 text-center text-xs text-arena-oscura lg:hidden">
+                        &copy; {{ date('Y') }} Rapp Luis. Todos los derechos reservados.
+                    </p>
                 </div>
-            </div>
+            </main>
         </div>
+
         @fluxScripts
     </body>
 </html>

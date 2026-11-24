@@ -105,8 +105,10 @@
                                     <td class="text-right">
                                         <x-action-buttons
                                             editWireClick="editar({{ $cliente->id_cliente }})"
-                                            deleteWireClick="eliminar({{ $cliente->id_cliente }})"
-                                            deleteMessage="¿Esta seguro de eliminar este cliente?"
+                                            deleteAction="eliminar"
+                                            :deleteParams="[$cliente->id_cliente]"
+                                            deleteMessage="¿Eliminar el cliente «{{ $cliente->razon_social ?? $cliente->nombre }}»?"
+                                            deleteDetalle="Las ventas y cargas asociadas no se borran."
                                             :canEdit="auth()->user()->can('editar-clientes')"
                                             :canDelete="auth()->user()->can('eliminar-clientes')" />
                                     </td>

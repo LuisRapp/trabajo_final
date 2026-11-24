@@ -112,7 +112,10 @@
                                                 <x-ui.button variant="secondary" size="sm" icon="pencil-square" wire:click="editar({{ $proveedor->id_proveedor }})" title="Editar" />
                                             @endcan
                                             @can('eliminar-proveedores')
-                                                <x-ui.button variant="danger" size="sm" icon="trash" wire:click="eliminar({{ $proveedor->id_proveedor }})" wire:confirm="¿Esta seguro de eliminar este proveedor?" title="Eliminar" />
+                                                <x-ui.confirmador accion="eliminar" :parametros="[$proveedor->id_proveedor]"
+                                                    mensaje="¿Eliminar el proveedor «{{ $proveedor->razon_social }}»?"
+                                                    detalle="CUIT {{ $proveedor->cuit }}."
+                                                />
                                             @endcan
                                         </div>
                                     </td>

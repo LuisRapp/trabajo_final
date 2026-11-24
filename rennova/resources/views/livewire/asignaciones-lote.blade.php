@@ -119,19 +119,23 @@
                                                 @endcan
                                                 @if($lote->estado !== 'cerrado')
                                                     @can('editar-asignaciones-lote')
-                                                    <x-ui.button variant="ghost" size="sm" icon="check"
-                                                            wire:click="liberar({{ $lote->id_lote }})"
-                                                            onclick="return confirm('¿Cerrar este lote y liberar recursos?')"
-                                                            title="Finalizar y liberar"
-                                                            class="rounded-none border-x-0" />
+                                                    <x-ui.confirmador accion="liberar" :parametros="[$lote->id_lote]"
+                                                        variante="ghost"
+                                                        icono="check"
+                                                        mensaje="¿Finalizar el lote «{{ $lote->propietario ?? '#'.$lote->id_lote }}» y liberar sus recursos?"
+                                                        detalle="Los empleados y maquinarias asignados quedan disponibles para otros lotes."
+                                                        etiqueta="Finalizar"
+                                                        class="rounded-none border-x-0"
+                                                    />
                                                     @endcan
                                                 @endif
                                                 @can('eliminar-asignaciones-lote')
-                                                <x-ui.button variant="ghost" size="sm" icon="trash"
-                                                        wire:click="eliminarAsignacion({{ $lote->id_lote }})"
-                                                        onclick="return confirm('¿Eliminar todas las asignaciones de este lote?')"
-                                                        title="Eliminar asignaciones"
-                                                        class="rounded-l-none" />
+                                                <x-ui.confirmador accion="eliminarAsignacion" :parametros="[$lote->id_lote]"
+                                                    variante="ghost"
+                                                    mensaje="¿Eliminar todas las asignaciones del lote «{{ $lote->propietario ?? '#'.$lote->id_lote }}»?"
+                                                    detalle="El lote y sus recursos no se eliminan, solo se desvinculan."
+                                                    class="rounded-l-none"
+                                                />
                                                 @endcan
                                             </div>
                                         </td>

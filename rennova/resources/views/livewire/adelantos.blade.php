@@ -144,11 +144,12 @@
                                                 class="rounded-r-none border-r-0" />
                                             @endcan
                                             @can('eliminar-adelantos')
-                                            <x-ui.button variant="ghost" size="sm" icon="trash"
-                                                wire:click="eliminar({{ $adelanto->id_adelanto }})"
-                                                wire:confirm="¿Está seguro de eliminar este adelanto?"
-                                                title="Eliminar"
-                                                class="rounded-l-none" />
+                                            <x-ui.confirmador accion="eliminar" :parametros="[$adelanto->id_adelanto]"
+                                                variante="ghost"
+                                                mensaje="¿Eliminar el adelanto de {{ $adelanto->empleado?->apellido }}, {{ $adelanto->empleado?->nombre }}?"
+                                                detalle="Monto: ${{ number_format($adelanto->monto, 2, ',', '.') }}."
+                                                class="rounded-l-none"
+                                            />
                                             @endcan
                                         </div>
                                     </td>
