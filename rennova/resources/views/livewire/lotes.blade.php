@@ -1,5 +1,5 @@
 <div>
-    <div class="w-full" x-data="{ tab: 'listado' }">
+    <div class="w-full" x-data="{ tab: 'listado' }" x-on:cambiar-tab.window="tab = $event.detail.tabla">
     <div class="mb-6 flex items-center justify-between">
         <h1 class="flex items-center gap-2 text-2xl font-bold text-tinta">
             <flux:icon.map-pin class="size-6" />
@@ -14,8 +14,13 @@
         <button type="button" @click="tab = 'nuevo'; $wire.$refresh()"
             class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border border-r-0 rounded-l-sm transition-all"
             :class="tab === 'nuevo' ? 'text-blanco bg-pino border-pino' : 'bg-blanco text-tinta border-arena hover:bg-corteza-suave'">
-            <flux:icon.plus class="size-4" />
-            Nuevo Lote
+            @if ($lote_id)
+                <flux:icon.pencil-square class="size-4" />
+                Editar Lote
+            @else
+                <flux:icon.plus class="size-4" />
+                Nuevo Lote
+            @endif
         </button>
         @endcanany
         <button type="button" @click="tab = 'listado'; $wire.$refresh()"
@@ -274,37 +279,15 @@
                                                 @endcan
                                             @endif
 
-                                            {{-- Botón de opciones (tres puntos) --}}
-                                            @canany(['editar-lotes', 'eliminar-lotes'])
-                                            <div x-data="{ open: false }" class="relative">
-                                                <button @click="open = !open" class="flex h-8 w-8 items-center justify-center rounded-sm text-tinta-suave hover:bg-corteza-suave transition-colors">
-                                                    <flux:icon.ellipsis-vertical class="size-5" />
-                                                </button>
-                                                <div x-show="open" @click.away="open = false" x-transition
-                                                    class="absolute right-0 z-20 mt-2 w-44 origin-top-right rounded-sm border border-arena bg-blanco shadow-xl ring-1 ring-black ring-opacity-5">
-                                                    <div class="py-1">
-                                                        @can('editar-lotes')
-                                                        <button wire:click="editar({{ $lote->id_lote }})" onclick="cambiarAPestanaFormulario()"
-                                                            class="flex w-full items-center gap-2 px-4 py-2 text-sm text-tinta hover:bg-corteza-suave">
-                                                            <flux:icon.pencil-square class="size-4" /> Editar
-                                                        </button>
-                                                        @endcan
-                                                        @can('eliminar-lotes')
-                                                        <button
-                                                            data-accion="eliminar"
-                                                            data-parametros="{{ json_encode([$lote->id_lote]) }}"
-                                                            data-mensaje="¿Eliminar el lote «{{ $lote->propietario ?? '#'.$lote->id_lote }}»?"
-                                                            data-detalle="Se quitan sus asignaciones y sus cargas dejan de estar disponibles."
-                                                            data-etiqueta="Eliminar"
-                                                            x-on:click="open = false; $dispatch('confirmar-accion', Object.assign({}, $el.dataset))"
-                                                            class="flex w-full items-center gap-2 px-4 py-2 text-sm text-tierra hover:bg-tierra-suave">
-                                                            <flux:icon.trash class="size-4" /> Eliminar
-                                                        </button>
-                                                        @endcan
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            @endcanany
+                                            @can('editar-lotes')
+                                                <x-ui.button size="sm" variant="secondary" icon="pencil-square"
+                                                    wire:click="editar({{ $lote->id_lote }})" title="Editar" />
+                                            @endcan
+                                            @can('eliminar-lotes')
+                                                <x-ui.confirmador accion="eliminar" :parametros="[$lote->id_lote]"
+                                                    mensaje="¿Eliminar el lote «{{ $lote->propietario ?? '#'.$lote->id_lote }}»?"
+                                                    detalle="Se quitan sus asignaciones y sus cargas dejan de estar disponibles." />
+                                            @endcan
                                         </div>
                                     </td>
                                 </tr>
@@ -327,14 +310,6 @@
     </div>
     </div>
 
-@push('scripts')
-<script>
-    // Función para cambiar a pestaña de formulario
-    function cambiarAPestanaFormulario() {
-        const event = new CustomEvent('cambiarTab', { detail: 'nuevo' });
-        window.dispatchEvent(event);
-    }
-</script>
-@endpush
+
 
 </div>

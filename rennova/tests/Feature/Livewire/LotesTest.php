@@ -298,6 +298,29 @@ class LotesTest extends TestCase
             ->assertSet('longitud', -57.456);
     }
 
+    public function test_editar_abre_la_pestana_de_formulario(): void
+    {
+        // Regresion: editar() cargaba los campos pero la pestana la manejaba Alpine,
+        // y el evento que la cambiaba no tenia quien lo escuchara: el formulario
+        // se llenaba fuera de la vista y parecia que no pasaba nada.
+        $lote = Lote::factory()->create();
+
+        Livewire::actingAs($this->usuario)
+            ->test(Lotes::class)
+            ->call('editar', $lote->id_lote)
+            ->assertDispatched('cambiar-tab', tabla: 'nuevo');
+    }
+
+    public function test_el_listado_muestra_los_botones_de_accion_sin_menu_desplegable(): void
+    {
+        Lote::factory()->create(['propietario' => 'Lote visible']);
+
+        Livewire::actingAs($this->usuario)
+            ->test(Lotes::class)
+            ->assertSeeHtml('title="Editar"')
+            ->assertDontSeeHtml('origin-top-right');
+    }
+
     public function test_editar_fails_for_nonexistent_lote(): void
     {
         $this->expectException(\Illuminate\Database\Eloquent\ModelNotFoundException::class);

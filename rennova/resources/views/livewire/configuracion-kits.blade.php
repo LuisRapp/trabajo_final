@@ -295,14 +295,6 @@
                     <div class="rounded-sm border border-arena bg-hueso py-12 text-center">
                         <p class="font-medium text-tinta-suave">Todavía no hay kits configurados.</p>
                         <p class="mt-1 text-xs text-arena-oscura">Creá el primero para que el mantenimiento preventivo sepa qué insumos descontar.</p>
-
-                        @canany(['crear-kits-mantenimiento', 'editar-kits-mantenimiento'])
-                            <div class="mt-4">
-                                <x-ui.button type="button" icon="plus" wire:click="$set('tab_activo','nuevo')">
-                                    Crear primer kit
-                                </x-ui.button>
-                            </div>
-                        @endcanany
                     </div>
                 @endif
             </div>

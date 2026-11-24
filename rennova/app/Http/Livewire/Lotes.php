@@ -148,6 +148,10 @@ class Lotes extends Component
         $this->latitud = $lote->latitud;
         $this->longitud = $lote->longitud;
         $this->main_task_type = $lote->main_task_type;
+
+        // La pestana la maneja Alpine en la vista: sin este aviso el formulario
+        // se llenaba fuera de pantalla y "Editar" parecia no hacer nada.
+        $this->dispatch('cambiar-tab', tabla: 'nuevo');
     }
 
     public function eliminar($id)

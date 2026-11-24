@@ -43,6 +43,14 @@ class ConfiguracionKitsTest extends TestCase
             ->assertSee('Listado de Kits');
     }
 
+    public function test_el_listado_vacio_no_ofrece_crear_kit_desde_la_tabla(): void
+    {
+        Livewire::actingAs($this->usuario)
+            ->test(ConfiguracionKits::class)
+            ->assertSet('tab_activo', 'listado')
+            ->assertDontSee('Crear primer kit');
+    }
+
     public function test_mount_carga_kits_registrados(): void
     {
         $maquinaria = Maquinaria::factory()->create();
