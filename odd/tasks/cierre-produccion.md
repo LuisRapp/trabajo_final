@@ -300,52 +300,171 @@ Se instala Docker **una sola vez**, al final del plan, para no abrir cambios de 
 
 ### Guion de prueba funcional (deploy en Docker)
 
-Se prueba contra `http://localhost:8080` con el admin creado a mano. Orden pensado
-para que cada modulo tenga los datos que necesita el siguiente.
+Se prueba contra `http://localhost:8080` con el admin creado a mano. **Objetivo:**
+verificar el cableado en el entorno real (contenedor, base, queue, cron, assets).
+La suite (727 tests) ya cubre la logica; el gate cubre lo que puede fallar en Docker
+y no en los tests.
 
-**Paso 0 - Rebuild con los fixes de UI.** `git pull` + `up -d --build` (Alpine.js
-en `app.js` y redaccion/localizacion de settings). Sin esto el dashboard queda en
-blanco y las tablas con menu desplegable se rompen.
+**Reglas**
 
-**1. Catalogos base** (una vez, cada uno crear + editar + eliminar):
-categorias de madera, unidades de medida, tipos de maquinaria, roles laborales,
-clientes, proveedores, insumos, kits de mantenimiento.
+1. En orden: cada bloque deja los datos que necesita el siguiente. Los seeders demo
+   estan rotos (tarea post-entrega), asi que los datos se crean a mano.
+2. Evidencia, no impresiones: por cada item, anotar que se hizo, el mensaje exacto
+   que se vio y, si aplica, el estado en la base (registro al final).
+3. Si algo falla, no seguir: se corrige y ese bloque se vuelve a correr completo.
 
-**2. Recursos**: maquinaria (con costo horario) y empleado (con rol laboral y
-jornal). Verificar que aparecen en los listados y que el buscador filtra.
+**Atajos** (parado en `/home/rluis/rennova-entrega`):
 
-**3. Ciclo de lote**: crear lote (con coordenadas) -> asignar empleado y
-maquinaria -> el lote pasa a `en_proceso` -> intentar asignar el mismo recurso a
-otro lote y confirmar que lo rechaza (exclusividad) -> finalizar el lote -> los
-recursos quedan liberados y el lote cierra sin recursos colgados.
+```bash
+PSQL="docker-compose -f docker-compose.prod.yml --env-file .env.production exec -T db psql -U rennova -d rennova -c"
+ARTISAN="docker-compose -f docker-compose.prod.yml --env-file .env.production exec -T app php artisan"
+```
 
-**4. Produccion**: parte diario / cargas sobre el lote en proceso -> venta de la
-carga (pasa a `facturada`) -> dar de baja la venta (la carga vuelve a
-`pendiente`) -> recibo y adelanto al empleado.
+#### Bloque 0 - El deploy corre el codigo nuevo (2 min)
 
-**5. Reglas de negocio de F0-F8** (lo que cambio en el plan):
-- Adelanto: el total pendiente + el nuevo no puede superar el 50% del promedio de
-  liquidaciones; sin liquidaciones el tope es 0.
-- Inventario: una salida mayor al stock se rechaza (nunca stock negativo) y el
-  costo sale por FIFO.
-- Mantenimiento: al superar `umbral_toneladas` se genera la orden preventiva, y
-  queda programada en dia de lluvia o al dia siguiente.
-- Indicadores: costo/tn, punto de equilibrio, tn/dia operativo y tendencia mes vs
-  mes (el mes en curso se marca parcial).
-- Reportes: estadisticas forestales y PDF de clima descargan bien.
+- [ ] `git pull` + `up -d --build` termino sin errores.
+- [ ] `/login` ya no esta en tema oscuro y la foto ocupa media pantalla (no un cuarto).
+- [ ] El boton de borrar de cualquier listado abre el modal de la app, no el cartel
+      gris del navegador.
+- [ ] Dashboard carga con el selector de lote y la proyeccion global (valida assets
+      y Alpine en el mismo paso).
 
-**6. Permisos**: crear un usuario con un rol limitado (sin `ver-empleados`) y
-entrar con el; abrir `/empleados` por URL directa debe dar 403, no la pagina.
+#### Bloque 1 - Catalogos base (el minimo, no todos)
 
-**7. UI**: dashboard (selector de lote, proyeccion global, mensaje de equilibrio),
-menu de acciones de la tabla de lotes sin romper la tabla, `/settings/profile`
-en espanol.
+Crear solo esto, uno de cada uno: categoria de madera, unidad de medida (kg), tipo de
+maquinaria, rol laboral, cliente, proveedor, insumo y kit de mantenimiento.
+
+- [ ] Alta de cada uno: guarda y muestra el mensaje de exito.
+- [ ] Editar uno y recargar con F5 (no `wire:navigate`): el cambio persiste.
+- [ ] Kit: dos insumos, uno obligatorio y uno opcional.
+- [ ] Kit: editar la cantidad de un insumo **sin tocar el Tipo** y confirmar que el
+      tipo se conserva (regresion del select booleano).
+- [ ] Borrar un registro: el modal nombra el registro concreto.
+
+#### Bloque 2 - Recursos
+
+- [ ] Maquinaria con `umbral_toneladas` cargado (ej. 100) y estado activo.
+- [ ] Empleado con rol laboral y jornal diario.
+- [ ] Aparecen en sus listados y el buscador filtra.
+
+#### Bloque 3 - Ciclo de lote (el invariante mas caro)
+
+- [ ] Crear lote con coordenadas y asignar empleado + maquinaria: el lote pasa a
+      `en_proceso`.
+- [ ] Intentar asignar el mismo recurso a otro lote: lo rechaza.
+
+  ```sql
+  select id_lote, estado from lotes;
+  select id_empleado, id_lote from lote_empleado;
+  ```
+
+- [ ] `finalizar` el lote: recursos liberados y sin asignaciones colgadas.
+- [ ] Tabla de lotes: el menu de tres puntos edita, elimina por modal y se cierra.
+
+#### Bloque 4 - Produccion y ventas
+
+- [ ] Parte diario / carga sobre el lote en proceso: guarda y aparece en el listado.
+- [ ] Vender la carga: queda `facturada`.
+- [ ] Dar de baja la venta: la carga vuelve a `pendiente`.
+
+  ```sql
+  select id_carga, estado from cargas;
+  ```
+
+#### Bloque 5 - Inventario: FIFO y nunca negativo
+
+- [ ] Dos ingresos del mismo insumo a costos distintos (ej. 10 kg a $100 y 10 kg
+      a $200).
+- [ ] Salida de 15 kg: el costo sale por FIFO (10 a $100 + 5 a $200), no promedio.
+- [ ] Salida mayor al stock: se rechaza con mensaje visible y el stock no cambia.
+
+  ```sql
+  select id_insumo, nombre, stock from insumos;
+  select * from movimiento_stocks order by movimiento_stocks.id_movimiento desc limit 5;
+  ```
+
+#### Bloque 6 - Mantenimiento
+
+- [ ] Correr el chequeo de umbrales en el contenedor:
+
+  ```bash
+  docker-compose -f docker-compose.prod.yml --env-file .env.production exec -T app php artisan mantenimiento:check-umbrales
+  ```
+
+- [ ] Con la maquinaria por encima del umbral, se genera la orden preventiva.
+- [ ] La orden queda programada en un dia de lluvia de la ventana de 72 h, o al dia
+      siguiente si no hay lluvia.
+- [ ] Aprobar la orden verifica el stock del kit; si falta, genera propuesta de compra.
+
+  ```sql
+  select id_mantenimiento, estado, fecha_programada from mantenimientos;
+  ```
+
+#### Bloque 7 - Pagos: liquidacion y adelanto
+
+- [ ] Un recibo/liquidacion del empleado.
+- [ ] Adelanto por debajo del 50% del promedio: pasa.
+- [ ] Adelanto que supera el 50%: se rechaza con mensaje visible.
+- [ ] Empleado sin liquidaciones: el tope es 0, cualquier adelanto se rechaza.
+- [ ] Liquidar descuenta el adelanto y el neto no queda negativo.
+
+  ```sql
+  select id_adelanto, id_empleado, monto, activo from adelantos;
+  ```
+
+#### Bloque 8 - Indicadores y reportes
+
+- [ ] Costo/tn, punto de equilibrio y tn/dia operativo coherentes con las cargas
+      creadas.
+- [ ] Tendencia mes vs mes: compara solo meses cerrados y marca el mes en curso
+      como parcial.
+- [ ] El PDF de clima descarga y abre (prueba el render de PDF en el contenedor).
+
+#### Bloque 9 - Permisos
+
+- [ ] Crear un usuario con un rol que **no** tenga `ver-empleados`.
+- [ ] Abrir `/empleados` por URL directa con ese usuario: 403, no la pagina.
+- [ ] El link del sidebar no aparece. Las dos cosas se prueban por separado: ocultar
+      el link no es seguridad.
+
+#### Bloque 10 - Transversal de UI (10 min)
+
+- [ ] Tabs en 3 modulos distintos: la activa se marca y el contenido cambia.
+- [ ] Formulario vacio en 2-3 modulos: el error aparece debajo del campo.
+- [ ] Un campo de texto no muestra el autocompletado del navegador.
+- [ ] Confirmacion con boton custom: lotes (menu de tres puntos) y roles y permisos.
+
+> Lo de kits, login y confirmaciones ya se verifico contra este deploy (L21), asi que
+> alcanza con un vistazo. Lo que falta recorrer es el ciclo de datos: bloques 3 a 9.
+
+#### Registro de evidencia
+
+| Bloque | Fecha | Resultado / observaciones |
+|--------|-------|---------------------------|
+| 0 - Deploy | | |
+| 1 - Catalogos | | |
+| 2 - Recursos | | |
+| 3 - Ciclo de lote | | |
+| 4 - Produccion y ventas | | |
+| 5 - Inventario | | |
+| 6 - Mantenimiento | | |
+| 7 - Pagos | | |
+| 8 - Indicadores y reportes | | |
+| 9 - Permisos | | |
+| 10 - UI transversal | | |
+
+#### Cierre del gate
+
+- [ ] Todos los bloques con evidencia y fecha.
+- [ ] Marcar el item del gate (linea 298) con el resumen.
+- [ ] Cambiar la password del admin antes de entregar (hoy es `password`).
+- [ ] No correr los seeders demo en la entrega.
 
 Cuando algo falla, el log se mira con
 `docker-compose -f docker-compose.prod.yml --env-file .env.production logs --tail=50 app`
 o `... exec -T app tail -50 storage/logs/laravel.log`.
 
-Si algo falla aca, se corrige y se vuelve a correr el gate completo. No se entrega con el gate parcialmente verificado.
+Si algo falla aca, se corrige y se vuelve a correr ese bloque completo. No se entrega con el gate parcialmente verificado.
 
 ## Backlog post-entrega (parking)
 
@@ -381,3 +500,4 @@ Todo lo que aparezca durante F2-F8 y no sea un defecto de la fase en curso se an
 - L19 (2026-11-23): Segunda vuelta de prueba funcional del usuario en el deploy. (1) `/maquinarias` "no permitia guardar": el select "Es alquilada?" mostraba "No" pero la propiedad PHP arrancaba en `null`, asi que `required` fallaba y la vista NO imprimia `@error('es_alquilada')` -> fallo mudo: nada guardaba y nada explicaba. Fix: default `es_alquilada = 0`, `resetCampos()` lo devuelve a 0, y se agrega el `@error`. Test de regresion (probado RED). (2) Se auditaron TODOS los componentes Livewire cruzando reglas `required` (propias y de servicios) contra los `@error` de cada vista: el unico otro caso era `Ventas` (`id_cliente`, `fecha_desde`, `fecha_hasta` del filtro) -> se agregaron los `@error` y un test que verifica que el motivo se ve. (3) Al usuario le molestaba el autocompletado del navegador ("texto sugerido"): se agrego `autocomplete="off"` a los 45 `<form>` y 148 `<input>` de las vistas de carga de datos (se dejan intactos login/registro para no romper el gestor de contrasenas). Verificado en el deploy con Firefox real: alta de maquinaria OK dejando "Es alquilada?" en No, mensaje "Maquinaria creada correctamente", reset vuelve a "No", y Ventas muestra "El cliente seleccionado no es valido". Suite 723 passed / 9 skipped.
 - L20 (2026-11-23): El usuario reporto que la pantalla de kits de mantenimiento "carece de logica y es demasiado diferente a las demas". Diagnostico: `registrarKit()` NO guardaba nada (los insumos se persisten al agregarlos) y solo vaciaba el formulario; "Limpiar Todo" tampoco borraba nada, solo limpiaba la vista; el "Historial de Bajas" mostraba los soft-deletes internos de los items del kit. Ademas el submit estaba bloqueado por validacion nativa de HTML5 (input number `min="0.01"` con default 0), asi que "Guardar" no enviaba ni un request. Rediseno: tabs con `<x-tab-nav>` y `tab_activo` (antes `activeTab`), una sola card con el form (maquinaria + insumo + cantidad + tipo) y los botones Guardar/Actualizar alineados a la derecha como el resto, tabla de insumos del kit, listado en una sola tabla por maquinaria, sin historial de bajas ni limpiar todo. Acceso a datos movido a `KitMantenimientoPreventivoService` (el componente ya no consulta la base) y `eliminarKit()` dentro de `DB::transaction()`. Tests: se renombraron `abrirModalAgregar`/`abrirModalEditar` a `nuevoItem`/`editarItem` y `activeTab` a `tab_activo`; 21 tests del componente en verde. Verificado en el deploy con Firefox: listado en tabla, editar kit, editar item y "Insumo actualizado correctamente", validacion visible ("Debe seleccionar un insumo", "La cantidad es requerida"). Suite 723 passed / 9 skipped.
 - L21 (2026-11-24): Segunda ronda de pulido pedida por el usuario: la tabla de kits no le gustó, los mensajes de confirmación para eliminar "no son personalizados" y el login "se ve feo" (funcionaba, pero se veía roto). Diagnóstico del login: en el layout de auth la imagen y el bloque de texto eran hermanos flex con `w-full` cada uno, así que la foto quedaba comprimida al 25% del ancho y el resto era un hueco verde vacío; además el `html` tenía `class="dark"` contra un sistema de diseño claro. Se reescribió con panel de marca en `absolute` + gradiente, formulario claro sobre `bg-hueso` con `form-input` y tokens de la app. Confirmaciones: 27 diálogos nativos (21 `wire:confirm` + 6 `return confirm()` en `onclick`) pasaron a un modal propio de la app (`x-ui.confirmacion` montado en `layouts/app`, disparador `x-ui.confirmador` con `data-*`), con mensajes que nombran el registro ("¿Eliminar el insumo «aserrín»?") y un detalle del efecto. Se eliminó `components/confirm-delete.blade.php` (sin uso) y `action-buttons` ahora recibe `deleteAction`/`deleteParams`. Kits: sin columna ID, columnas alineadas a la derecha, modelo y tipo juntos en el listado, resumen en texto en vez de tres badges y el select de Tipo pasó a checkbox (el select con propiedad booleana se reseteaba a Opcional al editar sin tocar el campo). Tests: 4 nuevos (721→727), incluido un guard que falla si vuelve a aparecer un `confirm()` nativo en las vistas. Verificado en el deploy con Firefox: login, listado/edición de kits, preservación del tipo al editar, modal en 23 rutas autenticadas y borrado real de una unidad descartable.
+- L22 (2026-11-24): El usuario pidio una hoja de ruta de que testear para cerrar el gate. Se reescribio el guion funcional: antes era una lista gruesa de 7 pasos sin datos, mensajes esperados ni forma de comprobar el efecto en la base, y mezclaba cosas ya cubiertas por la suite con el cableado real del entorno. Ahora son 11 bloques ordenados por dependencia de datos (0 deploy, 1 catalogos, 2 recursos, 3 ciclo de lote, 4 produccion y ventas, 5 inventario FIFO, 6 mantenimiento, 7 pagos, 8 indicadores, 9 permisos, 10 UI transversal), cada item con el resultado esperado, las consultas de control con los nombres reales de tabla (`lotes`, `lote_empleado`, `cargas`, `movimiento_stocks`, `mantenimientos`, `adelantos`), una tabla de registro de evidencia y el cierre (password del admin, no correr seeders demo). El criterio de cierre pasa a ser evidencia anotada por bloque, no "anduvo".
