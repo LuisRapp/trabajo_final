@@ -479,6 +479,7 @@ Todo lo que aparezca durante F2-F8 y no sea un defecto de la fase en curso se an
 - `LoteService::listar` usa `ILIKE`, que solo existe en PostgreSQL. Produccion es PostgreSQL y los tests no ejercitan la busqueda, asi que no rompe hoy; si se porta a otro motor o se testea el filtro, reemplazar por `whereLike`.
 - `ReporteController` usa `DB::raw('peso_neto / 1000.0')` para la aritmetica de toneladas (mismo patron que D3); `buildChartImage` tiene nombre en ingles; y `estadisticasForestales`/`estadisticasForestalesPdf` alimentan `desde`/`hasta` a `Carbon::parse` sin validar. Los tres aparecieron en el hook `gga run` durante F5; son deuda preexistente para F8.
 - Cualquier mejora de UI que surja al ver la app corriendo durante el Gate de entrega.
+- Pestanas de los catalogos: la etiqueta del formulario es estatica ("Nueva Unidad", "Nuevo Insumo"), asi que al editar dice "Nueva" aunque el titulo de la tarjeta diga "Editar". En empleados, choferes, adelantos, recibos, historico, lotes, asignaciones y propuestas ya cambia a "Editar X" (`08832c2`). Es solo la etiqueta: el flujo de edicion funciona. Decidido con el usuario el 2026-11-24: queda para despues del gate.
 
 ## Log
 
