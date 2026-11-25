@@ -230,20 +230,15 @@ class PropuestaAsignacionService
                 }
 
                 $meta = $proposal->meta ?? [];
-                $lowConfidence = self::esBajaConfianza($meta);
-                if ($lowConfidence && $proposal->status !== 'confirmed') {
+                if (self::esBajaConfianza($meta)) {
+                    // La confirmacion del usuario ES la revision: se aplica en un
+                    // solo paso y queda marcada para auditar despues.
                     $meta['review_required'] = true;
                     $meta['reviewed_at'] = now()->toISOString();
                     $proposal->meta = $meta;
-                    $proposal->status = 'confirmed';
                     if (! $proposal->confirmed_at) {
                         $proposal->confirmed_at = now();
                     }
-                    $proposal->save();
-                    $requiresReview = true;
-                    $reviewMessage = 'Propuesta con baja confianza. Confirmada para revisión manual. Volvé a confirmar para asignar.';
-
-                    return;
                 }
 
                 $empleadosIds = $proposal->proposedEmployees

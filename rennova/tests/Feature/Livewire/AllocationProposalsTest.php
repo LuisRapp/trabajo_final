@@ -158,26 +158,27 @@ test('confirmar aplica la propuesta de confianza normal y sincroniza el lote', f
 // confirmar() — baja confianza
 // =========================================================================
 
-test('propuesta de baja confianza se confirma sin aplicar hasta volver a aplicar', function () {
+test('una propuesta de baja confianza se aplica en un solo paso y queda marcada', function () {
     $lote = Lote::factory()->create(['estado' => 'activo']);
     $propuesta = PropuestaAsignacion::factory()->lowConfidence()->for($lote, 'lote')->create(['status' => 'draft']);
+    $empleado = Empleado::factory()->create();
+    PropuestaAsignacionEmpleado::factory()->create([
+        'id_allocation_proposal' => $propuesta->id_allocation_proposal,
+        'id_empleado' => $empleado->id_empleado,
+        'selected' => true,
+    ]);
 
     $this->mock(AutomaticAllocationService::class)->shouldIgnoreMissing();
 
-    $componente = Livewire::actingAs($this->usuario)
+    Livewire::actingAs($this->usuario)
         ->test(AllocationProposals::class, ['loteId' => $lote->id_lote])
-        ->call('confirmar');
+        ->call('confirmar')
+        ->assertRedirect(route('lotes.ficha', ['loteId' => $lote->id_lote]));
 
-    $componente->assertSee('Propuesta con baja confianza. Confirmada para revisión manual. Volvé a confirmar para asignar.');
+    $propuesta->refresh();
 
-    expect($propuesta->refresh()->status)->toBe('confirmed')
-        ->and($propuesta->meta['review_required'])->toBeTrue()
-        ->and($propuesta->status)->not->toBe('applied');
-    expect($lote->refresh()->estado)->not->toBe('en_proceso');
-
-    $componente->call('confirmar');
-
-    expect($propuesta->refresh()->status)->toBe('applied');
+    expect($propuesta->status)->toBe('applied')
+        ->and($propuesta->meta['review_required'])->toBeTrue();
 });
 
 // =========================================================================
@@ -282,6 +283,12 @@ test('confirmar no cierra propuestas de otros lotes', function () {
     $lote2 = Lote::factory()->create(['estado' => 'activo']);
     $propuesta1 = PropuestaAsignacion::factory()->for($lote1, 'lote')->create(['status' => 'draft']);
     $propuesta2 = PropuestaAsignacion::factory()->for($lote2, 'lote')->create(['status' => 'draft']);
+    $empleado = Empleado::factory()->create();
+    PropuestaAsignacionEmpleado::factory()->create([
+        'id_allocation_proposal' => $propuesta1->id_allocation_proposal,
+        'id_empleado' => $empleado->id_empleado,
+        'selected' => true,
+    ]);
 
     $this->mock(AutomaticAllocationService::class)->shouldIgnoreMissing();
 
@@ -392,4 +399,46 @@ test('al entrar por un lote se muestra la sugerencia vigente y no el historial',
         ->assertSet('selected_proposal_id', $vigente->id_allocation_proposal)
         ->assertDontSee('Guardar selección')
         ->assertDontSee('Detalle / Confirmar');
+});
+
+test('la generacion no propone recursos dados de baja', function () {
+    // Una maquina retirada o un empleado que ya no esta no puede aparecer en una
+    // sugerencia: el fallback de candidatos no filtraba el soft delete.
+    $lote = Lote::factory()->create([
+        'estado' => 'activo',
+        'main_task_type' => TaskType::TALA_RASA->value,
+    ]);
+    LoteTarea::factory()->create([
+        'id_lote' => $lote->id_lote,
+        'tipo_tarea' => TaskType::TALA_RASA->value,
+        'estado' => 'planificada',
+    ]);
+
+    $empleado = Empleado::factory()->create();
+    $maquinaria = Maquinaria::factory()->create();
+    $empleado->delete();
+    $maquinaria->delete();
+
+    $resultado = \App\Services\PropuestaAsignacionService::generar($lote->id_lote);
+    $propuesta = collect($resultado['proposals'])->first();
+
+    expect($propuesta)->not->toBeNull()
+        ->and($propuesta->proposedMaquinarias->pluck('id_maquinaria')->all())->not->toContain($maquinaria->id_maquinaria)
+        ->and($propuesta->proposedEmployees->pluck('id_empleado')->all())->not->toContain($empleado->id_empleado);
+});
+
+test('no confirma una propuesta sin recursos seleccionados', function () {
+    // Antes decia "Propuesta confirmada y aplicada" aunque no hubiera nada tildado
+    // y el lote quedaba igual: exito falso.
+    $lote = Lote::factory()->create(['estado' => 'activo']);
+    $propuesta = PropuestaAsignacion::factory()->for($lote, 'lote')->create(['status' => 'draft']);
+
+    $this->mock(AutomaticAllocationService::class)->shouldIgnoreMissing();
+
+    Livewire::actingAs($this->usuario)
+        ->test(AllocationProposals::class, ['loteId' => $lote->id_lote])
+        ->call('confirmar')
+        ->assertSee('Seleccioná al menos una persona o una máquina para asignar.');
+
+    expect($propuesta->refresh()->status)->toBe('draft');
 });

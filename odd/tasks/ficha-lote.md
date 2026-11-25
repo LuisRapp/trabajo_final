@@ -24,6 +24,11 @@ S8. Desde tareas y desde sugerencias se vuelve a la ficha.
 S9. Textos en lenguaje de usuario: la ficha no muestra "histórico", "fallback" ni
 números de propuesta.
 S10. Permisos: la ficha requiere `ver-lotes`; "Finalizar lote" respeta `editar-lotes`.
+S11. Un lote cerrado o de baja no permite editar tareas (ni desde la ficha ni por URL).
+S12. La primera tarea propuesta al planificar es la tarea principal elegida al crear el lote.
+S13. Al crear un lote y al finalizar uno, se vuelve al listado de lotes.
+S14. No se puede confirmar una propuesta sin recursos seleccionados, y si no hay
+recursos disponibles se explica por que.
 
 ## Tasks
 
@@ -36,6 +41,10 @@ S10. Permisos: la ficha requiere `ver-lotes`; "Finalizar lote" respeta `editar-l
 | T5 | S7, S8 | inline | hecho | guardar tareas vuelve a la ficha; tareas y sugerencias vuelven al lote |
 | T6 | S9 | inline | hecho | sin "historico", "fallback" ni numeros de propuesta |
 | T7 | S10 | inline | hecho | ruta con `ver-lotes`; finalizar con `editar-lotes` |
+| T8 | S11 | inline | hecho | lote cerrado: sin accion de tareas en la ficha y 403 en `/tareas` |
+| T9 | S12 | inline | hecho | la primera tarea propuesta es `main_task_type` |
+| T10 | S13 | inline | hecho | finalizar y crear lote vuelven al listado |
+| T11 | S14 | inline | hecho | confirmar en un paso; aviso si no hay recursos disponibles |
 
 ## Log
 

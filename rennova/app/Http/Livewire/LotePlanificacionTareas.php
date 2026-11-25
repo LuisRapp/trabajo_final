@@ -27,6 +27,13 @@ class LotePlanificacionTareas extends Component
         $this->loteId = (int) $loteId;
         $this->lote = Lote::findOrFail($this->loteId);
 
+        // Un lote cerrado o de baja no admite cambios en su planificacion.
+        abort_unless(
+            in_array($this->lote->estado, ['activo', 'en_proceso', 'inactivo'], true),
+            403,
+            'El lote está cerrado y no admite cambios en las tareas.'
+        );
+
         $existentes = LoteTarea::query()
             ->where('id_lote', $this->loteId)
             ->where('estado', 'planificada')
@@ -34,8 +41,9 @@ class LotePlanificacionTareas extends Component
             ->get();
 
         if ($existentes->isEmpty()) {
+            // La tarea principal elegida al crear el lote es la primera actividad.
             $this->tareas = [[
-                'tipo_tarea' => TaskType::TALA_RASA->value,
+                'tipo_tarea' => $this->lote->main_task_type ?: TaskType::TALA_RASA->value,
                 'superficie_afectada_ha' => (float) ($this->lote->superficie ?? 0),
                 'observaciones' => null,
             ]];
@@ -85,6 +93,13 @@ class LotePlanificacionTareas extends Component
     public function guardar(): void
     {
         $this->authorize('editar-lotes');
+
+        abort_unless(
+            in_array($this->lote->estado, ['activo', 'en_proceso', 'inactivo'], true),
+            403,
+            'El lote está cerrado y no admite cambios en las tareas.'
+        );
+
         $this->guardando = true;
 
         try {

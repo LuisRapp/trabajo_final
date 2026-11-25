@@ -22,18 +22,6 @@
                     <flux:icon.arrow-left class="size-4" />
                     Volver al lote
                 </a>
-                <a class="btn-primary" href="{{ route('lotes.tareas', ['loteId' => $loteId]) }}">
-                    <flux:icon.clipboard-document-list class="size-4" />
-                    Planificar tareas
-                </a>
-                @canany(['crear-propuestas-asignacion', 'editar-propuestas-asignacion'])
-                <x-ui.button variant="secondary" icon="bolt" wire:click="generarAhora" :disabled="$guardando || ($loteActual?->estado !== 'activo')">
-                    Generar ahora
-                </x-ui.button>
-                @endcanany
-                <x-ui.button variant="ghost" icon="arrow-path" wire:click="refreshProposals" :disabled="$guardando">
-                    Refrescar
-                </x-ui.button>
             </div>
         </div>
     @endif
@@ -194,7 +182,16 @@
                     @if(!$selectedProposal)
                         <x-ui.alert variant="info" dismissible="false">
                             @if(!empty($loteId))
-                                Todavía no hay sugerencias para este lote. Usá «Generar ahora» para crearlas.
+                                Todavía no hay sugerencias para este lote.
+                                @canany(['crear-propuestas-asignacion', 'editar-propuestas-asignacion'])
+                                    @if ($loteActual?->estado === 'activo')
+                                        <div class="mt-3">
+                                            <x-ui.button variant="primary" icon="bolt" wire:click="generarAhora" :disabled="$guardando">
+                                                Generar sugerencias
+                                            </x-ui.button>
+                                        </div>
+                                    @endif
+                                @endcanany
                             @else
                                 Seleccioná una propuesta desde la pestaña "Propuestas".
                             @endif
@@ -362,9 +359,20 @@
                             </x-ui.card>
                         </div>
 
+                        @php
+                            $hayCandidatos = $selectedProposal->proposedEmployees->isNotEmpty() || $selectedProposal->proposedMaquinarias->isNotEmpty();
+                            $haySeleccion = collect($employeeSelected)->contains(true) || collect($maquinariaSelected)->contains(true);
+                        @endphp
+
+                        @if (!$hayCandidatos)
+                            <x-ui.alert variant="info" class="mb-2" dismissible="false">
+                                No hay recursos disponibles para este lote: los que hay están asignados a otros lotes en proceso. Finalizá otro lote para liberarlos.
+                            </x-ui.alert>
+                        @endif
+
                         <div class="flex flex-wrap gap-2 mt-6">
                             @canany(['crear-propuestas-asignacion', 'editar-propuestas-asignacion'])
-                            <x-ui.button variant="primary" icon="check-circle" wire:click="confirmar" :disabled="$guardando">
+                            <x-ui.button variant="primary" icon="check-circle" wire:click="confirmar" :disabled="$guardando || ! $hayCandidatos || ! $haySeleccion">
                                 Confirmar y aplicar al lote
                             </x-ui.button>
                             @endcanany

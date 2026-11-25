@@ -126,14 +126,13 @@ class Lotes extends Component
             }
 
             session()->flash('message', $this->lote_id ? 'Lote actualizado correctamente.' : 'Lote creado correctamente.');
+
+            return redirect()->route('lotes.index');
         } catch (\Throwable $e) {
             session()->flash('error', 'No se pudo guardar el lote. Verificá los datos e intentá nuevamente.');
 
             return;
         }
-        $this->resetCampos();
-
-        $this->dispatch('loteGuardado');
     }
 
     public function editar($id)

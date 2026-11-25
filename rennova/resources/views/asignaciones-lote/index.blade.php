@@ -21,5 +21,5 @@
         @endcan
     </div>
 
-    @livewire('asignaciones-lote')
+    @livewire('asignaciones-lote', ['loteId' => request('lote')])
 @endsection

@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Enums\TaskType;
+use App\Models\Empleado;
+use App\Models\Maquinaria;
 use App\Models\PropuestaAsignacion;
 use App\Models\PropuestaAsignacionEmpleado;
 use App\Models\PropuestaAsignacionInsumo;
@@ -53,6 +55,8 @@ class AsignacionCandidatosService
         ));
 
         $busyEmployees = $this->busyEmployeeIds();
+
+        $employees = $this->descartarDadosDeBaja(Empleado::class, 'id_empleado', $employees);
 
         $employees = $employees
             ->filter(fn ($row) => ! in_array((int) $row->id_empleado, $busyEmployees, true))
@@ -151,10 +155,13 @@ class AsignacionCandidatosService
 
         $busyMaquinarias = $this->busyMaquinariaIds();
 
+        $maquinarias = $this->descartarDadosDeBaja(Maquinaria::class, 'id_maquinaria', $maquinarias);
+
         // Fallback: si no hay histórico, buscar maquinarias disponibles
         if ($maquinarias->isEmpty()) {
             $maquinarias = collect(DB::table('maquinarias as m')
                 ->leftJoin('tipo_maquinarias as tm', 'tm.id_tipo_maquinaria', '=', 'm.id_tipo_maquinaria')
+                ->whereNull('m.deleted_at')
                 ->whereNotIn('m.id_maquinaria', $busyMaquinarias)
                 ->select([
                     'm.id_maquinaria',
@@ -304,6 +311,29 @@ class AsignacionCandidatosService
     }
 
     /**
+     * Descarta candidatos que esten dados de baja (soft delete): una sugerencia no
+     * puede proponer a alguien que ya no esta en la empresa ni una maquina retirada.
+     */
+    private function descartarDadosDeBaja(string $modelo, string $clave, Collection $filas): Collection
+    {
+        $ids = $filas->pluck($clave)->map(fn ($valor) => (int) $valor)->unique()->values();
+
+        if ($ids->isEmpty()) {
+            return $filas->values();
+        }
+
+        $vigentes = $modelo::query()
+            ->whereIn($clave, $ids->all())
+            ->pluck($clave)
+            ->map(fn ($valor) => (int) $valor)
+            ->all();
+
+        return $filas
+            ->filter(fn ($fila) => in_array((int) $fila->{$clave}, $vigentes, true))
+            ->values();
+    }
+
+    /**
      * Obtiene IDs de empleados ocupados en lotes activos o en proceso
      */
     private function busyEmployeeIds(): array
@@ -415,6 +445,7 @@ class AsignacionCandidatosService
 
         return collect(DB::table('empleados as e')
             ->leftJoin('roles_laborales as rl', 'rl.id_rol_laboral', '=', 'e.id_rol_laboral')
+            ->whereNull('e.deleted_at')
             ->when(! empty($keywords), function ($q) use ($keywords) {
                 $q->where(function ($q) use ($keywords) {
                     foreach ($keywords as $kw) {

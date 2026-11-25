@@ -24,3 +24,26 @@ test('la pantalla de tareas muestra el lote arriba y no el texto tecnico', funct
         ->assertDontSee('alimenta el histórico')
         ->assertDontSee('para dividir 5/5');
 });
+
+test('propone como primera tarea la tarea principal del lote', function () {
+    $usuario = usuarioConPermisos(['ver-lotes', 'editar-lotes']);
+
+    $lote = Lote::factory()->create([
+        'estado' => 'activo',
+        'main_task_type' => \App\Enums\TaskType::RALEO->value,
+        'superficie' => 30,
+    ]);
+
+    Livewire::actingAs($usuario)
+        ->test(LotePlanificacionTareas::class, ['loteId' => $lote->id_lote])
+        ->assertSet('tareas.0.tipo_tarea', \App\Enums\TaskType::RALEO->value);
+});
+
+test('un lote cerrado no permite editar sus tareas', function () {
+    $usuario = usuarioConPermisos(['ver-lotes', 'editar-lotes']);
+    $lote = Lote::factory()->create(['estado' => 'cerrado']);
+
+    $this->actingAs($usuario)
+        ->get(route('lotes.tareas', ['loteId' => $lote->id_lote]))
+        ->assertForbidden();
+});

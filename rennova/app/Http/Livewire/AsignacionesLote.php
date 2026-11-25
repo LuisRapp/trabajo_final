@@ -34,6 +34,8 @@ class AsignacionesLote extends Component
 
     public $busqueda_maquinaria = '';
 
+    public $loteVolverId = null;
+
     protected AsignacionLoteService $servicio;
 
     protected $rules = [
@@ -52,14 +54,26 @@ class AsignacionesLote extends Component
         $this->servicio = app(AsignacionLoteService::class);
     }
 
-    public function mount()
+    public function mount($loteId = null)
     {
+        $this->loteVolverId = $loteId !== null ? (int) $loteId : null;
+
         $datos = $this->servicio->obtenerDatosFormulario();
 
         $this->lotes = $datos['lotes'];
         $this->empleados = $datos['empleados'];
         $this->maquinarias = $datos['maquinarias'];
         $this->cargarHistorial();
+
+        if ($this->loteVolverId) {
+            // Viniendo de la ficha: el lote ya esta elegido y el formulario al frente.
+            $this->id_lote = $this->loteVolverId;
+            $this->mostrar_historial = false;
+            $this->cargarAsignaciones();
+            $this->modo = (! empty($this->empleados_seleccionados) || ! empty($this->maquinarias_seleccionadas))
+                ? 'editar'
+                : 'nuevo';
+        }
     }
 
     public function updatedIdLote()

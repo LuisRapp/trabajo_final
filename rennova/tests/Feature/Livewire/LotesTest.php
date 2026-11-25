@@ -96,7 +96,8 @@ class LotesTest extends TestCase
             ->set('main_task_type', 'tala_rasa')
             ->set('latitud', -27.47)
             ->set('longitud', -58.83)
-            ->call('guardar');
+            ->call('guardar')
+            ->assertRedirect(route('lotes.index'));
 
         $this->assertDatabaseHas('lotes', [
             'propietario' => 'Forestal del Norte SA',
@@ -234,7 +235,10 @@ class LotesTest extends TestCase
         ]);
     }
 
-    public function test_guardar_dispatches_lote_guardado_event(): void
+    // Antes la pantalla se quedaba en el formulario, reseteaba los campos y avisaba
+    // con un evento. Ahora, al guardar, se vuelve al listado: el formulario deja de
+    // existir y el listado ya muestra el lote creado.
+    public function test_guardar_vuelve_al_listado_con_el_lote_creado(): void
     {
         Livewire::actingAs($this->usuario)
             ->test(Lotes::class)
@@ -246,23 +250,9 @@ class LotesTest extends TestCase
             ->set('estado', 'activo')
             ->set('main_task_type', 'tala_rasa')
             ->call('guardar')
-            ->assertDispatched('loteGuardado');
-    }
+            ->assertRedirect(route('lotes.index'));
 
-    public function test_guardar_resets_fields_after_create(): void
-    {
-        Livewire::actingAs($this->usuario)
-            ->test(Lotes::class)
-            ->set('propietario', 'Test Owner')
-            ->set('ubicacion', 'Test Location')
-            ->set('especie', 'Pino')
-            ->set('superficie', 50)
-            ->set('condicion_compra', 'propio')
-            ->set('estado', 'activo')
-            ->set('main_task_type', 'tala_rasa')
-            ->call('guardar')
-            ->assertSet('propietario', '')
-            ->assertSet('lote_id', null);
+        $this->assertDatabaseHas('lotes', ['propietario' => 'Test Owner']);
     }
 
     // =========================================================================

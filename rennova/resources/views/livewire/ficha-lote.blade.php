@@ -56,7 +56,7 @@
                         Ver sugerencias
                     </a>
                     @can('editar-asignaciones-lote')
-                        <a class="btn-secondary" href="{{ route('asignaciones-lote.index') }}">
+                        <a class="btn-secondary" href="{{ route('asignaciones-lote.index', ['lote' => $lote->id_lote]) }}">
                             <flux:icon.link class="size-4" />
                             Asignar manualmente
                         </a>
@@ -103,7 +103,7 @@
                 </h5>
                 <div class="flex items-center gap-2">
                     <x-ui.badge variant="neutral">{{ $tareas->count() }}</x-ui.badge>
-                    @if ($siguiente['accion'] !== null || $tareas->isNotEmpty())
+                    @if ($siguiente['accion'] !== null)
                         <x-ui.button variant="secondary" size="sm" icon="{{ $tareas->isEmpty() ? 'plus' : 'pencil-square' }}"
                             href="{{ route('lotes.tareas', ['loteId' => $lote->id_lote]) }}">
                             {{ $tareas->isEmpty() ? 'Planificar' : 'Editar' }}

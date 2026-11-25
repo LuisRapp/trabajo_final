@@ -29,7 +29,7 @@ class FichaLote extends Component
         $this->loteId = $loteId;
     }
 
-    public function finalizarLote(): void
+    public function finalizarLote()
     {
         $this->authorize('editar-lotes');
 
@@ -38,9 +38,11 @@ class FichaLote extends Component
 
             if ($finalizado) {
                 session()->flash('message', 'Lote finalizado. Los recursos quedaron liberados.');
-            } else {
-                session()->flash('error', 'El lote ya está finalizado.');
+
+                return $this->redirect(route('lotes.index'));
             }
+
+            session()->flash('error', 'El lote ya está finalizado.');
         } catch (\Throwable $e) {
             session()->flash('error', $this->mensajeErrorUsuario($e, 'finalizar el lote'));
         }

@@ -234,6 +234,15 @@ class AllocationProposals extends Component
             return;
         }
 
+        $haySeleccion = collect($this->employeeSelected)->contains(true)
+            || collect($this->maquinariaSelected)->contains(true);
+
+        if (! $haySeleccion) {
+            session()->flash('error', 'Seleccioná al menos una persona o una máquina para asignar.');
+
+            return;
+        }
+
         $this->guardando = true;
 
         try {

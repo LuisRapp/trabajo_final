@@ -1,4 +1,14 @@
 <div class="w-full">
+    @if ($loteVolverId)
+        <div class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-sm border border-pino/30 bg-pino-suave px-4 py-2">
+            <span class="text-sm text-tinta">Asignando recursos al Lote #{{ $loteVolverId }}</span>
+            <a class="btn-secondary" href="{{ route('lotes.ficha', ['loteId' => $loteVolverId]) }}">
+                <flux:icon.arrow-left class="size-4" />
+                Volver al lote
+            </a>
+        </div>
+    @endif
+
     <!-- Pestañas (Tabs) -->
     <x-tab-nav :tabs="[
         ['value' => false, 'label' => $modo === 'editar' ? 'Modificar Asignación' : 'Nueva Asignación', 'icon' => $modo === 'editar' ? 'pencil-square' : 'plus', 'can' => auth()->user()?->canAny(['crear-asignaciones-lote', 'editar-asignaciones-lote']) ?? false, 'set' => ['mostrar_historial', false]],

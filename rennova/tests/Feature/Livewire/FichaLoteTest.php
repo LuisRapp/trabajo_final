@@ -70,3 +70,13 @@ test('la ficha de un lote inexistente da 404', function () {
         ->get(route('lotes.ficha', ['loteId' => 99999]))
         ->assertNotFound();
 });
+
+test('finalizar el lote vuelve al listado', function () {
+    $usuario = usuarioConPermisos(['ver-lotes', 'editar-lotes']);
+    $lote = Lote::factory()->create(['estado' => 'en_proceso']);
+
+    Livewire::actingAs($usuario)
+        ->test(FichaLote::class, ['loteId' => $lote->id_lote])
+        ->call('finalizarLote')
+        ->assertRedirect(route('lotes.index'));
+});
