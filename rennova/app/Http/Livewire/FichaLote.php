@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire;
 
+use App\Enums\TaskType;
 use App\Http\Livewire\Traits\MensajesErrorUsuario;
 use App\Services\AsignacionLoteService;
 use App\Services\LoteService;
@@ -56,6 +57,7 @@ class FichaLote extends Component
         $empleados = $lote->empleados;
         $maquinarias = $lote->maquinarias;
 
+        $tareaPrincipal = TaskType::tryFrom((string) $lote->main_task_type)?->label();
         $tieneTareas = $tareas->isNotEmpty();
         $tieneRecursos = $empleados->isNotEmpty() || $maquinarias->isNotEmpty();
         $superficie = number_format((float) ($lote->superficie ?? 0), 2);
@@ -80,7 +82,9 @@ class FichaLote extends Component
             ],
             ! $tieneTareas => [
                 'titulo' => 'Paso 2: planificá las tareas',
-                'texto' => 'Con las tareas calculamos cuánta gente y cuántas máquinas necesitás para las '.$superficie.' ha.',
+                'texto' => $tareaPrincipal
+                    ? 'La tarea principal es «'.$tareaPrincipal.'»: la vas a encontrar cargada como primera actividad.'
+                    : 'Con las tareas calculamos cuánta gente y cuántas máquinas necesitás para las '.$superficie.' ha.',
                 'accion' => 'tareas',
             ],
             default => [
@@ -96,6 +100,7 @@ class FichaLote extends Component
             'empleados' => $empleados,
             'maquinarias' => $maquinarias,
             'siguiente' => $siguiente,
+            'tareaPrincipal' => $tareaPrincipal,
             'pasos' => [
                 ['numero' => 1, 'titulo' => 'Datos del lote', 'completo' => true],
                 ['numero' => 2, 'titulo' => 'Tareas', 'completo' => $tieneTareas],

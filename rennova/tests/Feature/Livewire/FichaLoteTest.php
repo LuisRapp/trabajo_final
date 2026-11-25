@@ -10,13 +10,20 @@ use Livewire\Livewire;
 
 test('sin tareas propone planificarlas', function () {
     $usuario = usuarioConPermisos(['ver-lotes', 'editar-lotes']);
-    $lote = Lote::factory()->create(['estado' => 'activo', 'superficie' => 44]);
+    $lote = Lote::factory()->create([
+        'estado' => 'activo',
+        'superficie' => 44,
+        'main_task_type' => \App\Enums\TaskType::TALA_RASA->value,
+    ]);
 
     Livewire::actingAs($usuario)
         ->test(FichaLote::class, ['loteId' => $lote->id_lote])
         ->assertSee('Paso 2: planificá las tareas')
         ->assertSee('Planificar tareas')
-        ->assertSee('Todavía no hay tareas planificadas');
+        ->assertSee('Todavía no hay tareas planificadas')
+        // La tarea elegida al crear el lote tiene que verse en la ficha.
+        ->assertSee('Tala Rasa')
+        ->assertSee('La tarea principal es «Tala Rasa»');
 });
 
 test('con tareas y sin recursos propone asignarlos', function () {

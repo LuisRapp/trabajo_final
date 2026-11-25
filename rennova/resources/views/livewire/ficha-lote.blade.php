@@ -19,6 +19,7 @@
                 {{ $lote->especie ?? 'Sin especie' }}
                 &middot; {{ $lote->ubicacion }}
                 &middot; {{ number_format((float) ($lote->superficie ?? 0), 2) }} ha
+                &middot; Tarea principal: <span class="font-medium text-tinta">{{ $tareaPrincipal ?? 'sin definir' }}</span>
             </p>
         </div>
 
