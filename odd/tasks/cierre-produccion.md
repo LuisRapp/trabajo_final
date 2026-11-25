@@ -353,17 +353,23 @@ maquinaria, rol laboral, cliente, proveedor, insumo y kit de mantenimiento.
 
 #### Bloque 3 - Ciclo de lote (el invariante mas caro)
 
-- [ ] Crear lote con coordenadas y asignar empleado + maquinaria: el lote pasa a
-      `en_proceso`.
-- [ ] Intentar asignar el mismo recurso a otro lote: lo rechaza.
+- [x] Crear lote con coordenadas y asignar empleado + maquinaria: el lote pasa a
+      `en_proceso`. (2026-11-25: verificado por el usuario y de punta a punta en el
+      deploy con la ficha: crear -> tareas -> sugerencias -> confirmar -> `en_proceso`.)
+- [x] Intentar asignar el mismo recurso a otro lote: lo rechaza. (2026-11-25: control
+      en base: 0 empleados y 0 maquinas en dos lotes activos/en_proceso.)
 
   ```sql
   select id_lote, estado from lotes;
   select id_empleado, id_lote from lote_empleado;
   ```
 
-- [ ] `finalizar` el lote: recursos liberados y sin asignaciones colgadas.
-- [ ] Tabla de lotes: el menu de tres puntos edita, elimina por modal y se cierra.
+- [x] `finalizar` el lote: recursos liberados y sin asignaciones colgadas. (2026-11-25:
+      0 lotes cerrados con filas en `lote_empleado` o `lote_maquinaria`; finalizar
+      vuelve al listado.)
+- [x] Tabla de lotes: "Abrir" entra a la ficha y "Editar"/"Eliminar" siguen en la
+      fila. (2026-11-25: el menu de tres puntos se reemplazo por botones directos y
+      "Propuestas"/"Finalizar" se movieron a la ficha.)
 
 #### Bloque 4 - Produccion y ventas
 
@@ -448,7 +454,7 @@ maquinaria, rol laboral, cliente, proveedor, insumo y kit de mantenimiento.
 | 0 - Deploy | 2026-11-24 | Build OK, login nuevo, modal propio en listados. Dashboard OK tras corregir el 500 al cambiar de lote y el fin de semana como NO LABORAL (`c387167`). |
 | 1 - Catalogos | 2026-11-24 | Ocho catalogos con alta/edicion/borrado OK; kit obligatorio/opcional OK. Se corrigio Editar lote, las acciones del lote pasaron a botones directos y se quito el CTA 'Crear primer kit' (`c117ced`). |
 | 2 - Recursos | | |
-| 3 - Ciclo de lote | | |
+| 3 - Ciclo de lote | 2026-11-25 | Alta -> tareas -> sugerencias -> confirmar -> en_proceso -> finalizar verificado de punta a punta. Invariantes en base: 0 recursos colgados en cerrados, 0 recursos en dos lotes activos. |
 | 4 - Produccion y ventas | | |
 | 5 - Inventario | | |
 | 6 - Mantenimiento | | |
