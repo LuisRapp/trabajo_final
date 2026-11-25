@@ -13,7 +13,7 @@
     @endif
 
     <x-tab-nav :tabs="[
-        ['value' => 'nuevo', 'label' => 'Nuevo Rol', 'icon' => 'plus', 'can' => auth()->user()->canAny(['crear-roles-laborales', 'editar-roles-laborales'])],
+        ['value' => 'nuevo', 'label' => 'Nuevo Rol', 'icon' => 'plus', 'can' => auth()->user()?->canAny(['crear-roles-laborales', 'editar-roles-laborales']) ?? false],
         ['value' => 'listado', 'label' => 'Listado de Roles', 'icon' => 'list-bullet'],
     ]" activeTab="{{ $tab_activo }}" tabProperty="tab_activo" />
 

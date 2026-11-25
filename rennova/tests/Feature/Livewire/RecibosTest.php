@@ -65,3 +65,19 @@ test('puede eliminar un recibo', function () {
 
     expect($recibo->fresh()->trashed())->toBeTrue();
 });
+
+test('editar un recibo abre la pestana del formulario', function () {
+    // Regresion: editar() cargaba los datos pero no cambiaba de pestana, el mismo
+    // fallo que tenia Lotes antes de estandarizar.
+    $user = usuarioConPermisos(['crear-recibos', 'editar-recibos', 'eliminar-recibos']);
+    $empleado = Empleado::factory()->create();
+    $recibo = Recibo::factory()->create([
+        'id_empleado' => $empleado->id_empleado,
+    ]);
+
+    Livewire::actingAs($user)
+        ->test(Recibos::class)
+        ->call('editar', $recibo->id_recibo)
+        ->assertSet('tab_activo', 'nuevo')
+        ->assertSet('recibo_id', $recibo->id_recibo);
+});

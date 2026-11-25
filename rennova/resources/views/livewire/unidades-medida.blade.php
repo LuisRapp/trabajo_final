@@ -10,7 +10,7 @@
     @endif
 
     <x-tab-nav :tabs="[
-        ['value' => 'nuevo', 'label' => 'Nueva Unidad', 'icon' => 'plus', 'can' => auth()->user()->canAny(['crear-unidades-medida', 'editar-unidades-medida'])],
+        ['value' => 'nuevo', 'label' => 'Nueva Unidad', 'icon' => 'plus', 'can' => auth()->user()?->canAny(['crear-unidades-medida', 'editar-unidades-medida']) ?? false],
         ['value' => 'listado', 'label' => 'Listado de Unidades', 'icon' => 'list-bullet'],
     ]" activeTab="{{ $tab_activo }}" tabProperty="tab_activo" />
 

@@ -22,7 +22,7 @@
     @endif
 
     <x-tab-nav :tabs="[
-        ['value' => 'nuevo', 'label' => $editando_kit ? 'Editar Kit' : 'Nuevo Kit', 'icon' => $editando_kit ? 'pencil-square' : 'plus', 'can' => auth()->user()->canAny(['crear-kits-mantenimiento', 'editar-kits-mantenimiento'])],
+        ['value' => 'nuevo', 'label' => $editando_kit ? 'Editar Kit' : 'Nuevo Kit', 'icon' => $editando_kit ? 'pencil-square' : 'plus', 'can' => auth()->user()?->canAny(['crear-kits-mantenimiento', 'editar-kits-mantenimiento']) ?? false],
         ['value' => 'listado', 'label' => 'Listado de Kits', 'icon' => 'list-bullet'],
     ]" activeTab="{{ $tab_activo }}" tabProperty="tab_activo" />
 

@@ -1,5 +1,5 @@
 <div>
-    <div class="w-full" x-data="{ tab: 'listado' }" x-on:cambiar-tab.window="tab = $event.detail.tabla">
+    <div class="w-full">
     <div class="mb-6 flex items-center justify-between">
         <h1 class="flex items-center gap-2 text-2xl font-bold text-tinta">
             <flux:icon.map-pin class="size-6" />
@@ -9,31 +9,14 @@
 
     <x-flash-messages />
 
-    <div class="mb-6 flex gap-0">
-        @canany(['crear-lotes', 'editar-lotes'])
-        <button type="button" @click="tab = 'nuevo'; $wire.$refresh()"
-            class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border border-r-0 rounded-l-sm transition-all"
-            :class="tab === 'nuevo' ? 'text-blanco bg-pino border-pino' : 'bg-blanco text-tinta border-arena hover:bg-corteza-suave'">
-            @if ($lote_id)
-                <flux:icon.pencil-square class="size-4" />
-                Editar Lote
-            @else
-                <flux:icon.plus class="size-4" />
-                Nuevo Lote
-            @endif
-        </button>
-        @endcanany
-        <button type="button" @click="tab = 'listado'; $wire.$refresh()"
-            class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border rounded-r-sm transition-all"
-            :class="tab === 'listado' ? 'text-blanco bg-pino border-pino' : 'bg-blanco text-tinta border-arena hover:bg-corteza-suave'">
-            <flux:icon.list-bullet class="size-4" />
-            Listado de Lotes
-        </button>
-    </div>
+    <x-tab-nav :tabs="[
+        ['value' => 'nuevo', 'label' => $lote_id ? 'Editar Lote' : 'Nuevo Lote', 'icon' => $lote_id ? 'pencil-square' : 'plus', 'can' => auth()->user()?->canAny(['crear-lotes', 'editar-lotes']) ?? false],
+        ['value' => 'listado', 'label' => 'Listado de Lotes', 'icon' => 'list-bullet'],
+    ]" activeTab="{{ $tab_activo }}" tabProperty="tab_activo" />
 
     <div>
+        @if ($tab_activo === 'nuevo')
         @canany(['crear-lotes', 'editar-lotes'])
-        <div x-show="tab === 'nuevo'" x-transition>
             <x-ui.card class="overflow-hidden">
                 <div class="bg-corteza-suave border-b border-arena px-6 py-4">
                     <h5 class="flex items-center gap-2 text-lg font-semibold text-tinta">
@@ -159,10 +142,10 @@
                     </form>
                 </div>
             </x-ui.card>
-        </div>
         @endcanany
+        @endif
 
-        <div x-show="tab === 'listado'" x-transition>
+        @if ($tab_activo === 'listado')
             <x-ui.card class="overflow-hidden">
                 <div class="bg-corteza-suave border-b border-arena px-6 py-4">
                     <div class="relative max-w-md">
@@ -306,7 +289,7 @@
                 {{ $lotes->links() }}
             </div>
             </x-ui.card>
-        </div>
+        @endif
     </div>
     </div>
 

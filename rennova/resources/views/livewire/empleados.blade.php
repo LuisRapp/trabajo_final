@@ -12,22 +12,10 @@
         </x-ui.alert>
     @endif
 
-    <div class="flex border-b border-arena mb-6" role="tablist">
-        @canany(['crear-empleados', 'editar-empleados'])
-        <button type="button" role="tab"
-            wire:click="$set('tab_activo', 'nuevo')"
-            class="px-4 py-2.5 text-sm font-medium border-b-2 transition-colors {{ $tab_activo === 'nuevo' ? 'border-pino text-pino' : 'border-transparent text-tinta-suave hover:text-tinta' }}">
-            <flux:icon.plus class="size-4 inline mr-1" />
-            Nuevo Empleado
-        </button>
-        @endcanany
-        <button type="button" role="tab"
-            wire:click="$set('tab_activo', 'listado')"
-            class="px-4 py-2.5 text-sm font-medium border-b-2 transition-colors {{ $tab_activo === 'listado' ? 'border-pino text-pino' : 'border-transparent text-tinta-suave hover:text-tinta' }}">
-            <flux:icon.list-bullet class="size-4 inline mr-1" />
-            Listado de Empleados
-        </button>
-    </div>
+    <x-tab-nav :tabs="[
+        ['value' => 'nuevo', 'label' => $empleado_id ? 'Editar Empleado' : 'Nuevo Empleado', 'icon' => $empleado_id ? 'pencil-square' : 'plus', 'can' => auth()->user()?->canAny(['crear-empleados', 'editar-empleados']) ?? false],
+        ['value' => 'listado', 'label' => 'Listado de Empleados', 'icon' => 'list-bullet'],
+    ]" activeTab="{{ $tab_activo }}" tabProperty="tab_activo" />
 
     @if($tab_activo === 'nuevo')
         @canany(['crear-empleados', 'editar-empleados'])

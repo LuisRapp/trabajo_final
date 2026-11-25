@@ -21,7 +21,7 @@
         </button>
         @endcanany
         <button type="button" wire:click="$set('tab_activo','listado')"
-            class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border rounded-r-sm transition-all {{ $tab_activo === 'listado' ? 'bg-pino text-white border-pino' : 'bg-white text-tinta-suave border-arena hover:bg-corteza-suave' }} {{ !auth()->user()->canAny(['crear-tipos-mantenimiento', 'editar-tipos-mantenimiento']) ? 'rounded-l-sm' : '' }}">
+            class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border rounded-r-sm transition-all {{ $tab_activo === 'listado' ? 'bg-pino text-white border-pino' : 'bg-white text-tinta-suave border-arena hover:bg-corteza-suave' }} {{ !auth()->user()?->canAny(['crear-tipos-mantenimiento', 'editar-tipos-mantenimiento']) ?? false ? 'rounded-l-sm' : '' }}">
             <flux:icon.list-bullet class="size-4" />
             Listado de Tipos
         </button>

@@ -16,7 +16,7 @@
     @endif
 
     <x-tab-nav :tabs="[
-        ['value' => 'nuevo', 'label' => 'Nuevo Precio', 'icon' => 'plus', 'can' => auth()->user()->canAny(['crear-lista-precios', 'editar-lista-precios'])],
+        ['value' => 'nuevo', 'label' => 'Nuevo Precio', 'icon' => 'plus', 'can' => auth()->user()?->canAny(['crear-lista-precios', 'editar-lista-precios']) ?? false],
         ['value' => 'listado', 'label' => 'Listado de Precios', 'icon' => 'list-bullet'],
     ]" activeTab="{{ $tab_activo }}" tabProperty="tab_activo" />
 

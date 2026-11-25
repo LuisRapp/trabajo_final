@@ -21,7 +21,17 @@ $legacyIconMap = [
                 $icon = $tab['icon'] ?? null;
                 $resolvedIcon = $icon ? ($legacyIconMap[$icon] ?? $icon) : null;
                 $href = $tab['href'] ?? null;
+                $disabled = (bool) ($tab['disabled'] ?? false);
                 $wireClick = $tab['wire:click'] ?? $tab['wireClick'] ?? null;
+
+                if (!$href && !$wireClick && isset($tab['method'])) {
+                    $argumentos = array_map(fn ($valor) => var_export($valor, true), $tab['params'] ?? []);
+                    $wireClick = $tab['method'] . '(' . implode(', ', $argumentos) . ')';
+                }
+
+                if (!$href && !$wireClick && isset($tab['set'])) {
+                    $wireClick = "\$set('{$tab['set'][0]}', " . var_export($tab['set'][1], true) . ')';
+                }
 
                 if (!$href && !$wireClick && $id !== null) {
                     $wireClick = "\$set('{$tabProperty}', '{$id}')";
@@ -51,9 +61,10 @@ $legacyIconMap = [
                 <button
                     type="button"
                     wire:click="{{ $wireClick }}"
-                    class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border transition-all {{ $firstClass }} {{ $borderLeftClass }} {{ $lastClass }} {{ $activeClass }}"
+                    class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border transition-all {{ $firstClass }} {{ $borderLeftClass }} {{ $lastClass }} {{ $activeClass }} {{ $disabled ? 'cursor-not-allowed opacity-50' : '' }}"
                     role="tab"
                     @if($isActive) aria-selected="true" @endif
+                    @if($disabled) disabled @endif
                 >
                     @if($resolvedIcon)
                         <x-dynamic-component component="flux::icon.{{ $resolvedIcon }}" class="size-4" />

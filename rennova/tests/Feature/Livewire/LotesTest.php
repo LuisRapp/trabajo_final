@@ -308,7 +308,7 @@ class LotesTest extends TestCase
         Livewire::actingAs($this->usuario)
             ->test(Lotes::class)
             ->call('editar', $lote->id_lote)
-            ->assertDispatched('cambiar-tab', tabla: 'nuevo');
+            ->assertSet('tab_activo', 'nuevo');
     }
 
     public function test_el_listado_muestra_los_botones_de_accion_sin_menu_desplegable(): void

@@ -17,20 +17,10 @@
                 </x-ui.alert>
             @endif
 
-            <div class="flex border-b border-arena mb-4">
-                <a class="px-4 py-2.5 text-sm font-medium border-b-2 transition-colors {{ $tab_activo === 'ordenes' ? 'border-pino text-pino' : 'border-transparent text-tinta-suave hover:text-tinta' }}"
-                   wire:click="cambiarTab('ordenes')"
-                   href="javascript:void(0)">
-                    <flux:icon.list-bullet class="size-4 inline mr-1" />
-                    Ordenes Activas
-                </a>
-                <a class="px-4 py-2.5 text-sm font-medium border-b-2 transition-colors {{ $tab_activo === 'completadas' ? 'border-pino text-pino' : 'border-transparent text-tinta-suave hover:text-tinta' }}"
-                   wire:click="cambiarTab('completadas')"
-                   href="javascript:void(0)">
-                    <flux:icon.check class="size-4 inline mr-1" />
-                    Completadas
-                </a>
-            </div>
+            <x-tab-nav :tabs="[
+                ['value' => 'ordenes', 'label' => 'Ordenes Activas', 'icon' => 'list-bullet', 'method' => 'cambiarTab', 'params' => ['ordenes']],
+                ['value' => 'completadas', 'label' => 'Completadas', 'icon' => 'check', 'method' => 'cambiarTab', 'params' => ['completadas']],
+            ]" activeTab="{{ $tab_activo }}" tabProperty="tab_activo" />
 
             <div class="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
                 <div>

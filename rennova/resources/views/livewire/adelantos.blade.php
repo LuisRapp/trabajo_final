@@ -12,22 +12,10 @@
         </x-ui.alert>
     @endif
 
-    <div class="flex border-b border-arena mb-6" role="tablist">
-        @canany(['crear-adelantos', 'editar-adelantos'])
-        <button type="button" role="tab"
-            wire:click="$set('tab_activo', 'nuevo')"
-            class="px-4 py-2.5 text-sm font-medium border-b-2 transition-colors {{ $tab_activo === 'nuevo' ? 'border-pino text-pino' : 'border-transparent text-tinta-suave hover:text-tinta' }}">
-            <flux:icon.plus class="size-4 inline mr-1" />
-            Nuevo Adelanto
-        </button>
-        @endcanany
-        <button type="button" role="tab"
-            wire:click="$set('tab_activo', 'listado')"
-            class="px-4 py-2.5 text-sm font-medium border-b-2 transition-colors {{ $tab_activo === 'listado' ? 'border-pino text-pino' : 'border-transparent text-tinta-suave hover:text-tinta' }}">
-            <flux:icon.list-bullet class="size-4 inline mr-1" />
-            Listado de Adelantos
-        </button>
-    </div>
+    <x-tab-nav :tabs="[
+        ['value' => 'nuevo', 'label' => $adelanto_id ? 'Editar Adelanto' : 'Nuevo Adelanto', 'icon' => $adelanto_id ? 'pencil-square' : 'plus', 'can' => auth()->user()?->canAny(['crear-adelantos', 'editar-adelantos']) ?? false],
+        ['value' => 'listado', 'label' => 'Listado de Adelantos', 'icon' => 'list-bullet'],
+    ]" activeTab="{{ $tab_activo }}" tabProperty="tab_activo" />
 
     @if($tab_activo === 'nuevo')
         @canany(['crear-adelantos', 'editar-adelantos'])

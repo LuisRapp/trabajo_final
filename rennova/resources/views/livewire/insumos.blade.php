@@ -10,7 +10,7 @@
     @endif
 
     <x-tab-nav :tabs="[
-        ['value' => 'nuevo', 'label' => 'Nuevo Insumo', 'icon' => 'plus', 'can' => auth()->user()->canAny(['crear-insumos', 'editar-insumos'])],
+        ['value' => 'nuevo', 'label' => 'Nuevo Insumo', 'icon' => 'plus', 'can' => auth()->user()?->canAny(['crear-insumos', 'editar-insumos']) ?? false],
         ['value' => 'listado', 'label' => 'Listado de Insumos', 'icon' => 'list-bullet'],
     ]" activeTab="{{ $tab_activo }}" tabProperty="tab_activo" />
 

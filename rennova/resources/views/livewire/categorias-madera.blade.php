@@ -10,7 +10,7 @@
     @endif
 
     <x-tab-nav :tabs="[
-        ['value' => 'nuevo', 'label' => 'Nueva Categoria', 'icon' => 'plus', 'can' => auth()->user()->canAny(['crear-categorias-madera', 'editar-categorias-madera'])],
+        ['value' => 'nuevo', 'label' => 'Nueva Categoria', 'icon' => 'plus', 'can' => auth()->user()?->canAny(['crear-categorias-madera', 'editar-categorias-madera']) ?? false],
         ['value' => 'listado', 'label' => 'Listado de Categorias', 'icon' => 'list-bullet'],
     ]" activeTab="{{ $tab_activo }}" tabProperty="tab_activo" />
 

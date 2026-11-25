@@ -1,30 +1,9 @@
 <div class="w-full">
     <!-- Pestañas (Tabs) -->
-    <div class="flex border-b border-arena mb-6" id="asignacionesTabs" role="tablist">
-        <button class="px-4 py-2.5 text-sm font-medium border-b-2 transition-colors {{ $mostrar_historial ? 'border-pino text-pino' : 'border-transparent text-tinta-suave hover:text-tinta' }}"
-                id="historial-tab"
-                type="button"
-                role="tab"
-                wire:click="$set('mostrar_historial', true)">
-            <flux:icon.list-bullet class="size-4 inline mr-1" />
-            Historial de Asignaciones
-        </button>
-        @canany(['crear-asignaciones-lote', 'editar-asignaciones-lote'])
-        <button class="px-4 py-2.5 text-sm font-medium border-b-2 transition-colors {{ !$mostrar_historial ? 'border-pino text-pino' : 'border-transparent text-tinta-suave hover:text-tinta' }}"
-                id="formulario-tab"
-                type="button"
-                role="tab"
-                wire:click="$set('mostrar_historial', false)">
-            @if($modo === 'editar')
-                <flux:icon.pencil-square class="size-4 inline mr-1" />
-                Modificar Asignación
-            @else
-                <flux:icon.plus class="size-4 inline mr-1" />
-                Nueva Asignación
-            @endif
-        </button>
-        @endcanany
-    </div>
+    <x-tab-nav :tabs="[
+        ['value' => true, 'label' => 'Historial de Asignaciones', 'icon' => 'list-bullet', 'set' => ['mostrar_historial', true]],
+        ['value' => false, 'label' => $modo === 'editar' ? 'Modificar Asignación' : 'Nueva Asignación', 'icon' => $modo === 'editar' ? 'pencil-square' : 'plus', 'can' => auth()->user()?->canAny(['crear-asignaciones-lote', 'editar-asignaciones-lote']) ?? false, 'set' => ['mostrar_historial', false]],
+    ]" :activeTab="$mostrar_historial" tabProperty="mostrar_historial" />
 
     <div id="asignacionesTabContent">
         <!-- Pestaña 1: Historial de Asignaciones -->

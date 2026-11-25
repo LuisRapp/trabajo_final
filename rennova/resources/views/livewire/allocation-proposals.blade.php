@@ -28,27 +28,10 @@
         </div>
     @endif
 
-    <div class="flex border-b border-arena mb-6" role="tablist">
-        <button
-            class="px-4 py-2.5 text-sm font-medium border-b-2 transition-colors {{ $mostrar_listado ? 'border-pino text-pino' : 'border-transparent text-tinta-suave hover:text-tinta' }}"
-            type="button"
-            role="tab"
-            wire:click="$set('mostrar_listado', true)"
-        >
-            <flux:icon.bolt class="size-4 inline mr-1" />
-            Propuestas
-        </button>
-        <button
-            class="px-4 py-2.5 text-sm font-medium border-b-2 transition-colors {{ !$mostrar_listado ? 'border-pino text-pino' : 'border-transparent text-tinta-suave hover:text-tinta' }}"
-            type="button"
-            role="tab"
-            wire:click="$set('mostrar_listado', false)"
-            @if(!$selected_proposal_id) disabled @endif
-        >
-            <flux:icon.clipboard-document-list class="size-4 inline mr-1" />
-            Detalle / Confirmar
-        </button>
-    </div>
+    <x-tab-nav :tabs="[
+        ['value' => true, 'label' => 'Propuestas', 'icon' => 'bolt', 'set' => ['mostrar_listado', true]],
+        ['value' => false, 'label' => 'Detalle / Confirmar', 'icon' => 'clipboard-document-list', 'set' => ['mostrar_listado', false], 'disabled' => ! $selected_proposal_id],
+    ]" :activeTab="$mostrar_listado" tabProperty="mostrar_listado" />
 
     @if (session()->has('message'))
         <x-ui.alert variant="success" class="mb-5">

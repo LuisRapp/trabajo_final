@@ -112,6 +112,7 @@ class Recibos extends Component
         $this->descuentos = $recibo->descuentos;
         $this->monto = $recibo->monto;
         $this->observaciones = $recibo->observaciones;
+        $this->tab_activo = 'nuevo';
     }
 
     public function eliminar($id)

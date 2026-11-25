@@ -21,7 +21,7 @@
         </button>
         @endcanany
         <button type="button" wire:click="$set('tab_activo', 'listado')"
-            class="inline-flex items-center gap-2 px-4 py-3 text-sm font-semibold border transition-all {{ $tab_activo === 'listado' ? 'bg-pino text-white border-pino' : 'bg-white text-tinta-suave border-arena hover:bg-corteza-suave' }} {{ !auth()->user()->canAny(['crear-maquinarias', 'editar-maquinarias']) ? 'rounded-l-sm' : '' }} rounded-r-sm">
+            class="inline-flex items-center gap-2 px-4 py-3 text-sm font-semibold border transition-all {{ $tab_activo === 'listado' ? 'bg-pino text-white border-pino' : 'bg-white text-tinta-suave border-arena hover:bg-corteza-suave' }} {{ !auth()->user()?->canAny(['crear-maquinarias', 'editar-maquinarias']) ?? false ? 'rounded-l-sm' : '' }} rounded-r-sm">
             <flux:icon.list-bullet class="size-4" />
             Listado de Maquinarias
         </button>

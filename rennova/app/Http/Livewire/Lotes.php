@@ -36,6 +36,8 @@ class Lotes extends Component
 
     public $busqueda = '';
 
+    public $tab_activo = 'listado';
+
     protected LoteService $servicio;
 
     public function boot(): void
@@ -149,9 +151,7 @@ class Lotes extends Component
         $this->longitud = $lote->longitud;
         $this->main_task_type = $lote->main_task_type;
 
-        // La pestana la maneja Alpine en la vista: sin este aviso el formulario
-        // se llenaba fuera de pantalla y "Editar" parecia no hacer nada.
-        $this->dispatch('cambiar-tab', tabla: 'nuevo');
+        $this->tab_activo = 'nuevo';
     }
 
     public function eliminar($id)
