@@ -1,29 +1,39 @@
 @php use App\Enums\EstadoPropuesta; @endphp
 <div class="w-full">
     @if(!empty($loteId))
-        <div class="flex flex-wrap justify-between items-center mb-4">
+        @php $loteActual = $this->loteParaGenerar; @endphp
+        <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
             <div>
-                <h4 class="text-xl font-bold text-tinta flex items-center gap-2">
-                    <flux:icon.sparkles class="size-5" />
-                    Sugerencias de asignación — Lote #{{ $loteId }}
+                <h4 class="flex items-center gap-2 text-2xl font-bold text-tinta">
+                    <flux:icon.sparkles class="size-6" />
+                    Sugerencias de asignación
                 </h4>
-                <div class="text-tinta-suave text-sm">Al pasar el lote a <strong>en proceso</strong> se generan estas propuestas.</div>
+                <p class="mt-1 text-sm text-tinta-suave">
+                    Lote #{{ $loteId }}. El lote tiene que estar activo: al confirmar una propuesta pasa a en proceso.
+                </p>
+                @if ($loteActual && $loteActual->estado !== 'activo')
+                    <p class="mt-1 text-xs text-tierra">
+                        El lote está {{ str_replace('_', ' ', $loteActual->estado) }}: no se pueden generar propuestas nuevas.
+                    </p>
+                @endif
             </div>
-            <div class="flex gap-2">
+            <div class="flex flex-wrap gap-2">
                 <a class="btn-secondary" href="{{ route('lotes.index') }}">
                     <flux:icon.arrow-left class="size-4" />
                     Volver a Lotes
                 </a>
+                <a class="btn-primary" href="{{ route('lotes.tareas', ['loteId' => $loteId]) }}">
+                    <flux:icon.clipboard-document-list class="size-4" />
+                    Planificar tareas
+                </a>
                 @canany(['crear-propuestas-asignacion', 'editar-propuestas-asignacion'])
-                <x-ui.button variant="secondary" icon="bolt" wire:click="generarAhora" :disabled="$guardando">
+                <x-ui.button variant="secondary" icon="bolt" wire:click="generarAhora" :disabled="$guardando || ($loteActual?->estado !== 'activo')">
                     Generar ahora
                 </x-ui.button>
                 @endcanany
-                @canany(['crear-propuestas-asignacion', 'editar-propuestas-asignacion'])
                 <x-ui.button variant="ghost" icon="arrow-path" wire:click="refreshProposals" :disabled="$guardando">
                     Refrescar
                 </x-ui.button>
-                @endcanany
             </div>
         </div>
     @endif
@@ -252,7 +262,7 @@
                                                     <label class="text-sm text-tinta" for="ape-{{ $row->id_allocation_proposal_employee }}">
                                                         {{ $row->empleado->apellido ?? '' }}, {{ $row->empleado->nombre ?? '' }}
                                                         <small class="text-tinta-suave">- {{ $row->rol_sugerido ?? ($row->empleado->rolLaboral->nombre ?? 'Sin rol') }}</small>
-                                                        <x-ui.badge variant="neutral">score: {{ $row->score ?? 'N/A' }}</x-ui.badge>
+                                                        <x-ui.historial-score :valor="$row->score" />
                                                     </label>
                                                 </div>
                                             @endforeach
@@ -286,7 +296,7 @@
                                                     <label class="text-sm text-tinta" for="apm-{{ $row->id_allocation_proposal_maquinaria }}">
                                                         {{ $row->maquinaria->modelo ?? '' }}
                                                         <small class="text-tinta-suave">- {{ $row->tipo_sugerido ?? ($row->maquinaria->tipoMaquinaria->nombre ?? 'N/A') }}</small>
-                                                        <x-ui.badge variant="neutral">score: {{ $row->score ?? 'N/A' }}</x-ui.badge>
+                                                        <x-ui.historial-score :valor="$row->score" />
                                                     </label>
                                                 </div>
                                             @endforeach

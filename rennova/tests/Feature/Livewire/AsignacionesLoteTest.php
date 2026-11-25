@@ -339,6 +339,13 @@ class AsignacionesLoteTest extends TestCase
             ->assertSet('mostrar_historial', false);
     }
 
+    public function test_el_formulario_va_primero_y_el_historial_despues(): void
+    {
+        Livewire::actingAs($this->usuario)
+            ->test(AsignacionesLote::class)
+            ->assertSeeInOrder(['Nueva Asignación', 'Historial de Asignaciones']);
+    }
+
     public function test_editar_cambia_modo_a_editar(): void
     {
         $lote = Lote::factory()->activo()->create();

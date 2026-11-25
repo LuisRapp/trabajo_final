@@ -150,8 +150,14 @@ class PropuestaAsignacionService
             return ['proposals' => [], 'error' => 'No se encontró el lote seleccionado.'];
         }
 
-        if ($lote->estado === 'inactivo') {
-            return ['proposals' => [], 'error' => 'El lote está inactivo. Activá el lote para generar propuestas de asignación.'];
+        if ($lote->estado !== 'activo') {
+            // Solo un lote activo recibe propuestas: uno en proceso ya tiene sus
+            // recursos asignados y confirmar una propuesta lo reemplazaria.
+            $error = $lote->estado === 'en_proceso'
+                ? 'El lote está en proceso y ya tiene recursos asignados. Finalizá el lote para generar propuestas nuevas.'
+                : "El lote está {$lote->estado}. Activá el lote para generar propuestas de asignación.";
+
+            return ['proposals' => [], 'error' => $error];
         }
 
         try {

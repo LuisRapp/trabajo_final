@@ -310,3 +310,58 @@ test('confirmar es idempotente sobre una propuesta ya aplicada', function () {
     expect($propuesta->refresh()->status)->toBe('applied');
     expect($lote->refresh()->estado)->toBe('en_proceso');
 });
+
+test('generarAhora con lote en proceso muestra error', function () {
+    // Un lote en proceso ya tiene recursos asignados: generar otra propuesta
+    // automatica solo confunde y, si se aplica, reemplaza lo que ya esta.
+    $this->mock(AutomaticAllocationService::class)->shouldIgnoreMissing();
+
+    $lote = Lote::factory()->create(['estado' => 'en_proceso']);
+
+    Livewire::actingAs($this->usuario)
+        ->test(AllocationProposals::class, ['loteId' => $lote->id_lote])
+        ->call('generarAhora')
+        ->assertSee('El lote está en proceso');
+});
+
+test('generarAhora deja seleccionada la propuesta mas nueva', function () {
+    // Regresion: al generar se cierran los borradores previos, pero la seleccion
+    // seguia apuntando a la vieja: la pantalla mostraba datos obsoletos y parecia
+    // que la generacion no habia encontrado recursos.
+    $lote = Lote::factory()->create([
+        'estado' => 'activo',
+        'main_task_type' => TaskType::TALA_RASA->value,
+    ]);
+    $tarea = LoteTarea::factory()->create([
+        'id_lote' => $lote->id_lote,
+        'tipo_tarea' => TaskType::TALA_RASA->value,
+        'estado' => 'planificada',
+    ]);
+
+    $vieja = PropuestaAsignacion::factory()->for($lote, 'lote')->create([
+        'id_lote_tarea' => $tarea->id_lote_tarea,
+        'tipo_tarea' => $tarea->tipo_tarea,
+        'status' => 'draft',
+    ]);
+
+    $nueva = null;
+    $this->mock(AutomaticAllocationService::class)
+        ->shouldIgnoreMissing()
+        ->shouldReceive('proposeForLoteTarea')
+        ->once()
+        ->andReturnUsing(function () use ($lote, $tarea, &$nueva) {
+            $nueva = PropuestaAsignacion::factory()->for($lote, 'lote')->create([
+                'id_lote_tarea' => $tarea->id_lote_tarea,
+                'tipo_tarea' => $tarea->tipo_tarea,
+                'status' => 'draft',
+            ]);
+
+            return $nueva;
+        });
+
+    Livewire::actingAs($this->usuario)
+        ->test(AllocationProposals::class, ['loteId' => $lote->id_lote])
+        ->assertSet('selected_proposal_id', $vieja->id_allocation_proposal)
+        ->call('generarAhora')
+        ->assertSet('selected_proposal_id', $nueva->id_allocation_proposal);
+});

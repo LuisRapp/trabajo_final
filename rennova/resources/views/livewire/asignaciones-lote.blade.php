@@ -1,8 +1,8 @@
 <div class="w-full">
     <!-- Pestañas (Tabs) -->
     <x-tab-nav :tabs="[
-        ['value' => true, 'label' => 'Historial de Asignaciones', 'icon' => 'list-bullet', 'set' => ['mostrar_historial', true]],
         ['value' => false, 'label' => $modo === 'editar' ? 'Modificar Asignación' : 'Nueva Asignación', 'icon' => $modo === 'editar' ? 'pencil-square' : 'plus', 'can' => auth()->user()?->canAny(['crear-asignaciones-lote', 'editar-asignaciones-lote']) ?? false, 'set' => ['mostrar_historial', false]],
+        ['value' => true, 'label' => 'Historial de Asignaciones', 'icon' => 'list-bullet', 'set' => ['mostrar_historial', true]],
     ]" :activeTab="$mostrar_historial" tabProperty="mostrar_historial" />
 
     <div id="asignacionesTabContent">

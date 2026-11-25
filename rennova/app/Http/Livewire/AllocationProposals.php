@@ -53,6 +53,13 @@ class AllocationProposals extends Component
         }
     }
 
+    public function getLoteParaGenerarProperty(): ?Lote
+    {
+        $id = $this->loteId ?: (int) $this->filter_lote_id;
+
+        return $id ? $this->lotes->firstWhere('id_lote', $id) : null;
+    }
+
     public function updatedFilterLoteId()
     {
         $this->refreshProposals();
@@ -110,8 +117,15 @@ class AllocationProposals extends Component
                 return;
             }
 
-            if ($this->loteId && ! $this->selected_proposal_id && $this->proposals && $this->proposals->count() > 0) {
-                $this->seleccionar((int) $this->proposals->first()->id_allocation_proposal);
+            // La generacion cierra los borradores anteriores: si la seleccion no se
+            // mueve a la propuesta nueva, la pantalla sigue mostrando la vieja (ya
+            // cerrada) con sus datos y parece que no se encontro nada.
+            $masReciente = $this->proposals->first()?->id_allocation_proposal;
+
+            if ($this->loteId && $masReciente) {
+                $this->seleccionar((int) $masReciente);
+            } elseif ($this->selected_proposal_id) {
+                $this->loadSelectedProposal();
             }
 
             session()->flash('message', 'Propuestas generadas correctamente.');
