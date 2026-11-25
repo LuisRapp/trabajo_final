@@ -257,6 +257,10 @@ class AllocationProposals extends Component
             }
 
             session()->flash('message', 'Propuesta confirmada y aplicada al lote.');
+
+            if ($this->loteId) {
+                return $this->redirect(route('lotes.ficha', ['loteId' => $this->loteId]));
+            }
         } catch (\Throwable $e) {
             session()->flash('error', $this->mensajeErrorUsuario($e, 'confirmar la propuesta'));
         } finally {

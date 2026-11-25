@@ -13,9 +13,9 @@
             </p>
         </div>
         <div class="flex flex-wrap gap-2">
-            <a class="btn-secondary" href="{{ route('lotes.index') }}">
+            <a class="btn-secondary" href="{{ route('lotes.ficha', ['loteId' => $lote->id_lote]) }}">
                 <flux:icon.arrow-left class="size-4" />
-                Volver a Lotes
+                Volver al lote
             </a>
             <a class="btn-secondary" href="{{ route('lotes.recomendaciones', ['loteId' => $lote->id_lote]) }}">
                 <flux:icon.sparkles class="size-4" />

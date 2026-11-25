@@ -127,8 +127,8 @@ class LotePlanificacionTareas extends Component
 
             GenerateAllocationProposalsForLote::dispatch($this->loteId);
 
-            session()->flash('message', 'Tareas planificadas. Generando propuestas de asignación…');
-            $this->redirect(route('lotes.recomendaciones', ['loteId' => $this->loteId]));
+            session()->flash('message', 'Tareas guardadas. El siguiente paso es asignar los recursos.');
+            $this->redirect(route('lotes.ficha', ['loteId' => $this->loteId]));
         } finally {
             $this->guardando = false;
         }

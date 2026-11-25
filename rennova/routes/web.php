@@ -72,6 +72,10 @@ Route::middleware(['auth'])->group(function () {
 
     // --- ABMs PRINCIPALES (Ahora protegidos por ver-*) ---
     Route::get('/lotes', [LoteController::class, 'index'])->middleware(['permission:ver-lotes'])->name('lotes.index');
+    Route::get('/lotes/{loteId}', function ($loteId) {
+        return view('lotes.ficha', ['loteId' => (int) $loteId]);
+    })->middleware(['permission:ver-lotes'])->name('lotes.ficha');
+
     Route::get('/lotes/{loteId}/recomendaciones', function ($loteId) {
         return view('lotes.recomendaciones', ['loteId' => (int) $loteId]);
     })->middleware(['permission:ver-lotes'])->name('lotes.recomendaciones');

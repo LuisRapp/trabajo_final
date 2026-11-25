@@ -102,6 +102,20 @@ class LoteService
         return Lote::findOrFail($id);
     }
 
+    /**
+     * Lote con todo lo que muestra la ficha: planificacion y recursos asignados.
+     */
+    public function ficha(int $id): Lote
+    {
+        return Lote::query()
+            ->with([
+                'tareas' => fn ($consulta) => $consulta->orderBy('id_lote_tarea'),
+                'empleados.rolLaboral',
+                'maquinarias.tipoMaquinaria',
+            ])
+            ->findOrFail($id);
+    }
+
     public function eliminar(int $id, array $requestData = []): void
     {
         DB::transaction(function () use ($id, $requestData) {

@@ -139,7 +139,7 @@ test('confirmar aplica la propuesta de confianza normal y sincroniza el lote', f
     Livewire::actingAs($this->usuario)
         ->test(AllocationProposals::class, ['loteId' => $lote->id_lote])
         ->call('confirmar')
-        ->assertSee('Propuesta confirmada y aplicada al lote.');
+        ->assertRedirect(route('lotes.ficha', ['loteId' => $lote->id_lote]));
 
     expect($propuesta->refresh()->status)->toBe('applied');
     expect($lote->refresh()->estado)->toBe('en_proceso');
@@ -271,7 +271,7 @@ test('confirmar cierra otras propuestas competidoras del mismo lote', function (
     Livewire::actingAs($this->usuario)
         ->test(AllocationProposals::class, ['loteId' => $lote->id_lote])
         ->call('confirmar')
-        ->assertSee('Propuesta confirmada y aplicada al lote.');
+        ->assertRedirect(route('lotes.ficha', ['loteId' => $lote->id_lote]));
 
     expect($propuesta1->refresh()->status)->toBe('closed')
         ->and($propuesta2->refresh()->status)->toBe('applied');

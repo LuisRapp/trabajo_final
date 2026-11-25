@@ -18,9 +18,9 @@
                 @endif
             </div>
             <div class="flex flex-wrap gap-2">
-                <a class="btn-secondary" href="{{ route('lotes.index') }}">
+                <a class="btn-secondary" href="{{ route('lotes.ficha', ['loteId' => $loteId]) }}">
                     <flux:icon.arrow-left class="size-4" />
-                    Volver a Lotes
+                    Volver al lote
                 </a>
                 <a class="btn-primary" href="{{ route('lotes.tareas', ['loteId' => $loteId]) }}">
                     <flux:icon.clipboard-document-list class="size-4" />

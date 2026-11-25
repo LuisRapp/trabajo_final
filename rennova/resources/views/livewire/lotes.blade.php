@@ -240,27 +240,15 @@
                                                 <x-ui.badge variant="success" class="h-8 items-center">Finalizado</x-ui.badge>
                                             @elseif($esInactivo)
                                                 <x-ui.badge variant="neutral" class="h-8 items-center">Pausado</x-ui.badge>
-                                            @else
-                                                @can('editar-lotes')
-                                                <x-ui.button variant="{{ $esActivo ? 'primary' : 'secondary' }}" size="sm" icon="sparkles"
-                                                    href="{{ route('lotes.recomendaciones', ['loteId' => $lote->id_lote]) }}"
-                                                    class="w-24">
-                                                    Propuestas
-                                                </x-ui.button>
-
-                                                @if($esEnProceso)
-                                                    <x-ui.confirmador accion="finalizarLote" :parametros="[$lote->id_lote]"
-                                                        variante="primary"
-                                                        icono="flag"
-                                                        mensaje="¿Finalizar el lote «{{ $lote->propietario ?? '#'.$lote->id_lote }}»?"
-                                                        detalle="Se liberan todos los empleados y maquinarias asignadas, y se cierran las propuestas del lote."
-                                                        etiqueta="Finalizar"
-                                                        texto="Finalizar"
-                                                        class="w-24"
-                                                    />
-                                                @endif
-                                                @endcan
                                             @endif
+
+                                            @can('ver-lotes')
+                                            <x-ui.button variant="secondary" size="sm" icon="arrow-right"
+                                                href="{{ route('lotes.ficha', ['loteId' => $lote->id_lote]) }}"
+                                                title="Abrir lote">
+                                                Abrir
+                                            </x-ui.button>
+                                            @endcan
 
                                             @can('editar-lotes')
                                                 <x-ui.button size="sm" variant="secondary" icon="pencil-square"

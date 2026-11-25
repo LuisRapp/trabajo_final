@@ -298,6 +298,18 @@ class LotesTest extends TestCase
             ->assertSet('longitud', -57.456);
     }
 
+    public function test_el_listado_abre_la_ficha_y_no_muestra_propuestas(): void
+    {
+        Lote::factory()->create(['propietario' => 'Lote visible']);
+
+        $usuario = usuarioConPermisos(['ver-lotes']);
+
+        Livewire::actingAs($usuario)
+            ->test(Lotes::class)
+            ->assertSee('Abrir')
+            ->assertDontSee('Propuestas');
+    }
+
     public function test_editar_abre_la_pestana_de_formulario(): void
     {
         // Regresion: editar() cargaba los campos pero la pestana la manejaba Alpine,
