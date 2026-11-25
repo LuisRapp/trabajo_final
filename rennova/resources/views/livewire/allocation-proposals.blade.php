@@ -38,10 +38,12 @@
         </div>
     @endif
 
-    <x-tab-nav :tabs="[
-        ['value' => true, 'label' => 'Propuestas', 'icon' => 'bolt', 'set' => ['mostrar_listado', true]],
-        ['value' => false, 'label' => 'Detalle / Confirmar', 'icon' => 'clipboard-document-list', 'set' => ['mostrar_listado', false], 'disabled' => ! $selected_proposal_id],
-    ]" :activeTab="$mostrar_listado" tabProperty="mostrar_listado" />
+    @if(empty($loteId))
+        <x-tab-nav :tabs="[
+            ['value' => true, 'label' => 'Propuestas', 'icon' => 'bolt', 'set' => ['mostrar_listado', true]],
+            ['value' => false, 'label' => 'Detalle / Confirmar', 'icon' => 'clipboard-document-list', 'set' => ['mostrar_listado', false], 'disabled' => ! $selected_proposal_id],
+        ]" :activeTab="$mostrar_listado" tabProperty="mostrar_listado" />
+    @endif
 
     @if (session()->has('message'))
         <x-ui.alert variant="success" class="mb-5">
@@ -179,17 +181,23 @@
                         <flux:icon.clipboard-document-list class="size-5" />
                         Detalle de Propuesta
                     </h5>
-                    <div class="flex gap-2">
-                        <x-ui.button variant="secondary" icon="arrow-left" wire:click="volver">
-                            Volver
-                        </x-ui.button>
-                    </div>
+                    @if(empty($loteId))
+                        <div class="flex gap-2">
+                            <x-ui.button variant="secondary" icon="arrow-left" wire:click="volver">
+                                Volver
+                            </x-ui.button>
+                        </div>
+                    @endif
                 </div>
 
                 <div class="p-6">
                     @if(!$selectedProposal)
-                        <x-ui.alert variant="warning" dismissible="false">
-                            Seleccione una propuesta desde la pestaña "Propuestas".
+                        <x-ui.alert variant="info" dismissible="false">
+                            @if(!empty($loteId))
+                                Todavía no hay sugerencias para este lote. Usá «Generar ahora» para crearlas.
+                            @else
+                                Seleccioná una propuesta desde la pestaña "Propuestas".
+                            @endif
                         </x-ui.alert>
                     @else
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -356,10 +364,6 @@
 
                         <div class="flex flex-wrap gap-2 mt-6">
                             @canany(['crear-propuestas-asignacion', 'editar-propuestas-asignacion'])
-                            <x-ui.button variant="secondary" icon="check" wire:click="guardarSeleccion" :disabled="$guardando">
-                                Guardar selección
-                            </x-ui.button>
-
                             <x-ui.button variant="primary" icon="check-circle" wire:click="confirmar" :disabled="$guardando">
                                 Confirmar y aplicar al lote
                             </x-ui.button>

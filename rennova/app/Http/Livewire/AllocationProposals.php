@@ -48,8 +48,16 @@ class AllocationProposals extends Component
 
         $this->refreshProposals();
 
-        if ($this->loteId && ! $this->selected_proposal_id && $this->proposals && $this->proposals->count() > 0) {
-            $this->seleccionar((int) $this->proposals->first()->id_allocation_proposal);
+        if ($this->loteId) {
+            // Al entrar desde un lote no hay historial que navegar: se muestra
+            // directamente la sugerencia vigente (la mas nueva sin cerrar).
+            $this->mostrar_listado = false;
+
+            $vigente = $this->proposals->first(fn ($propuesta) => $propuesta->status !== 'closed');
+
+            if ($vigente) {
+                $this->seleccionar((int) $vigente->id_allocation_proposal);
+            }
         }
     }
 

@@ -377,3 +377,19 @@ test('el detalle tiene una sola accion final para confirmar y aplicar', function
         ->assertSee('Confirmar y aplicar al lote')
         ->assertDontSee('Aplicar al lote');
 });
+
+test('al entrar por un lote se muestra la sugerencia vigente y no el historial', function () {
+    // Desde el boton de la tabla de lotes no tiene sentido ver el historial de
+    // propuestas: se entra a ver las sugerencias actuales de ese lote.
+    $lote = Lote::factory()->create(['estado' => 'activo']);
+
+    PropuestaAsignacion::factory()->for($lote, 'lote')->create(['status' => 'closed']);
+    $vigente = PropuestaAsignacion::factory()->for($lote, 'lote')->create(['status' => 'draft']);
+
+    Livewire::actingAs($this->usuario)
+        ->test(AllocationProposals::class, ['loteId' => $lote->id_lote])
+        ->assertSet('mostrar_listado', false)
+        ->assertSet('selected_proposal_id', $vigente->id_allocation_proposal)
+        ->assertDontSee('Guardar selección')
+        ->assertDontSee('Detalle / Confirmar');
+});
