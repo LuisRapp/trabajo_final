@@ -174,8 +174,12 @@ class CargaForm extends Component
     }
 
     #[On('loteChanged')]
-    public function loteChanged(): void
+    public function loteChanged($idLote = null, $empleados = [], $maquinarias = []): void
     {
+        $this->id_lote = $idLote ?? $this->id_lote;
+        $this->empleados_asignados_ids = array_map('intval', (array) $empleados);
+        $this->maquinarias_asignadas_ids = array_map('intval', (array) $maquinarias);
+
         $this->busqueda_chofer = '';
         $this->busqueda_cliente = '';
         $this->busqueda_empleado = '';

@@ -113,8 +113,11 @@ class PartesDiariosService
 
             $maqs = $cargaData['maquinarias'] ?? [];
             if (! empty($maqs)) {
-                $valorIngresado = (float) ($cargaData['peso_neto'] ?? 0);
-                $toneladasTotales = $valorIngresado > 1000 ? ($valorIngresado / 1000.0) : $valorIngresado;
+                // El formulario carga kilos en todo el sistema: la tonelada es solo
+                // una unidad de presentacion. Antes se adivinaba por magnitud (> 1000)
+                // y una carga de 800 kg se registraba como 800 toneladas.
+                $kilosNetos = (float) ($cargaData['peso_neto'] ?? 0);
+                $toneladasTotales = $kilosNetos / 1000.0;
                 $porMaquinaria = count($maqs) > 0 ? $toneladasTotales / count($maqs) : 0;
 
                 foreach ($maqs as $maqId) {

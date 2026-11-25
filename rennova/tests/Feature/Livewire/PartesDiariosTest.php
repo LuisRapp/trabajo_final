@@ -677,6 +677,68 @@ class PartesDiariosTest extends TestCase
         $this->assertEquals('TK-EVENT', $cargas[0]['ticket']);
     }
 
+    // =========================================================================
+    // Comunicacion hijo -> padre
+    // =========================================================================
+
+    public function test_al_cambiar_el_lote_el_padre_avisa_los_recursos_asignados(): void
+    {
+        $asignada = Maquinaria::factory()->create(['modelo' => 'Asignada 800']);
+        $this->lote->maquinarias()->attach($asignada->id_maquinaria);
+
+        $componente = Livewire::actingAs($this->usuario)->test(PartesDiarios::class);
+        $componente->set('id_lote', $this->lote->id_lote);
+
+        expect($componente->get('maquinarias_asignadas_ids'))->toContain($asignada->id_maquinaria);
+        $componente->assertDispatched('loteChanged', idLote: $this->lote->id_lote);
+    }
+
+    public function test_el_formulario_de_carga_filtra_por_los_recursos_del_lote(): void
+    {
+        // El hijo no recibe props actualizadas en cada render: los recursos llegan
+        // por el evento loteChanged, que antes no traia datos.
+        $asignada = Maquinaria::factory()->create(['modelo' => 'Asignada 800']);
+        $ajena = Maquinaria::factory()->create(['modelo' => 'Ajena 700']);
+
+        Livewire::actingAs($this->usuario)
+            ->test(\App\Http\Livewire\CargaForm::class)
+            ->call('loteChanged', idLote: $this->lote->id_lote, maquinarias: [$asignada->id_maquinaria], empleados: [])
+            ->assertSee('Asignada 800')
+            ->assertDontSee('Ajena 700');
+    }
+
+    public function test_el_padre_recibe_la_carga_agregada_del_hijo(): void
+    {
+        // Regresion: los hijos despachaban cargaAgregada / jornalAgregado /
+        // movimientoAgregado y el padre no los escuchaba (faltaba #[On]): el boton
+        // "Agregar carga" reseteaba el formulario y la fila nunca aparecia.
+        Livewire::actingAs($this->usuario)
+            ->test(PartesDiarios::class)
+            ->dispatch('cargaAgregada', cargaData: ['ticket' => 'T-1', 'peso_neto' => 800])
+            ->assertCount('cargas', 1)
+            ->dispatch('jornalAgregado', jornalData: ['id_empleado' => 1, 'jornal' => 1000])
+            ->assertCount('jornales', 1)
+            ->dispatch('movimientoAgregado', movData: ['id_insumo' => 1, 'cantidad' => 2])
+            ->assertCount('movimientos', 1);
+    }
+
+    public function test_mount_carga_los_recursos_asignados_del_lote(): void
+    {
+        // Regresion: al entrar con un lote ya elegido (edicion o ?lote=) el filtro
+        // quedaba vacio y el formulario ofrecia todas las maquinarias del sistema.
+        $lote = Lote::factory()->create(['estado' => 'en_proceso']);
+        $empleado = Empleado::factory()->create();
+        $maquinaria = Maquinaria::factory()->create();
+
+        $lote->empleados()->attach($empleado->id_empleado);
+        $lote->maquinarias()->attach($maquinaria->id_maquinaria);
+
+        Livewire::actingAs($this->usuario)
+            ->test(PartesDiarios::class, ['id_lote' => $lote->id_lote])
+            ->assertSet('empleados_asignados_ids', [$empleado->id_empleado])
+            ->assertSet('maquinarias_asignadas_ids', [$maquinaria->id_maquinaria]);
+    }
+
     public function test_carga_agregada_recalculates_total_toneladas(): void
     {
         $component = Livewire::actingAs($this->usuario)

@@ -237,7 +237,7 @@
                 @if(count($cargas) > 0 || count($jornales) > 0 || count($movimientos) > 0)
                     <div class="mb-4 flex flex-wrap gap-3">
                         @if(count($cargas) > 0)
-                            <x-ui.badge variant="info">{{ count($cargas) }} carga(s) · {{ number_format($total_toneladas, 2) }} ton</x-ui.badge>
+                            <x-ui.badge variant="info">{{ count($cargas) }} carga(s) · {{ number_format($total_toneladas, 0, ',', '.') }} kg ({{ number_format($total_toneladas / 1000, 2, ',', '.') }} ton)</x-ui.badge>
                         @endif
                         @if(count($jornales) > 0)
                             <x-ui.badge variant="warning">{{ count($jornales) }} jornal(es)</x-ui.badge>

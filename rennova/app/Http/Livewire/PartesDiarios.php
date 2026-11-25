@@ -14,6 +14,7 @@ use App\Models\ParteDiario;
 use App\Services\ParteDiarioCostoService;
 use App\Services\PartesDiariosService;
 use Carbon\Carbon;
+use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -161,28 +162,38 @@ class PartesDiarios extends Component
 
     public function mount()
     {
-        // Los lotes se cargan lazy via propiedad computada
-        // actualizarJornalPorEmpleado se llama cuando hay fecha
+        // Si se entra con un lote ya elegido (edicion o ?lote=), el filtro de
+        // recursos tiene que estar cargado desde el arranque: antes solo se armaba
+        // al cambiar el lote y por eso el formulario ofrecia todas las maquinarias.
+        if ($this->id_lote) {
+            $this->cargarAsignadosDelLote();
+        }
+    }
+
+    private function cargarAsignadosDelLote(): void
+    {
+        $this->empleados_asignados_ids = [];
+        $this->maquinarias_asignadas_ids = [];
+
+        if (! $this->id_lote) {
+            return;
+        }
+
+        $this->empleados_asignados_ids = \DB::table('lote_empleado')
+            ->where('id_lote', $this->id_lote)
+            ->pluck('id_empleado')
+            ->toArray();
+
+        $this->maquinarias_asignadas_ids = \DB::table('lote_maquinaria')
+            ->where('id_lote', $this->id_lote)
+            ->pluck('id_maquinaria')
+            ->toArray();
     }
 
     public function updatedIdLote()
     {
         // Al cambiar el lote, cargar empleados y maquinarias asignadas para filtrar
-        $this->empleados_asignados_ids = [];
-        $this->maquinarias_asignadas_ids = [];
-
-        if ($this->id_lote) {
-            // Query directa sin validación extra - más rápido
-            $this->empleados_asignados_ids = \DB::table('lote_empleado')
-                ->where('id_lote', $this->id_lote)
-                ->pluck('id_empleado')
-                ->toArray();
-
-            $this->maquinarias_asignadas_ids = \DB::table('lote_maquinaria')
-                ->where('id_lote', $this->id_lote)
-                ->pluck('id_maquinaria')
-                ->toArray();
-        }
+        $this->cargarAsignadosDelLote();
 
         // Limpiar cache de propiedades computadas
         unset($this->empleadosFiltradosCache);
@@ -198,7 +209,14 @@ class PartesDiarios extends Component
         $this->resolverClima();
 
         // Notificar al componente hijo CargaForm
-        $this->dispatch('loteChanged');
+        // El hijo no recibe las props actualizadas en cada render: le pasamos los
+        // recursos asignados por el evento que ya escuchaba.
+        $this->dispatch(
+            'loteChanged',
+            idLote: $this->id_lote,
+            empleados: $this->empleados_asignados_ids,
+            maquinarias: $this->maquinarias_asignadas_ids,
+        );
     }
 
     public function crearTareaRapida()
@@ -340,12 +358,14 @@ class PartesDiarios extends Component
 
     // ============ GESTIÓN DE CARGAS (DESTAJO) — Event Listeners ============
 
+    #[On('cargaAgregada')]
     public function cargaAgregada(array $cargaData): void
     {
         $this->cargas[] = $cargaData;
         $this->calcularTotalToneladas();
     }
 
+    #[On('cargaEliminada')]
     public function cargaEliminada(int $index): void
     {
         unset($this->cargas[$index]);
@@ -541,22 +561,26 @@ class PartesDiarios extends Component
 
     // ============ EVENT LISTENERS (Child Components) ============
 
+    #[On('jornalAgregado')]
     public function onJornalAgregado($jornalData): void
     {
         $this->jornales[] = $jornalData;
     }
 
+    #[On('jornalEliminado')]
     public function onJornalEliminado($index): void
     {
         unset($this->jornales[$index]);
         $this->jornales = array_values($this->jornales);
     }
 
+    #[On('movimientoAgregado')]
     public function onMovimientoAgregado($movData): void
     {
         $this->movimientos[] = $movData;
     }
 
+    #[On('movimientoEliminado')]
     public function onMovimientoEliminado($index): void
     {
         unset($this->movimientos[$index]);

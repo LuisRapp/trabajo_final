@@ -68,7 +68,14 @@ class Cargas extends Component
         return view('livewire.cargas', [
             'cargas' => $this->servicio->listar($this->busqueda, $this->pagina),
             'clientes' => $this->servicio->listarClientes(),
+            'choferes' => $this->servicio->listarChoferes($this->id_cliente ? (int) $this->id_cliente : null),
         ]);
+    }
+
+    public function updatedIdCliente(): void
+    {
+        // El chofer depende del cliente: al cambiarlo, la seleccion previa deja de ser valida.
+        $this->id_chofer = null;
     }
 
     public function updatedBusqueda()

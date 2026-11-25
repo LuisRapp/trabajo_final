@@ -58,9 +58,16 @@
                             @error('id_categoria_madera') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
-                            <label for="id_chofer" class="block text-sm font-semibold text-tinta mb-1.5">Chofer (ID)</label>
-                            <input autocomplete="off" type="number" id="id_chofer" wire:model="id_chofer"
+                            <label for="id_chofer" class="block text-sm font-semibold text-tinta mb-1.5">Chofer</label>
+                            <select id="id_chofer" wire:model="id_chofer"
                                 class="form-input @error('id_chofer') border-tierra bg-tierra-suave @enderror">
+                                <option value="">{{ $id_cliente ? 'Seleccione...' : 'Elegí un cliente primero' }}</option>
+                                @foreach($choferes as $chofer)
+                                    <option value="{{ $chofer->id_chofer }}" wire:key="option-chofer-{{ $chofer->id_chofer }}">
+                                        {{ $chofer->apellido }}, {{ $chofer->nombre }}
+                                    </option>
+                                @endforeach
+                            </select>
                             @error('id_chofer') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
@@ -84,19 +91,19 @@
                             @error('ticket') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
-                            <label for="peso_bruto" class="block text-sm font-semibold text-tinta mb-1.5">Peso Bruto</label>
+                            <label for="peso_bruto" class="block text-sm font-semibold text-tinta mb-1.5">Peso Bruto (kg)</label>
                             <input autocomplete="off" type="number" id="peso_bruto" wire:model="peso_bruto" step="0.1" min="0"
                                 class="form-input @error('peso_bruto') border-tierra bg-tierra-suave @enderror">
                             @error('peso_bruto') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
-                            <label for="tara" class="block text-sm font-semibold text-tinta mb-1.5">Tara</label>
+                            <label for="tara" class="block text-sm font-semibold text-tinta mb-1.5">Tara (kg)</label>
                             <input autocomplete="off" type="number" id="tara" wire:model="tara" step="0.1" min="0"
                                 class="form-input @error('tara') border-tierra bg-tierra-suave @enderror">
                             @error('tara') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
-                            <label for="peso_neto" class="block text-sm font-semibold text-tinta mb-1.5">Peso Neto</label>
+                            <label for="peso_neto" class="block text-sm font-semibold text-tinta mb-1.5">Peso Neto (kg)</label>
                             <input autocomplete="off" type="number" id="peso_neto" wire:model="peso_neto" step="0.1" min="0"
                                 class="form-input @error('peso_neto') border-tierra bg-tierra-suave @enderror">
                             @error('peso_neto') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
@@ -159,7 +166,7 @@
                                 <th>Parte Diario</th>
                                 <th>Ticket</th>
                                 <th class="text-right">Bruto</th>
-                                <th class="text-right">Tara</th>
+                                <th class="text-right">Tara (kg)</th>
                                 <th class="text-right">Neto</th>
                                 <th>Destino</th>
                                 <th>Fecha</th>

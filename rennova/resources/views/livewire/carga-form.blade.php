@@ -112,17 +112,17 @@
                         @error('carga_ticket') <div class="text-tierra text-sm mt-1">{{ $message }}</div> @enderror
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold text-tinta mb-2">Bruto (Ton) <span class="text-tierra">*</span></label>
-                        <input autocomplete="off" type="number" wire:model.live="carga_peso_bruto" step="0.1" min="0" class="form-input @error('carga_peso_bruto') ring-2 ring-tierra @enderror" placeholder="0.00">
+                        <label class="block text-sm font-semibold text-tinta mb-2">Bruto (kg) <span class="text-tierra">*</span></label>
+                        <input autocomplete="off" type="number" wire:model.live="carga_peso_bruto" step="1" min="0" class="form-input @error('carga_peso_bruto') ring-2 ring-tierra @enderror" placeholder="0.00">
                         @error('carga_peso_bruto') <div class="text-tierra text-sm mt-1">{{ $message }}</div> @enderror
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold text-tinta mb-2">Tara (Ton) <span class="text-tierra">*</span></label>
-                        <input autocomplete="off" type="number" wire:model.live="carga_tara" step="0.1" min="0" class="form-input @error('carga_tara') ring-2 ring-tierra @enderror {{ $carga_tara > 0 && $carga_peso_bruto > 0 && $carga_tara > $carga_peso_bruto ? 'ring-2 ring-tierra' : '' }}" placeholder="0.00">
+                        <label class="block text-sm font-semibold text-tinta mb-2">Tara (kg) <span class="text-tierra">*</span></label>
+                        <input autocomplete="off" type="number" wire:model.live="carga_tara" step="1" min="0" class="form-input @error('carga_tara') ring-2 ring-tierra @enderror {{ $carga_tara > 0 && $carga_peso_bruto > 0 && $carga_tara > $carga_peso_bruto ? 'ring-2 ring-tierra' : '' }}" placeholder="0.00">
                         @error('carga_tara') <div class="text-tierra text-sm mt-1">{{ $message }}</div> @enderror
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold text-pino mb-2">Neto (Ton) <span class="text-sm">Calculado</span></label>
+                        <label class="block text-sm font-semibold text-pino mb-2">Neto (kg) <span class="text-sm">Calculado</span></label>
                         <input autocomplete="off" type="text" value="{{ is_numeric($carga_peso_neto) ? number_format((float) $carga_peso_neto, 2, '.', '') : '0.00' }}" class="form-input bg-corteza-suave text-tinta-suave" readonly>
                         @error('carga_peso_neto') <div class="text-tierra text-sm mt-1 block">{{ $message }}</div> @enderror
                     </div>
@@ -222,7 +222,7 @@
                         <tfoot>
                             <tr>
                                 <td colspan="7" class="text-right">Total:</td>
-                                <td class="text-center text-pino font-semibold">{{ number_format(collect($cargas)->sum('peso_neto'), 2) }} Ton</td>
+                                <td class="text-center text-pino font-semibold">{{ number_format(collect($cargas)->sum('peso_neto'), 0, ',', '.') }} kg ({{ number_format(collect($cargas)->sum('peso_neto') / 1000, 2, ',', '.') }} ton)</td>
                             </tr>
                         </tfoot>
                     </table>

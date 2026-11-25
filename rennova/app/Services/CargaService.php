@@ -4,10 +4,12 @@ namespace App\Services;
 
 use App\Models\Carga;
 use App\Models\CategoriaMadera;
+use App\Models\Chofer;
 use App\Models\Cliente;
 use App\Models\Lote;
 use App\Models\ParteDiario;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 
@@ -26,6 +28,15 @@ class CargaService
     public function listarPartes()
     {
         return ParteDiario::all();
+    }
+
+    public function listarChoferes(?int $idCliente = null): Collection
+    {
+        return Chofer::query()
+            ->when($idCliente, fn ($consulta) => $consulta->where('id_cliente', $idCliente))
+            ->orderBy('apellido')
+            ->orderBy('nombre')
+            ->get();
     }
 
     public function listarClientes()
@@ -67,7 +78,7 @@ class CargaService
         return [
             'id_lote' => 'required|exists:lotes,id_lote',
             'id_categoria_madera' => 'nullable|exists:categoria_maderas,id_categoria_madera',
-            'id_chofer' => 'nullable|integer',
+            'id_chofer' => 'nullable|exists:choferes,id_chofer',
             'id_parte_diario' => 'nullable|exists:parte_diarios,id_parte_diario',
             'ticket' => 'nullable|string|max:20',
             'peso_bruto' => 'nullable|numeric|min:0',
