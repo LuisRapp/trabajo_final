@@ -506,7 +506,6 @@ class PartesDiarios extends Component
         $this->jornales = $datos['jornales'];
         $this->movimientos = $datos['movimientos'];
         $this->total_toneladas = $datos['total_toneladas'];
-
         $this->tab_activo = 'nuevo';
         $this->dispatch('editarParte', parteId: $id);
     }

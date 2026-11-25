@@ -13,20 +13,10 @@
     @endif
 
     <!-- Tabs -->
-    <div class="mb-6 flex gap-0">
-        @canany(['crear-cargas', 'editar-cargas'])
-        <button type="button" wire:click="$set('tab_activo','nuevo')"
-            class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border border-r-0 rounded-l-sm transition-all {{ $tab_activo === 'nuevo' ? 'text-blanco bg-pino border-pino' : 'bg-blanco text-tinta border-arena hover:bg-corteza-suave' }}">
-            <flux:icon.plus class="size-4" />
-            Nueva Carga
-        </button>
-        @endcanany
-        <button type="button" wire:click="$set('tab_activo','listado')"
-            class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border rounded-r-sm transition-all {{ $tab_activo === 'listado' ? 'text-blanco bg-pino border-pino' : 'bg-blanco text-tinta border-arena hover:bg-corteza-suave' }}">
-            <flux:icon.list-bullet class="size-4" />
-            Listado de Cargas
-        </button>
-    </div>
+    <x-tab-nav :tabs="[
+        ['value' => 'nuevo', 'label' => 'Nueva Carga', 'icon' => 'plus', 'can' => auth()->user()?->canAny(['crear-cargas', 'editar-cargas']) ?? false],
+        ['value' => 'listado', 'label' => 'Listado de Cargas', 'icon' => 'list-bullet'],
+    ]" activeTab="{{ $tab_activo }}" tabProperty="tab_activo" />
 
     @if($tab_activo === 'nuevo')
         @canany(['crear-cargas', 'editar-cargas'])

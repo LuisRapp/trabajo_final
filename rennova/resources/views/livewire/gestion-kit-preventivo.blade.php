@@ -12,20 +12,10 @@
         </x-ui.alert>
     @endif
 
-    <div class="mb-6 flex gap-0">
-        @canany(['crear-kits-mantenimiento', 'editar-kits-mantenimiento'])
-        <button type="button" wire:click="$set('tab_activo','nuevo')"
-            class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border border-r-0 rounded-l-sm transition-all {{ $tab_activo === 'nuevo' ? 'bg-pino text-white border-pino' : 'bg-white text-tinta-suave border-arena hover:bg-corteza-suave' }}">
-            <flux:icon.plus class="size-4" />
-            Nuevo Kit
-        </button>
-        @endcanany
-        <button type="button" wire:click="$set('tab_activo','listado')"
-            class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border rounded-r-sm transition-all {{ $tab_activo === 'listado' ? 'bg-pino text-white border-pino' : 'bg-white text-tinta-suave border-arena hover:bg-corteza-suave' }} {{ !auth()->user()?->canAny(['crear-kits-mantenimiento', 'editar-kits-mantenimiento']) ?? false ? 'rounded-l-sm' : '' }}">
-            <flux:icon.list-bullet class="size-4" />
-            Listado de Kits
-        </button>
-    </div>
+    <x-tab-nav :tabs="[
+        ['value' => 'nuevo', 'label' => 'Nuevo Kit', 'icon' => 'plus', 'can' => auth()->user()?->canAny(['crear-kits-mantenimiento', 'editar-kits-mantenimiento']) ?? false],
+        ['value' => 'listado', 'label' => 'Listado de Kits', 'icon' => 'list-bullet'],
+    ]" activeTab="{{ $tab_activo }}" tabProperty="tab_activo" />
 
     @if($tab_activo === 'nuevo')
         @canany(['crear-kits-mantenimiento', 'editar-kits-mantenimiento'])

@@ -21,20 +21,10 @@
     <x-flash-messages />
 
     <!-- Tabs -->
-    <div class="mb-6 flex gap-0">
-        @canany(['crear-partes-diarios', 'editar-partes-diarios'])
-        <button type="button" wire:click="$set('tab_activo','nuevo')"
-            class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border border-r-0 rounded-l-sm transition-all {{ $tab_activo === 'nuevo' ? 'text-blanco bg-pino border-pino' : 'bg-blanco text-tinta border-arena hover:bg-corteza-suave' }}">
-            <flux:icon.plus class="size-4" />
-            Nuevo Parte Diario
-        </button>
-        @endcanany
-        <button type="button" wire:click="$set('tab_activo','listado')"
-            class="inline-flex items-center gap-2 px-4 py-3 font-semibold text-sm border rounded-r-sm transition-all {{ $tab_activo === 'listado' ? 'text-blanco bg-pino border-pino' : 'bg-blanco text-tinta border-arena hover:bg-corteza-suave' }}">
-            <flux:icon.list-bullet class="size-4" />
-            Listado de Partes Diarios
-        </button>
-    </div>
+    <x-tab-nav :tabs="[
+        ['value' => 'nuevo', 'label' => 'Nuevo Parte Diario', 'icon' => 'plus', 'can' => auth()->user()?->canAny(['crear-partes-diarios', 'editar-partes-diarios']) ?? false],
+        ['value' => 'listado', 'label' => 'Listado de Partes Diarios', 'icon' => 'list-bullet'],
+    ]" activeTab="{{ $tab_activo }}" tabProperty="tab_activo" />
 
     <!-- Pestaña 1: Nuevo Parte Diario -->
     @if($tab_activo === 'nuevo')

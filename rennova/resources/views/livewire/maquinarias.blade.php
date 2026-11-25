@@ -12,20 +12,10 @@
         </x-ui.alert>
     @endif
 
-    <div class="mb-6 flex gap-0">
-        @canany(['crear-maquinarias', 'editar-maquinarias'])
-        <button type="button" wire:click="$set('tab_activo', 'nuevo')"
-            class="inline-flex items-center gap-2 px-4 py-3 text-sm font-semibold border border-r-0 transition-all rounded-l-sm {{ $tab_activo === 'nuevo' ? 'bg-pino text-white border-pino' : 'bg-white text-tinta-suave border-arena hover:bg-corteza-suave' }}">
-            <flux:icon.plus class="size-4" />
-            Nueva Maquinaria
-        </button>
-        @endcanany
-        <button type="button" wire:click="$set('tab_activo', 'listado')"
-            class="inline-flex items-center gap-2 px-4 py-3 text-sm font-semibold border transition-all {{ $tab_activo === 'listado' ? 'bg-pino text-white border-pino' : 'bg-white text-tinta-suave border-arena hover:bg-corteza-suave' }} {{ !auth()->user()?->canAny(['crear-maquinarias', 'editar-maquinarias']) ?? false ? 'rounded-l-sm' : '' }} rounded-r-sm">
-            <flux:icon.list-bullet class="size-4" />
-            Listado de Maquinarias
-        </button>
-    </div>
+    <x-tab-nav :tabs="[
+        ['value' => 'nuevo', 'label' => 'Nueva Maquinaria', 'icon' => 'plus', 'can' => auth()->user()?->canAny(['crear-maquinarias', 'editar-maquinarias']) ?? false],
+        ['value' => 'listado', 'label' => 'Listado de Maquinarias', 'icon' => 'list-bullet'],
+    ]" activeTab="{{ $tab_activo }}" tabProperty="tab_activo" />
 
     @if($tab_activo === 'nuevo')
         @canany(['crear-maquinarias', 'editar-maquinarias'])
