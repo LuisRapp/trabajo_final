@@ -241,7 +241,7 @@ class PropuestaAsignacionService
                     }
                     $proposal->save();
                     $requiresReview = true;
-                    $reviewMessage = 'Propuesta con baja confianza. Confirmada para revision manual. Vuelva a aplicar para asignar.';
+                    $reviewMessage = 'Propuesta con baja confianza. Confirmada para revisión manual. Volvé a confirmar para asignar.';
 
                     return;
                 }

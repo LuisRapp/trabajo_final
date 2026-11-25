@@ -168,7 +168,7 @@ test('propuesta de baja confianza se confirma sin aplicar hasta volver a aplicar
         ->test(AllocationProposals::class, ['loteId' => $lote->id_lote])
         ->call('confirmar');
 
-    $componente->assertSee('Propuesta con baja confianza. Confirmada para revision manual. Vuelva a aplicar para asignar.');
+    $componente->assertSee('Propuesta con baja confianza. Confirmada para revisión manual. Volvé a confirmar para asignar.');
 
     expect($propuesta->refresh()->status)->toBe('confirmed')
         ->and($propuesta->meta['review_required'])->toBeTrue()
@@ -364,4 +364,16 @@ test('generarAhora deja seleccionada la propuesta mas nueva', function () {
         ->assertSet('selected_proposal_id', $vieja->id_allocation_proposal)
         ->call('generarAhora')
         ->assertSet('selected_proposal_id', $nueva->id_allocation_proposal);
+});
+
+test('el detalle tiene una sola accion final para confirmar y aplicar', function () {
+    // "Confirmar" y "Aplicar al lote" ejecutaban exactamente lo mismo: se unifican
+    // en un boton para que no haya dos caminos con el mismo efecto.
+    $lote = Lote::factory()->create(['estado' => 'activo']);
+    PropuestaAsignacion::factory()->for($lote, 'lote')->create(['status' => 'draft']);
+
+    Livewire::actingAs($this->usuario)
+        ->test(AllocationProposals::class, ['loteId' => $lote->id_lote])
+        ->assertSee('Confirmar y aplicar al lote')
+        ->assertDontSee('Aplicar al lote');
 });

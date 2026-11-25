@@ -361,17 +361,13 @@
                             </x-ui.button>
 
                             <x-ui.button variant="primary" icon="check-circle" wire:click="confirmar" :disabled="$guardando">
-                                Confirmar
-                            </x-ui.button>
-
-                            <x-ui.button variant="primary" icon="archive-box-arrow-down" wire:click="aplicar" :disabled="$guardando">
-                                Aplicar al lote
+                                Confirmar y aplicar al lote
                             </x-ui.button>
                             @endcanany
                         </div>
 
                         <x-ui.alert variant="warning" class="mt-4" dismissible="false">
-                            "Aplicar" reemplaza las asignaciones actuales del lote por la selección de esta propuesta.
+                            Confirmar reemplaza las asignaciones actuales del lote por la selección de esta propuesta.
                         </x-ui.alert>
                     @endif
                 </div>

@@ -208,13 +208,7 @@ class AllocationProposals extends Component
         $this->guardando = true;
 
         try {
-            $servicio = app(PropuestaAsignacionService::class);
-            $servicio->guardarSeleccion(
-                (int) $this->selected_proposal_id,
-                $this->employeeSelected,
-                $this->maquinariaSelected,
-                $this->insumoSelected
-            );
+            $this->persistirSeleccion();
 
             $this->loadSelectedProposal();
             session()->flash('message', 'Selección guardada correctamente.');
@@ -227,7 +221,7 @@ class AllocationProposals extends Component
 
     public function confirmar()
     {
-        $this->authorize('crear-propuestas-asignacion');
+        abort_unless(auth()->user()?->canAny(['crear-propuestas-asignacion', 'editar-propuestas-asignacion']), 403);
         if (! $this->selected_proposal_id) {
             return;
         }
@@ -235,7 +229,7 @@ class AllocationProposals extends Component
         $this->guardando = true;
 
         try {
-            $this->guardarSeleccion();
+            $this->persistirSeleccion();
 
             $resultado = PropuestaAsignacionService::confirmar((int) $this->selected_proposal_id);
 
@@ -262,41 +256,18 @@ class AllocationProposals extends Component
         }
     }
 
-    public function aplicar()
+    private function persistirSeleccion(): void
     {
-        $this->authorize('editar-propuestas-asignacion');
         if (! $this->selected_proposal_id) {
             return;
         }
 
-        $this->guardando = true;
-
-        try {
-            $this->guardarSeleccion();
-
-            $resultado = PropuestaAsignacionService::confirmar((int) $this->selected_proposal_id);
-
-            if ($resultado['error']) {
-                session()->flash('error', $resultado['error']);
-
-                return;
-            }
-
-            $this->loadSelectedProposal();
-            $this->refreshProposals();
-
-            if ($resultado['requiresReview']) {
-                session()->flash('message', $resultado['reviewMessage']);
-
-                return;
-            }
-
-            session()->flash('message', 'Asignación aplicada al lote.');
-        } catch (\Throwable $e) {
-            session()->flash('error', $this->mensajeErrorUsuario($e, 'aplicar la asignación'));
-        } finally {
-            $this->guardando = false;
-        }
+        app(PropuestaAsignacionService::class)->guardarSeleccion(
+            (int) $this->selected_proposal_id,
+            $this->employeeSelected,
+            $this->maquinariaSelected,
+            $this->insumoSelected
+        );
     }
 
     public function render()
