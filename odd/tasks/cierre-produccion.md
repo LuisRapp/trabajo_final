@@ -373,9 +373,13 @@ maquinaria, rol laboral, cliente, proveedor, insumo y kit de mantenimiento.
 
 #### Bloque 4 - Produccion y ventas
 
-- [ ] Parte diario / carga sobre el lote en proceso: guarda y aparece en el listado.
-- [ ] Vender la carga: queda `facturada`.
-- [ ] Dar de baja la venta: la carga vuelve a `pendiente`.
+- [x] Parte diario / carga sobre el lote en proceso: guarda y aparece en el listado.
+      (2026-11-26: verificado en el deploy; el formulario ademas usa combobox, tiene
+      borrador persistente y el peso neto se calcula solo.)
+- [x] Vender la carga: queda `facturada`. (2026-11-26: verificado por el usuario y en
+      base: cargas en `facturada` ligadas a ventas activas.)
+- [x] Dar de baja la venta: la carga vuelve a `pendiente`. (2026-11-26: verificado por
+      el usuario; hay cargas en `pendiente` y el estado de la venta es su soft delete.)
 
   ```sql
   select id_carga, estado from cargas;
@@ -455,7 +459,7 @@ maquinaria, rol laboral, cliente, proveedor, insumo y kit de mantenimiento.
 | 1 - Catalogos | 2026-11-24 | Ocho catalogos con alta/edicion/borrado OK; kit obligatorio/opcional OK. Se corrigio Editar lote, las acciones del lote pasaron a botones directos y se quito el CTA 'Crear primer kit' (`c117ced`). |
 | 2 - Recursos | | |
 | 3 - Ciclo de lote | 2026-11-25 | Alta -> tareas -> sugerencias -> confirmar -> en_proceso -> finalizar verificado de punta a punta. Invariantes en base: 0 recursos colgados en cerrados, 0 recursos en dos lotes activos. |
-| 4 - Produccion y ventas | | |
+| 4 - Produccion y ventas | 2026-11-26 | Parte diario y cargas funcionando; facturar y dar de baja verificados. Rediseno de ventas y comprobante PDF con pesajes en kilos. |
 | 5 - Inventario | | |
 | 6 - Mantenimiento | | |
 | 7 - Pagos | | |
@@ -528,3 +532,4 @@ Todo lo que aparezca durante F2-F8 y no sea un defecto de la fase en curso se an
 - L34 (2026-11-26): Bloque 4 cerrado en lo funcional: el usuario confirmo que facturar cargas y dar de baja funciona. Dos observaciones atendidas: **mensajes de jerga** ("Formulario limpiado.") reemplazados por avisos que describen el hecho (venta registrada con su numero, cargas que vuelven a pendiente), y **comprobante de venta en PDF** (`/ventas/{id}/comprobante`, permiso `ver-ventas`) con criterio de salida impresa: marca y titulo, numero y fecha, bloque de cliente, detalle por carga con unidades, totales de cargas/toneladas/monto, pie con emisor, marca "documento no fiscal", numero de pagina y fin de comprobante. Verificado generando el PDF del deploy y convirtiendolo a imagen. Suite 777 passed / 9 skipped. **Pendiente**: pasada de diseno de la pantalla de ventas (el usuario la considera "muy tosca") y del parte diario (borrador persistente, selectores, modal de justificacion).
 - L35 (2026-11-26): Segunda parte del rediseno pedido por el usuario. **(1)** El aviso de borrador del parte diario aparecia apenas se empezaba a cargar; ahora solo se muestra en el listado (es un recordatorio, no un cartel mientras trabajas). **(2)** Rediseno de ventas con patron maestro-detalle: sin pestanas, barra de herramientas (busqueda, filtro por estado, Nueva venta), listado con numero formateado, toneladas, total y chip de estado; detalle en panel lateral con resumen tipo documento y acciones al pie; nueva venta en panel de dos pasos (cliente y periodo -> cargas, total y observaciones). Verificado con capturas del deploy: lista, detalle y los dos pasos. **(3)** Bug encontrado al redisenar: `ventas` no tiene columna `activo`, el estado es el soft delete; la vista usaba `$venta->activo` (siempre null) y mostraba TODAS las ventas como "Baja". Ahora sale de `trashed()`, el listado incluye las dadas de baja, el detalle se abre igual y dar de baja cierra el panel. Suite 783 passed / 9 skipped.
 - L36 (2026-11-26): Se alineo `/cargas` con el formulario de parte diario: lote, categoria, cliente, chofer y parte diario usan el combobox (buscador, detalle, check y chips) y el chofer sigue dependiendo del cliente. Al probar el alta aparecio otro bug de la misma familia que el chofer por ID: el formulario permitia guardar sin cliente y `cargas.id_cliente` es NOT NULL, asi que el guardado devolvia un 500 con excepcion SQL. La regla pasa a `required|exists` y el error se muestra en el campo. Verificado el alta completa en el deploy. Suite 785 passed / 9 skipped.
+- L37 (2026-11-26): Ultimos ajustes del Bloque 4. **(1)** Comprobante PDF: la tabla pasa a incluir chofer y los tres pesajes (bruto, tara, neto) en kilos, segun lo pedido; se ajustaron anchos para que los encabezados entren en una linea. Verificado regenerando el PDF y revisandolo como imagen. **(2)** En `/cargas` el panel del combobox de parte diario quedaba recortado por `overflow-hidden` en la tarjeta del formulario; se quito. **(3)** El peso neto no se calculaba: bruto y tara pasan a `wire:model.live` y el neto se deriva (bruto - tara, sin negativos) y se muestra de solo lectura. Verificado: 1200 - 300 = 900 automatico. Con esto el Bloque 4 queda cerrado en lo funcional.
