@@ -16,13 +16,20 @@ use Illuminate\Validation\ValidationException;
 class CargaService
 {
     /**
-     * Lotes donde se puede registrar produccion: activos o en proceso.
-     * Un lote cerrado, inactivo o de baja no recibe cargas.
+     * Lotes donde se puede registrar produccion: solo los que estan en proceso,
+     * que es de donde salen las toneladas. Al editar una carga historica se
+     * incluye su lote aunque ya no este en proceso, para no romper la edicion.
      */
-    public function listarLotes(): Collection
+    public function listarLotes(?int $incluirId = null): Collection
     {
         return Lote::query()
-            ->whereIn('estado', ['activo', 'en_proceso'])
+            ->where(function ($consulta) use ($incluirId): void {
+                $consulta->where('estado', 'en_proceso');
+
+                if ($incluirId) {
+                    $consulta->orWhere('id_lote', $incluirId);
+                }
+            })
             ->orderBy('propietario')
             ->get();
     }

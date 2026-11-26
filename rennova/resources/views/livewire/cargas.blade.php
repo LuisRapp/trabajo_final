@@ -39,9 +39,9 @@
                             <label for="id_lote" class="block text-sm font-semibold text-tinta mb-1.5">Lote <span class="text-tierra">*</span></label>
                             <select id="id_lote" wire:model="id_lote"
                                 class="form-input @error('id_lote') border-tierra bg-tierra-suave @enderror">
-                                <option value="">Seleccione...</option>
+                                <option value="">{{ $lotes->isEmpty() ? 'No hay lotes en proceso' : 'Seleccione...' }}</option>
                                 @foreach($lotes as $lote)
-                                    <option value="{{ $lote->id_lote }}" wire:key="option-{{ $lote->id_lote }}">{{ $lote->propietario }} - {{ $lote->ubicacion }} ({{ ucfirst(str_replace('_', ' ', $lote->estado)) }})</option>
+                                    <option value="{{ $lote->id_lote }}" wire:key="option-{{ $lote->id_lote }}">{{ $lote->propietario }} - {{ $lote->ubicacion }}</option>
                                 @endforeach
                             </select>
                             @error('id_lote') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror

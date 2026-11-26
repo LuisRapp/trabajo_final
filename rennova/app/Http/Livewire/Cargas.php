@@ -69,6 +69,9 @@ class Cargas extends Component
             'cargas' => $this->servicio->listar($this->busqueda, $this->pagina),
             'clientes' => $this->servicio->listarClientes(),
             'choferes' => $this->servicio->listarChoferes($this->id_cliente ? (int) $this->id_cliente : null),
+            // Solo lotes en proceso; al editar se incluye el de la carga aunque
+            // haya salido de proceso, para no perder la seleccion.
+            'lotes' => $this->servicio->listarLotes($this->carga_id ? (int) $this->id_lote : null),
         ]);
     }
 
