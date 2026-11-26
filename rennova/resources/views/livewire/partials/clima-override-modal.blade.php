@@ -33,8 +33,14 @@
             </button>
         </div>
         <div class="p-6">
-            <p class="text-sm text-tinta-suave mb-4">
-                Para continuar, debes indicar el motivo por el cual se decide operar en este dia.
+            @if($clima_razon)
+                <div class="mb-4 rounded-sm border border-resina/30 bg-resina-suave/40 px-3 py-2 text-sm text-tinta">
+                    El sistema marca este día como no operativo por: <strong>{{ $clima_razon }}</strong>.
+                </div>
+            @endif
+
+            <p class="mb-4 text-sm text-tinta-suave">
+                Podés operar igual, pero necesitamos saber por qué. Queda registrado con tu usuario y la fecha.
             </p>
             <label class="block text-sm font-semibold text-tinta mb-2">Motivo <span class="text-tierra">*</span></label>
             <textarea
@@ -44,6 +50,9 @@
                 placeholder="Ej: compromiso logistico con cliente, ventana operativa segura, prioridad de entrega"
             ></textarea>
             <p x-show="modalError" x-text="modalError" class="mt-2 text-sm text-tierra"></p>
+            <p class="mt-3 text-xs text-tinta-suave">
+                Si continuás, la producción de hoy se registra como una decisión tuya sobre las condiciones del día.
+            </p>
         </div>
         <div class="px-6 py-4 border-t border-arena bg-corteza-suave flex justify-end gap-3">
             <button
@@ -67,7 +76,7 @@
                     $wire.guardar();
                 "
             >
-                Confirmar y guardar
+                Operar igual y guardar
             </button>
         </div>
     </div>

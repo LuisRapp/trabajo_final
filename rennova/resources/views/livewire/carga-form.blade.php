@@ -81,11 +81,12 @@
                     <div>
                         <label class="block text-sm font-semibold text-tinta mb-2">Chofer <span class="text-tierra">*</span></label>
                         <input autocomplete="off" type="text" wire:model.live.debounce.500ms="busqueda_chofer" class="form-input mb-2 @error('carga_id_chofer') ring-2 ring-tierra @enderror" placeholder="Buscar chofer...">
-                        <select wire:model="carga_id_chofer" class="form-input" size="3">
+                        <select wire:model="carga_id_chofer" @disabled(! $carga_destino) class="form-input disabled:cursor-not-allowed disabled:bg-corteza-suave">
+                            <option value="">{{ $carga_destino ? 'Seleccione...' : 'Primero elegí el destino' }}</option>
                             @forelse($this->choferesFiltrados as $chofer)
                                 <option value="{{ $chofer->id_chofer }}" wire:key="option-{{ $chofer->id_chofer }}">{{ $chofer->apellido }}, {{ $chofer->nombre }}</option>
                             @empty
-                                <option value="" disabled>No hay resultados</option>
+                                <option value="" disabled>Sin choferes para este cliente</option>
                             @endforelse
                         </select>
                         @error('carga_id_chofer') <div class="text-tierra text-sm mt-1">{{ $message }}</div> @enderror
@@ -93,7 +94,8 @@
                     <div>
                         <label class="block text-sm font-semibold text-tinta mb-2">Destino (Cliente) <span class="text-tierra">*</span></label>
                         <input autocomplete="off" type="text" wire:model.live.debounce.500ms="busqueda_cliente" class="form-input mb-2 @error('carga_destino') ring-2 ring-tierra @enderror" placeholder="Buscar cliente...">
-                        <select wire:model="carga_destino" class="form-input" size="3">
+                        <select wire:model.live="carga_destino" class="form-input">
+                            <option value="">Seleccione el destino...</option>
                             @forelse($this->clientesFiltrados as $cliente)
                                 <option value="{{ $cliente->id_cliente }}" wire:key="option-{{ $cliente->id_cliente }}">{{ $cliente->razon_social }}</option>
                             @empty

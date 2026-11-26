@@ -15,6 +15,7 @@ use App\Services\ParteDiarioCostoService;
 use App\Services\PartesDiariosService;
 use Carbon\Carbon;
 use Livewire\Attributes\On;
+use Livewire\Attributes\Session;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -32,16 +33,20 @@ class PartesDiarios extends Component
     // Listado paginado se entrega desde render(), no como estado
     public $parte_id;
 
+    #[Session]
     public $id_lote;
 
+    #[Session]
     public $id_lote_tarea;
 
+    #[Session]
     public $fecha;
 
     public $tipo_tarea;
 
     public $actividad_realizada;
 
+    #[Session]
     public $es_dia_caido = false;
 
     public $motivo_dia_caido;
@@ -60,6 +65,7 @@ class PartesDiarios extends Component
 
     public $clima_override_motivo;
 
+    #[Session]
     public $observaciones;
 
     public $busqueda = '';
@@ -82,14 +88,17 @@ class PartesDiarios extends Component
     public $maquinarias_asignadas_ids = [];
 
     // Detalles de Cargas (Modo Destajo)
+    #[Session]
     public $cargas = [];
 
     public $total_toneladas = 0;
 
     // Detalles de Jornales (Modo Día Caído) — managed by JornalForm child
+    #[Session]
     public $jornales = [];
 
     // Detalles de Movimientos de Insumos — managed by MovimientoForm child
+    #[Session]
     public $movimientos = [];
 
     // Creación rápida de tarea
@@ -549,6 +558,45 @@ class PartesDiarios extends Component
             'nueva_tarea_tipo_tarea', 'nueva_tarea_superficie_afectada_ha',
         ]);
         $this->total_toneladas = 0;
+    }
+
+    /**
+     * Hay un parte diario a medio cargar (recuperado de la sesion).
+     */
+    public function getHayBorradorProperty(): bool
+    {
+        return ! empty($this->id_lote)
+            || ! empty($this->cargas)
+            || ! empty($this->jornales)
+            || ! empty($this->movimientos);
+    }
+
+    public function descartarBorrador(): void
+    {
+        $this->resetCampos();
+        $this->resetValidation();
+    }
+
+    /**
+     * Sin produccion cargada no se puede pasar de la seccion de produccion.
+     */
+    public function validarPaso2(): bool
+    {
+        $this->resetValidation();
+
+        if ($this->es_dia_caido && empty($this->jornales)) {
+            $this->addError('jornales', 'Cargá al menos un jornal antes de continuar.');
+
+            return false;
+        }
+
+        if (! $this->es_dia_caido && empty($this->cargas)) {
+            $this->addError('cargas', 'Cargá al menos una carga antes de continuar.');
+
+            return false;
+        }
+
+        return true;
     }
 
     public function cancelarEdicion()

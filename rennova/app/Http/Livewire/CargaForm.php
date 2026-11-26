@@ -54,13 +54,24 @@ class CargaForm extends Component
 
     public function getChoferesFiltradosProperty()
     {
+        $choferes = $this->choferes;
+
+        // El chofer pertenece al cliente: sin destino elegido no hay lista.
+        if ($this->carga_destino) {
+            $choferes = $choferes->filter(
+                fn ($chofer) => (int) $chofer->id_cliente === (int) $this->carga_destino
+            );
+        } else {
+            $choferes = collect();
+        }
+
         if (empty($this->busqueda_chofer)) {
-            return $this->choferes;
+            return $choferes;
         }
 
         $busq = strtolower($this->busqueda_chofer);
 
-        return $this->choferes->filter(function ($chofer) use ($busq) {
+        return $choferes->filter(function ($chofer) use ($busq) {
             $nombre_completo = strtolower($chofer->apellido.' '.$chofer->nombre);
 
             return str_contains($nombre_completo, $busq);

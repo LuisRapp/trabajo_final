@@ -681,6 +681,33 @@ class PartesDiariosTest extends TestCase
     // Comunicacion hijo -> padre
     // =========================================================================
 
+    public function test_no_se_avanza_sin_cargas_cargadas(): void
+    {
+        Livewire::actingAs($this->usuario)
+            ->test(PartesDiarios::class)
+            ->call('validarPaso2')
+            ->assertHasErrors('cargas');
+    }
+
+    public function test_el_parte_a_medio_cargar_se_recupera_al_volver(): void
+    {
+        Livewire::actingAs($this->usuario)
+            ->test(PartesDiarios::class)
+            ->set('id_lote', $this->lote->id_lote)
+            ->set('fecha', now()->toDateString())
+            ->dispatch('cargaAgregada', cargaData: ['ticket' => 'T-BORRADOR', 'peso_neto' => 500]);
+
+        $nuevo = Livewire::actingAs($this->usuario)->test(PartesDiarios::class);
+
+        $nuevo->assertSet('id_lote', $this->lote->id_lote)
+            ->assertCount('cargas', 1)
+            ->assertSee('Tenés un parte diario sin guardar');
+
+        $nuevo->call('descartarBorrador')
+            ->assertSet('id_lote', null)
+            ->assertCount('cargas', 0);
+    }
+
     public function test_al_cambiar_el_lote_el_padre_avisa_los_recursos_asignados(): void
     {
         $asignada = Maquinaria::factory()->create(['modelo' => 'Asignada 800']);

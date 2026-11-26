@@ -20,6 +20,22 @@
 
     <x-flash-messages />
 
+    @if($this->hayBorrador)
+        <x-ui.alert variant="info" class="mb-4" :dismissible="false">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <span>Tenés un parte diario sin guardar.</span>
+                <div class="flex gap-2">
+                    <x-ui.button size="sm" wire:click="$set('tab_activo', 'nuevo')">
+                        Continuar
+                    </x-ui.button>
+                    <x-ui.button variant="secondary" size="sm" wire:click="descartarBorrador">
+                        Empezar de nuevo
+                    </x-ui.button>
+                </div>
+            </div>
+        </x-ui.alert>
+    @endif
+
     <!-- Tabs -->
     <x-tab-nav :tabs="[
         ['value' => 'nuevo', 'label' => 'Nuevo Parte Diario', 'icon' => 'plus', 'can' => auth()->user()?->canAny(['crear-partes-diarios', 'editar-partes-diarios']) ?? false],
@@ -221,12 +237,20 @@
                 />
             </div>
 
+            @error('cargas')
+                <x-ui.alert variant="danger" class="mb-3" dismissible="false">{{ $message }}</x-ui.alert>
+            @enderror
+            @error('jornales')
+                <x-ui.alert variant="danger" class="mb-3" dismissible="false">{{ $message }}</x-ui.alert>
+            @enderror
+
             <!-- Nav: Volver + Siguiente from Step 2 -->
             <div class="flex justify-between gap-3 mb-6" x-show="paso === 2">
                 <x-ui.button variant="secondary" icon="arrow-left" type="button" @click="paso = 1">
                     Volver
                 </x-ui.button>
-                <x-ui.button variant="primary" icon="arrow-right" type="button" @click="paso = 3; maxPaso = Math.max(maxPaso, 3);">
+                <x-ui.button variant="primary" icon="arrow-right" type="button"
+                    @click="if (await $wire.validarPaso2()) { paso = 3; maxPaso = Math.max(maxPaso, 3); }">
                     Siguiente
                 </x-ui.button>
             </div>

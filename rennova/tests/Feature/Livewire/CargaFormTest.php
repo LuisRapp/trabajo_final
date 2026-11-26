@@ -336,7 +336,12 @@ class CargaFormTest extends TestCase
         $component = Livewire::actingAs($this->usuario)
             ->test(CargaForm::class, $this->defaultProps());
 
-        // Without search — chofer should be visible
+        // Sin destino elegido no hay choferes: el chofer pertenece al cliente.
+        $this->assertCount(0, $component->get('choferesFiltrados'));
+
+        $component->set('carga_destino', $this->cliente->id_cliente);
+
+        // Con destino y sin busqueda, el chofer del cliente aparece
         $filtrados = $component->get('choferesFiltrados');
         $this->assertTrue($filtrados->contains('id_chofer', $this->chofer->id_chofer));
 
