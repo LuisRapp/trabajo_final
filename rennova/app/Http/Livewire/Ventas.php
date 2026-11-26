@@ -71,10 +71,47 @@ class Ventas extends Component
 
     public $monto_edicion = 0;
 
+    // Panel lateral de nueva venta
+    public $panel_nueva = false;
+
+    public $paso_nueva = 1;
+
+    // Filtro del listado
+    public $filtro_estado = '';
+
     public function mount()
     {
         $this->fecha_desde = date('Y-m-d', strtotime('-7 days'));
         $this->fecha_hasta = date('Y-m-d');
+    }
+
+    public function abrirNuevaVenta(): void
+    {
+        $this->authorize('crear-ventas');
+
+        $this->reset(['detalle_cargas', 'total_venta', 'observaciones', 'id_cliente']);
+        $this->resetValidation();
+        $this->paso_nueva = 1;
+        $this->panel_nueva = true;
+    }
+
+    public function volverPaso1(): void
+    {
+        $this->paso_nueva = 1;
+        $this->resetValidation();
+    }
+
+    public function cerrarNuevaVenta(): void
+    {
+        $this->panel_nueva = false;
+        $this->paso_nueva = 1;
+        $this->reset(['detalle_cargas', 'total_venta', 'observaciones', 'id_cliente']);
+        $this->resetValidation();
+    }
+
+    public function updatedFiltroEstado(): void
+    {
+        $this->resetPage();
     }
 
     public function buscarCargasPendientes()
@@ -102,6 +139,7 @@ class Ventas extends Component
 
             $this->detalle_cargas = $cargas;
             $this->total_venta = collect($this->detalle_cargas)->sum('subtotal');
+            $this->paso_nueva = 2;
             session()->flash('message', count($this->detalle_cargas) === 1 ? 'Encontramos 1 carga pendiente.' : 'Encontramos '.count($this->detalle_cargas).' cargas pendientes.');
 
         } catch (\InvalidArgumentException $e) {
@@ -137,6 +175,8 @@ class Ventas extends Component
             $this->total_venta = 0;
             $this->observaciones = '';
             $this->id_cliente = null;
+            $this->panel_nueva = false;
+            $this->paso_nueva = 1;
 
             session()->flash('message', 'Venta #'.$venta->id_recibo.' registrada. Las cargas quedaron facturadas.');
 
@@ -147,7 +187,7 @@ class Ventas extends Component
 
     public function cargarVentas()
     {
-        return VentaService::listarVentas($this->busqueda, 15);
+        return VentaService::listarVentas($this->busqueda, 15, $this->filtro_estado ?: null);
     }
 
     public function updatedBusqueda()
@@ -157,7 +197,8 @@ class Ventas extends Component
 
     public function verDetalle($id_recibo)
     {
-        $venta = Venta::with(['cliente', 'cargas.categoriaMadera'])
+        $venta = Venta::withTrashed()
+            ->with(['cliente', 'cargas.categoriaMadera'])
             ->findOrFail($id_recibo);
 
         $this->venta_seleccionada = $venta;
@@ -230,6 +271,9 @@ class Ventas extends Component
             VentaService::darDeBaja($id_recibo);
 
             $this->cerrarModal();
+            $this->cerrarModal();
+            $this->cargarVentas();
+
             session()->flash('message', 'Venta dada de baja. Las cargas volvieron a pendiente.');
 
         } catch (\Exception $e) {
@@ -263,6 +307,12 @@ class Ventas extends Component
         return view('livewire.ventas', [
             'ventas' => $this->cargarVentas(),
             'clientes' => $clientes,
+            'opcionesClientes' => $clientes
+                ->map(fn ($cliente) => [
+                    'value' => $cliente->id_cliente,
+                    'label' => $cliente->razon_social,
+                    'detalle' => $cliente->cuit,
+                ])->values()->all(),
         ]);
     }
 }

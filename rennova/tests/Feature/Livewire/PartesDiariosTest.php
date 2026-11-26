@@ -695,13 +695,26 @@ class PartesDiariosTest extends TestCase
             ->test(PartesDiarios::class)
             ->set('id_lote', $this->lote->id_lote)
             ->set('fecha', now()->toDateString())
-            ->dispatch('cargaAgregada', cargaData: ['ticket' => 'T-BORRADOR', 'peso_neto' => 500]);
+            ->dispatch('cargaAgregada', cargaData: [
+                'id_categoria_madera' => $this->categoriaMadera->id_categoria_madera,
+                'ticket' => 'T-BORRADOR',
+                'peso_neto' => 500,
+                'id_chofer' => $this->chofer->id_chofer,
+                'destino' => $this->cliente->id_cliente,
+                'destino_nombre' => 'Cliente Test',
+                'empleados' => [$this->empleado->id_empleado],
+                'maquinarias' => [$this->maquinaria->id_maquinaria],
+            ]);
 
         $nuevo = Livewire::actingAs($this->usuario)->test(PartesDiarios::class);
 
         $nuevo->assertSet('id_lote', $this->lote->id_lote)
             ->assertCount('cargas', 1)
             ->assertSee('Tenés un parte diario sin guardar');
+
+        // Mientras se esta cargando el parte, el aviso no debe aparecer.
+        $nuevo->set('tab_activo', 'nuevo')
+            ->assertDontSee('Tenés un parte diario sin guardar');
 
         $nuevo->call('descartarBorrador')
             ->assertSet('id_lote', null)

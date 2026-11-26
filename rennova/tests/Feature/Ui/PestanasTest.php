@@ -13,7 +13,6 @@ use App\Http\Livewire\PartesDiarios;
 use App\Http\Livewire\Recibos;
 use App\Http\Livewire\TipoMantenimiento;
 use App\Http\Livewire\TiposMaquinaria;
-use App\Http\Livewire\Ventas;
 use Illuminate\Support\Facades\File;
 use Livewire\Livewire;
 
@@ -31,7 +30,6 @@ dataset('pantallas_con_pestanas', [
     'maquinarias' => [Maquinarias::class, ['ver-maquinarias', 'crear-maquinarias', 'editar-maquinarias'], 'Nueva Maquinaria', 'Listado de Maquinarias'],
     'tipo-mantenimiento' => [TipoMantenimiento::class, ['ver-tipos-mantenimiento', 'crear-tipos-mantenimiento', 'editar-tipos-mantenimiento'], 'Nuevo Tipo', 'Listado de Tipos'],
     'tipos-maquinaria' => [TiposMaquinaria::class, ['ver-tipos-maquinaria', 'crear-tipos-maquinaria', 'editar-tipos-maquinaria'], 'Nuevo Tipo', 'Listado de Tipos'],
-    'ventas' => [Ventas::class, ['ver-ventas', 'crear-ventas', 'editar-ventas'], 'Nueva Venta', 'Historial de Ventas'],
 ]);
 
 test('cada pantalla de alta muestra sus dos pestanas', function (string $componente, array $permisos, string $tabAlta, string $tabListado) {

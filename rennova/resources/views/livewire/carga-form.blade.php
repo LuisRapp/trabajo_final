@@ -149,17 +149,17 @@
                         <tbody>
                             @foreach($cargas as $index => $carga)
                                 <tr wire:key="row-{{ $index }}">
-                                    <td><span class="badge badge-neutral">{{ $carga['ticket'] }}</span></td>
+                                    <td><span class="badge badge-neutral">{{ $carga['ticket'] ?? '—' }}</span></td>
                                     <td>
                                         @php
-                                            $cat = $this->categoriasMadera->firstWhere('id_categoria_madera', $carga['id_categoria_madera']);
+                                            $cat = $this->categoriasMadera->firstWhere('id_categoria_madera', $carga['id_categoria_madera'] ?? null);
                                         @endphp
                                         {{ $cat->nombre ?? '-' }}
                                     </td>
-                                    <td class="font-semibold">{{ number_format($carga['peso_neto'], 2) }}</td>
+                                    <td class="font-semibold">{{ number_format((float) ($carga['peso_neto'] ?? 0), 2) }}</td>
                                     <td>
                                         @php
-                                            $chofer = $this->choferes->firstWhere('id_chofer', $carga['id_chofer']);
+                                            $chofer = $this->choferes->firstWhere('id_chofer', $carga['id_chofer'] ?? null);
                                         @endphp
                                         {{ $chofer ? $chofer->apellido . ', ' . $chofer->nombre : '-' }}
                                     </td>

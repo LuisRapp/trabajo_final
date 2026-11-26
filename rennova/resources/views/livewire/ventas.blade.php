@@ -1,310 +1,322 @@
-<div class="w-full">
-    <div class="mb-6 flex items-center justify-between">
+<div class="w-full px-4 py-6 sm:px-6 lg:px-8">
+    <div class="mb-6">
         <h1 class="flex items-center gap-2 text-2xl font-bold text-tinta">
             <flux:icon.document-text class="size-6" />
             Ventas
         </h1>
+        <p class="mt-1 text-sm text-tinta-suave">
+            Facturá las cargas pendientes y consultá el historial con su comprobante.
+        </p>
     </div>
 
     @if (session()->has('message'))
-        <x-ui.alert variant="success" class="mb-5">
-            {{ session('message') }}
-        </x-ui.alert>
+        <x-ui.alert variant="success" class="mb-4">{{ session('message') }}</x-ui.alert>
     @endif
 
     @if (session()->has('error'))
-        <x-ui.alert variant="danger" class="mb-5">
-            {{ session('error') }}
-        </x-ui.alert>
+        <x-ui.alert variant="danger" class="mb-4">{{ session('error') }}</x-ui.alert>
     @endif
 
-    <!-- Tabs -->
-    <x-tab-nav :tabs="[
-        ['value' => 'nuevo', 'label' => 'Nueva Venta', 'icon' => 'plus', 'can' => auth()->user()?->canAny(['crear-ventas', 'editar-ventas']) ?? false],
-        ['value' => 'historial', 'label' => 'Historial de Ventas', 'icon' => 'list-bullet'],
-    ]" activeTab="{{ $tab_activo }}" tabProperty="tab_activo" />
-
-    @if($tab_activo === 'nuevo')
-    @can('crear-ventas')
-    <div>
-        <x-ui.card class="overflow-hidden">
-            <div class="bg-corteza-suave border-b border-arena px-6 py-4">
-                <h5 class="text-lg font-semibold text-tinta mb-0">Buscar cargas pendientes</h5>
+    <!-- Barra de herramientas -->
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex flex-1 flex-wrap items-center gap-2">
+            <div class="flex min-w-[240px] flex-1 items-center gap-2 rounded-sm border border-arena bg-white px-3 py-2 sm:max-w-sm">
+                <flux:icon.magnifying-glass class="size-4 shrink-0 text-tinta-suave" />
+                <input
+                    autocomplete="off"
+                    type="text"
+                    wire:model.live.debounce.400ms="busqueda"
+                    placeholder="Buscar por cliente, número o monto..."
+                    class="flex-1 border-0 bg-white text-sm text-tinta placeholder-tinta-suave focus:ring-0 focus:outline-none"
+                >
+                @if ($busqueda !== '')
+                    <button type="button" class="text-tinta-suave hover:text-tinta" wire:click="$set('busqueda', '')" title="Limpiar búsqueda">
+                        <flux:icon.x-mark class="size-4" />
+                    </button>
+                @endif
             </div>
-            <div class="p-6">
-                <form autocomplete="off" wire:submit.prevent="buscarCargasPendientes" class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
-                    <div>
-                        <label class="block text-sm font-semibold text-tinta mb-2">Cliente</label>
-                        <select wire:model="id_cliente" class="form-input @error('id_cliente') border-tierra bg-tierra-suave @enderror">
-                            <option value="">Seleccione cliente</option>
-                            @foreach($clientes as $cliente)
-                                <option value="{{ $cliente->id_cliente }}" wire:key="option-{{ $cliente->id_cliente }}">{{ $cliente->razon_social }}</option>
-                            @endforeach
-                        </select>
-                        @error('id_cliente') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-tinta mb-2">Desde</label>
-                        <input autocomplete="off" type="date" wire:model="fecha_desde" class="form-input @error('fecha_desde') border-tierra bg-tierra-suave @enderror">
-                        @error('fecha_desde') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-tinta mb-2">Hasta</label>
-                        <input autocomplete="off" type="date" wire:model="fecha_hasta" class="form-input @error('fecha_hasta') border-tierra bg-tierra-suave @enderror">
-                        @error('fecha_hasta') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
-                    </div>
-                    <div class="md:col-span-2 flex gap-2">
-                        <x-ui.button variant="primary" icon="magnifying-glass" type="submit" class="flex-1">
-                            Buscar
-                        </x-ui.button>
-                    </div>
-                </form>
-            </div>
-        </x-ui.card>
 
-        @if (!empty($detalle_cargas))
-            <x-ui.card class="mt-5 overflow-hidden">
-                <div class="bg-corteza-suave border-b border-arena px-6 py-4">
-                    <h5 class="text-lg font-semibold text-tinta mb-0">Resultados ({{ count($detalle_cargas) }})</h5>
+            <select wire:model.live="filtro_estado" class="form-input w-auto">
+                <option value="">Todas</option>
+                <option value="facturadas">Facturadas</option>
+                <option value="bajas">Dadas de baja</option>
+            </select>
+        </div>
+
+        @can('crear-ventas')
+            <x-ui.button variant="primary" icon="plus" wire:click="abrirNuevaVenta">
+                Nueva venta
+            </x-ui.button>
+        @endcan
+    </div>
+
+    <!-- Listado -->
+    <x-ui.card class="overflow-hidden">
+        @if ($ventas->count() > 0)
+            <x-ui.table-container>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 12%;">N.º</th>
+                            <th style="width: 14%;">Fecha</th>
+                            <th style="width: 28%;">Cliente</th>
+                            <th style="width: 10%;" class="text-center">Cargas</th>
+                            <th style="width: 12%;" class="text-right">Toneladas</th>
+                            <th style="width: 14%;" class="text-right">Total</th>
+                            <th style="width: 12%;">Estado</th>
+                            <th style="width: 8%;"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($ventas as $venta)
+                            @php
+                                $toneladas = $venta->cargas->sum(fn ($carga) => (float) $carga->pivot->peso_toneladas);
+                            @endphp
+                            <tr wire:key="venta-{{ $venta->id_recibo }}">
+                                <td class="font-medium text-tinta">
+                                    #{{ str_pad((string) $venta->id_recibo, 6, '0', STR_PAD_LEFT) }}
+                                </td>
+                                <td class="text-tinta-suave">{{ \Carbon\Carbon::parse($venta->fecha_emision)->format('d/m/Y') }}</td>
+                                <td class="text-tinta">{{ $venta->cliente?->razon_social ?? '—' }}</td>
+                                <td class="text-center"><x-ui.badge variant="neutral">{{ $venta->cargas->count() }}</x-ui.badge></td>
+                                <td class="text-right text-tinta-suave">{{ number_format($toneladas, 3, ',', '.') }}</td>
+                                <td class="text-right font-medium text-tinta">$ {{ number_format((float) $venta->monto, 2, ',', '.') }}</td>
+                                <td>
+                                    <x-ui.badge variant="{{ $venta->trashed() ? 'danger' : 'success' }}">
+                                        {{ $venta->trashed() ? 'Dada de baja' : 'Facturada' }}
+                                    </x-ui.badge>
+                                </td>
+                                <td class="text-right">
+                                    <x-ui.button variant="secondary" size="sm" icon="eye"
+                                        wire:click="verDetalle({{ $venta->id_recibo }})" title="Abrir venta" />
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </x-ui.table-container>
+
+            <div class="border-t border-arena px-4 py-3">
+                {{ $ventas->links() }}
+            </div>
+        @else
+            <div class="px-4 py-12 text-center">
+                <flux:icon.document-text class="mx-auto size-8 text-arena-oscura" />
+                <p class="mt-3 font-medium text-tinta-suave">No hay ventas para mostrar.</p>
+                <p class="mt-1 text-xs text-arena-oscura">
+                    {{ $busqueda !== '' || $filtro_estado !== '' ? 'Probá con otra búsqueda o quitá el filtro.' : 'Cuando factures cargas pendientes van a aparecer acá.' }}
+                </p>
+            </div>
+        @endif
+    </x-ui.card>
+
+    {{-- Panel: nueva venta --}}
+    @if ($panel_nueva)
+        <div class="fixed inset-0 z-50 flex justify-end bg-tinta/40 backdrop-blur-[1px]">
+            <div class="flex h-full w-full max-w-xl flex-col bg-white shadow-2xl">
+                <div class="flex items-start justify-between gap-3 border-b border-arena px-5 py-4">
+                    <div>
+                        <h2 class="flex items-center gap-2 text-lg font-semibold text-tinta">
+                            <flux:icon.document-text class="size-5" />
+                            Nueva venta
+                        </h2>
+                        <p class="mt-0.5 text-xs text-tinta-suave">
+                            {{ $paso_nueva === 1 ? 'Paso 1 de 2 · Elegí el cliente y el período' : 'Paso 2 de 2 · Revisá las cargas y facturá' }}
+                        </p>
+                    </div>
+                    <button type="button" class="text-tinta-suave transition-colors hover:text-tinta" wire:click="cerrarNuevaVenta" title="Cerrar">
+                        <flux:icon.x-mark class="size-5" />
+                    </button>
                 </div>
-                <div class="p-0">
+
+                <div class="flex-1 overflow-y-auto px-5 py-5">
+                    @if ($paso_nueva === 1)
+                        <div class="space-y-4">
+                            <div>
+                                <label class="mb-1.5 block text-xs font-semibold text-tinta">Cliente <span class="text-tierra">*</span></label>
+                                <x-ui.combobox modelo="id_cliente" :opciones="$opcionesClientes" :seleccion="$id_cliente" placeholder="Elegí el cliente..." />
+                                @error('id_cliente') <p class="mt-1 text-xs text-tierra">{{ $message }}</p> @enderror
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="mb-1.5 block text-xs font-semibold text-tinta">Desde <span class="text-tierra">*</span></label>
+                                    <input autocomplete="off" type="date" wire:model="fecha_desde" class="form-input @error('fecha_desde') border-tierra bg-tierra-suave @enderror">
+                                    @error('fecha_desde') <p class="mt-1 text-xs text-tierra">{{ $message }}</p> @enderror
+                                </div>
+                                <div>
+                                    <label class="mb-1.5 block text-xs font-semibold text-tinta">Hasta <span class="text-tierra">*</span></label>
+                                    <input autocomplete="off" type="date" wire:model="fecha_hasta" class="form-input @error('fecha_hasta') border-tierra bg-tierra-suave @enderror">
+                                    @error('fecha_hasta') <p class="mt-1 text-xs text-tierra">{{ $message }}</p> @enderror
+                                </div>
+                            </div>
+
+                            <p class="text-xs text-tinta-suave">
+                                Solo se muestran las cargas pendientes del cliente en ese período, con el precio de su lista.
+                            </p>
+                        </div>
+                    @else
+                        <div class="space-y-4">
+                            <div class="rounded-sm border border-arena bg-hueso px-4 py-3 text-sm">
+                                <div class="flex justify-between gap-3">
+                                    <span class="text-tinta-suave">Cliente</span>
+                                    <span class="font-medium text-tinta">{{ collect($opcionesClientes)->firstWhere('value', $id_cliente)['label'] ?? '—' }}</span>
+                                </div>
+                                <div class="mt-1 flex justify-between gap-3">
+                                    <span class="text-tinta-suave">Período</span>
+                                    <span class="text-tinta">{{ \Carbon\Carbon::parse($fecha_desde)->format('d/m/Y') }} — {{ \Carbon\Carbon::parse($fecha_hasta)->format('d/m/Y') }}</span>
+                                </div>
+                            </div>
+
+                            <x-ui.table-container>
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Ticket</th>
+                                            <th>Fecha</th>
+                                            <th>Categoría</th>
+                                            <th class="text-right">Kg</th>
+                                            <th class="text-right">Subtotal</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($detalle_cargas as $carga)
+                                            <tr wire:key="carga-{{ $loop->index }}">
+                                                <td class="font-medium text-tinta">{{ $carga['ticket'] }}</td>
+                                                <td class="text-tinta-suave">{{ \Carbon\Carbon::parse($carga['fecha_carga'])->format('d/m/Y') }}</td>
+                                                <td class="text-tinta-suave">{{ $carga['categoria'] }}</td>
+                                                <td class="text-right text-tinta-suave">{{ number_format((float) $carga['peso_kg'], 0, ',', '.') }}</td>
+                                                <td class="text-right text-tinta">$ {{ number_format((float) $carga['subtotal'], 2, ',', '.') }}</td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </x-ui.table-container>
+
+                            <div class="flex items-center justify-between rounded-sm border border-pino/30 bg-pino-suave px-4 py-3">
+                                <span class="text-sm font-medium text-tinta">{{ count($detalle_cargas) }} {{ count($detalle_cargas) === 1 ? 'carga' : 'cargas' }} a facturar</span>
+                                <span class="text-lg font-bold text-pino">$ {{ number_format((float) $total_venta, 2, ',', '.') }}</span>
+                            </div>
+
+                            <div>
+                                <label class="mb-1.5 block text-xs font-semibold text-tinta">Observaciones (opcional)</label>
+                                <textarea wire:model="observaciones" rows="3" class="form-input" placeholder="Ej: entrega en planta, retiro con transporte propio"></textarea>
+                                @error('observaciones') <p class="mt-1 text-xs text-tierra">{{ $message }}</p> @enderror
+                            </div>
+                        </div>
+                    @endif
+                </div>
+
+                <div class="flex items-center justify-between gap-2 border-t border-arena bg-hueso px-5 py-3">
+                    @if ($paso_nueva === 1)
+                        <x-ui.button variant="secondary" icon="x-mark" wire:click="cerrarNuevaVenta">Cancelar</x-ui.button>
+                        <x-ui.button variant="primary" icon="magnifying-glass" wire:click="buscarCargasPendientes">Buscar cargas</x-ui.button>
+                    @else
+                        <x-ui.button variant="secondary" icon="arrow-left" wire:click="volverPaso1">Volver</x-ui.button>
+                        <x-ui.button variant="primary" icon="check" wire:click="guardarVenta">Registrar venta</x-ui.button>
+                    @endif
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- Panel: detalle de la venta --}}
+    @if ($mostrar_modal && $venta_seleccionada)
+        <div class="fixed inset-0 z-50 flex justify-end bg-tinta/40 backdrop-blur-[1px]">
+            <div class="flex h-full w-full max-w-xl flex-col bg-white shadow-2xl">
+                <div class="flex items-start justify-between gap-3 border-b border-arena px-5 py-4">
+                    <div>
+                        <h2 class="text-lg font-semibold text-tinta">
+                            Venta #{{ str_pad((string) $venta_seleccionada->id_recibo, 6, '0', STR_PAD_LEFT) }}
+                        </h2>
+                        <div class="mt-1 flex flex-wrap items-center gap-2 text-xs text-tinta-suave">
+                            <x-ui.badge variant="{{ $venta_seleccionada->trashed() ? 'danger' : 'success' }}">
+                                {{ $venta_seleccionada->trashed() ? 'Dada de baja' : 'Facturada' }}
+                            </x-ui.badge>
+                            <span>{{ \Carbon\Carbon::parse($venta_seleccionada->fecha_emision)->format('d/m/Y') }}</span>
+                            <span>·</span>
+                            <span>{{ $venta_seleccionada->cliente?->razon_social ?? 'Sin cliente' }}</span>
+                        </div>
+                    </div>
+                    <button type="button" class="text-tinta-suave transition-colors hover:text-tinta" wire:click="cerrarModal" title="Cerrar">
+                        <flux:icon.x-mark class="size-5" />
+                    </button>
+                </div>
+
+                <div class="flex-1 overflow-y-auto px-5 py-5">
                     <x-ui.table-container>
                         <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th>Fecha</th>
                                     <th>Ticket</th>
+                                    <th>Fecha</th>
                                     <th>Categoría</th>
-                                    <th class="text-right">Peso Neto (kg)</th>
-                                    <th class="text-right">Precio (por tn)</th>
+                                    <th class="text-right">Ton</th>
+                                    <th class="text-right">Precio/tn</th>
                                     <th class="text-right">Subtotal</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($detalle_cargas as $c)
-                                    <tr wire:key="row-{{ $loop->index }}">
-                                        <td class="text-tinta-suave">{{ \Carbon\Carbon::parse($c['fecha_carga'])->format('d/m/Y') }}</td>
-                                        <td class="text-tinta-suave">{{ $c['ticket'] }}</td>
-                                        <td class="text-tinta-suave">{{ $c['categoria'] }}</td>
-                                        <td class="text-right text-tinta-suave">{{ number_format($c['peso_kg'], 0, ',', '.') }}</td>
-                                        <td class="text-right text-tinta-suave">{{ number_format($c['precio_unitario'], 2, ',', '.') }}</td>
-                                        <td class="text-right text-tinta-suave">{{ number_format($c['subtotal'], 2, ',', '.') }}</td>
+                                @foreach ($detalle_venta as $det)
+                                    <tr wire:key="det-{{ $loop->index }}">
+                                        <td class="font-medium text-tinta">{{ $det['ticket'] }}</td>
+                                        <td class="text-tinta-suave">{{ \Carbon\Carbon::parse($det['fecha_carga'])->format('d/m/Y') }}</td>
+                                        <td class="text-tinta-suave">{{ $det['categoria'] }}</td>
+                                        <td class="text-right text-tinta-suave">{{ number_format((float) $det['peso_toneladas'], 3, ',', '.') }}</td>
+                                        <td class="text-right text-tinta-suave">$ {{ number_format((float) $det['precio_unitario'], 2, ',', '.') }}</td>
+                                        <td class="text-right text-tinta">$ {{ number_format((float) $det['subtotal'], 2, ',', '.') }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>
-                            <tfoot>
-                                <tr>
-                                    <th colspan="5" class="text-right text-sm font-semibold text-tinta">Total</th>
-                                    <th class="text-right text-sm font-semibold text-tinta">{{ number_format($total_venta, 2, ',', '.') }}</th>
-                                </tr>
-                            </tfoot>
                         </table>
                     </x-ui.table-container>
-                </div>
-                <div class="border-t border-arena px-6 py-4 bg-corteza-suave">
-                    <form autocomplete="off" wire:submit.prevent="guardarVenta">
-                        <div class="mb-4">
-                            <label class="block text-sm font-semibold text-tinta mb-2">Observaciones (opcional)</label>
-                            <textarea wire:model="observaciones" class="form-input" rows="3"></textarea>
-                        </div>
-                        <div class="flex gap-2 justify-between">
-                            <x-ui.button variant="secondary" icon="x-mark" type="button" wire:click="limpiar">
-                                Limpiar
-                            </x-ui.button>
-                            <x-ui.button variant="primary" icon="check" type="submit">
-                                Guardar Venta
-                            </x-ui.button>
-                        </div>
-                    </form>
-                </div>
-            </x-ui.card>
-        @endif
-    </div>
-    @endcan
-    @elseif($tab_activo === 'historial')
-    <div>
-        <x-ui.card class="overflow-hidden">
-            <div class="bg-corteza-suave border-b border-arena px-6 py-4 flex justify-between items-center">
-                <h5 class="text-lg font-semibold text-tinta mb-0">Historial de Ventas</h5>
-                <div class="flex items-center gap-2 px-4 py-2 border border-arena rounded-sm bg-blanco max-w-[300px]">
-                    <flux:icon.magnifying-glass class="size-4 text-tinta-suave" />
-                    <input autocomplete="off" type="text" wire:model.live="busqueda" placeholder="Buscar..." class="flex-1 border-0 focus:ring-0 focus:outline-none text-tinta placeholder-tinta-suave bg-blanco">
-                    <button class="text-tinta-suave hover:text-tinta" wire:click="$set('busqueda', '')">
-                        <flux:icon.x-mark class="size-4" />
-                    </button>
-                </div>
-            </div>
-            <div class="p-0">
-                <x-ui.table-container>
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>ID Recibo</th>
-                                <th>Fecha</th>
-                                <th>Cliente</th>
-                                <th class="text-right">Monto</th>
-                                <th>Estado</th>
-                                <th class="text-center">Cargas</th>
-                                <th class="text-center">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($ventas as $venta)
-                                <tr wire:key="row-{{ $venta->id_recibo }}">
-                                    <td class="text-tinta-suave">{{ $venta->id_recibo }}</td>
-                                    <td class="text-tinta-suave">{{ \Carbon\Carbon::parse($venta->fecha_emision)->format('d/m/Y') }}</td>
-                                    <td class="text-tinta-suave">{{ $venta->cliente->razon_social ?? 'N/A' }}</td>
-                                    <td class="text-right text-tinta-suave">${{ number_format($venta->monto, 2, ',', '.') }}</td>
-                                    <td>
-                                        @if($venta->activo)
-                                            <x-ui.badge variant="success">Activa</x-ui.badge>
-                                        @else
-                                            <x-ui.badge variant="danger">Baja</x-ui.badge>
-                                        @endif
-                                    </td>
-                                    <td class="text-center">
-                                        <x-ui.badge variant="info">{{ $venta->cargas->count() }}</x-ui.badge>
-                                    </td>
-                                    <td class="text-center">
-                                        <x-ui.button variant="ghost" size="sm" icon="eye" wire:click="verDetalle({{ $venta->id_recibo }})" title="Ver" />
-                                    </td>
-                                </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="7" class="text-center py-12 text-tinta-suave">
-                                            No hay ventas registradas.
-                                        </td>
-                                    </tr>
-                                @endforelse
-                        </tbody>
-                    </table>
-                </x-ui.table-container>
 
-                <div class="mt-4 p-6">
-                    {{ $ventas->links() }}
-                </div>
-            </div>
-        </x-ui.card>
-    </div>
-    @endif
-
-    {{-- Modal de Detalles --}}
-    @if($mostrar_modal && $venta_seleccionada)
-        <div class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4 bg-black/50">
-            <div class="w-full max-w-4xl bg-blanco rounded-sm shadow-xl border border-arena">
-                <div class="text-blanco px-6 py-4 flex items-center justify-between bg-pino">
-                    <h5 class="flex items-center gap-2 text-lg font-semibold mb-0">
-                        <flux:icon.document-text class="size-5" />
-                        Detalle de Venta #{{ $venta_seleccionada->id_recibo }}
-                    </h5>
-                    <button type="button" class="text-blanco hover:text-corteza-suave transition-colors" wire:click="cerrarModal">
-                        <flux:icon.x-mark class="size-5" />
-                    </button>
-                </div>
-                <div class="p-6">
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                        <div>
-                            <strong class="block text-sm font-semibold text-tinta mb-1">Cliente:</strong>
-                            <p class="text-tinta-suave">{{ $venta_seleccionada->cliente->razon_social ?? 'N/A' }}</p>
-                        </div>
-                        <div>
-                            <strong class="block text-sm font-semibold text-tinta mb-1">Fecha:</strong>
-                            <p class="text-tinta-suave">{{ \Carbon\Carbon::parse($venta_seleccionada->fecha_emision)->format('d/m/Y') }}</p>
-                        </div>
-                        <div>
-                            <strong class="block text-sm font-semibold text-tinta mb-1">Estado:</strong>
-                            @if($venta_seleccionada->activo)
-                                <x-ui.badge variant="success">Activa</x-ui.badge>
-                            @else
-                                <x-ui.badge variant="danger">Dada de Baja</x-ui.badge>
-                            @endif
-                        </div>
-                        <div>
-                            @if($modo_edicion)
-                                <label class="block text-sm font-semibold text-tinta mb-1"><strong>Monto:</strong></label>
-                                <input autocomplete="off" type="number" wire:model="monto_edicion" step="0.1" min="0" class="form-input">
-                            @else
-                                <strong class="block text-sm font-semibold text-tinta mb-1">Monto Total:</strong>
-                                <p class="text-tinta-suave">${{ number_format($venta_seleccionada->monto, 2, ',', '.') }}</p>
-                            @endif
-                        </div>
-                    </div>
-
-                    <div class="mb-6">
-                        <strong class="block text-sm font-semibold text-tinta mb-2">Observaciones:</strong>
-                        @if($modo_edicion)
-                            <textarea wire:model="obs_edicion" class="form-input" rows="2"></textarea>
+                    <div class="mt-4 flex items-center justify-between rounded-sm border border-arena bg-hueso px-4 py-3">
+                        <span class="text-sm text-tinta-suave">Total</span>
+                        @if ($modo_edicion)
+                            <input autocomplete="off" type="number" wire:model="monto_edicion" step="0.01" min="0" class="form-input w-32 text-right">
                         @else
-                            <p class="text-tinta-suave text-sm">{{ $venta_seleccionada->observaciones ?: 'Sin observaciones' }}</p>
+                            <span class="text-lg font-bold text-pino">$ {{ number_format((float) $venta_seleccionada->monto, 2, ',', '.') }}</span>
                         @endif
                     </div>
 
-                    <div>
-                        <h6 class="border-b border-arena pb-2 mb-3 font-semibold text-tinta">Cargas Asociadas</h6>
-                        <x-ui.table-container>
-                            <table class="data-table">
-                                <thead>
-                                    <tr>
-                                        <th>Ticket</th>
-                                        <th>Fecha</th>
-                                        <th>Categoría</th>
-                                        <th class="text-right">Peso (kg)</th>
-                                        <th class="text-right">Ton</th>
-                                        <th class="text-right">Precio/tn</th>
-                                        <th class="text-right">Subtotal</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach($detalle_venta as $det)
-                                        <tr wire:key="row-{{ $loop->index }}">
-                                            <td class="text-tinta-suave">{{ $det['ticket'] }}</td>
-                                            <td class="text-tinta-suave">{{ \Carbon\Carbon::parse($det['fecha_carga'])->format('d/m/Y') }}</td>
-                                            <td class="text-tinta-suave">{{ $det['categoria'] }}</td>
-                                            <td class="text-right text-tinta-suave">{{ number_format($det['peso_kg'], 0, ',', '.') }}</td>
-                                            <td class="text-right text-tinta-suave">{{ number_format($det['peso_toneladas'], 3, ',', '.') }}</td>
-                                            <td class="text-right text-tinta-suave">${{ number_format($det['precio_unitario'], 2, ',', '.') }}</td>
-                                            <td class="text-right text-tinta-suave">${{ number_format($det['subtotal'], 2, ',', '.') }}</td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </x-ui.table-container>
+                    <div class="mt-4">
+                        <label class="mb-1.5 block text-xs font-semibold text-tinta">Observaciones</label>
+                        @if ($modo_edicion)
+                            <textarea wire:model="obs_edicion" rows="2" class="form-input"></textarea>
+                            @error('obs_edicion') <p class="mt-1 text-xs text-tierra">{{ $message }}</p> @enderror
+                            @error('monto_edicion') <p class="mt-1 text-xs text-tierra">{{ $message }}</p> @enderror
+                        @else
+                            <p class="text-sm text-tinta-suave">{{ $venta_seleccionada->observaciones ?: 'Sin observaciones.' }}</p>
+                        @endif
                     </div>
                 </div>
-                <div class="border-t border-arena px-6 py-4 bg-corteza-suave flex gap-2 justify-end">
-                    @if($modo_edicion)
-                        <x-ui.button variant="secondary" icon="x-mark" wire:click="cancelarEdicion">
-                            Cancelar
-                        </x-ui.button>
+
+                <div class="flex flex-wrap items-center justify-end gap-2 border-t border-arena bg-hueso px-5 py-3">
+                    @if ($modo_edicion)
+                        <x-ui.button variant="secondary" icon="x-mark" wire:click="cancelarEdicion">Cancelar</x-ui.button>
                         @can('editar-ventas')
-                        <x-ui.button variant="primary" icon="check" wire:click="guardarEdicion">
-                            Guardar Cambios
-                        </x-ui.button>
+                            <x-ui.button variant="primary" icon="check" wire:click="guardarEdicion">Guardar cambios</x-ui.button>
                         @endcan
                     @else
-                        <x-ui.button variant="secondary" icon="x-mark" wire:click="cerrarModal">
-                            Cerrar
-                        </x-ui.button>
+                        <x-ui.button variant="secondary" icon="x-mark" wire:click="cerrarModal">Cerrar</x-ui.button>
                         @can('ver-ventas')
-                        <x-ui.button variant="secondary" icon="document-arrow-down"
-                            href="{{ route('ventas.comprobante', ['venta' => $venta_seleccionada->id_recibo]) }}"
-                            target="_blank" rel="noopener">
-                            Comprobante
-                        </x-ui.button>
-                        @endcan
-                        @if($venta_seleccionada->activo)
-                            @can('editar-ventas')
-                            <x-ui.button variant="secondary" icon="pencil-square" wire:click="activarEdicion">
-                                Editar
+                            <x-ui.button variant="secondary" icon="document-arrow-down"
+                                href="{{ route('ventas.comprobante', ['venta' => $venta_seleccionada->id_recibo]) }}"
+                                target="_blank" rel="noopener">
+                                Comprobante
                             </x-ui.button>
+                        @endcan
+                        @if (! $venta_seleccionada->trashed())
+                            @can('editar-ventas')
+                                <x-ui.button variant="secondary" icon="pencil-square" wire:click="activarEdicion">Editar</x-ui.button>
                             @endcan
                             @can('eliminar-ventas')
-                            <x-ui.confirmador accion="darDeBaja" :parametros="[$venta_seleccionada->id_recibo]"
-                                mensaje="¿Dar de baja la venta #{{ $venta_seleccionada->id_recibo }}?"
-                                detalle="La carga vuelve a quedar pendiente de venta."
-                                etiqueta="Dar de baja"
-                                texto="Dar de Baja"
-                            />
+                                <x-ui.confirmador accion="darDeBaja" :parametros="[$venta_seleccionada->id_recibo]"
+                                    mensaje="¿Dar de baja la venta #{{ $venta_seleccionada->id_recibo }}?"
+                                    detalle="Las cargas vuelven a quedar pendientes de venta."
+                                    etiqueta="Dar de baja"
+                                    texto="Dar de baja" />
                             @endcan
                         @endif
                     @endif

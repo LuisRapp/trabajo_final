@@ -218,11 +218,19 @@ class VentaService
      * @param  int  $perPage  Items per page
      * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator Paginated sales
      */
-    public static function listarVentas(?string $busqueda = null, int $perPage = 15): LengthAwarePaginator
+    public static function listarVentas(?string $busqueda = null, int $perPage = 15, ?string $estado = null): LengthAwarePaginator
     {
-        $query = Venta::with(['cliente', 'cargas'])
+        // El estado de una venta es su soft delete: dada de baja = trashed.
+        $query = Venta::withTrashed()
+            ->with(['cliente', 'cargas'])
             ->orderBy('fecha_emision', 'desc')
             ->orderBy('id_recibo', 'desc');
+
+        if ($estado === 'facturadas') {
+            $query->whereNull('deleted_at');
+        } elseif ($estado === 'bajas') {
+            $query->onlyTrashed();
+        }
 
         if ($busqueda) {
             $busq = $busqueda;

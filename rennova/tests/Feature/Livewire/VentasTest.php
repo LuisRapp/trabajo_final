@@ -43,10 +43,38 @@ class VentasTest extends TestCase
         // error, asi que el boton "Buscar" no hacia nada y no explicaba por que.
         Livewire::actingAs($this->usuario)
             ->test(Ventas::class)
-            ->set('tab_activo', 'nuevo')
+            ->call('abrirNuevaVenta')
             ->call('buscarCargasPendientes')
             ->assertHasErrors(['id_cliente'])
             ->assertSee('El cliente seleccionado no es válido.');
+    }
+
+    public function test_abrir_nueva_venta_muestra_el_panel_en_el_paso_1(): void
+    {
+        Livewire::actingAs($this->usuario)
+            ->test(Ventas::class)
+            ->call('abrirNuevaVenta')
+            ->assertSet('panel_nueva', true)
+            ->assertSet('paso_nueva', 1)
+            ->assertSee('Paso 1 de 2')
+            ->call('cerrarNuevaVenta')
+            ->assertSet('panel_nueva', false);
+    }
+
+    public function test_el_filtro_de_estado_separa_facturadas_de_bajas(): void
+    {
+        $facturada = Cliente::factory()->create(['razon_social' => 'Cliente Facturado SA']);
+        $baja = Cliente::factory()->create(['razon_social' => 'Cliente Baja SA']);
+
+        Venta::factory()->create(['id_cliente' => $facturada->id_cliente]);
+        $dadaDeBaja = Venta::factory()->create(['id_cliente' => $baja->id_cliente]);
+        $dadaDeBaja->delete();
+
+        Livewire::actingAs($this->usuario)
+            ->test(Ventas::class)
+            ->set('filtro_estado', 'facturadas')
+            ->assertSee('Cliente Facturado SA')
+            ->assertDontSee('Cliente Baja SA');
     }
 
     public function test_mount_setea_fechas_ultimos_7_dias(): void

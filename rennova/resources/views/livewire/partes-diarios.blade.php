@@ -20,7 +20,7 @@
 
     <x-flash-messages />
 
-    @if($this->hayBorrador)
+    @if($this->hayBorrador && $tab_activo === 'listado')
         <x-ui.alert variant="info" class="mb-4" :dismissible="false">
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <span>Tenés un parte diario sin guardar.</span>
