@@ -107,6 +107,25 @@ class Cargas extends Component
         ]);
     }
 
+    public function updatedPesoBruto(): void
+    {
+        $this->calcularPesoNetoDesdePesajes();
+    }
+
+    public function updatedTara(): void
+    {
+        $this->calcularPesoNetoDesdePesajes();
+    }
+
+    private function calcularPesoNetoDesdePesajes(): void
+    {
+        if (! is_numeric($this->peso_bruto) || ! is_numeric($this->tara)) {
+            return;
+        }
+
+        $this->peso_neto = max(0, round((float) $this->peso_bruto - (float) $this->tara, 2));
+    }
+
     public function updatedIdCliente(): void
     {
         // El chofer depende del cliente: al cambiarlo, la seleccion previa deja de ser valida.

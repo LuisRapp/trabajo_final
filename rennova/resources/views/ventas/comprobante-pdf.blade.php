@@ -16,8 +16,8 @@
         .bloque { border: 1px solid #d6d3cd; padding: 8px; margin-bottom: 14px; }
         .bloque-titulo { font-size: 8px; letter-spacing: 1px; text-transform: uppercase; color: #57534e; margin-bottom: 4px; }
         table.detalle { width: 100%; border-collapse: collapse; }
-        table.detalle th { background: #f3f0eb; border-bottom: 1px solid #d6d3cd; padding: 5px 4px; font-size: 8px; text-transform: uppercase; letter-spacing: 0.5px; color: #57534e; text-align: left; }
-        table.detalle td { padding: 4px; border-bottom: 1px solid #e7e5e4; }
+        table.detalle th { background: #f3f0eb; border-bottom: 1px solid #d6d3cd; padding: 4px 3px; font-size: 7px; text-transform: uppercase; letter-spacing: 0.3px; color: #57534e; text-align: left; }
+        table.detalle td { padding: 3px; border-bottom: 1px solid #e7e5e4; font-size: 8.5px; }
         table.detalle tr:nth-child(even) td { background: #faf9f7; }
         .num { text-align: right; }
         .centro { text-align: center; }
@@ -62,15 +62,17 @@
     <table class="detalle">
         <thead>
             <tr>
-                <th style="width: 4%;">#</th>
-                <th style="width: 14%;">Ticket</th>
-                <th style="width: 11%;">Fecha</th>
-                <th style="width: 20%;">Lote</th>
-                <th style="width: 18%;">Categoría</th>
-                <th style="width: 9%;" class="num">Kg</th>
-                <th style="width: 8%;" class="num">Ton</th>
-                <th style="width: 11%;" class="num">Precio/Tn</th>
-                <th style="width: 13%;" class="num">Subtotal</th>
+                <th style="width: 3%;">#</th>
+                <th style="width: 9%;">Ticket</th>
+                <th style="width: 8%;">Fecha</th>
+                <th style="width: 13%;">Chofer</th>
+                <th style="width: 9%;">Lote</th>
+                <th style="width: 12%;">Categoría</th>
+                <th style="width: 8%;" class="num">Bruto (kg)</th>
+                <th style="width: 8%;" class="num">Tara (kg)</th>
+                <th style="width: 8%;" class="num">Neto (kg)</th>
+                <th style="width: 9%;" class="num">Precio/Tn</th>
+                <th style="width: 12%;" class="num">Subtotal</th>
             </tr>
         </thead>
         <tbody>
@@ -79,10 +81,12 @@
                     <td class="centro">{{ $loop->iteration }}</td>
                     <td>{{ $carga->ticket }}</td>
                     <td>{{ $carga->fecha_carga ? \Carbon\Carbon::parse($carga->fecha_carga)->format('d/m/Y') : '—' }}</td>
+                    <td>{{ $carga->chofer ? $carga->chofer->apellido.', '.$carga->chofer->nombre : '—' }}</td>
                     <td>{{ $carga->lote?->propietario ?? '—' }}</td>
                     <td>{{ $carga->categoriaMadera?->nombre ?? '—' }}</td>
+                    <td class="num">{{ number_format((float) $carga->peso_bruto, 0, ',', '.') }}</td>
+                    <td class="num">{{ number_format((float) $carga->tara, 0, ',', '.') }}</td>
                     <td class="num">{{ number_format((float) $carga->peso_neto, 0, ',', '.') }}</td>
-                    <td class="num">{{ number_format((float) $carga->pivot->peso_toneladas, 3, ',', '.') }}</td>
                     <td class="num">$ {{ number_format((float) $carga->pivot->precio_unitario, 2, ',', '.') }}</td>
                     <td class="num">$ {{ number_format((float) $carga->pivot->subtotal, 2, ',', '.') }}</td>
                 </tr>

@@ -36,3 +36,11 @@ test('elegir el cliente deja solo sus choferes', function () {
         ->assertSee('ChoferA')
         ->assertDontSee('ChoferB');
 });
+
+test('el peso neto se calcula con bruto menos tara', function () {
+    Livewire::actingAs($this->usuario)
+        ->test(Cargas::class)
+        ->set('peso_bruto', 1000)
+        ->set('tara', 250)
+        ->assertSet('peso_neto', 750.0);
+});

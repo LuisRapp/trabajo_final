@@ -20,7 +20,7 @@
 
     @if($tab_activo === 'nuevo')
         @canany(['crear-cargas', 'editar-cargas'])
-        <x-ui.card class="overflow-hidden mb-5">
+        <x-ui.card class="mb-5">
             <div class="bg-corteza-suave border-b border-arena px-6 py-4">
                 <h5 class="text-lg font-semibold text-tinta flex items-center gap-2">
                     @if($carga_id)
@@ -77,20 +77,21 @@
                         </div>
                         <div>
                             <label for="peso_bruto" class="block text-sm font-semibold text-tinta mb-1.5">Peso Bruto (kg)</label>
-                            <input autocomplete="off" type="number" id="peso_bruto" wire:model="peso_bruto" step="0.1" min="0"
+                            <input autocomplete="off" type="number" id="peso_bruto" wire:model.live.debounce.400ms="peso_bruto" step="0.1" min="0"
                                 class="form-input @error('peso_bruto') border-tierra bg-tierra-suave @enderror">
                             @error('peso_bruto') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label for="tara" class="block text-sm font-semibold text-tinta mb-1.5">Tara (kg)</label>
-                            <input autocomplete="off" type="number" id="tara" wire:model="tara" step="0.1" min="0"
+                            <input autocomplete="off" type="number" id="tara" wire:model.live.debounce.400ms="tara" step="0.1" min="0"
                                 class="form-input @error('tara') border-tierra bg-tierra-suave @enderror">
                             @error('tara') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
-                            <label for="peso_neto" class="block text-sm font-semibold text-tinta mb-1.5">Peso Neto (kg)</label>
-                            <input autocomplete="off" type="number" id="peso_neto" wire:model="peso_neto" step="0.1" min="0"
-                                class="form-input @error('peso_neto') border-tierra bg-tierra-suave @enderror">
+                            <label for="peso_neto" class="block text-sm font-semibold text-pino mb-1.5">Peso Neto (kg) <span class="text-xs font-normal">calculado</span></label>
+                            <input autocomplete="off" type="text" id="peso_neto" readonly
+                                value="{{ is_numeric($peso_neto) ? number_format((float) $peso_neto, 2, '.', '') : '0.00' }}"
+                                class="form-input cursor-not-allowed bg-corteza-suave text-tinta-suave">
                             @error('peso_neto') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
