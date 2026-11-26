@@ -37,48 +37,27 @@
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                         <div>
                             <label for="id_lote" class="block text-sm font-semibold text-tinta mb-1.5">Lote <span class="text-tierra">*</span></label>
-                            <select id="id_lote" wire:model="id_lote"
-                                class="form-input @error('id_lote') border-tierra bg-tierra-suave @enderror">
-                                <option value="">{{ $lotes->isEmpty() ? 'No hay lotes en proceso' : 'Seleccione...' }}</option>
-                                @foreach($lotes as $lote)
-                                    <option value="{{ $lote->id_lote }}" wire:key="option-{{ $lote->id_lote }}">{{ $lote->propietario }} - {{ $lote->ubicacion }}</option>
-                                @endforeach
-                            </select>
+                            <x-ui.combobox modelo="id_lote" :opciones="$opcionesLotes" :seleccion="$id_lote"
+                                placeholder="{{ $lotes->isEmpty() ? 'No hay lotes en proceso' : 'Elegí el lote...' }}" />
                             @error('id_lote') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label for="id_categoria_madera" class="block text-sm font-semibold text-tinta mb-1.5">Categoría Madera</label>
-                            <select id="id_categoria_madera" wire:model="id_categoria_madera"
-                                class="form-input">
-                                <option value="">Seleccione...</option>
-                                @foreach($categorias as $cat)
-                                    <option value="{{ $cat->id_categoria_madera }}" wire:key="option-{{ $cat->id_categoria_madera }}">{{ $cat->nombre }}</option>
-                                @endforeach
-                            </select>
+                            <x-ui.combobox modelo="id_categoria_madera" :opciones="$opcionesCategorias" :seleccion="$id_categoria_madera"
+                                placeholder="Elegí la categoría..." />
                             @error('id_categoria_madera') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label for="id_cliente" class="block text-sm font-semibold text-tinta mb-1.5">Cliente</label>
-                            <select id="id_cliente" wire:model.live="id_cliente"
-                                class="form-input @error('id_cliente') border-tierra bg-tierra-suave @enderror">
-                                <option value="">— Elegí el cliente —</option>
-                                @foreach($clientes as $cliente)
-                                    <option value="{{ $cliente->id_cliente }}">{{ $cliente->razon_social }}</option>
-                                @endforeach
-                            </select>
+                            <x-ui.combobox modelo="id_cliente" :opciones="$opcionesClientes" :seleccion="$id_cliente"
+                                placeholder="Elegí el cliente..." />
                             @error('id_cliente') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label for="id_chofer" class="block text-sm font-semibold text-tinta mb-1.5">Chofer</label>
-                            <select id="id_chofer" wire:model="id_chofer" @disabled(! $id_cliente)
-                                class="form-input @error('id_chofer') border-tierra bg-tierra-suave @enderror disabled:cursor-not-allowed disabled:bg-corteza-suave">
-                                <option value="">{{ $id_cliente ? 'Seleccione...' : 'Primero elegí el cliente' }}</option>
-                                @foreach($choferes as $chofer)
-                                    <option value="{{ $chofer->id_chofer }}" wire:key="option-chofer-{{ $chofer->id_chofer }}">
-                                        {{ $chofer->apellido }}, {{ $chofer->nombre }}
-                                    </option>
-                                @endforeach
-                            </select>
+                            <x-ui.combobox modelo="id_chofer" :opciones="$opcionesChoferes" :seleccion="$id_chofer"
+                                :deshabilitado="! $id_cliente"
+                                placeholder="{{ $id_cliente ? 'Elegí el chofer...' : 'Primero elegí el cliente' }}" />
                             @error('id_chofer') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
                     </div>
@@ -86,13 +65,8 @@
                     <div class="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
                         <div>
                             <label for="id_parte_diario" class="block text-sm font-semibold text-tinta mb-1.5">Parte Diario</label>
-                            <select id="id_parte_diario" wire:model="id_parte_diario"
-                                class="form-input">
-                                <option value="">Seleccione...</option>
-                                @foreach($partes as $parte)
-                                    <option value="{{ $parte->id_parte_diario }}" wire:key="option-{{ $parte->id_parte_diario }}">{{ $parte->id_parte_diario }}</option>
-                                @endforeach
-                            </select>
+                            <x-ui.combobox modelo="id_parte_diario" :opciones="$opcionesPartes" :seleccion="$id_parte_diario"
+                                placeholder="Sin parte asociado" />
                             @error('id_parte_diario') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
                                                 <div>

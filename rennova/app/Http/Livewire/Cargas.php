@@ -65,13 +65,45 @@ class Cargas extends Component
 
     public function render()
     {
+        $lotes = $this->servicio->listarLotes($this->carga_id ? (int) $this->id_lote : null);
+        $clientes = $this->servicio->listarClientes();
+        $choferes = $this->servicio->listarChoferes($this->id_cliente ? (int) $this->id_cliente : null);
+
         return view('livewire.cargas', [
             'cargas' => $this->servicio->listar($this->busqueda, $this->pagina),
-            'clientes' => $this->servicio->listarClientes(),
-            'choferes' => $this->servicio->listarChoferes($this->id_cliente ? (int) $this->id_cliente : null),
-            // Solo lotes en proceso; al editar se incluye el de la carga aunque
-            // haya salido de proceso, para no perder la seleccion.
-            'lotes' => $this->servicio->listarLotes($this->carga_id ? (int) $this->id_lote : null),
+            'clientes' => $clientes,
+            'choferes' => $choferes,
+            'lotes' => $lotes,
+
+            'opcionesLotes' => $lotes->map(fn ($lote) => [
+                'value' => $lote->id_lote,
+                'label' => $lote->propietario.' - '.$lote->ubicacion,
+                'detalle' => null,
+            ])->values()->all(),
+
+            'opcionesCategorias' => $this->categorias->map(fn ($categoria) => [
+                'value' => $categoria->id_categoria_madera,
+                'label' => $categoria->nombre,
+                'detalle' => null,
+            ])->values()->all(),
+
+            'opcionesClientes' => $clientes->map(fn ($cliente) => [
+                'value' => $cliente->id_cliente,
+                'label' => $cliente->razon_social,
+                'detalle' => $cliente->cuit,
+            ])->values()->all(),
+
+            'opcionesChoferes' => $choferes->map(fn ($chofer) => [
+                'value' => $chofer->id_chofer,
+                'label' => $chofer->apellido.', '.$chofer->nombre,
+                'detalle' => null,
+            ])->values()->all(),
+
+            'opcionesPartes' => $this->partes->map(fn ($parte) => [
+                'value' => $parte->id_parte_diario,
+                'label' => '#'.$parte->id_parte_diario,
+                'detalle' => $parte->fecha ? \Carbon\Carbon::parse($parte->fecha)->format('d/m/Y') : null,
+            ])->values()->all(),
         ]);
     }
 

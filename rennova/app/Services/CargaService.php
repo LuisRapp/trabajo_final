@@ -98,7 +98,7 @@ class CargaService
             'peso_bruto' => 'nullable|numeric|min:0',
             'tara' => 'nullable|numeric|min:0',
             'peso_neto' => 'nullable|numeric|min:0',
-            'id_cliente' => 'nullable|exists:clientes,id_cliente',
+            'id_cliente' => 'required|exists:clientes,id_cliente',
             'fecha_carga' => 'required|date|before_or_equal:today',
         ];
     }
