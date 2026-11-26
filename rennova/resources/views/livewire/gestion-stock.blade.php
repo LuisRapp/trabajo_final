@@ -6,7 +6,7 @@
                 Control de stock
             </h1>
             <p class="mt-1 text-sm text-tinta-suave">
-                Lotes por costo (FIFO): lo que sale consume primero lo más antiguo.
+                Lotes de inventario con su costo, disponibilidad y movimientos.
             </p>
         </div>
 
@@ -196,7 +196,11 @@
                 </div>
 
                 <div class="flex-1 overflow-y-auto px-5 py-5">
-                    @php $esSalida = $tipo_movimiento === 'ajuste_salida'; @endphp
+                    @if ($mensajePanel)
+                        <x-ui.alert variant="danger" class="mb-4" :dismissible="false">{{ $mensajePanel }}</x-ui.alert>
+                    @endif
+
+                    @php $esSalida = in_array($tipo_movimiento, ['ajuste_salida', 'devolucion'], true); @endphp
 
                     <form id="movimiento-stock-form" autocomplete="off" wire:submit.prevent="guardar" class="space-y-4">
                         <div>
@@ -205,8 +209,8 @@
                                 <option value="">Seleccione un tipo</option>
                                 <option value="compra">Compra (ingresa stock)</option>
                                 <option value="ajuste_entrada">Ajuste de entrada (suma)</option>
-                                <option value="ajuste_salida">Ajuste de salida (descuenta por FIFO)</option>
-                                <option value="devolucion">Devolución (ingresa stock)</option>
+                                <option value="ajuste_salida">Ajuste de salida (descuenta stock)</option>
+                                <option value="devolucion">Devolución a proveedor (descuenta stock)</option>
                             </select>
                             @error('tipo_movimiento') <p class="mt-1 text-xs text-tierra">{{ $message }}</p> @enderror
                         </div>
@@ -244,7 +248,7 @@
 
                         @if ($esSalida)
                             <div class="rounded-sm border border-pino/30 bg-pino-suave px-4 py-2.5 text-xs text-tinta">
-                                Se descuenta del lote más antiguo primero (FIFO) y no puede superar el stock disponible.
+                                Se descuenta del stock disponible y no puede ser mayor a lo que hay.
                             </div>
                         @else
                             <div class="flex items-center justify-between rounded-sm border border-pino/30 bg-pino-suave px-4 py-2.5">

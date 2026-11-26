@@ -166,6 +166,43 @@ class InventarioService
      * @param  int  $idInsumo  Identificador del insumo a consultar
      * @return float Cantidad de stock disponible
      */
+    /**
+     * Consulta de lotes con los mismos filtros que usa la pantalla de stock.
+     * La comparten el listado y la exportacion.
+     *
+     * @param  array{insumo?: int|null, proveedor?: int|null, tipo?: string|null, estado?: string|null, desde?: string|null, hasta?: string|null}  $filtros
+     */
+    public static function consultaLotesFiltrados(array $filtros = [])
+    {
+        $query = \App\Models\LoteInventario::with(['insumo', 'proveedor']);
+
+        $estado = $filtros['estado'] ?? 'disponibles';
+
+        if ($estado === 'disponibles') {
+            $query->disponibles();
+        } elseif ($estado === 'agotados') {
+            $query->agotados();
+        }
+
+        if (! empty($filtros['insumo'])) {
+            $query->where('id_insumo', $filtros['insumo']);
+        }
+
+        if (! empty($filtros['proveedor'])) {
+            $query->where('id_proveedor', $filtros['proveedor']);
+        }
+
+        if (! empty($filtros['tipo'])) {
+            $query->where('tipo_movimiento', $filtros['tipo']);
+        }
+
+        if (! empty($filtros['desde']) && ! empty($filtros['hasta'])) {
+            $query->entreFechas($filtros['desde'], $filtros['hasta']);
+        }
+
+        return $query->ordenFifo();
+    }
+
     public static function stockDisponible($idInsumo)
     {
         // Usar función PostgreSQL si está disponible, sino calcular con Eloquent

@@ -57,6 +57,41 @@ class GestionStockTest extends TestCase
         )->toBe(6.0);
     }
 
+    public function test_una_devolucion_descuenta_stock(): void
+    {
+        $insumo = Insumo::factory()->create();
+        LoteInventario::create([
+            'id_insumo' => $insumo->id_insumo,
+            'cantidad_inicial' => 10,
+            'cantidad_disponible' => 10,
+            'precio_unitario' => 50,
+            'costo_total' => 500,
+            'fecha_compra' => now()->toDateString(),
+            'agotado' => false,
+        ]);
+
+        Livewire::actingAs($this->usuario)
+            ->test(GestionStock::class)
+            ->call('abrirModal')
+            ->set('id_insumo', $insumo->id_insumo)
+            ->set('tipo_movimiento', 'devolucion')
+            ->set('cantidad', 4)
+            ->set('fecha_compra', now()->toDateString())
+            ->call('guardar')
+            ->assertHasNoErrors();
+
+        expect(
+            (float) LoteInventario::where('id_insumo', $insumo->id_insumo)->sum('cantidad_disponible')
+        )->toBe(6.0);
+    }
+
+    public function test_la_pantalla_no_habla_de_fifo(): void
+    {
+        Livewire::actingAs($this->usuario)
+            ->test(GestionStock::class)
+            ->assertDontSee('FIFO');
+    }
+
     public function test_ajuste_de_salida_mayor_al_stock_se_rechaza_y_no_cambia_nada(): void
     {
         $insumo = Insumo::factory()->create();
@@ -463,11 +498,41 @@ class GestionStockTest extends TestCase
     // Edge cases
     // =========================================================================
 
-    public function test_exportar_reporte_no_rompe(): void
+    public function test_exportar_reporte_redirige_a_la_descarga_con_los_filtros(): void
     {
-        Livewire::actingAs($this->usuario)
-            ->test(GestionStock::class)
-            ->call('exportarReporte')
-            ->assertStatus(200);
+        $usuario = usuarioConPermisos(['ver-gestion-stock', 'crear-gestion-stock']);
+
+        $componente = Livewire::actingAs($usuario)->test(GestionStock::class);
+
+        $esperado = route('reportes.stock', array_filter([
+            'estado' => 'disponibles',
+            'desde' => $componente->get('filtro_fecha_inicio') ?: null,
+            'hasta' => $componente->get('filtro_fecha_fin') ?: null,
+        ]));
+
+        $componente->call('exportarReporte')->assertRedirect($esperado);
+    }
+
+    public function test_la_descarga_de_stock_devuelve_un_csv_con_los_lotes(): void
+    {
+        $usuario = usuarioConPermisos(['ver-gestion-stock']);
+        $insumo = Insumo::factory()->create(['nombre' => 'Insumo Exportable']);
+
+        LoteInventario::create([
+            'id_insumo' => $insumo->id_insumo,
+            'cantidad_inicial' => 10,
+            'cantidad_disponible' => 10,
+            'precio_unitario' => 5,
+            'costo_total' => 50,
+            'fecha_compra' => now()->toDateString(),
+            'agotado' => false,
+        ]);
+
+        $respuesta = $this->actingAs($usuario)->get(route('reportes.stock'));
+
+        $respuesta->assertOk();
+        $this->assertStringContainsString('text/csv', $respuesta->headers->get('Content-Type'));
+        $this->assertStringContainsString('stock-', $respuesta->headers->get('Content-Disposition'));
+        $this->assertStringContainsString('Insumo Exportable', $respuesta->streamedContent());
     }
 }

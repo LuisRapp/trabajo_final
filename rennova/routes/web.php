@@ -158,6 +158,8 @@ Route::middleware(['auth'])->group(function () {
 
     // Gestión de Stock (FIFO) dentro del módulo Operaciones
     Route::view('/modulos/operaciones/gestionstock', 'modulos.operaciones.gestionstock')->middleware(['permission:ver-gestion-stock'])->name('modulos.operaciones.gestionstock');
+    Route::get('/reportes/stock', [\App\Http\Controllers\StockReporteController::class, 'exportar'])
+        ->middleware(['permission:ver-gestion-stock'])->name('reportes.stock');
 
     // ABM Cargas
     Route::get('/cargas', [CargaController::class, 'index'])->middleware(['permission:ver-cargas'])->name('cargas.index');

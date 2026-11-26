@@ -41,6 +41,8 @@ class GestionStock extends Component
 
     public $loteSeleccionado = null;
 
+    public $mensajePanel = null;
+
     // Filtros
     public $filtro_insumo = '';
 
@@ -107,36 +109,22 @@ class GestionStock extends Component
 
     private function obtenerLotes()
     {
-        $query = LoteInventario::with(['insumo', 'proveedor']);
+        return InventarioService::consultaLotesFiltrados($this->filtrosStock())->paginate(20);
+    }
 
-        // Filtro por estado
-        if ($this->filtro_estado === 'disponibles') {
-            $query->disponibles();
-        } elseif ($this->filtro_estado === 'agotados') {
-            $query->agotados();
-        }
-
-        // Filtro por insumo
-        if ($this->filtro_insumo) {
-            $query->where('id_insumo', $this->filtro_insumo);
-        }
-
-        // Filtro por proveedor
-        if ($this->filtro_proveedor) {
-            $query->where('id_proveedor', $this->filtro_proveedor);
-        }
-
-        // Filtro por tipo de movimiento
-        if ($this->filtro_tipo) {
-            $query->where('tipo_movimiento', $this->filtro_tipo);
-        }
-
-        // Filtro por rango de fechas
-        if ($this->filtro_fecha_inicio && $this->filtro_fecha_fin) {
-            $query->entreFechas($this->filtro_fecha_inicio, $this->filtro_fecha_fin);
-        }
-
-        return $query->ordenFifo()->paginate(20);
+    /**
+     * @return array{insumo: ?string, proveedor: ?string, tipo: ?string, estado: string, desde: ?string, hasta: ?string}
+     */
+    private function filtrosStock(): array
+    {
+        return [
+            'insumo' => $this->filtro_insumo ?: null,
+            'proveedor' => $this->filtro_proveedor ?: null,
+            'tipo' => $this->filtro_tipo ?: null,
+            'estado' => $this->filtro_estado,
+            'desde' => $this->filtro_fecha_inicio ?: null,
+            'hasta' => $this->filtro_fecha_fin ?: null,
+        ];
     }
 
     private function calcularEstadisticas()
@@ -162,6 +150,7 @@ class GestionStock extends Component
     public function abrirModal()
     {
         $this->resetearFormulario();
+        $this->mensajePanel = null;
         $this->mostrarModal = true;
         $this->modoEdicion = false;
     }
@@ -169,6 +158,7 @@ class GestionStock extends Component
     public function cerrarModal()
     {
         $this->mostrarModal = false;
+        $this->mensajePanel = null;
         $this->resetearFormulario();
         $this->resetValidation();
     }
@@ -194,22 +184,14 @@ class GestionStock extends Component
         // consume por FIFO y no fija precio.
         $reglas = $this->rules;
 
-        if ($this->tipo_movimiento !== 'ajuste_salida') {
+        if (! in_array($this->tipo_movimiento, ['ajuste_salida', 'devolucion'], true)) {
             $reglas['precio_unitario'] = 'required|numeric|min:0.01';
         }
 
         $this->validate($reglas);
 
         try {
-            \Log::info('=== INICIO GUARDAR LOTE ===');
-            \Log::info('Datos recibidos:', [
-                'id_insumo' => $this->id_insumo,
-                'cantidad' => $this->cantidad,
-                'precio_unitario' => $this->precio_unitario,
-                'fecha_compra' => $this->fecha_compra,
-            ]);
-
-            if ($this->tipo_movimiento === 'ajuste_salida') {
+            if (in_array($this->tipo_movimiento, ['ajuste_salida', 'devolucion'], true)) {
                 $resultado = \App\Services\InventarioService::registrarSalida(
                     $this->id_insumo,
                     $this->cantidad,
@@ -217,7 +199,9 @@ class GestionStock extends Component
                     $this->fecha_compra
                 );
 
-                session()->flash('message', 'Ajuste de salida registrado: '.count($resultado['movimientos']).' lote(s) consumidos por FIFO.');
+                $cantidad = collect($resultado['movimientos'])->sum('cantidad');
+                $etiqueta = $this->tipo_movimiento === 'devolucion' ? 'Devolución registrada' : 'Salida registrada';
+                session()->flash('message', $etiqueta.': se descontaron '.number_format((float) $cantidad, 2, ',', '.').'.');
                 session()->flash('alert-type', 'success');
 
                 $this->cerrarModal();
@@ -234,8 +218,6 @@ class GestionStock extends Component
                 'motivo' => $this->generarMotivo(),
             ];
 
-            \Log::info('Metadata:', $metadata);
-
             $resultado = InventarioService::registrarEntrada(
                 $this->id_insumo,
                 $this->cantidad,
@@ -243,12 +225,6 @@ class GestionStock extends Component
                 $metadata,
                 $this->fecha_compra
             );
-
-            \Log::info('Resultado:', [
-                'lote_id' => $resultado['lote']->id_lote_inventario,
-                'cantidad_inicial' => $resultado['lote']->cantidad_inicial,
-                'cantidad_disponible' => $resultado['lote']->cantidad_disponible,
-            ]);
 
             session()->flash('message', 'Lote de inventario registrado correctamente');
             session()->flash('alert-type', 'success');
@@ -259,10 +235,9 @@ class GestionStock extends Component
         } catch (\Exception $e) {
             \Log::error('Error al guardar lote: '.$e->getMessage());
             \Log::error($e->getTraceAsString());
-            session()->flash('message', $e instanceof \DomainException
+            $this->mensajePanel = $e instanceof \DomainException
                 ? $e->getMessage()
-                : $this->mensajeErrorUsuario($e, 'registrar el lote de inventario'));
-            session()->flash('alert-type', 'danger');
+                : $this->mensajeErrorUsuario($e, 'registrar el lote de inventario');
         }
     }
 
@@ -271,7 +246,7 @@ class GestionStock extends Component
         $motivos = [
             'compra' => 'Compra',
             'ajuste_entrada' => 'Ajuste de Entrada',
-            'devolucion' => 'Devolución',
+            'devolucion' => 'Devolución a proveedor',
             'ajuste_salida' => 'Ajuste de Salida',
         ];
 
@@ -308,9 +283,9 @@ class GestionStock extends Component
 
     public function exportarReporte()
     {
-        // TODO: Implementar exportación a Excel/PDF
-        session()->flash('message', 'Funcionalidad de exportación en desarrollo');
-        session()->flash('alert-type', 'info');
+        $this->authorize('ver-gestion-stock');
+
+        return $this->redirect(route('reportes.stock', array_filter($this->filtrosStock(), fn ($valor) => $valor !== null && $valor !== '')));
     }
 
     public function updatingFiltroInsumo()
