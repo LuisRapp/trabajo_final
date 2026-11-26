@@ -16,11 +16,11 @@
         .bloque { border: 1px solid #d6d3cd; padding: 8px; margin-bottom: 14px; }
         .bloque-titulo { font-size: 8px; letter-spacing: 1px; text-transform: uppercase; color: #57534e; margin-bottom: 4px; }
         table.detalle { width: 100%; border-collapse: collapse; }
-        table.detalle th { background: #f3f0eb; border-bottom: 1px solid #d6d3cd; padding: 4px 3px; font-size: 7px; text-transform: uppercase; letter-spacing: 0.3px; color: #57534e; text-align: left; }
+        table.detalle th { background: #f3f0eb; border-bottom: 1px solid #d6d3cd; padding: 4px 3px; font-size: 7px; text-transform: uppercase; letter-spacing: 0.3px; color: #57534e; text-align: left; vertical-align: bottom; }
         table.detalle td { padding: 3px; border-bottom: 1px solid #e7e5e4; font-size: 8.5px; }
         table.detalle tr:nth-child(even) td { background: #faf9f7; }
-        .num { text-align: right; }
-        .centro { text-align: center; }
+        table.detalle th.num, table.detalle td.num { text-align: right; }
+        table.detalle th.centro, table.detalle td.centro { text-align: center; }
         .totales { width: 45%; margin-left: 55%; margin-top: 8px; border-collapse: collapse; }
         .totales td { padding: 4px 0; }
         .totales .etiqueta { color: #57534e; }
@@ -62,7 +62,7 @@
     <table class="detalle">
         <thead>
             <tr>
-                <th style="width: 3%;">#</th>
+                <th style="width: 3%;" class="centro">#</th>
                 <th style="width: 9%;">Ticket</th>
                 <th style="width: 8%;">Fecha</th>
                 <th style="width: 13%;">Chofer</th>
