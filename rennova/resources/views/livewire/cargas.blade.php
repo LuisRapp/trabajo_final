@@ -41,7 +41,7 @@
                                 class="form-input @error('id_lote') border-tierra bg-tierra-suave @enderror">
                                 <option value="">Seleccione...</option>
                                 @foreach($lotes as $lote)
-                                    <option value="{{ $lote->id_lote }}" wire:key="option-{{ $lote->id_lote }}">{{ $lote->propietario }} - {{ $lote->ubicacion }}</option>
+                                    <option value="{{ $lote->id_lote }}" wire:key="option-{{ $lote->id_lote }}">{{ $lote->propietario }} - {{ $lote->ubicacion }} ({{ ucfirst(str_replace('_', ' ', $lote->estado)) }})</option>
                                 @endforeach
                             </select>
                             @error('id_lote') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
@@ -58,10 +58,21 @@
                             @error('id_categoria_madera') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
+                            <label for="id_cliente" class="block text-sm font-semibold text-tinta mb-1.5">Cliente</label>
+                            <select id="id_cliente" wire:model.live="id_cliente"
+                                class="form-input @error('id_cliente') border-tierra bg-tierra-suave @enderror">
+                                <option value="">— Elegí el cliente —</option>
+                                @foreach($clientes as $cliente)
+                                    <option value="{{ $cliente->id_cliente }}">{{ $cliente->razon_social }}</option>
+                                @endforeach
+                            </select>
+                            @error('id_cliente') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
                             <label for="id_chofer" class="block text-sm font-semibold text-tinta mb-1.5">Chofer</label>
-                            <select id="id_chofer" wire:model="id_chofer"
-                                class="form-input @error('id_chofer') border-tierra bg-tierra-suave @enderror">
-                                <option value="">{{ $id_cliente ? 'Seleccione...' : 'Elegí un cliente primero' }}</option>
+                            <select id="id_chofer" wire:model="id_chofer" @disabled(! $id_cliente)
+                                class="form-input @error('id_chofer') border-tierra bg-tierra-suave @enderror disabled:cursor-not-allowed disabled:bg-corteza-suave">
+                                <option value="">{{ $id_cliente ? 'Seleccione...' : 'Primero elegí el cliente' }}</option>
                                 @foreach($choferes as $chofer)
                                     <option value="{{ $chofer->id_chofer }}" wire:key="option-chofer-{{ $chofer->id_chofer }}">
                                         {{ $chofer->apellido }}, {{ $chofer->nombre }}
@@ -70,6 +81,9 @@
                             </select>
                             @error('id_chofer') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
                         <div>
                             <label for="id_parte_diario" class="block text-sm font-semibold text-tinta mb-1.5">Parte Diario</label>
                             <select id="id_parte_diario" wire:model="id_parte_diario"
@@ -81,10 +95,7 @@
                             </select>
                             @error('id_parte_diario') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
-                        <div>
+                                                <div>
                             <label for="ticket" class="block text-sm font-semibold text-tinta mb-1.5">Ticket</label>
                             <input autocomplete="off" type="text" id="ticket" wire:model="ticket" maxlength="20"
                                 class="form-input @error('ticket') border-tierra bg-tierra-suave @enderror">
@@ -107,17 +118,6 @@
                             <input autocomplete="off" type="number" id="peso_neto" wire:model="peso_neto" step="0.1" min="0"
                                 class="form-input @error('peso_neto') border-tierra bg-tierra-suave @enderror">
                             @error('peso_neto') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
-                        </div>
-                        <div>
-                            <label for="id_cliente" class="block text-sm font-semibold text-tinta mb-1.5">Cliente</label>
-                            <select id="id_cliente" wire:model="id_cliente"
-                                class="form-input @error('id_cliente') border-tierra bg-tierra-suave @enderror">
-                                <option value="">-- Seleccionar cliente --</option>
-                                @foreach($clientes as $cliente)
-                                    <option value="{{ $cliente->id_cliente }}">{{ $cliente->razon_social }}</option>
-                                @endforeach
-                            </select>
-                            @error('id_cliente') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label for="fecha_carga" class="block text-sm font-semibold text-tinta mb-1.5">Fecha Carga <span class="text-tierra">*</span></label>

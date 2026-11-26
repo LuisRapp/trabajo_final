@@ -171,7 +171,11 @@ class CargaFormTest extends TestCase
 
         $component->call('agregarCarga');
 
-        $component->assertDispatched('cargaAgregada');
+        // La fila tiene que verse en el propio formulario: el padre ya no le
+        // sincroniza la prop con la lista.
+        $component->assertDispatched('cargaAgregada')
+            ->assertCount('cargas', 1)
+            ->assertSee('TK-TEST-001');
     }
 
     public function test_agregar_carga_resets_form_after_dispatch(): void

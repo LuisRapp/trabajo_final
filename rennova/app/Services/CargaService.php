@@ -15,9 +15,16 @@ use Illuminate\Validation\ValidationException;
 
 class CargaService
 {
-    public function listarLotes()
+    /**
+     * Lotes donde se puede registrar produccion: activos o en proceso.
+     * Un lote cerrado, inactivo o de baja no recibe cargas.
+     */
+    public function listarLotes(): Collection
     {
-        return Lote::all();
+        return Lote::query()
+            ->whereIn('estado', ['activo', 'en_proceso'])
+            ->orderBy('propietario')
+            ->get();
     }
 
     public function listarCategorias()

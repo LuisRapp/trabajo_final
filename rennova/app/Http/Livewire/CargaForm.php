@@ -164,12 +164,17 @@ class CargaForm extends Component
             'maquinarias' => $this->carga_maquinarias,
         ];
 
+        // El padre no sincroniza props hacia el hijo en cada render: la fila se
+        // refleja localmente y ademas se avisa al padre, que es el duenio del total.
+        $this->cargas[] = $cargaData;
         $this->dispatch('cargaAgregada', cargaData: $cargaData);
         $this->resetCargaForm();
     }
 
     public function eliminarCarga(int $index): void
     {
+        unset($this->cargas[$index]);
+        $this->cargas = array_values($this->cargas);
         $this->dispatch('cargaEliminada', index: $index);
     }
 
