@@ -173,6 +173,22 @@ class VentaService
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException If venta not found
      * @throws \Exception If a database error occurs
      */
+    /**
+     * Venta con todo lo que muestra el comprobante impreso.
+     */
+    public static function obtenerParaComprobante(int $id): Venta
+    {
+        return Venta::query()
+            ->with([
+                'cliente',
+                'cargas.cliente',
+                'cargas.categoriaMadera',
+                'cargas.lote',
+                'cargas.chofer',
+            ])
+            ->findOrFail($id);
+    }
+
     public static function editarVenta(int $idRecibo, ?string $observaciones, ?float $monto): Venta
     {
         DB::beginTransaction();

@@ -95,14 +95,14 @@ class Ventas extends Component
             if (empty($cargas)) {
                 $this->detalle_cargas = [];
                 $this->total_venta = 0;
-                session()->flash('message', 'No se encontraron cargas pendientes.');
+                session()->flash('error', 'No hay cargas pendientes con esos filtros.');
 
                 return;
             }
 
             $this->detalle_cargas = $cargas;
             $this->total_venta = collect($this->detalle_cargas)->sum('subtotal');
-            session()->flash('message', 'Cargas cargadas: '.count($this->detalle_cargas));
+            session()->flash('message', count($this->detalle_cargas) === 1 ? 'Encontramos 1 carga pendiente.' : 'Encontramos '.count($this->detalle_cargas).' cargas pendientes.');
 
         } catch (\InvalidArgumentException $e) {
             session()->flash('error', $this->mensajeErrorUsuario($e, 'buscar cargas'));
@@ -115,7 +115,7 @@ class Ventas extends Component
     {
         $this->authorize('crear-ventas');
         if (empty($this->detalle_cargas)) {
-            session()->flash('error', 'No hay cargas para facturar.');
+            session()->flash('error', 'Seleccioná al menos una carga para facturar.');
 
             return;
         }
@@ -138,7 +138,7 @@ class Ventas extends Component
             $this->observaciones = '';
             $this->id_cliente = null;
 
-            session()->flash('message', 'Venta registrada exitosamente. ID: '.$venta->id_recibo);
+            session()->flash('message', 'Venta #'.$venta->id_recibo.' registrada. Las cargas quedaron facturadas.');
 
         } catch (\Exception $e) {
             session()->flash('error', $this->mensajeErrorUsuario($e, 'guardar la venta'));
@@ -216,7 +216,7 @@ class Ventas extends Component
             );
 
             $this->modo_edicion = false;
-            session()->flash('message', 'Venta actualizada exitosamente.');
+            session()->flash('message', 'Venta actualizada.');
 
         } catch (\Exception $e) {
             session()->flash('error', $this->mensajeErrorUsuario($e, 'actualizar la venta'));
@@ -230,7 +230,7 @@ class Ventas extends Component
             VentaService::darDeBaja($id_recibo);
 
             $this->cerrarModal();
-            session()->flash('message', 'Venta dada de baja exitosamente. Las cargas están disponibles nuevamente.');
+            session()->flash('message', 'Venta dada de baja. Las cargas volvieron a pendiente.');
 
         } catch (\Exception $e) {
             session()->flash('error', $this->mensajeErrorUsuario($e, 'dar de baja la venta'));
@@ -253,7 +253,7 @@ class Ventas extends Component
         $this->detalle_cargas = [];
         $this->total_venta = 0;
         $this->observaciones = '';
-        session()->flash('message', 'Formulario limpiado.');
+
     }
 
     public function render()

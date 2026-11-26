@@ -285,6 +285,13 @@
                         <x-ui.button variant="secondary" icon="x-mark" wire:click="cerrarModal">
                             Cerrar
                         </x-ui.button>
+                        @can('ver-ventas')
+                        <x-ui.button variant="secondary" icon="document-arrow-down"
+                            href="{{ route('ventas.comprobante', ['venta' => $venta_seleccionada->id_recibo]) }}"
+                            target="_blank" rel="noopener">
+                            Comprobante
+                        </x-ui.button>
+                        @endcan
                         @if($venta_seleccionada->activo)
                             @can('editar-ventas')
                             <x-ui.button variant="secondary" icon="pencil-square" wire:click="activarEdicion">

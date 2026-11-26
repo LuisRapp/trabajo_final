@@ -125,6 +125,8 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/partes-diarios', [ParteDiarioController::class, 'index'])->middleware(['permission:ver-partes-diarios'])->name('partes-diarios.index');
     Route::get('/ventas', [VentaController::class, 'index'])->middleware(['permission:ver-ventas'])->name('ventas.index');
+    Route::get('/ventas/{venta}/comprobante', [VentaController::class, 'comprobante'])
+        ->middleware(['permission:ver-ventas'])->name('ventas.comprobante');
     Route::get('/adelantos', [AdelantoController::class, 'index'])->middleware(['permission:ver-adelantos'])->name('adelantos.index');
     Route::get('/recibos', [ReciboController::class, 'index'])->middleware(['permission:ver-recibos'])->name('recibos.index');
 
