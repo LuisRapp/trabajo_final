@@ -28,6 +28,22 @@ class InventarioService
      */
     public static function registrarSalida($idInsumo, $cantidad, $motivo, $fecha = null, $parteDiarioId = null)
     {
+        // Invariante del sistema: el stock nunca puede quedar negativo. Se valida
+        // aca, en el servicio, para que ningun camino (parte diario, ajuste manual,
+        // importacion) pueda saltearlo.
+        if ((float) $cantidad <= 0) {
+            throw new \DomainException('La cantidad a consumir debe ser mayor a 0.');
+        }
+
+        $disponible = (float) self::stockDisponible($idInsumo);
+
+        if ((float) $cantidad > $disponible) {
+            throw new \DomainException(
+                'Stock insuficiente: hay '.number_format($disponible, 2, ',', '.').
+                ' disponibles y se intentó consumir '.number_format((float) $cantidad, 2, ',', '.').'.'
+            );
+        }
+
         DB::beginTransaction();
 
         try {

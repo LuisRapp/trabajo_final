@@ -510,7 +510,9 @@ class PartesDiarios extends Component
             session()->flash('message', $mensaje);
 
         } catch (\Exception $e) {
-            session()->flash('error', $this->mensajeErrorUsuario($e, 'guardar el parte diario'));
+            session()->flash('error', $e instanceof \DomainException
+                ? $e->getMessage()
+                : $this->mensajeErrorUsuario($e, 'guardar el parte diario'));
             \Log::error('Error en PartesDiarios::guardar()', [
                 'exception' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),

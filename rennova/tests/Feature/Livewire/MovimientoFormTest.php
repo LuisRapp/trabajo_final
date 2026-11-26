@@ -342,4 +342,26 @@ class MovimientoFormTest extends TestCase
         $this->assertCount(1, $movimientos);
         $this->assertEquals($this->insumo->id_insumo, $movimientos[0]['id_insumo']);
     }
+
+    public function test_rechaza_consumo_mayor_al_stock_y_lo_explica(): void
+    {
+        // Invariante: con 5 disponibles no se pueden consumir 10, y el motivo
+        // tiene que verse en el propio formulario (antes se avisaba con un evento
+        // que nadie escuchaba).
+        $this->crearStockDisponible($this->insumo->id_insumo, 5, 100);
+
+        Livewire::actingAs($this->usuario)
+            ->test(MovimientoForm::class)
+            ->set('movimiento_id_insumo', $this->insumo->id_insumo)
+            ->set('movimiento_cantidad', 10)
+            ->set('movimiento_motivo', 'Producción')
+            ->call('agregarMovimiento')
+            ->assertCount('movimientos', 0)
+            ->assertSee('Stock insuficiente');
+
+        $this->assertEquals(
+            5.0,
+            (float) LoteInventario::where('id_insumo', $this->insumo->id_insumo)->sum('cantidad_disponible')
+        );
+    }
 }

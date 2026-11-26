@@ -18,6 +18,10 @@ class MovimientoForm extends Component
 
     public $movimientos = [];
 
+    public $mensajeError = null;
+
+    public $mensajeExito = null;
+
     public $stock_disponible_insumo = null;
 
     // Props from parent
@@ -46,7 +50,9 @@ class MovimientoForm extends Component
             $stockDisponible = InventarioService::stockDisponible($this->movimiento_id_insumo);
 
             if ($this->movimiento_cantidad > $stockDisponible) {
-                $this->dispatch('mostrarError', mensaje: "Stock insuficiente. Disponible: {$stockDisponible}");
+                $this->mensajeError = 'Stock insuficiente: hay '.number_format((float) $stockDisponible, 2, ',', '.').
+                    ' disponibles y se intentó consumir '.number_format((float) $this->movimiento_cantidad, 2, ',', '.').'.';
+                $this->mensajeExito = null;
 
                 return;
             }
@@ -63,15 +69,17 @@ class MovimientoForm extends Component
                 'unidad' => $insumo->unidadMedida->nombre ?? 'Unidad',
             ];
 
+            $this->mensajeError = null;
+            $this->mensajeExito = 'Insumo agregado al parte.';
             $this->dispatch('movimientoAgregado', movData: end($this->movimientos));
-            $this->dispatch('mostrarExito', mensaje: 'Insumo agregado correctamente');
             $this->resetMovimientoForm();
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             throw $e;
         } catch (\Exception $e) {
             \Log::error('Error en agregarMovimiento: '.$e->getMessage());
-            $this->dispatch('mostrarError', mensaje: 'Error al agregar el insumo. Intente nuevamente.');
+            $this->mensajeError = 'No se pudo agregar el insumo. Intentá nuevamente.';
+            $this->mensajeExito = null;
         }
     }
 

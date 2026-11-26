@@ -3,7 +3,7 @@
         <h1 class="text-2xl font-bold text-tinta">Control de Stock</h1>
         @can('crear-gestion-stock')
             <x-ui.button variant="primary" icon="plus" wire:click="abrirModal">
-                Registrar Entrada
+                Registrar movimiento
             </x-ui.button>
         @endcan
     </div>
@@ -158,18 +158,18 @@
         </div>
     </x-ui.card>
 
-    <!-- Modal: Registrar Entrada -->
+    <!-- Modal: Registrar movimiento -->
     @if($mostrarModal)
         <div class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center" wire:ignore.self>
             <div class="bg-white border border-arena rounded-sm shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
                 <div class="bg-pino text-white px-4 py-3 flex justify-between items-center">
-                    <h5 class="text-sm font-semibold">Registrar Entrada de Stock</h5>
+                    <h5 class="text-sm font-semibold">Registrar movimiento de stock</h5>
                     <button type="button" class="text-white/80 hover:text-white" wire:click="cerrarModal" aria-label="Cerrar">
                         <flux:icon.x-mark class="size-4" />
                     </button>
                 </div>
                 <div class="p-4">
-                    <form autocomplete="off" wire:submit.prevent="guardar">
+                    <form id="movimiento-stock-form" autocomplete="off" wire:submit.prevent="guardar">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-semibold text-tinta mb-1.5">Insumo <span class="text-tierra">*</span></label>
@@ -230,9 +230,10 @@
                                 <label class="block text-xs font-semibold text-tinta mb-1.5">Tipo de Movimiento <span class="text-tierra">*</span></label>
                                 <select class="form-input @error('tipo_movimiento') border-tierra bg-tierra-suave @enderror" wire:model="tipo_movimiento">
                                     <option value="">Seleccione un tipo</option>
-                                    <option value="compra">Compra</option>
-                                    <option value="ajuste_entrada">Ajuste de Entrada</option>
-                                    <option value="devolucion">Devolucion</option>
+                                    <option value="compra">Compra (ingresa stock)</option>
+                                    <option value="ajuste_entrada">Ajuste de entrada (suma)</option>
+                                    <option value="ajuste_salida">Ajuste de salida (descuenta)</option>
+                                    <option value="devolucion">Devolución (ingresa stock)</option>
                                 </select>
                                 @error('tipo_movimiento') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                             </div>
@@ -250,8 +251,8 @@
                         Cancelar
                     </x-ui.button>
                     @can('crear-gestion-stock')
-                        <x-ui.button variant="primary" icon="check" wire:click="guardar">
-                            Guardar Entrada
+                        <x-ui.button variant="primary" icon="check" type="submit" form="movimiento-stock-form">
+                            Guardar movimiento
                         </x-ui.button>
                     @endcan
                 </div>
@@ -263,9 +264,9 @@
     @if($loteSeleccionado)
         <div class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center" wire:ignore.self>
             <div class="bg-white border border-arena rounded-sm shadow-xl max-w-5xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-                <div class="bg-corteza text-white px-4 py-3 flex justify-between items-center">
-                    <h5 class="text-sm font-semibold">Detalle del Lote #{{ $loteSeleccionado?->id_lote_inventario }}</h5>
-                    <button type="button" class="text-white/80 hover:text-white" wire:click="cerrarDetalle" aria-label="Cerrar">
+                <div class="flex items-center justify-between border-b border-arena bg-hueso px-4 py-3">
+                    <h5 class="text-sm font-semibold text-tinta">Detalle del lote #{{ $loteSeleccionado?->id_lote_inventario }}</h5>
+                    <button type="button" class="text-tinta-suave transition-colors hover:text-tinta" wire:click="cerrarDetalle" aria-label="Cerrar">
                         <flux:icon.x-mark class="size-4" />
                     </button>
                 </div>

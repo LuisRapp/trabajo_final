@@ -26,6 +26,66 @@ class GestionStockTest extends TestCase
     }
 
     // =========================================================================
+    // Ajuste de salida (FIFO)
+    // =========================================================================
+
+    public function test_ajuste_de_salida_descuenta_por_fifo(): void
+    {
+        $insumo = Insumo::factory()->create();
+        LoteInventario::create([
+            'id_insumo' => $insumo->id_insumo,
+            'cantidad_inicial' => 10,
+            'cantidad_disponible' => 10,
+            'precio_unitario' => 50,
+            'costo_total' => 500,
+            'fecha_compra' => now()->toDateString(),
+            'agotado' => false,
+        ]);
+
+        Livewire::actingAs($this->usuario)
+            ->test(GestionStock::class)
+            ->call('abrirModal')
+            ->set('id_insumo', $insumo->id_insumo)
+            ->set('tipo_movimiento', 'ajuste_salida')
+            ->set('cantidad', 4)
+            ->set('fecha_compra', now()->toDateString())
+            ->call('guardar')
+            ->assertHasNoErrors();
+
+        expect(
+            (float) LoteInventario::where('id_insumo', $insumo->id_insumo)->sum('cantidad_disponible')
+        )->toBe(6.0);
+    }
+
+    public function test_ajuste_de_salida_mayor_al_stock_se_rechaza_y_no_cambia_nada(): void
+    {
+        $insumo = Insumo::factory()->create();
+        LoteInventario::create([
+            'id_insumo' => $insumo->id_insumo,
+            'cantidad_inicial' => 5,
+            'cantidad_disponible' => 5,
+            'precio_unitario' => 50,
+            'costo_total' => 250,
+            'fecha_compra' => now()->toDateString(),
+            'agotado' => false,
+        ]);
+
+        Livewire::actingAs($this->usuario)
+            ->test(GestionStock::class)
+            ->call('abrirModal')
+            ->set('id_insumo', $insumo->id_insumo)
+            ->set('tipo_movimiento', 'ajuste_salida')
+            ->set('cantidad', 10)
+            ->set('fecha_compra', now()->toDateString())
+            ->call('guardar')
+            ->assertSee('Stock insuficiente');
+
+        expect(
+            (float) LoteInventario::where('id_insumo', $insumo->id_insumo)->sum('cantidad_disponible')
+        )->toBe(5.0);
+    }
+
+    // =========================================================================
     // Render / Mount
     // =========================================================================
 

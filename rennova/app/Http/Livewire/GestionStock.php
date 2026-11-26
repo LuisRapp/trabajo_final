@@ -58,9 +58,9 @@ class GestionStock extends Component
         'id_insumo' => 'required|exists:insumos,id_insumo',
         'id_proveedor' => 'nullable|exists:proveedores,id_proveedor',
         'cantidad' => 'required|numeric|min:0.01',
-        'precio_unitario' => 'required|numeric|min:0.01',
+        'precio_unitario' => 'nullable|numeric|min:0',
         'numero_factura' => 'nullable|string|max:100',
-        'tipo_movimiento' => 'required|in:compra,ajuste_entrada,devolucion',
+        'tipo_movimiento' => 'required|in:compra,ajuste_entrada,ajuste_salida,devolucion',
         'observaciones' => 'nullable|string|max:500',
         'fecha_compra' => 'required|date',
     ];
@@ -189,7 +189,16 @@ class GestionStock extends Component
     public function guardar()
     {
         $this->authorize('crear-gestion-stock');
-        $this->validate();
+
+        // El precio solo tiene sentido en los ingresos: el ajuste de salida
+        // consume por FIFO y no fija precio.
+        $reglas = $this->rules;
+
+        if ($this->tipo_movimiento !== 'ajuste_salida') {
+            $reglas['precio_unitario'] = 'required|numeric|min:0.01';
+        }
+
+        $this->validate($reglas);
 
         try {
             \Log::info('=== INICIO GUARDAR LOTE ===');
@@ -199,6 +208,23 @@ class GestionStock extends Component
                 'precio_unitario' => $this->precio_unitario,
                 'fecha_compra' => $this->fecha_compra,
             ]);
+
+            if ($this->tipo_movimiento === 'ajuste_salida') {
+                $resultado = \App\Services\InventarioService::registrarSalida(
+                    $this->id_insumo,
+                    $this->cantidad,
+                    $this->generarMotivo(),
+                    $this->fecha_compra
+                );
+
+                session()->flash('message', 'Ajuste de salida registrado: '.count($resultado['movimientos']).' lote(s) consumidos por FIFO.');
+                session()->flash('alert-type', 'success');
+
+                $this->cerrarModal();
+                $this->resetPage();
+
+                return;
+            }
 
             $metadata = [
                 'id_proveedor' => $this->id_proveedor,
@@ -233,7 +259,9 @@ class GestionStock extends Component
         } catch (\Exception $e) {
             \Log::error('Error al guardar lote: '.$e->getMessage());
             \Log::error($e->getTraceAsString());
-            session()->flash('message', $this->mensajeErrorUsuario($e, 'registrar el lote de inventario'));
+            session()->flash('message', $e instanceof \DomainException
+                ? $e->getMessage()
+                : $this->mensajeErrorUsuario($e, 'registrar el lote de inventario'));
             session()->flash('alert-type', 'danger');
         }
     }
@@ -244,6 +272,7 @@ class GestionStock extends Component
             'compra' => 'Compra',
             'ajuste_entrada' => 'Ajuste de Entrada',
             'devolucion' => 'Devolución',
+            'ajuste_salida' => 'Ajuste de Salida',
         ];
 
         $motivo = $motivos[$this->tipo_movimiento] ?? 'Entrada';

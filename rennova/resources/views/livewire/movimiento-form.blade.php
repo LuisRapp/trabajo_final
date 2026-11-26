@@ -52,6 +52,14 @@
                         </select>
                         @error('movimiento_motivo') <div class="text-tierra text-xs mt-1">{{ $message }}</div> @enderror
                     </div>
+                    <div class="md:col-span-full">
+                        @if ($mensajeError)
+                            <x-ui.alert variant="danger" class="mb-3" :dismissible="false">{{ $mensajeError }}</x-ui.alert>
+                        @endif
+                        @if ($mensajeExito)
+                            <x-ui.alert variant="success" class="mb-3" :dismissible="false">{{ $mensajeExito }}</x-ui.alert>
+                        @endif
+                    </div>
                     <div class="flex items-end">
                         <x-ui.button variant="primary" icon="plus" wire:click.prevent="agregarMovimiento" class="w-full" wire:loading.attr="disabled" wire:target="agregarMovimiento">
                             <span wire:loading.remove wire:target="agregarMovimiento">Agregar</span>
