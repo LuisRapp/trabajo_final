@@ -252,6 +252,35 @@ class CargaForm extends Component
 
     public function render()
     {
-        return view('livewire.carga-form');
+        return view('livewire.carga-form', [
+            'opcionesClientes' => $this->clientes
+                ->map(fn ($cliente) => [
+                    'value' => $cliente->id_cliente,
+                    'label' => $cliente->razon_social,
+                    'detalle' => $cliente->cuit,
+                ])->values()->all(),
+
+            'opcionesChoferes' => $this->choferes
+                ->filter(fn ($chofer) => $this->carga_destino && (int) $chofer->id_cliente === (int) $this->carga_destino)
+                ->map(fn ($chofer) => [
+                    'value' => $chofer->id_chofer,
+                    'label' => $chofer->apellido.', '.$chofer->nombre,
+                    'detalle' => null,
+                ])->values()->all(),
+
+            'opcionesEmpleados' => $this->empleadosCargaFiltrados
+                ->map(fn ($empleado) => [
+                    'value' => $empleado->id_empleado,
+                    'label' => $empleado->apellido.', '.$empleado->nombre,
+                    'detalle' => $empleado->rolLaboral->nombre ?? null,
+                ])->values()->all(),
+
+            'opcionesMaquinarias' => $this->maquinariasCargaFiltrada
+                ->map(fn ($maquinaria) => [
+                    'value' => $maquinaria->id_maquinaria,
+                    'label' => $maquinaria->modelo ?: 'Sin modelo',
+                    'detalle' => $maquinaria->tipoMaquinaria->nombre ?? null,
+                ])->values()->all(),
+        ]);
     }
 }

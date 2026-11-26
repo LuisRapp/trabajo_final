@@ -1,6 +1,6 @@
 <div>
     <!-- SECCIÓN 2: Registro de Producción -->
-    <x-ui.card class="mb-5 overflow-hidden">
+    <x-ui.card class="mb-5">
         <div class="bg-pino text-blanco px-6 py-4">
             <h5 class="text-lg font-semibold mb-0 flex items-center gap-2">
                 <flux:icon.truck class="size-5" />
@@ -52,57 +52,27 @@
                             Cargando maquinarias...
                         </div>
                         <div wire:loading.remove wire:target="id_lote">
-                            <div class="border border-arena rounded-sm p-3 bg-blanco @error('carga_maquinarias') ring-2 ring-tierra @enderror">
-                                <input autocomplete="off" type="text" wire:model.live.debounce.300ms="busqueda_maquinaria"
-                                    class="form-input mb-2"
-                                    placeholder="Buscar maquinaria...">
-                                <div class="max-h-32 overflow-y-auto">
-                                    @forelse($this->maquinariasCargaFiltrada as $maq)
-                                        <div class="flex items-center mb-2" wire:key="item-{{ $maq->id_maquinaria }}">
-                                            <input autocomplete="off" type="checkbox" value="{{ $maq->id_maquinaria }}" id="maq-{{ $maq->id_maquinaria }}" wire:model="carga_maquinarias" class="h-4 w-4 rounded border-arena text-pino focus:ring-pino">
-                                            <label for="maq-{{ $maq->id_maquinaria }}" class="ml-2 text-sm text-tinta">
-                                                {{ $maq->modelo }} - <small class="text-tinta-suave">{{ $maq->tipoMaquinaria->nombre ?? 'Sin tipo' }}</small>
-                                            </label>
-                                        </div>
-                                    @empty
-                                        <div class="text-tinta-suave text-sm p-2">
-                                            Sin resultados para "{{ $busqueda_maquinaria }}"
-                                        </div>
-                                    @endforelse
-                                </div>
-                            </div>
+                            <x-ui.combobox modelo="carga_maquinarias" :opciones="$opcionesMaquinarias" :seleccionados="$carga_maquinarias"
+                                multiple placeholder="Elegí las máquinas..." />
                             @error('carga_maquinarias') <div class="text-tierra text-sm mt-1">{{ $message }}</div> @enderror
                         </div>
                     </div>
                 </div>
 
-                <!-- Fila 2: Chofer y Cliente con búsqueda -->
+                <!-- Fila 2: Destino y chofer -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div>
-                        <label class="block text-sm font-semibold text-tinta mb-2">Chofer <span class="text-tierra">*</span></label>
-                        <input autocomplete="off" type="text" wire:model.live.debounce.500ms="busqueda_chofer" class="form-input mb-2 @error('carga_id_chofer') ring-2 ring-tierra @enderror" placeholder="Buscar chofer...">
-                        <select wire:model="carga_id_chofer" @disabled(! $carga_destino) class="form-input disabled:cursor-not-allowed disabled:bg-corteza-suave">
-                            <option value="">{{ $carga_destino ? 'Seleccione...' : 'Primero elegí el destino' }}</option>
-                            @forelse($this->choferesFiltrados as $chofer)
-                                <option value="{{ $chofer->id_chofer }}" wire:key="option-{{ $chofer->id_chofer }}">{{ $chofer->apellido }}, {{ $chofer->nombre }}</option>
-                            @empty
-                                <option value="" disabled>Sin choferes para este cliente</option>
-                            @endforelse
-                        </select>
-                        @error('carga_id_chofer') <div class="text-tierra text-sm mt-1">{{ $message }}</div> @enderror
+                        <label class="block text-sm font-semibold text-tinta mb-2">Destino (Cliente) <span class="text-tierra">*</span></label>
+                        <x-ui.combobox modelo="carga_destino" :opciones="$opcionesClientes" :seleccion="$carga_destino"
+                            placeholder="Elegí el destino..." />
+                        @error('carga_destino') <div class="text-tierra text-sm mt-1">{{ $message }}</div> @enderror
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold text-tinta mb-2">Destino (Cliente) <span class="text-tierra">*</span></label>
-                        <input autocomplete="off" type="text" wire:model.live.debounce.500ms="busqueda_cliente" class="form-input mb-2 @error('carga_destino') ring-2 ring-tierra @enderror" placeholder="Buscar cliente...">
-                        <select wire:model.live="carga_destino" class="form-input">
-                            <option value="">Seleccione el destino...</option>
-                            @forelse($this->clientesFiltrados as $cliente)
-                                <option value="{{ $cliente->id_cliente }}" wire:key="option-{{ $cliente->id_cliente }}">{{ $cliente->razon_social }}</option>
-                            @empty
-                                <option value="" disabled>No hay resultados</option>
-                            @endforelse
-                        </select>
-                        @error('carga_destino') <div class="text-tierra text-sm mt-1">{{ $message }}</div> @enderror
+                        <label class="block text-sm font-semibold text-tinta mb-2">Chofer <span class="text-tierra">*</span></label>
+                        <x-ui.combobox modelo="carga_id_chofer" :opciones="$opcionesChoferes" :seleccion="$carga_id_chofer"
+                            :deshabilitado="! $carga_destino"
+                            placeholder="{{ $carga_destino ? 'Elegí el chofer...' : 'Primero elegí el destino' }}" />
+                        @error('carga_id_chofer') <div class="text-tierra text-sm mt-1">{{ $message }}</div> @enderror
                     </div>
                 </div>
 
@@ -139,35 +109,16 @@
                 @endif
 
                 <!-- Fila 4: Empleados -->
-                <div class="grid grid-cols-1 gap-4 mb-4">
-                    <div>
-                        <label class="block text-sm font-semibold text-tinta mb-2">Empleados <span class="text-tierra">*</span></label>
-                        <div wire:loading wire:target="id_lote" class="text-center py-2 text-tinta-suave">
-                            <flux:icon.arrow-path class="inline-block size-4 animate-spin" />
-                            Cargando empleados...
-                        </div>
-                        <div wire:loading.remove wire:target="id_lote">
-                            <div class="border border-arena rounded-sm p-3 bg-blanco @error('carga_empleados') ring-2 ring-tierra @enderror">
-                                <input autocomplete="off" type="text" wire:model.live.debounce.300ms="busqueda_empleado"
-                                    class="form-input mb-2"
-                                    placeholder="Buscar empleado...">
-                                <div class="max-h-40 overflow-y-auto">
-                                    @forelse($this->empleadosCargaFiltrados as $emp)
-                                        <div class="flex items-center mb-2" wire:key="item-{{ $emp->id_empleado }}">
-                                            <input autocomplete="off" type="checkbox" value="{{ $emp->id_empleado }}" id="emp-{{ $emp->id_empleado }}" wire:model="carga_empleados" class="h-4 w-4 rounded border-arena text-pino focus:ring-pino">
-                                            <label for="emp-{{ $emp->id_empleado }}" class="ml-2 text-sm text-tinta">
-                                                {{ $emp->apellido }}, {{ $emp->nombre }} - <small class="text-tinta-suave">{{ $emp->rolLaboral->nombre ?? 'Sin rol' }}</small>
-                                            </label>
-                                        </div>
-                                    @empty
-                                        <div class="text-tinta-suave text-sm p-2">
-                                            Sin resultados para "{{ $busqueda_empleado }}"
-                                        </div>
-                                    @endforelse
-                                </div>
-                            </div>
-                            @error('carga_empleados') <div class="text-tierra text-sm mt-1">{{ $message }}</div> @enderror
-                        </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-semibold text-tinta mb-2">Empleados <span class="text-tierra">*</span></label>
+                    <div wire:loading wire:target="id_lote" class="text-center py-2 text-tinta-suave">
+                        <flux:icon.arrow-path class="inline-block size-4 animate-spin" />
+                        Cargando empleados...
+                    </div>
+                    <div wire:loading.remove wire:target="id_lote">
+                        <x-ui.combobox modelo="carga_empleados" :opciones="$opcionesEmpleados" :seleccionados="$carga_empleados"
+                            multiple placeholder="Elegí los operarios..." />
+                        @error('carga_empleados') <div class="text-tierra text-sm mt-1">{{ $message }}</div> @enderror
                     </div>
                 </div>
 
