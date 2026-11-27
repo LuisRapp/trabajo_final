@@ -103,7 +103,8 @@
                             <tr>
                                 <th>ID</th>
                                 <th>Empleado</th>
-                                <th>Monto</th>
+                                <th class="text-right">Monto</th>
+                                <th class="text-right">Saldo</th>
                                 <th>Fecha Adelanto</th>
                                 <th>Estado</th>
                                 <th class="text-right">Acciones</th>
@@ -114,7 +115,8 @@
                                 <tr wire:key="row-{{ $adelanto->id_adelanto }}">
                                     <td><x-ui.badge variant="neutral">{{ $adelanto->id_adelanto }}</x-ui.badge></td>
                                     <td class="font-medium text-tinta">{{ $adelanto->empleado?->apellido ?? 'N/A' }}, {{ $adelanto->empleado?->nombre ?? '' }}</td>
-                                    <td class="text-tinta-suave">${{ number_format($adelanto->monto, 2, ',', '.') }}</td>
+                                    <td class="text-right text-tinta-suave">${{ number_format($adelanto->monto, 2, ',', '.') }}</td>
+                                    <td class="text-right {{ $adelanto->saldoPendiente() > 0 ? 'font-semibold text-tierra' : 'text-tinta-suave' }}">${{ number_format($adelanto->saldoPendiente(), 2, ',', '.') }}</td>
                                     <td class="text-tinta-suave">{{ $adelanto->fecha_emision ? \Carbon\Carbon::parse($adelanto->fecha_emision)->format('d/m/Y') : 'N/A' }}</td>
                                     <td>
                                         @if($adelanto->estado === 'pendiente')
@@ -146,7 +148,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="text-center py-12 text-tinta-suave">
+                                    <td colspan="7" class="text-center py-12 text-tinta-suave">
                                         No hay adelantos registrados.
                                     </td>
                                 </tr>

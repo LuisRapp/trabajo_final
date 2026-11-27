@@ -197,19 +197,22 @@ class EmpleadoPagoService
      *
      * @throws \Exception Si ocurre un error de base de datos (transacción revertida)
      */
-    public static function generarRecibo(int $idEmpleado, float $montoBruto, float $descuentos, string $observaciones, $adelantosPendientes): Recibo
+    public static function generarRecibo(int $idEmpleado, float $montoBruto, float $otrosDescuentos, string $observaciones, $adelantosPendientes): Recibo
     {
-        $totalAdelantos = collect($adelantosPendientes)->sum(fn ($adelanto) => (float) $adelanto->monto);
+        $otros = max(0, round($otrosDescuentos, 2));
 
-        if ($totalAdelantos > 0 && $descuentos + 0.001 < $totalAdelantos) {
-            throw new \DomainException('Los descuentos no cubren los adelantos pendientes. Ajustá el descuento antes de generar el recibo.');
+        if ($otros > $montoBruto) {
+            throw new \DomainException('Los descuentos no pueden superar el monto bruto de la liquidación.');
         }
-
-        $montoNeto = max(0, $montoBruto - $descuentos);
 
         DB::beginTransaction();
 
         try {
+            $disponible = min(self::topeAdelanto($montoBruto), max(0, $montoBruto - $otros));
+            $aplicado = self::aplicarAdelantos($adelantosPendientes ?? collect(), $disponible)['aplicado'];
+            $descuentos = round($aplicado + $otros, 2);
+            $montoNeto = max(0, round($montoBruto - $descuentos, 2));
+
             $recibo = Recibo::create([
                 'id_empleado' => $idEmpleado,
                 'fecha_emision' => now(),
@@ -218,13 +221,6 @@ class EmpleadoPagoService
                 'monto' => $montoNeto,
                 'observaciones' => $observaciones,
             ]);
-
-            if ($adelantosPendientes && count($adelantosPendientes) > 0) {
-                foreach ($adelantosPendientes as $adelanto) {
-                    $adelanto->estado = 'pagado';
-                    $adelanto->save();
-                }
-            }
 
             DB::commit();
 
@@ -272,13 +268,13 @@ class EmpleadoPagoService
 
                 $adelantosPendientes = Adelanto::where('id_empleado', $empleado->id_empleado)
                     ->where('estado', 'pendiente')
-                    ->whereBetween('fecha_emision', [$fechaInicio, $fechaFin])
+                    ->orderBy('fecha_emision')
                     ->get();
 
-                $totalAdelantos = $adelantosPendientes->sum('monto');
                 $montoBruto = $calculo['total_pagar_final'];
-                $descuentos = $totalAdelantos;
-                $montoNeto = max(0, $montoBruto - $descuentos);
+                $aplicado = self::aplicarAdelantos($adelantosPendientes, self::topeAdelanto($montoBruto));
+                $descuentos = $aplicado['aplicado'];
+                $montoNeto = max(0, round($montoBruto - $descuentos, 2));
 
                 $obsBase = sprintf(
                     'Liquidación período %s a %s - %d días caídos + %.2f ton',
@@ -288,8 +284,8 @@ class EmpleadoPagoService
                     $calculo['total_peso_toneladas'] ?? 0
                 );
 
-                if ($totalAdelantos > 0) {
-                    $obsBase .= sprintf(' | Adelantos: $%.2f', $totalAdelantos);
+                if ($descuentos > 0) {
+                    $obsBase .= sprintf(' | Adelantos: $%.2f', $descuentos);
                 }
 
                 $recibo = Recibo::create([
@@ -301,17 +297,10 @@ class EmpleadoPagoService
                     'observaciones' => $obsBase,
                 ]);
 
-                if ($adelantosPendientes->isNotEmpty()) {
-                    foreach ($adelantosPendientes as $adelanto) {
-                        $adelanto->estado = 'pagado';
-                        $adelanto->save();
-                    }
-                }
-
                 $recibos[] = [
                     'recibo' => $recibo,
                     'empleado' => $empleado,
-                    'adelantos_descontados' => $adelantosPendientes->count(),
+                    'adelantos_descontados' => $aplicado['cantidad'],
                 ];
             }
 
@@ -335,9 +324,11 @@ class EmpleadoPagoService
      */
     public static function promedioLiquidaciones(Empleado $empleado): float
     {
+        // Sobre el bruto: el adelanto no debe reducir el promedio que habilita
+        // nuevos adelantos (LCT art. 130 apunta al salario, no al neto ya descontado).
         return round((float) Recibo::query()
             ->where('id_empleado', $empleado->id_empleado)
-            ->avg('monto'), 2);
+            ->avg('monto_bruto'), 2);
     }
 
     /**
@@ -356,7 +347,55 @@ class EmpleadoPagoService
             $query->where('id_adelanto', '!=', $excluirId);
         }
 
-        return round((float) $query->sum('monto'), 2);
+        return round((float) $query->get()->sum(fn ($adelanto) => $adelanto->saldoPendiente()), 2);
+    }
+
+    /**
+     * Tope de descuento por liquidacion: 50% del monto bruto.
+     */
+    private static function topeAdelanto(float $montoBruto): float
+    {
+        return round(max(0, $montoBruto) * 0.5, 2);
+    }
+
+    /**
+     * Aplica el saldo disponible sobre los adelantos pendientes, del mas
+     * antiguo al mas nuevo. Un adelanto solo pasa a 'pagado' cuando su saldo
+     * queda en cero; si no alcanza, el resto se arrastra a la proxima.
+     *
+     * @param  \Illuminate\Support\Collection<int, Adelanto>  $adelantos
+     * @return array{aplicado: float, cantidad: int}
+     */
+    private static function aplicarAdelantos($adelantos, float $disponible): array
+    {
+        $aplicado = 0.0;
+        $cantidad = 0;
+
+        foreach ($adelantos as $adelanto) {
+            if ($disponible <= 0) {
+                break;
+            }
+
+            $saldo = $adelanto->saldoPendiente();
+
+            if ($saldo <= 0) {
+                $adelanto->estado = 'pagado';
+                $adelanto->save();
+
+                continue;
+            }
+
+            $tomar = min($saldo, $disponible);
+            $adelanto->monto_descontado = round((float) $adelanto->monto_descontado + $tomar, 2);
+            $adelanto->estado = $adelanto->saldoPendiente() <= 0.009 ? 'pagado' : 'pendiente';
+            $adelanto->save();
+
+            $aplicado += $tomar;
+            $cantidad++;
+            $disponible -= $tomar;
+        }
+
+        return ['aplicado' => round($aplicado, 2), 'cantidad' => $cantidad];
     }
 
     /**

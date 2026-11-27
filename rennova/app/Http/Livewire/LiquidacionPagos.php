@@ -33,6 +33,10 @@ class LiquidacionPagos extends Component
 
     public $total_adelantos = 0;
 
+    public $saldo_adelantos = 0;
+
+    public $descuento_adelantos = 0;
+
     // Datos editables para el recibo
     public $monto_bruto;
 
@@ -112,18 +116,21 @@ class LiquidacionPagos extends Component
             $this->fecha_fin
         );
 
-        // Buscar adelantos pendientes en el rango de fechas
+        // Adelantos pendientes: todos, no solo los del periodo, porque el
+        // saldo se arrastra a la liquidacion siguiente.
         $this->adelantos_pendientes = Adelanto::where('id_empleado', $this->id_empleado)
             ->where('estado', 'pendiente')
-            ->whereBetween('fecha_emision', [$this->fecha_inicio, $this->fecha_fin])
+            ->orderBy('fecha_emision')
             ->get();
 
-        $this->total_adelantos = $this->adelantos_pendientes->sum('monto');
+        $this->saldo_adelantos = round($this->adelantos_pendientes->sum(fn ($adelanto) => $adelanto->saldoPendiente()), 2);
+        $this->total_adelantos = $this->saldo_adelantos;
 
         // Cargar valores editables
         $this->monto_bruto = $this->calculo['total_pagar_final'];
-        $this->descuentos = $this->total_adelantos; // Descuento automático por adelantos
-        $this->monto_neto = max(0, $this->monto_bruto - $this->descuentos);
+        $this->descuentos = 0; // otros descuentos; el de adelantos se calcula
+        $this->descuento_adelantos = min($this->saldo_adelantos, round($this->monto_bruto * 0.5, 2));
+        $this->monto_neto = max(0, $this->monto_bruto - $this->descuento_adelantos - $this->descuentos);
 
         // Generar observaciones automáticas
         $obs_base = sprintf(
@@ -134,8 +141,8 @@ class LiquidacionPagos extends Component
             $this->calculo['total_peso_toneladas'] ?? 0
         );
 
-        if ($this->total_adelantos > 0) {
-            $obs_base .= sprintf(' | Adelantos: $%.2f', $this->total_adelantos);
+        if ($this->descuento_adelantos > 0) {
+            $obs_base .= sprintf(' | Adelantos: $%.2f', $this->descuento_adelantos);
         }
 
         $this->observaciones = $obs_base;
@@ -209,7 +216,9 @@ class LiquidacionPagos extends Component
 
     private function calcularMontoNeto()
     {
-        $this->monto_neto = max(0, ($this->monto_bruto ?? 0) - ($this->descuentos ?? 0));
+        $bruto = (float) ($this->monto_bruto ?? 0);
+        $this->descuento_adelantos = min((float) $this->saldo_adelantos, round($bruto * 0.5, 2));
+        $this->monto_neto = max(0, round($bruto - $this->descuento_adelantos - (float) ($this->descuentos ?? 0), 2));
     }
 
     public function generarRecibo()
@@ -234,9 +243,12 @@ class LiquidacionPagos extends Component
             $this->recibo_generado_id = $recibo->id_recibo;
 
             $mensaje = 'Recibo #'.$recibo->id_recibo.' generado correctamente.';
-            $cantidadAdelantos = count($this->adelantos_pendientes ?? []);
-            if ($cantidadAdelantos > 0) {
-                $mensaje .= ' Se marcaron '.$cantidadAdelantos.' adelanto(s) como pagado(s).';
+            if ($this->descuento_adelantos > 0) {
+                $restante = round($this->saldo_adelantos - $this->descuento_adelantos, 2);
+                $mensaje .= ' Se descontaron $'.number_format($this->descuento_adelantos, 2, ',', '.').' de adelantos';
+                $mensaje .= $restante > 0
+                    ? '; quedan $'.number_format($restante, 2, ',', '.').' pendientes.'
+                    : ' y quedaron saldados.';
             }
 
             $this->enviarReciboPorEmail($recibo);
@@ -297,6 +309,8 @@ class LiquidacionPagos extends Component
             'empleado_seleccionado',
             'adelantos_pendientes',
             'total_adelantos',
+            'saldo_adelantos',
+            'descuento_adelantos',
             'monto_bruto',
             'descuentos',
             'monto_neto',

@@ -96,6 +96,7 @@ class Adelantos extends Component
         );
 
         session()->flash('message', $this->adelanto_id ? 'Adelanto actualizado correctamente.' : 'Adelanto creado correctamente.');
+        $this->tab_activo = 'listado';
         $this->resetCampos();
         $this->dispatch('adelantoGuardado');
     }

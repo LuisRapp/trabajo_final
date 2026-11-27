@@ -19,8 +19,17 @@ class Adelanto extends Model implements Auditable
         'id_empleado',
         'fecha_emision',
         'monto',
+        'monto_descontado',
         'estado',
     ];
+
+    /**
+     * Saldo que falta descontar del adelanto.
+     */
+    public function saldoPendiente(): float
+    {
+        return max(0, round((float) $this->monto - (float) $this->monto_descontado, 2));
+    }
 
     public function empleado()
     {

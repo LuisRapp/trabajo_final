@@ -17,7 +17,7 @@ function crearEmpleadoValido(): Empleado
 function crearLiquidaciones(Empleado $empleado, array $montos): void
 {
     foreach ($montos as $monto) {
-        Recibo::factory()->create(['id_empleado' => $empleado->id_empleado, 'monto' => $monto]);
+        Recibo::factory()->create(['id_empleado' => $empleado->id_empleado, 'monto_bruto' => $monto, 'monto' => $monto]);
     }
 }
 

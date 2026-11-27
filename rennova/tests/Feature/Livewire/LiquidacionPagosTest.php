@@ -242,7 +242,7 @@ class LiquidacionPagosTest extends TestCase
         $this->assertArrayHasKey('tarifa_fija_por_tonelada', $calculo);
     }
 
-    public function test_calcular_liquidacion_loads_pending_advances_in_range(): void
+    public function test_calcular_liquidacion_incluye_adelantos_de_periodos_anteriores(): void
     {
         $fechaInicio = Carbon::now()->startOfMonth()->format('Y-m-d');
         $fechaFin = Carbon::now()->endOfMonth()->format('Y-m-d');
@@ -261,7 +261,7 @@ class LiquidacionPagosTest extends TestCase
             'estado' => 'pendiente',
         ]);
 
-        // Adelanto fuera del rango (no deberia cargarse)
+        // Adelanto de un mes anterior: su saldo se arrastra y se incluye
         Adelanto::create([
             'id_empleado' => $this->empleadoActivo->id_empleado,
             'monto' => 200.00,
@@ -285,8 +285,8 @@ class LiquidacionPagosTest extends TestCase
             ->call('calcularLiquidacion');
 
         $adelantos = $component->get('adelantos_pendientes');
-        $this->assertCount(2, $adelantos);
-        $this->assertEquals(800.00, $component->get('total_adelantos'));
+        $this->assertCount(3, $adelantos);
+        $this->assertEquals(1000.00, $component->get('saldo_adelantos'));
     }
 
     public function test_calcular_liquidacion_prefills_monto_bruto_from_calculation(): void
@@ -302,7 +302,7 @@ class LiquidacionPagosTest extends TestCase
         $this->assertEquals($calculo['total_pagar_final'], $component->get('monto_bruto'));
     }
 
-    public function test_calcular_liquidacion_prefills_descuentos_from_advances(): void
+    public function test_calcular_liquidacion_calcula_el_descuento_por_adelantos_con_tope(): void
     {
         Adelanto::create([
             'id_empleado' => $this->empleadoActivo->id_empleado,
@@ -316,9 +316,12 @@ class LiquidacionPagosTest extends TestCase
             ->set('id_empleado', $this->empleadoActivo->id_empleado)
             ->set('fecha_inicio', Carbon::now()->startOfMonth()->format('Y-m-d'))
             ->set('fecha_fin', Carbon::now()->endOfMonth()->format('Y-m-d'))
-            ->call('calcularLiquidacion');
+            ->call('calcularLiquidacion')
+            ->set('monto_bruto', 3000.00);
 
-        $this->assertEquals(750.00, $component->get('descuentos'));
+        // Tope 50% de 3000 = 1500; el saldo de 750 entra completo.
+        $this->assertEquals(750.00, $component->get('descuento_adelantos'));
+        $this->assertEquals(0.0, $component->get('descuentos'));
     }
 
     public function test_calcular_liquidacion_sets_mostrar_liquidacion_true(): void
@@ -470,7 +473,7 @@ class LiquidacionPagosTest extends TestCase
         $this->assertDatabaseHas('recibos', ['id_empleado' => $this->empleadoActivo->id_empleado]);
     }
 
-    public function test_liquidar_todos_marks_advances_as_pagado(): void
+    public function test_liquidar_todos_no_descuenta_adelantos_si_la_liquidacion_no_tiene_monto(): void
     {
         $adelanto = Adelanto::create([
             'id_empleado' => $this->empleadoActivo->id_empleado,
@@ -487,7 +490,8 @@ class LiquidacionPagosTest extends TestCase
 
         $this->assertDatabaseHas('adelantos', [
             'id_adelanto' => $adelanto->id_adelanto,
-            'estado' => 'pagado',
+            'estado' => 'pendiente',
+            'monto_descontado' => 0,
         ]);
     }
 
@@ -536,10 +540,10 @@ class LiquidacionPagosTest extends TestCase
         $recibo = Recibo::where('id_empleado', $this->empleadoActivo->id_empleado)->first();
         $this->assertNotNull($recibo);
 
-        // Service returns 0 for total_pagar_final (no ParteDiarios in test)
-        // monto_bruto = 0, descuentos = 200 (advances), monto = max(0, 0-200) = 0
+        // Sin produccion el bruto es 0: el tope del 50% es 0, no se descuenta
+        // el adelanto y el recibo queda sin descuentos.
         $this->assertEquals(0, $recibo->monto_bruto);
-        $this->assertEquals(200.00, $recibo->descuentos);
+        $this->assertEquals(0, $recibo->descuentos);
         $this->assertEquals(0, $recibo->monto);
     }
 
@@ -689,13 +693,13 @@ class LiquidacionPagosTest extends TestCase
         $this->assertDatabaseHas('adelantos', ['id_adelanto' => $adelanto2->id_adelanto, 'estado' => 'pagado']);
     }
 
-    public function test_no_genera_recibo_si_los_descuentos_no_cubren_los_adelantos(): void
+    public function test_el_saldo_del_adelanto_se_arrastra_si_no_entra_en_la_liquidacion(): void
     {
         $this->setupComponentForGenerarRecibo();
 
         $adelanto = Adelanto::create([
             'id_empleado' => $this->empleadoActivo->id_empleado,
-            'monto' => 500.00,
+            'monto' => 10000.00,
             'fecha_emision' => Carbon::now()->startOfMonth()->addDays(2)->format('Y-m-d'),
             'estado' => 'pendiente',
         ]);
@@ -703,20 +707,123 @@ class LiquidacionPagosTest extends TestCase
         Livewire::actingAs($this->usuario)
             ->test(LiquidacionPagos::class)
             ->set('empleado_seleccionado', $this->empleadoActivo)
-            ->set('monto_bruto', 15000.00)
-            ->set('descuentos', 100.00)
+            ->set('monto_bruto', 10000.00)
+            ->set('descuentos', 0)
             ->set('observaciones', 'Test')
             ->set('adelantos_pendientes', [$adelanto])
             ->set('fecha_inicio', Carbon::now()->startOfMonth()->format('Y-m-d'))
             ->set('fecha_fin', Carbon::now()->endOfMonth()->format('Y-m-d'))
-            ->call('generarRecibo')
-            ->assertSee('no cubren los adelantos pendientes');
+            ->call('generarRecibo');
 
-        $this->assertDatabaseMissing('recibos', ['id_empleado' => $this->empleadoActivo->id_empleado])
-            ->assertDatabaseHas('adelantos', ['id_adelanto' => $adelanto->id_adelanto, 'estado' => 'pendiente']);
+        $this->assertDatabaseHas('recibos', [
+            'id_empleado' => $this->empleadoActivo->id_empleado,
+            'monto_bruto' => 10000.00,
+            'descuentos' => 5000.00,
+            'monto' => 5000.00,
+        ]);
+
+        $adelanto->refresh();
+        expect((float) $adelanto->monto_descontado)->toBe(5000.0)
+            ->and($adelanto->estado)->toBe('pendiente')
+            ->and($adelanto->saldoPendiente())->toBe(5000.0);
+    }
+
+    public function test_una_segunda_liquidacion_cobra_el_saldo_restante(): void
+    {
+        $this->setupComponentForGenerarRecibo();
+
+        $adelanto = Adelanto::create([
+            'id_empleado' => $this->empleadoActivo->id_empleado,
+            'monto' => 10000.00,
+            'fecha_emision' => Carbon::now()->startOfMonth()->addDays(2)->format('Y-m-d'),
+            'estado' => 'pendiente',
+        ]);
+
+        foreach ([1, 2] as $intento) {
+            Livewire::actingAs($this->usuario)
+                ->test(LiquidacionPagos::class)
+                ->set('empleado_seleccionado', $this->empleadoActivo)
+                ->set('monto_bruto', 10000.00)
+                ->set('descuentos', 0)
+                ->set('observaciones', 'Test '.$intento)
+                ->set('adelantos_pendientes', [$adelanto->fresh()])
+                ->set('fecha_inicio', Carbon::now()->startOfMonth()->format('Y-m-d'))
+                ->set('fecha_fin', Carbon::now()->endOfMonth()->format('Y-m-d'))
+                ->call('generarRecibo');
+        }
+
+        $adelanto->refresh();
+        expect($adelanto->estado)->toBe('pagado')
+            ->and((float) $adelanto->monto_descontado)->toBe(10000.0)
+            ->and($adelanto->saldoPendiente())->toBe(0.0);
+    }
+
+    public function test_aplica_los_adelantos_del_mas_antiguo_al_mas_nuevo(): void
+    {
+        $this->setupComponentForGenerarRecibo();
+
+        $viejo = Adelanto::create([
+            'id_empleado' => $this->empleadoActivo->id_empleado,
+            'monto' => 300.00,
+            'fecha_emision' => Carbon::now()->subDays(10)->format('Y-m-d'),
+            'estado' => 'pendiente',
+        ]);
+        $nuevo = Adelanto::create([
+            'id_empleado' => $this->empleadoActivo->id_empleado,
+            'monto' => 400.00,
+            'fecha_emision' => Carbon::now()->subDay()->format('Y-m-d'),
+            'estado' => 'pendiente',
+        ]);
+
+        Livewire::actingAs($this->usuario)
+            ->test(LiquidacionPagos::class)
+            ->set('empleado_seleccionado', $this->empleadoActivo)
+            ->set('monto_bruto', 1000.00)
+            ->set('descuentos', 0)
+            ->set('observaciones', 'Test')
+            ->set('adelantos_pendientes', [$viejo, $nuevo])
+            ->set('fecha_inicio', Carbon::now()->startOfMonth()->format('Y-m-d'))
+            ->set('fecha_fin', Carbon::now()->endOfMonth()->format('Y-m-d'))
+            ->call('generarRecibo');
+
+        expect($viejo->fresh()->estado)->toBe('pagado')
+            ->and((float) $viejo->fresh()->monto_descontado)->toBe(300.0)
+            ->and($nuevo->fresh()->estado)->toBe('pendiente')
+            ->and((float) $nuevo->fresh()->monto_descontado)->toBe(200.0)
+            ->and($nuevo->fresh()->saldoPendiente())->toBe(200.0);
     }
 
     public function test_el_monto_neto_nunca_queda_negativo(): void
+    {
+        $this->setupComponentForGenerarRecibo();
+
+        $adelanto = Adelanto::create([
+            'id_empleado' => $this->empleadoActivo->id_empleado,
+            'monto' => 5000.00,
+            'fecha_emision' => Carbon::now()->startOfMonth()->addDays(2)->format('Y-m-d'),
+            'estado' => 'pendiente',
+        ]);
+
+        Livewire::actingAs($this->usuario)
+            ->test(LiquidacionPagos::class)
+            ->set('empleado_seleccionado', $this->empleadoActivo)
+            ->set('monto_bruto', 1000.00)
+            ->set('descuentos', 0)
+            ->set('observaciones', 'Test')
+            ->set('adelantos_pendientes', [$adelanto])
+            ->set('fecha_inicio', Carbon::now()->startOfMonth()->format('Y-m-d'))
+            ->set('fecha_fin', Carbon::now()->endOfMonth()->format('Y-m-d'))
+            ->call('generarRecibo');
+
+        $this->assertDatabaseHas('recibos', [
+            'id_empleado' => $this->empleadoActivo->id_empleado,
+            'monto_bruto' => 1000.00,
+            'descuentos' => 500.00,
+            'monto' => 500.00,
+        ]);
+    }
+
+    public function test_no_genera_recibo_con_otros_descuentos_mayores_al_bruto(): void
     {
         $this->setupComponentForGenerarRecibo();
 
@@ -729,14 +836,10 @@ class LiquidacionPagosTest extends TestCase
             ->set('adelantos_pendientes', collect())
             ->set('fecha_inicio', Carbon::now()->startOfMonth()->format('Y-m-d'))
             ->set('fecha_fin', Carbon::now()->endOfMonth()->format('Y-m-d'))
-            ->call('generarRecibo');
+            ->call('generarRecibo')
+            ->assertSee('no pueden superar el monto bruto');
 
-        $this->assertDatabaseHas('recibos', [
-            'id_empleado' => $this->empleadoActivo->id_empleado,
-            'monto_bruto' => 1000.00,
-            'descuentos' => 5000.00,
-            'monto' => 0,
-        ]);
+        $this->assertDatabaseMissing('recibos', ['id_empleado' => $this->empleadoActivo->id_empleado]);
     }
 
     public function test_generar_recibo_dispatches_recibo_generado_event(): void
@@ -991,7 +1094,7 @@ class LiquidacionPagosTest extends TestCase
         $component->assertHasNoErrors(['fecha_fin']);
     }
 
-    public function test_liquidar_todos_only_marks_advances_in_date_range(): void
+    public function test_liquidar_todos_sin_monto_no_toca_adelantos_de_ningun_periodo(): void
     {
         // Advance within range
         $adelantoDentro = Adelanto::create([
@@ -1015,7 +1118,7 @@ class LiquidacionPagosTest extends TestCase
             ->set('fecha_fin', Carbon::now()->endOfMonth()->format('Y-m-d'))
             ->call('liquidarTodos');
 
-        $this->assertDatabaseHas('adelantos', ['id_adelanto' => $adelantoDentro->id_adelanto, 'estado' => 'pagado']);
+        $this->assertDatabaseHas('adelantos', ['id_adelanto' => $adelantoDentro->id_adelanto, 'estado' => 'pendiente']);
         $this->assertDatabaseHas('adelantos', ['id_adelanto' => $adelantoFuera->id_adelanto, 'estado' => 'pendiente']);
     }
 

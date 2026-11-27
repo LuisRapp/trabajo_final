@@ -15,6 +15,7 @@ class AdelantoFactory extends Factory
         return [
             'id_empleado' => Empleado::factory(),
             'monto' => $this->faker->randomFloat(2, 100, 5000),
+            'monto_descontado' => 0,
             'fecha_emision' => $this->faker->dateTimeBetween('-3 months', 'now'),
             'estado' => 'pendiente',
         ];
@@ -24,6 +25,7 @@ class AdelantoFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'estado' => 'pagado',
+            'monto_descontado' => $attributes['monto'] ?? 0,
         ]);
     }
 
@@ -31,6 +33,7 @@ class AdelantoFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'estado' => 'pendiente',
+            'monto_descontado' => 0,
         ]);
     }
 }

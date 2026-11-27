@@ -140,27 +140,27 @@
                                                 <thead>
                                                     <tr>
                                                         <th>Fecha</th>
-                                                        <th class="text-right">Monto</th>
+                                                        <th class="text-right">Saldo</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
                                                     @foreach($adelantos_pendientes as $adelanto)
                                                         <tr wire:key="row-{{ $adelanto->id }}">
                                                             <td>{{ \Carbon\Carbon::parse($adelanto->fecha_emision)->format('d/m/Y') }}</td>
-                                                            <td class="text-right">${{ number_format($adelanto->monto, 2) }}</td>
+                                                            <td class="text-right">${{ number_format($adelanto->saldoPendiente(), 2) }}</td>
                                                         </tr>
                                                     @endforeach
                                                 </tbody>
                                                 <tfoot>
                                                     <tr class="font-semibold bg-resina-suave">
                                                         <td>TOTAL ADELANTOS</td>
-                                                        <td class="text-right">${{ number_format($total_adelantos, 2) }}</td>
+                                                        <td class="text-right">${{ number_format($total_adelantos, 2, ',', '.') }}</td>
                                                     </tr>
                                                 </tfoot>
                                             </table>
                                         </x-ui.table-container>
                                         <x-ui.alert variant="info" class="mt-3" dismissible="false">
-                                            Estos adelantos se descontarán automáticamente y se marcarán como "pagados" al generar el recibo.
+                                            Se descuenta hasta el 50% de esta liquidación. El saldo que quede se arrastra a la próxima.
                                         </x-ui.alert>
                                     </div>
                                 </x-ui.card>
@@ -185,24 +185,24 @@
                                     </div>
 
                                     <div>
-                                        <label for="descuentos" class="block text-sm font-semibold text-tinta mb-2">
-                                            Descuentos
-                                            @if($total_adelantos > 0)
-                                                <x-ui.badge variant="warning" class="ml-2">
-                                                    Incluye adelantos
-                                                </x-ui.badge>
+                                        <label class="block text-sm font-semibold text-tinta mb-2">Descuento por adelantos</label>
+                                        <div class="rounded-sm border border-arena bg-hueso px-4 py-3 text-sm font-semibold text-tinta">
+                                            ${{ number_format($descuento_adelantos, 2, ',', '.') }}
+                                        </div>
+                                        <p class="mt-1 text-xs text-tinta-suave">
+                                            Hasta el 50% de la liquidación. Saldo de adelantos: ${{ number_format($saldo_adelantos, 2, ',', '.') }}.
+                                            @if($saldo_adelantos > $descuento_adelantos)
+                                                Quedan ${{ number_format($saldo_adelantos - $descuento_adelantos, 2, ',', '.') }} para la próxima.
                                             @endif
-                                        </label>
+                                        </p>
+                                    </div>
+
+                                    <div>
+                                        <label for="descuentos" class="block text-sm font-semibold text-tinta mb-2">Otros descuentos</label>
                                         <input autocomplete="off" type="number" wire:model.live="descuentos" id="descuentos" step="0.1" min="0"
                                             class="form-input @error('descuentos') border-tierra bg-tierra-suave @enderror">
                                         @error('descuentos') <p class="mt-1 text-xs text-tierra">{{ $message }}</p> @enderror
-                                        <p class="mt-1 text-xs text-tinta-suave">
-                                            @if($total_adelantos > 0)
-                                                Adelantos del período: ${{ number_format($total_adelantos, 2) }} (se marcarán como pagados)
-                                            @else
-                                                Otros descuentos: retenciones, etc.
-                                            @endif
-                                        </p>
+                                        <p class="mt-1 text-xs text-tinta-suave">Retenciones u otros conceptos. Los adelantos se descuentan aparte.</p>
                                     </div>
 
                                     <div>
