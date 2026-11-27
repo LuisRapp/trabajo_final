@@ -24,7 +24,7 @@ class Usuarios extends Component
 
     public $telefono;
 
-    public $activo;
+    public $activo = 1;
 
     public $busqueda = '';
 
@@ -110,5 +110,6 @@ class Usuarios extends Component
     public function resetCampos()
     {
         $this->reset(['usuario_id', 'nombre', 'apellido', 'email', 'password', 'password_confirmation', 'telefono', 'activo']);
+        $this->activo = 1;
     }
 }

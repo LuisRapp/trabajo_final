@@ -77,3 +77,19 @@ test('puede eliminar un usuario', function () {
 
     expect($target->fresh()->trashed())->toBeTrue();
 });
+
+test('crea un usuario activo sin tocar el estado', function () {
+    $user = usuarioConPermisos(['gestionar-usuarios', 'crear-usuarios']);
+
+    Livewire::actingAs($user)
+        ->test(Usuarios::class)
+        ->set('nombre', 'Nuevo')
+        ->set('apellido', 'Usuario')
+        ->set('email', 'nuevo.activo@example.com')
+        ->set('password', 'secret123')
+        ->set('password_confirmation', 'secret123')
+        ->call('guardar')
+        ->assertHasNoErrors();
+
+    expect(Usuario::where('email', 'nuevo.activo@example.com')->exists())->toBeTrue();
+});
