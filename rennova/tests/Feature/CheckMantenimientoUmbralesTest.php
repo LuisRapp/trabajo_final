@@ -201,3 +201,19 @@ test('check-umbrales programa la orden por clima cuando hay lluvia en la ventana
         ->and($orden->estado)->toBe('programado')
         ->and($orden->fecha_programada)->not->toBeNull();
 });
+
+test('check-umbrales falla cuando no hay tipo preventivo en el catalogo', function () {
+    TipoMantenimiento::query()->forceDelete();
+
+    Maquinaria::factory()->create([
+        'estado' => 'disponible',
+        'umbral_toneladas' => 1000,
+        'toneladas_acumuladas' => 1500,
+    ]);
+
+    $this->artisan('mantenimiento:check-umbrales')
+        ->expectsOutputToContain('No hay un tipo de mantenimiento preventivo')
+        ->assertExitCode(1);
+
+    expect(Mantenimiento::query()->count())->toBe(0);
+});

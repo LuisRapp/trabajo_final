@@ -72,8 +72,11 @@ Lo que hace el entrypoint en el arranque, en orden:
 3. Espera a que Postgres responda (máximo 60 s; si no, el contenedor falla).
 4. `php artisan migrate --force` — **sin `|| true`**: si migra mal, el
    despliegue está mal y el contenedor no queda arriba como si estuviera sano.
-5. Arranca `cron` (scheduler) y el worker de cola en background.
-6. Levanta Apache.
+5. `php artisan db:seed --class=CatalogoMantenimientoSeeder --force` — catálogo
+   de referencia (tipos Preventivo y Correctivo) que necesita el proceso
+   automático de mantenimiento. Es idempotente.
+6. Arranca `cron` (scheduler) y el worker de cola en background.
+7. Levanta Apache.
 
 ## 3. Verificación post-despliegue
 
@@ -89,6 +92,8 @@ Checklist:
 
 - [ ] La app responde en `http://localhost:8080` y el login funciona.
 - [ ] Las migraciones corrieron sin error (log de `app` al arrancar).
+- [ ] El catálogo de mantenimiento existe:
+      `php artisan tinker --execute="echo App\Models\TipoMantenimiento::count();"` → 2.
 - [ ] `php artisan schedule:list` muestra las 5 tareas programadas (abajo).
 - [ ] El worker de cola está corriendo (ver sección siguiente).
 

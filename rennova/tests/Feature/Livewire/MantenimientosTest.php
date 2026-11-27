@@ -8,6 +8,7 @@ use App\Models\KitMantenimientoPreventivo;
 use App\Models\Mantenimiento;
 use App\Models\Maquinaria;
 use App\Models\NotificacionSistema;
+use App\Models\PropuestaCompraMantenimiento;
 use App\Models\TipoMantenimiento;
 use App\Models\Usuario;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -229,6 +230,35 @@ class MantenimientosTest extends TestCase
             'id_mantenimiento' => $mantenimiento->id_mantenimiento,
             'estado' => 'en curso',
         ]);
+    }
+
+    public function test_confirmar_desde_la_pantalla_verifica_el_kit_y_genera_la_propuesta_de_compra(): void
+    {
+        $maquinaria = Maquinaria::factory()->create();
+        $mantenimiento = Mantenimiento::factory()->programado()->create([
+            'id_maquinaria' => $maquinaria->id_maquinaria,
+        ]);
+
+        $insumo = Insumo::factory()->create();
+
+        KitMantenimientoPreventivo::factory()->create([
+            'id_tipo_maquinaria' => $maquinaria->id_tipo_maquinaria,
+            'id_insumo' => $insumo->id_insumo,
+            'cantidad_requerida' => 10,
+            'es_obligatorio' => true,
+        ]);
+
+        Livewire::actingAs($this->usuario)
+            ->test(Mantenimientos::class)
+            ->call('confirmarMantenimiento', $mantenimiento->id_mantenimiento)
+            ->assertSee('se generó la propuesta de compra');
+
+        expect($mantenimiento->fresh()->estado)->toBe('en curso')
+            ->and(
+                PropuestaCompraMantenimiento::query()
+                    ->where('id_mantenimiento', $mantenimiento->id_mantenimiento)
+                    ->exists()
+            )->toBeTrue();
     }
 
     public function test_confirmar_mantenimiento_no_programado_falla(): void

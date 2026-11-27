@@ -620,45 +620,32 @@ class MantenimientoService
      *
      * @return array{success: bool, mantenimiento?: Mantenimiento, message?: string}
      */
+    /**
+     * Confirma una orden programada y la pasa a "en curso".
+     *
+     * Delega en aprobarMantenimiento para que la aprobacion tenga una sola
+     * regla en todo el sistema: verificar el stock del kit y generar la
+     * propuesta de compra cuando falta. Marca la notificacion como accionada.
+     *
+     * @return array{success: bool, mantenimiento?: Mantenimiento, compra_generada?: bool, message?: string}
+     */
     public function confirmarMantenimiento(int $id, ?int $usuarioId = null): array
     {
-        try {
-            return DB::transaction(function () use ($id, $usuarioId) {
-                $mantenimiento = Mantenimiento::findOrFail($id);
+        $resultado = $this->aprobarMantenimiento($id);
 
-                if ($mantenimiento->estado !== 'programado') {
-                    return [
-                        'success' => false,
-                        'message' => 'Solo se pueden confirmar mantenimientos en estado programado.',
-                    ];
-                }
-
-                $mantenimiento->update([
-                    'estado' => 'en curso',
-                    'fecha_inicio' => now()->toDateString(),
-                ]);
-
-                if ($usuarioId) {
-                    $this->marcarNotificacionComoAccionada($mantenimiento->id_mantenimiento, $usuarioId);
-                }
-
-                return [
-                    'success' => true,
-                    'mantenimiento' => $mantenimiento->fresh(),
-                    'message' => "Mantenimiento #{$id} confirmado y en curso.",
-                ];
-            });
-        } catch (\Exception $e) {
-            Log::error('Error confirmando mantenimiento', [
-                'mantenimiento_id' => $id,
-                'error' => $e->getMessage(),
-            ]);
-
-            return [
-                'success' => false,
-                'message' => 'Error al confirmar el mantenimiento. Intente nuevamente o contacte al administrador.',
-            ];
+        if (! $resultado['success']) {
+            return $resultado;
         }
+
+        if ($usuarioId) {
+            $this->marcarNotificacionComoAccionada($id, $usuarioId);
+        }
+
+        $resultado['message'] = $resultado['compra_generada']
+            ? "Mantenimiento #{$id} aprobado y en curso. Faltaban insumos del kit: se generó la propuesta de compra."
+            : "Mantenimiento #{$id} aprobado y en curso.";
+
+        return $resultado;
     }
 
     /**

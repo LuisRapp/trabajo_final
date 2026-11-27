@@ -57,6 +57,10 @@ fi
 # contenedor no debe quedar arriba como si estuviera sano.
 como_usuario_app php artisan migrate --force
 
+# Catalogo de referencia que necesita el proceso automatico de mantenimiento
+# (tipo preventivo y correctivo). Es idempotente: no duplica ni pisa datos.
+como_usuario_app php artisan db:seed --class=CatalogoMantenimientoSeeder --force
+
 service cron start
 
 # Worker de cola en background: procesa jobs encolados (asignacion automatica,

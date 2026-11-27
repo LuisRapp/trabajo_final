@@ -63,6 +63,7 @@ class ProcesoMantenimientoService
     {
         return TipoMantenimiento::query()
             ->whereLike('nombre', '%preventivo%')
+            ->orderBy('id_tipo_mantenimiento')
             ->first();
     }
 

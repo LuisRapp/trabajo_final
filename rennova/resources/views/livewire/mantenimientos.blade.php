@@ -204,7 +204,7 @@
                                         <div class="flex gap-1 justify-center">
                                             @if($isProgramado)
                                                 @can('confirmar-mantenimiento')
-                                                <x-ui.button size="sm" variant="secondary" icon="check" wire:click="confirmarMantenimiento({{ $mantenimiento->id_mantenimiento }})" title="Confirmar realizacion" />
+                                                <x-ui.button size="sm" variant="secondary" icon="check" wire:click="confirmarMantenimiento({{ $mantenimiento->id_mantenimiento }})" title="Aprobar y verificar stock del kit" />
                                                 @endcan
                                             @endif
                                             @if($isVencido)

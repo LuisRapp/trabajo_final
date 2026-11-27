@@ -31,9 +31,10 @@ class CheckMantenimientoUmbrales extends Command
 
         $tipoPreventivo = $servicio->obtenerTipoPreventivo();
         if (! $tipoPreventivo) {
-            $this->error('No existe tipo de mantenimiento preventivo configurado.');
+            $this->error('No hay un tipo de mantenimiento preventivo en el catalogo (el nombre debe contener "preventivo").');
+            $this->line('Crealo con: php artisan db:seed --class=CatalogoMantenimientoSeeder');
 
-            return self::SUCCESS;
+            return self::FAILURE;
         }
 
         $ordenesGeneradas = 0;
