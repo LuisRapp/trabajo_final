@@ -46,7 +46,7 @@
                     <div>
                         <label class="block text-xs font-semibold text-tinta mb-1.5">Motivo <span class="text-tierra">*</span></label>
                         <select wire:model="movimiento_motivo" class="form-input @error('movimiento_motivo') border-tierra bg-tierra-suave @enderror">
-                            <option value="Produccion">Produccion</option>
+                            <option value="Producción">Producción</option>
                             <option value="Mantenimiento">Mantenimiento</option>
                             <option value="Varios">Varios</option>
                         </select>

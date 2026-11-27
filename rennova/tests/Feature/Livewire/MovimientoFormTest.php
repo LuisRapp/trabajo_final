@@ -87,6 +87,20 @@ class MovimientoFormTest extends TestCase
             ->assertSee('Sin movimientos registrados');
     }
 
+    public function test_el_motivo_por_defecto_coincide_con_la_opcion_del_select(): void
+    {
+        // Regresion: el select ofrecia value="Produccion" (sin tilde) mientras
+        // la regla y el default usan "Producción" (con tilde). Al elegir la
+        // opcion, la validacion in:Producción la rechazaba.
+        Livewire::actingAs($this->usuario)
+            ->test(MovimientoForm::class, [
+                'insumos' => $this->getInsumos(),
+            ])
+            ->assertSet('movimiento_motivo', 'Producción')
+            ->assertSee('value="Producción"', false)
+            ->assertDontSee('value="Produccion"', false);
+    }
+
     // ================================================================
     // AGREGAR MOVIMIENTO
     // ================================================================
