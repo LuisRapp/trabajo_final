@@ -31,6 +31,9 @@ class ClimaApiService
             'daily' => 'precipitation_sum,cloudcover_mean,wind_speed_10m_max,et0_fao_evapotranspiration',
             'hourly' => 'precipitation',
             'timezone' => self::TIMEZONE,
+            // El dia anterior es necesario para calcular la saturacion y el
+            // barro del primer dia pronosticado (lluvia de ayer).
+            'past_days' => 1,
             'forecast_days' => (int) app(ClimaConfiguracionService::class)->valor('forecast_dias', self::DIAS_FORECAST),
         ];
 

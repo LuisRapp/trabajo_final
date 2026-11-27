@@ -38,7 +38,7 @@ class ClimaAnalisisService
      *               'dias_operativos_previos' => int (días operativos antes del Día Cero)
      *               ]
      */
-    public function mapearDiasInactivos(array $pronostico, bool $ignorarFinDeSemana = false, ?Lote $lote = null): array
+    public function mapearDiasInactivos(array $pronostico, bool $ignorarFinDeSemana = false, ?Lote $lote = null, int $diasPrevios = 0): array
     {
         $fechas = $pronostico['daily']['time'] ?? [];
         $precipitaciones = $pronostico['daily']['precipitation_sum'] ?? [];
@@ -85,6 +85,14 @@ class ClimaAnalisisService
         }
 
         foreach ($fechas as $index => $fechaStr) {
+            // Los primeros dias son auxiliares: aportan su lluvia a la
+            // saturacion del primer dia pronosticado, pero no se emiten ni
+            // cuentan como dias operativos.
+            if ($index < $diasPrevios) {
+                continue;
+            }
+
+            $posicion = $index - $diasPrevios;
             $fecha = Carbon::parse($fechaStr);
             $mm = $precipitaciones[$index] ?? 0;
             $cloudCover = $nubosidades[$index] ?? 0;
@@ -111,7 +119,11 @@ class ClimaAnalisisService
             $ayerKey = $index > 0 ? Carbon::parse($fechas[$index - 1])->toDateString() : null;
             $madrugadaAyer = $ayerKey ? ($lluviaPorFecha[$ayerKey]['madrugada'] ?? 0) : 0;
             $lluviaDiurnaAyer = $ayerKey ? ($lluviaPorFecha[$ayerKey]['diurna'] ?? 0) : 0;
-            $lluviaRealAyer = ($lluviaAyer >= $umbralLluvia) && ($madrugadaAyer > $umbralMadrugada || $lluviaDiurnaAyer > $umbralDiurna);
+            $lluviaNocturnaAyer = $ayerKey ? ($lluviaPorFecha[$ayerKey]['nocturna'] ?? 0) : 0;
+            // La lluvia de la tarde/noche de ayer tambien deja barro a la
+            // manana siguiente: cuenta igual que la de madrugada o diurna.
+            $lluviaRealAyer = ($lluviaAyer >= $umbralLluvia)
+                && ($madrugadaAyer > $umbralMadrugada || $lluviaDiurnaAyer > $umbralDiurna || $lluviaNocturnaAyer > $umbralDiurna);
             $lluviaRealHoy = ($mm >= $umbralLluvia) && ($madrugada > $umbralMadrugada || $lluviaDiurna > $umbralDiurna);
 
             // Analizar estado del día
@@ -132,7 +144,7 @@ class ClimaAnalisisService
                     : 'Lluvia diurna activa';
 
                 if ($diaCeroIndex === null) {
-                    $diaCeroIndex = $index;
+                    $diaCeroIndex = $posicion;
                 }
 
                 $totalDiasPerdidos++;
@@ -148,7 +160,7 @@ class ClimaAnalisisService
                     $razon = 'Saturación alta + nubosidad + poco viento';
 
                     if ($diaCeroIndex === null) {
-                        $diaCeroIndex = $index;
+                        $diaCeroIndex = $posicion;
                     }
 
                     $totalDiasPerdidos++;
@@ -170,7 +182,7 @@ class ClimaAnalisisService
                 'saturacion_index' => round($saturacionIndex, 2),
                 'estado' => $estado,
                 'razon' => $razon,
-                'index' => $index,
+                'index' => $posicion,
             ];
         }
 

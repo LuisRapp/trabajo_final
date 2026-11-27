@@ -98,7 +98,7 @@ class ClimaDecisionService
             }
 
             // 2. PASO A: Mapeo de Días Inactivos (Futuro)
-            $analisisDias = $this->analisisService->mapearDiasInactivos($pronostico, false, $lote);
+            $analisisDias = $this->analisisService->mapearDiasInactivos($pronostico, false, $lote, 1);
             $this->persistenciaService->persistirDiasDetalle($lote, $analisisDias['dias_detalle'], 'api', null);
 
             // 3. Determinar estrategia según ventanas operativas disponibles
@@ -144,7 +144,7 @@ class ClimaDecisionService
             ];
         }
 
-        $analisisDias = $this->analisisService->mapearDiasInactivos($pronostico, false, $lote);
+        $analisisDias = $this->analisisService->mapearDiasInactivos($pronostico, false, $lote, 1);
         $this->persistenciaService->persistirDiasDetalle($lote, $analisisDias['dias_detalle'], 'api', null);
 
         return [
