@@ -95,8 +95,15 @@ class SelectorLote extends Component
                         default => isset($dia['razon']) && str_contains($dia['razon'], 'Lluvia') ? 'storm' : 'cloud',
                     };
 
+                    // El nombre del dia se calcula desde la fecha con locale es:
+                    // el servicio puede devolver el dato cacheado en ingles.
+                    $diaSemana = $fechaDia
+                        ? ucfirst(rtrim($fechaDia->copy()->locale('es')->isoFormat('ddd'), '.'))
+                        : ucfirst(mb_substr((string) ($dia['dia_semana'] ?? ''), 0, 3, 'UTF-8'));
+
                     $pronosticoFormateado[] = [
-                        'label' => ucfirst(mb_substr($dia['dia_semana'], 0, 3, 'UTF-8')).' ('.$dia['fecha_str'].')',
+                        'fecha' => $fechaDia?->toDateString(),
+                        'label' => $diaSemana.' ('.$dia['fecha_str'].')',
                         'estado' => match (true) {
                             $noLaboral => 'NO LABORAL',
                             $estado === 'INACTIVO' => 'NO OPERATIVO',
@@ -116,12 +123,48 @@ class SelectorLote extends Component
                 fn (array $dia): bool => $dia['inactivo']
             ));
 
+            $datos = $climaData['datos_calculados'] ?? [];
+
             $nivelUrgencia = $climaData['nivel_urgencia'] ?? 'BAJA';
             $tipoAlerta = match ($nivelUrgencia) {
-                'ALTA' => 'ACELERAR',
-                'MEDIA' => 'ACELERAR',
-                'CRITICA' => 'SUSPENDER',
+                'ALTA', 'MEDIA' => 'ACELERAR',
+                'CRITICA' => 'REPROGRAMAR',
                 default => 'NORMAL',
+            };
+
+            $diasCriticos = array_values(array_map(
+                fn (array $dia): string => $dia['label'],
+                array_filter($pronosticoFormateado, fn (array $dia): bool => $dia['inactivo'])
+            ));
+
+            $diasOperativos = count(array_filter(
+                $pronosticoFormateado,
+                fn (array $dia): bool => ! $dia['inactivo'] && ! $dia['no_laboral']
+            ));
+
+            $primerOperativo = null;
+            $hoy = Carbon::today()->toDateString();
+            foreach ($pronosticoFormateado as $dia) {
+                if (! $dia['inactivo'] && ! $dia['no_laboral'] && ($dia['fecha'] ?? '') >= $hoy) {
+                    $primerOperativo = $dia['label'];
+                    break;
+                }
+            }
+
+            $deficit = round((float) ($datos['volumen_riesgo'] ?? 0), 0);
+            $porcentaje = round((float) ($datos['aumento_necesario_pct'] ?? 0));
+            $nuevaMeta = isset($datos['nueva_meta_diaria']) ? (float) $datos['nueva_meta_diaria'] : null;
+
+            $listaDias = $diasCriticos !== [] ? ' ('.implode(', ', $diasCriticos).')' : '';
+
+            $recomendacion = match ($tipoAlerta) {
+                'NORMAL' => 'No se pronostican lluvias en la ventana. Mantené el ritmo actual.',
+                'REPROGRAMAR' => 'No hay días operativos en la ventana. Reprogramá las tareas y revisá el pronóstico en 24 h.',
+                default => 'Se pierden '.$diasPerdidos.' día(s) por lluvia/barro'.$listaDias.'. '
+                    .'Quedan '.$diasOperativos.' días operativos: sumá '.$porcentaje.'%'
+                    .($nuevaMeta ? ' ('.number_format($nuevaMeta, 0, ',', '.').' tn/día)' : '')
+                    .' desde '.($primerOperativo ?? 'el próximo día operativo')
+                    .' para recuperar '.number_format($deficit, 0, ',', '.').' tn.',
             };
 
             $this->pronosticoData = [
@@ -129,11 +172,15 @@ class SelectorLote extends Component
                 'pronostico' => $pronosticoFormateado,
                 'analisisImpacto' => [
                     'diasPerdidos' => $diasPerdidos,
-                    'deficitTn' => $climaData['datos_calculados']['volumen_riesgo'] ?? 0,
-                    'accionPorcentaje' => round($climaData['datos_calculados']['aumento_necesario_pct'] ?? 0),
+                    'deficitTn' => $deficit,
+                    'accionPorcentaje' => $porcentaje,
+                    'diasOperativos' => $diasOperativos,
+                    'primerOperativo' => $primerOperativo,
+                    'diasCriticos' => $diasCriticos,
+                    'nuevaMetaDiaria' => $nuevaMeta,
                 ],
                 'loteNombre' => $lote->nombre ?? $lote->propietario ?? ('Lote #'.$lote->id_lote),
-                'recomendacionDetallada' => $climaData['recomendacion'] ?? '',
+                'recomendacionDetallada' => $recomendacion,
             ];
         } else {
             $this->pronosticoData = null;

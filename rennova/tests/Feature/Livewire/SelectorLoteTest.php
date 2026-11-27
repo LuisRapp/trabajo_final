@@ -110,9 +110,51 @@ test('los fines de semana se muestran como no laborales y no cuentan como dias p
     $porEtiqueta = collect($pronostico['pronostico'])->keyBy('label');
 
     expect($pronostico['analisisImpacto']['diasPerdidos'])->toBe(1)
-        ->and($porEtiqueta['Sab (28/11/2026)']['estado'])->toBe('NO LABORAL')
-        ->and($porEtiqueta['Sab (28/11/2026)']['inactivo'])->toBeFalse()
-        ->and($porEtiqueta['Sab (28/11/2026)']['no_laboral'])->toBeTrue()
-        ->and($porEtiqueta['Mie (02/12/2026)']['estado'])->toBe('NO OPERATIVO')
-        ->and($porEtiqueta['Mie (02/12/2026)']['inactivo'])->toBeTrue();
+        ->and($porEtiqueta['Sáb (28/11/2026)']['estado'])->toBe('NO LABORAL')
+        ->and($porEtiqueta['Sáb (28/11/2026)']['inactivo'])->toBeFalse()
+        ->and($porEtiqueta['Sáb (28/11/2026)']['no_laboral'])->toBeTrue()
+        ->and($porEtiqueta['Mié (02/12/2026)']['estado'])->toBe('NO OPERATIVO')
+        ->and($porEtiqueta['Mié (02/12/2026)']['inactivo'])->toBeTrue();
+});
+
+test('calcula el dia en espanol y arma una accion concreta aunque el servicio devuelva ingles', function () {
+    Lote::factory()->create([
+        'propietario' => 'Lote test1',
+        'estado' => 'activo',
+        'latitud' => -34.6,
+        'longitud' => -58.4,
+    ]);
+
+    $hoy = \Carbon\Carbon::today();
+
+    $this->mock(\App\Services\ClimaDecisionService::class, function ($mock) use ($hoy) {
+        $mock->shouldReceive('analizarYRecomendar')->andReturn([
+            'success' => true,
+            'nivel_urgencia' => 'ALTA',
+            'recomendacion' => 'texto viejo',
+            'dias_detalle' => [
+                ['fecha' => $hoy->copy(), 'fecha_str' => $hoy->format('d/m/Y'), 'dia_semana' => 'Friday', 'estado' => 'INACTIVO', 'razon' => 'Lluvia diurna activa'],
+                ['fecha' => $hoy->copy()->addDay(), 'fecha_str' => $hoy->copy()->addDay()->format('d/m/Y'), 'dia_semana' => 'Saturday', 'estado' => 'INACTIVO', 'razon' => 'Fin de semana (no laboral)'],
+                ['fecha' => $hoy->copy()->addDays(2), 'fecha_str' => $hoy->copy()->addDays(2)->format('d/m/Y'), 'dia_semana' => 'Sunday', 'estado' => 'INACTIVO', 'razon' => 'Fin de semana (no laboral)'],
+                ['fecha' => $hoy->copy()->addDays(3), 'fecha_str' => $hoy->copy()->addDays(3)->format('d/m/Y'), 'dia_semana' => 'Monday', 'estado' => 'OPERATIVO', 'razon' => null],
+                ['fecha' => $hoy->copy()->addDays(4), 'fecha_str' => $hoy->copy()->addDays(4)->format('d/m/Y'), 'dia_semana' => 'Tuesday', 'estado' => 'OPERATIVO', 'razon' => null],
+            ],
+            'datos_calculados' => [
+                'volumen_riesgo' => 300,
+                'aumento_necesario_pct' => 18,
+                'nueva_meta_diaria' => 118,
+            ],
+        ]);
+    });
+
+    $componente = Livewire::actingAs(Usuario::factory()->create())->test(SelectorLote::class);
+    $datos = $componente->get('pronosticoData');
+
+    $componente->assertSee('sumá 18%');
+
+    expect($datos['alerta'])->toBe('ACELERAR')
+        ->and($datos['pronostico'][0]['label'])->toStartWith('Vie')
+        ->and($datos['analisisImpacto']['diasPerdidos'])->toBe(1)
+        ->and($datos['analisisImpacto']['primerOperativo'])->toStartWith('Lun')
+        ->and($datos['recomendacionDetallada'])->toContain('sumá 18%');
 });

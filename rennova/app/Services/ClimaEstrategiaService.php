@@ -51,8 +51,10 @@ class ClimaEstrategiaService
             ];
         }
 
-        // CASO 2: Lluvia inminente y sin días previos → Reacción inmediata
-        if ($diaCeroIndex !== null && $diasPrevios === 0) {
+        // CASO 2: No hay ningun dia operativo en la ventana → no hay plan posible
+        // (si la lluvia es hoy pero quedan dias despues, se planifica la recuperacion;
+        // antes se recomendaba suspender sin mirar el lunes).
+        if ($totalDiasOperativos === 0) {
             return $this->estrategiaReaccion($lote, $analisisDias);
         }
 

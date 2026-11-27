@@ -2,7 +2,7 @@
     'lote' => 'Lote sin especificar',
     'alerta' => 'NORMAL',
     'pronostico' => [],
-    'analisisImpacto' => ['diasPerdidos' => 0, 'deficitTn' => 0, 'accionPorcentaje' => 0],
+    'analisisImpacto' => ['diasPerdidos' => 0, 'deficitTn' => 0, 'accionPorcentaje' => 0, 'diasOperativos' => 0, 'primerOperativo' => null, 'diasCriticos' => [], 'nuevaMetaDiaria' => null],
     'recomendacionDetallada' => null,
 ])
 
@@ -13,13 +13,13 @@
             'bg' => 'bg-resina-suave/50',
             'text' => 'text-resina',
             'dot' => 'bg-resina',
-            'label' => 'ALERTA',
+            'label' => 'COMPENSAR',
         ],
-        'SUSPENDER' => [
+        'REPROGRAMAR' => [
             'bg' => 'bg-tierra-suave/50',
             'text' => 'text-tierra',
             'dot' => 'bg-tierra',
-            'label' => 'PARADA',
+            'label' => 'SIN VENTANA',
         ],
         'NORMAL' => [
             'bg' => 'bg-musgo-suave/50',
@@ -47,7 +47,7 @@
             $diasOperativos++;
         }
     }
-    $ventana = $diasOperativos . ' dias';
+    $ventana = $diasOperativos . ' días';
 
     // Encontrar el primer día perdido por clima (el fin de semana no lo es)
     $diaCritico = null;
@@ -70,36 +70,41 @@
                 <span class="text-xs font-bold uppercase tracking-wide {{ $currentAlert['text'] }}">{{ $currentAlert['label'] }}</span>
             </div>
             <div class="mt-2 text-xs text-tinta-suave">
-                <span class="font-medium {{ $currentAlert['text'] }}">{{ $diaCritico }}</span> · {{ $ventana }}
+                <span class="font-medium {{ $currentAlert['text'] }}">{{ $diaCritico }}</span>
+                <span class="block">Primer día no operativo · {{ $ventana }} operativos</span>
             </div>
         </div>
 
-        {{-- Widget 2: Dias Perdidos --}}
+        {{-- Widget 2: Dias no operativos --}}
         <div class="rounded-lg border border-arena bg-blanco p-3">
-            <div class="text-xs font-medium uppercase tracking-wide text-tinta-suave">DIAS PERDIDOS</div>
+            <div class="text-xs font-medium uppercase tracking-wide text-tinta-suave">DÍAS NO OPERATIVOS</div>
             <div class="mt-1 text-2xl font-bold text-tinta">{{ $analisisImpacto['diasPerdidos'] ?? 0 }}</div>
-            <div class="text-xs text-tinta-suave">Lluvia + barro</div>
+            <div class="text-xs text-tinta-suave">Lluvia o barro · sin fines de semana</div>
         </div>
 
         {{-- Widget 3: Deficit --}}
         <div class="rounded-lg border border-arena bg-blanco p-3">
-            <div class="text-xs font-medium uppercase tracking-wide text-tinta-suave">DEFICIT TN</div>
-            <div class="mt-1 text-2xl font-bold text-tinta">{{ abs($analisisImpacto['deficitTn'] ?? 0) }}</div>
-            <div class="text-xs text-tinta-suave">Volumen en riesgo</div>
+            <div class="text-xs font-medium uppercase tracking-wide text-tinta-suave">PRODUCCIÓN EN RIESGO</div>
+            <div class="mt-1 text-2xl font-bold text-tinta">{{ number_format(abs($analisisImpacto['deficitTn'] ?? 0), 0, ',', '.') }} <span class="text-sm font-normal">tn</span></div>
+            <div class="text-xs text-tinta-suave">Volumen a recuperar</div>
         </div>
 
         {{-- Widget 4: Accion --}}
         <div class="rounded-lg border border-arena bg-blanco p-3">
             @php
+                $primerOperativoCorto = $analisisImpacto['primerOperativo']
+                    ? preg_replace('/ \((\d{2}\/\d{2})\/\d{4}\)/', ' $1', $analisisImpacto['primerOperativo'])
+                    : null;
+
                 $accionConfig = match($alerta) {
-                    'SUSPENDER' => ['text' => 'Suspender', 'color' => 'text-tierra'],
-                    'ACELERAR' => ['text' => '+' . ($analisisImpacto['accionPorcentaje'] ?? 0) . '%', 'color' => 'text-resina'],
-                    default => ['text' => 'Normal', 'color' => 'text-musgo']
+                    'REPROGRAMAR' => ['text' => 'Reprogramar', 'sub' => 'Sin días operativos', 'color' => 'text-tierra'],
+                    'ACELERAR' => ['text' => '+' . ($analisisImpacto['accionPorcentaje'] ?? 0) . '%', 'sub' => $primerOperativoCorto ? 'Desde '.$primerOperativoCorto : 'En días operativos', 'color' => 'text-resina'],
+                    default => ['text' => 'Ritmo normal', 'sub' => 'Sin cambios', 'color' => 'text-musgo']
                 };
             @endphp
-            <div class="text-xs font-medium uppercase tracking-wide text-tinta-suave">ACCION</div>
+            <div class="text-xs font-medium uppercase tracking-wide text-tinta-suave">ACCIÓN</div>
             <div class="mt-1 text-2xl font-bold {{ $accionConfig['color'] }}">{{ $accionConfig['text'] }}</div>
-            <div class="text-xs text-tinta-suave">Sugerida</div>
+            <div class="text-xs text-tinta-suave">{{ $accionConfig['sub'] }}</div>
         </div>
     </div>
 
@@ -107,7 +112,7 @@
     {{-- Timeline Strip: Pronostico 7 dias (estilo Gantt compacto) --}}
     <div class="rounded-lg border border-arena bg-blanco">
         <div class="border-b border-arena px-3 py-2">
-            <h3 class="text-xs font-bold uppercase tracking-wide text-tinta">Pronostico Operativo (7 dias)</h3>
+            <h3 class="text-xs font-bold uppercase tracking-wide text-tinta">Pronóstico operativo (7 días)</h3>
         </div>
         @if(count($pronostico) > 0)
             <div class="grid grid-cols-7 divide-x divide-arena/50">

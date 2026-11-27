@@ -23,6 +23,7 @@
                 :pronostico="$pronosticoData['pronostico'] ?? []"
                 :analisisImpacto="$pronosticoData['analisisImpacto'] ?? []"
                 :lote="$pronosticoData['loteNombre'] ?? null"
+                :recomendacionDetallada="$pronosticoData['recomendacionDetallada'] ?? null"
             />
         </div>
     @endif
