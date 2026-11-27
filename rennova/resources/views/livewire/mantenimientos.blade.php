@@ -12,6 +12,12 @@
         </x-ui.alert>
     @endif
 
+    @if (session()->has('error'))
+        <x-ui.alert variant="danger" class="mb-6" :dismissible="false">
+            {{ session('error') }}
+        </x-ui.alert>
+    @endif
+
     <x-tab-nav :tabs="[
         ['value' => 'nuevo', 'label' => 'Nuevo Mantenimiento', 'icon' => 'plus', 'can' => auth()->user()?->canAny(['crear-mantenimientos', 'editar-mantenimientos']) ?? false],
         ['value' => 'listado', 'label' => 'Listado de Mantenimientos', 'icon' => 'list-bullet'],
@@ -204,7 +210,7 @@
                                         <div class="flex gap-1 justify-center">
                                             @if($isProgramado)
                                                 @can('confirmar-mantenimiento')
-                                                <x-ui.button size="sm" variant="secondary" icon="check" wire:click="confirmarMantenimiento({{ $mantenimiento->id_mantenimiento }})" title="Aprobar y verificar stock del kit" />
+                                                <x-ui.button size="sm" variant="secondary" icon="check" wire:click="abrirModalAprobar({{ $mantenimiento->id_mantenimiento }})" title="Aprobar y verificar stock del kit" />
                                                 @endcan
                                             @endif
                                             @if($isVencido)
@@ -240,6 +246,106 @@
     @endif
 
     <livewire:completar-orden-modal />
+
+    {{-- Aprobar orden: verifica el kit antes de pasarla a "en curso" --}}
+    @if ($modal_aprobar && $orden_aprobar)
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" wire:key="modal-aprobar">
+            <div class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-sm border border-arena bg-white shadow-xl">
+                <div class="flex items-center justify-between border-b border-arena bg-hueso px-5 py-4">
+                    <h2 class="flex items-center gap-2 text-lg font-semibold text-tinta">
+                        <flux:icon.check class="size-5" />
+                        Aprobar orden #{{ $orden_aprobar->id_mantenimiento }}
+                    </h2>
+                    <button type="button" class="text-tinta-suave hover:text-tinta" wire:click="cerrarModalAprobar" title="Cerrar">
+                        <flux:icon.x-mark class="size-5" />
+                    </button>
+                </div>
+
+                <div class="space-y-4 px-5 py-5">
+                    <div class="grid grid-cols-2 gap-3 text-sm">
+                        <div>
+                            <p class="text-xs uppercase tracking-wide text-tinta-suave">Maquinaria</p>
+                            <p class="font-medium text-tinta">{{ $orden_aprobar->maquinaria?->modelo ?? '—' }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs uppercase tracking-wide text-tinta-suave">Tipo</p>
+                            <p class="font-medium text-tinta">{{ $orden_aprobar->tipoMantenimiento?->nombre ?? '—' }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs uppercase tracking-wide text-tinta-suave">Programada</p>
+                            <p class="font-medium text-tinta">{{ $orden_aprobar->fecha_programada ? \Carbon\Carbon::parse($orden_aprobar->fecha_programada)->format('d/m/Y') : '—' }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs uppercase tracking-wide text-tinta-suave">Estado</p>
+                            <p class="font-medium text-tinta">{{ ucfirst($orden_aprobar->estado) }}</p>
+                        </div>
+                    </div>
+
+                    @if ($verificacion_stock)
+                        @if ($verificacion_stock['puede_aprobar'])
+                            <x-ui.alert variant="success" :dismissible="false">
+                                Todos los insumos obligatorios del kit están disponibles.
+                            </x-ui.alert>
+                        @else
+                            <x-ui.alert variant="warning" :dismissible="false">
+                                Faltan insumos del kit: al aprobar se genera la propuesta de compra de los obligatorios.
+                            </x-ui.alert>
+                        @endif
+
+                        @if (count($verificacion_stock['kit']) === 0)
+                            <p class="rounded-sm border border-arena bg-hueso py-4 text-center text-sm text-tinta-suave">
+                                La maquinaria no tiene kit preventivo configurado.
+                            </p>
+                        @else
+                            <x-ui.table-container>
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Insumo</th>
+                                            <th class="text-right">Requerido</th>
+                                            <th class="text-right">Disponible</th>
+                                            <th>Estado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($verificacion_stock['kit'] as $item)
+                                            @php
+                                                $faltan = $item['cantidad_requerida'] - $item['stock_disponible'];
+                                                $enFalta = in_array($item['insumo_id'], array_column($verificacion_stock['insuficientes'], 'insumo_id'), true);
+                                            @endphp
+                                            <tr wire:key="kit-{{ $item['insumo_id'] }}" class="{{ $enFalta ? 'bg-tierra-suave' : '' }}">
+                                                <td class="text-tinta">{{ $item['nombre'] }}</td>
+                                                <td class="text-right text-tinta-suave">{{ number_format($item['cantidad_requerida'], 2, ',', '.') }}</td>
+                                                <td class="text-right text-tinta-suave">{{ number_format($item['stock_disponible'], 2, ',', '.') }}</td>
+                                                <td>
+                                                    @if ($faltan <= 0)
+                                                        <x-ui.badge variant="success">Disponible</x-ui.badge>
+                                                    @elseif (! $item['es_obligatorio'])
+                                                        <x-ui.badge variant="neutral">Opcional: faltan {{ number_format($faltan, 2, ',', '.') }}</x-ui.badge>
+                                                    @else
+                                                        <x-ui.badge variant="danger">Faltan {{ number_format($faltan, 2, ',', '.') }}</x-ui.badge>
+                                                    @endif
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </x-ui.table-container>
+                        @endif
+                    @else
+                        <x-ui.alert variant="info" :dismissible="false">
+                            Es un mantenimiento correctivo: se aprueba sin verificar el kit preventivo.
+                        </x-ui.alert>
+                    @endif
+                </div>
+
+                <div class="flex items-center justify-end gap-2 border-t border-arena bg-hueso px-5 py-3">
+                    <x-ui.button variant="secondary" icon="x-mark" wire:click="cerrarModalAprobar">Cancelar</x-ui.button>
+                    <x-ui.button variant="primary" icon="check" wire:click="aprobarOrden">Aprobar y poner en curso</x-ui.button>
+                </div>
+            </div>
+        </div>
+    @endif
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {

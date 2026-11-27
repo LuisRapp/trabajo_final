@@ -50,3 +50,16 @@ test('valida nombre obligatorio', function () {
         ->call('guardar')
         ->assertHasErrors(['nombre']);
 });
+
+test('la pagina de tipos de mantenimiento carga con permiso y monta el componente', function () {
+    $this->actingAs(usuarioConPermisos(['ver-tipos-mantenimiento']))
+        ->get(route('tipos-mantenimiento.index'))
+        ->assertOk()
+        ->assertSeeLivewire(TipoMantenimiento::class);
+});
+
+test('la pagina de tipos de mantenimiento exige el permiso ver', function () {
+    $this->actingAs(usuarioConPermisos(['ver-insumos']))
+        ->get(route('tipos-mantenimiento.index'))
+        ->assertForbidden();
+});

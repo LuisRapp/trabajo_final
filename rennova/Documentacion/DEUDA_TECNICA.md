@@ -11,7 +11,7 @@ Estado del trabajo validado al cierre de F8: `php artisan test` = **711 passed, 
 - Cierre de mantenimiento unificado en `MantenimientoService::completarMantenimiento` (FIFO, snapshot del odometro, costo_mano_obra, guard anti-doble-cierre, fecha opcional).
 - Cierre de lotes unificado en `AsignacionLoteService::finalizar` (detach con auditoria, estado 'cerrado' valido, guard en el servicio).
 - Split de `MantenimientoService` en core + `ProcesoMantenimientoService` (PA-01) + `PropuestaCompraMantenimientoService` + `MailMantenimientoService`.
-- Delegacion completa de `CompletarOrdenModal` y `GestionMantenimientos` a servicios.
+- Delegacion completa de `CompletarOrdenModal` a servicios (la pantalla duplicada `GestionMantenimientos` se elimino).
 - Renombre de tablas/PKs/estados de propuestas de compra al espanol.
 - SoftDeletes verificados en `Carga`, `Mantenimiento`, `Lote`, `PropuestaAsignacion`, `MovimientoStock`.
 - Excepcion PostgreSQL (funciones `calcular_costo_fifo`, `obtener_stock_disponible`, `obtener_precio_promedio`) usada conforme: desde Servicio, documentada, con fallback.

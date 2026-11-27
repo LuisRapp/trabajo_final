@@ -261,6 +261,63 @@ class MantenimientosTest extends TestCase
             )->toBeTrue();
     }
 
+    public function test_abrir_modal_aprobar_muestra_el_kit_faltante(): void
+    {
+        $tipo = TipoMantenimiento::factory()->preventivo()->create();
+        $maquinaria = Maquinaria::factory()->create();
+        $mantenimiento = Mantenimiento::factory()->programado()->create([
+            'id_maquinaria' => $maquinaria->id_maquinaria,
+            'id_tipo_mantenimiento' => $tipo->id_tipo_mantenimiento,
+        ]);
+
+        $insumo = Insumo::factory()->create(['nombre' => 'Filtro de aceite']);
+
+        KitMantenimientoPreventivo::factory()->create([
+            'id_tipo_maquinaria' => $maquinaria->id_tipo_maquinaria,
+            'id_insumo' => $insumo->id_insumo,
+            'cantidad_requerida' => 10,
+            'es_obligatorio' => true,
+        ]);
+
+        Livewire::actingAs($this->usuario)
+            ->test(Mantenimientos::class)
+            ->call('abrirModalAprobar', $mantenimiento->id_mantenimiento)
+            ->assertSet('modal_aprobar', true)
+            ->assertSee('Faltan insumos del kit')
+            ->assertSee('Filtro de aceite');
+    }
+
+    public function test_aprobar_desde_el_modal_pasa_la_orden_a_en_curso(): void
+    {
+        $tipo = TipoMantenimiento::factory()->preventivo()->create();
+        $mantenimiento = Mantenimiento::factory()->programado()->create([
+            'id_tipo_mantenimiento' => $tipo->id_tipo_mantenimiento,
+        ]);
+
+        Livewire::actingAs($this->usuario)
+            ->test(Mantenimientos::class)
+            ->call('abrirModalAprobar', $mantenimiento->id_mantenimiento)
+            ->call('aprobarOrden')
+            ->assertSet('modal_aprobar', false);
+
+        expect($mantenimiento->fresh()->estado)->toBe('en curso');
+    }
+
+    public function test_el_modal_de_un_correctivo_no_verifica_kit(): void
+    {
+        $tipo = TipoMantenimiento::factory()->correctivo()->create();
+        $mantenimiento = Mantenimiento::factory()->programado()->create([
+            'id_tipo_mantenimiento' => $tipo->id_tipo_mantenimiento,
+        ]);
+
+        Livewire::actingAs($this->usuario)
+            ->test(Mantenimientos::class)
+            ->call('abrirModalAprobar', $mantenimiento->id_mantenimiento)
+            ->assertSet('modal_aprobar', true)
+            ->assertSet('verificacion_stock', null)
+            ->assertSee('correctivo');
+    }
+
     public function test_confirmar_mantenimiento_no_programado_falla(): void
     {
         $mantenimiento = Mantenimiento::factory()->enCurso()->create();

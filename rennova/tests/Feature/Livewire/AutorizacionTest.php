@@ -2,9 +2,9 @@
 
 use App\Http\Livewire\Adelantos;
 use App\Http\Livewire\AsignacionesLote;
-use App\Http\Livewire\GestionMantenimientos;
 use App\Http\Livewire\Insumos;
 use App\Http\Livewire\Lotes;
+use App\Http\Livewire\Mantenimientos;
 use App\Http\Livewire\RolesPermisos;
 use App\Http\Livewire\Usuarios;
 use App\Http\Livewire\Ventas;
@@ -73,7 +73,7 @@ test('sin permiso confirmar-mantenimiento no puede aprobar una orden', function 
     $usuario = usuarioConPermisos(['completar-mantenimiento']);
 
     Livewire::actingAs($usuario)
-        ->test(GestionMantenimientos::class)
+        ->test(Mantenimientos::class)
         ->call('aprobarOrden')
         ->assertForbidden();
 });

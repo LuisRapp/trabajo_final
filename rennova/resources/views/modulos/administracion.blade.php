@@ -107,6 +107,18 @@
             </x-ui.card>
         @endcan
 
+        @can('ver-tipos-mantenimiento')
+            <x-ui.card class="p-6 text-center">
+                <div class="text-pino mb-4 flex justify-center">
+                    <flux:icon.wrench-screwdriver class="size-12" />
+                </div>
+                <h3 class="text-base font-bold text-tinta mb-4">Tipos de mantenimiento</h3>
+                <a href="{{ route('tipos-mantenimiento.index') }}" class="btn-primary w-full">
+                    Gestionar
+                </a>
+            </x-ui.card>
+        @endcan
+
         @can('ver-roles-laborales')
             <x-ui.card class="p-6 text-center">
                 <div class="text-pino mb-4 flex justify-center">

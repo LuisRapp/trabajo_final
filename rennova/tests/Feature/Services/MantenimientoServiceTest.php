@@ -6,6 +6,7 @@ use App\Models\Mantenimiento;
 use App\Models\Maquinaria;
 use App\Models\PropuestaCompraMantenimiento;
 use App\Models\PropuestaCompraMantenimientoInsumo;
+use App\Models\TipoMantenimiento;
 use App\Services\InventarioService;
 use App\Services\MantenimientoService;
 
@@ -30,9 +31,11 @@ test('aprobar mantenimiento no programado falla', function () {
 });
 
 test('aprobar mantenimiento genera orden de compra solo para insumos obligatorios faltantes', function () {
+    $tipo = TipoMantenimiento::factory()->preventivo()->create();
     $maquinaria = Maquinaria::factory()->create();
     $mantenimiento = Mantenimiento::factory()->programado()->create([
         'id_maquinaria' => $maquinaria->id_maquinaria,
+        'id_tipo_mantenimiento' => $tipo->id_tipo_mantenimiento,
     ]);
 
     $obligatorio = Insumo::factory()->create();
@@ -158,4 +161,29 @@ test('completar mantenimiento ya completado falla', function () {
 
     expect($resultado['success'])->toBeFalse();
     expect((float) $insumo->fresh()->stock)->toBe(100.0);
+});
+
+test('aprobar un correctivo no verifica el kit ni genera propuesta de compra', function () {
+    $tipo = TipoMantenimiento::factory()->correctivo()->create();
+    $maquinaria = Maquinaria::factory()->create();
+    $mantenimiento = Mantenimiento::factory()->programado()->create([
+        'id_maquinaria' => $maquinaria->id_maquinaria,
+        'id_tipo_mantenimiento' => $tipo->id_tipo_mantenimiento,
+    ]);
+
+    $insumo = Insumo::factory()->create();
+
+    KitMantenimientoPreventivo::factory()->create([
+        'id_tipo_maquinaria' => $maquinaria->id_tipo_maquinaria,
+        'id_insumo' => $insumo->id_insumo,
+        'cantidad_requerida' => 10,
+        'es_obligatorio' => true,
+    ]);
+
+    $resultado = app(MantenimientoService::class)->aprobarMantenimiento($mantenimiento->id_mantenimiento);
+
+    expect($resultado['success'])->toBeTrue()
+        ->and($resultado['compra_generada'])->toBeFalse()
+        ->and($mantenimiento->fresh()->estado)->toBe('en curso')
+        ->and(PropuestaCompraMantenimiento::query()->count())->toBe(0);
 });

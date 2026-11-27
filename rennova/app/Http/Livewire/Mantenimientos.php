@@ -36,6 +36,12 @@ class Mantenimientos extends Component
 
     public $tab_activo = 'listado';
 
+    public $modal_aprobar = false;
+
+    public $orden_aprobar;
+
+    public $verificacion_stock;
+
     protected function rules()
     {
         return [
@@ -214,6 +220,52 @@ class Mantenimientos extends Component
         }
 
         $this->cargarMantenimientos();
+    }
+
+    /**
+     * Abre el modal de aprobación con la verificación del kit preventivo.
+     *
+     * Un correctivo no tiene kit, así que se aprueba sin verificación.
+     */
+    public function abrirModalAprobar($id)
+    {
+        $this->authorize('confirmar-mantenimiento');
+        $servicio = app(MantenimientoService::class);
+
+        try {
+            $this->orden_aprobar = $servicio->obtenerOrdenParaAprobar((int) $id);
+
+            $tipo = $this->orden_aprobar->tipoMantenimiento;
+            $this->verificacion_stock = $tipo && $servicio->esTipoPreventivo($tipo)
+                ? $servicio->verificarStockParaAprobacion((int) $id)
+                : null;
+
+            $this->modal_aprobar = true;
+        } catch (\Exception $e) {
+            session()->flash('error', $this->mensajeErrorUsuario($e, 'cargar la orden'));
+        }
+    }
+
+    public function cerrarModalAprobar()
+    {
+        $this->modal_aprobar = false;
+        $this->orden_aprobar = null;
+        $this->verificacion_stock = null;
+    }
+
+    /**
+     * Aprueba la orden abierta en el modal y la pasa a "en curso".
+     */
+    public function aprobarOrden()
+    {
+        $this->authorize('confirmar-mantenimiento');
+
+        if (! $this->orden_aprobar) {
+            return;
+        }
+
+        $this->confirmarMantenimiento($this->orden_aprobar->id_mantenimiento);
+        $this->cerrarModalAprobar();
     }
 
     public function reprogramarMantenimiento($id)

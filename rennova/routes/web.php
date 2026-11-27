@@ -17,6 +17,7 @@ use App\Http\Controllers\ProveedorController;
 use App\Http\Controllers\ReciboController;
 use App\Http\Controllers\ReporteController;
 use App\Http\Controllers\RolLaboralController;
+use App\Http\Controllers\TipoMantenimientoController;
 use App\Http\Controllers\TipoMaquinariaController;
 use App\Http\Controllers\UnidadMedidaController;
 use App\Http\Controllers\UsuarioController;
@@ -87,6 +88,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/categorias-madera', [CategoriaMaderaController::class, 'index'])->middleware(['permission:ver-categorias-madera'])->name('categorias-madera.index');
     Route::get('/unidades-medida', [UnidadMedidaController::class, 'index'])->middleware(['permission:ver-unidades-medida'])->name('unidades-medida.index');
     Route::get('/tipos-maquinaria', [TipoMaquinariaController::class, 'index'])->middleware(['permission:ver-tipos-maquinaria'])->name('tipos-maquinaria.index');
+    Route::get('/tipos-mantenimiento', [TipoMantenimientoController::class, 'index'])->middleware(['permission:ver-tipos-mantenimiento'])->name('tipos-mantenimiento.index');
     Route::get('/roles-laborales', [RolLaboralController::class, 'index'])->middleware(['permission:ver-roles-laborales'])->name('roles-laborales.index');
     Route::get('/insumos', [InsumoController::class, 'index'])->middleware(['permission:ver-insumos'])->name('insumos.index');
     Route::get('/maquinarias', [MaquinariaController::class, 'index'])->middleware(['permission:ver-maquinarias'])->name('maquinarias.index');

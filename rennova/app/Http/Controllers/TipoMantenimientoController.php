@@ -12,7 +12,7 @@ class TipoMantenimientoController extends Controller
      */
     public function index()
     {
-        //
+        return view('tipos-mantenimiento.index');
     }
 
     /**

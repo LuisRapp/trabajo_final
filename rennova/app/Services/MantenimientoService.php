@@ -92,11 +92,14 @@ class MantenimientoService
     }
 
     /**
-     * Aprueba una orden de mantenimiento preventivo y genera la orden de compra
-     * de los insumos OBLIGATORIOS que faltan, sin bloquear la aprobación.
+     * Aprueba una orden y genera la orden de compra de los insumos
+     * OBLIGATORIOS del kit que faltan, sin bloquear la aprobación.
+     *
+     * Solo las órdenes preventivas verifican el kit: un correctivo surge por
+     * una falla y no tiene kit asociado, así que nunca genera compra.
      *
      * Ejecuta dentro de una transacción. Solo órdenes en estado 'programado'
-     * pueden aprobarse. Los insumos opcionales en falta no se compran ni bloquean.
+     * pueden aprobarse.
      *
      * @param  int  $mantenimientoId  Identificador de la orden a aprobar
      * @return array{success: bool, mantenimiento?: \App\Models\Mantenimiento, compra_generada?: bool, message?: string}
@@ -114,7 +117,12 @@ class MantenimientoService
                     ];
                 }
 
-                $verificacion = $this->verificarStockParaAprobacion($mantenimientoId);
+                $tipo = $mantenimiento->tipoMantenimiento;
+                $esPreventivo = $tipo !== null && $this->esTipoPreventivo($tipo);
+
+                $verificacion = $esPreventivo
+                    ? $this->verificarStockParaAprobacion($mantenimientoId)
+                    : ['insuficientes' => []];
 
                 $mantenimiento->update([
                     'estado' => 'en curso',
@@ -392,35 +400,11 @@ class MantenimientoService
     }
 
     /**
-     * Obtiene una orden con sus relaciones para el modal de detalle.
-     */
-    public function obtenerOrdenParaDetalle(int $id): Mantenimiento
-    {
-        return Mantenimiento::with([
-            'maquinaria.tipoMaquinaria',
-            'mantenimientoInsumos.insumo',
-        ])->findOrFail($id);
-    }
-
-    /**
      * Obtiene una orden con su maquinaria para el modal de aprobación.
      */
     public function obtenerOrdenParaAprobar(int $id): Mantenimiento
     {
         return Mantenimiento::with(['maquinaria.tipoMaquinaria'])->findOrFail($id);
-    }
-
-    /**
-     * Maquinarias en estado activo para los filtros de la gestión de mantenimientos.
-     *
-     * @return \Illuminate\Database\Eloquent\Collection<int, Maquinaria>
-     */
-    public function obtenerMaquinariasActivasParaFiltro(): Collection
-    {
-        return Maquinaria::with('tipoMaquinaria')
-            ->whereIn('estado', ['disponible', 'asignada'])
-            ->orderBy('modelo')
-            ->get();
     }
 
     /**
@@ -436,50 +420,6 @@ class MantenimientoService
 
             return $insumo;
         });
-    }
-
-    /**
-     * Obtiene un insumo por su identificador (para actualización del modal de cierre).
-     */
-    public function obtenerInsumo(int $idInsumo): ?Insumo
-    {
-        return Insumo::find($idInsumo);
-    }
-
-    /**
-     * Lista las órdenes para la pantalla de gestión según pestaña y filtros.
-     *
-     * @param  array{estado?: string, maquinaria?: string, tipo?: string, fecha_desde?: string, fecha_hasta?: string}  $filtros
-     * @param  string  $tab  Pestaña activa: 'ordenes', 'completadas' o 'kits'
-     * @return \Illuminate\Database\Eloquent\Collection<int, Mantenimiento>
-     */
-    public function listarOrdenesGestion(array $filtros, string $tab): Collection
-    {
-        $query = Mantenimiento::with(['maquinaria.tipoMaquinaria', 'tipoMantenimiento'])
-            ->whereBetween('fecha_inicio', [
-                $filtros['fecha_desde'] ?: now()->subYear(),
-                $filtros['fecha_hasta'] ?: now(),
-            ]);
-
-        if (! empty($filtros['estado'])) {
-            $query->where('estado', $filtros['estado']);
-        }
-
-        if (! empty($filtros['maquinaria'])) {
-            $query->where('id_maquinaria', $filtros['maquinaria']);
-        }
-
-        if (! empty($filtros['tipo'])) {
-            $query->where('id_tipo_mantenimiento', $filtros['tipo']);
-        }
-
-        if ($tab === 'ordenes') {
-            $query->whereIn('estado', ['programado', 'en curso']);
-        } elseif ($tab === 'completadas') {
-            $query->where('estado', 'completado');
-        }
-
-        return $query->orderBy('fecha_inicio', 'desc')->get();
     }
 
     /**

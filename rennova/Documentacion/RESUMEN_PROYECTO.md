@@ -103,7 +103,7 @@ Este documento resume el estado actual del proyecto, su arquitectura, módulos p
 - Cálculo de costos: `costo_total` se calcula sumando `cantidad × precio_unitario` de insumos correctivos, más un monto manual opcional.
 - Columnas de BD: corregidos nombres a `cantidad_utilizada`, `costo_unitario`, `subtotal` según migraciones.
 - Comando de umbrales: actualizado para usar `operativa` en vez de `activo`.
-- Vista index: carga el componente `mantenimientos` (en vez de `gestion-mantenimientos`).
+- Vista index: carga el componente `mantenimientos`. La pantalla duplicada `gestion-mantenimientos` se elimino y su modal de aprobacion con verificacion de kit se integro al listado.
 
 ## 11. Mejoras Pendientes y Siguientes Pasos
 - Validación de stock al completar correctivo (bloquear si no hay stock suficiente o mostrar confirmación).
