@@ -27,7 +27,7 @@ class EstadoProcesosService
         $cronProgramados = (string) (ConfiguracionService::obtener('mantenimiento_cron_programados', '0 */4 * * *') ?: '0 */4 * * *');
         $horaRecordatorio = (string) (ConfiguracionService::obtener('mantenimiento_hora_recordatorio', '08:00') ?: '08:00');
 
-        return [
+        $filas = [
             [
                 'nombre' => 'Verificación de umbrales de mantenimiento',
                 'descripcion' => 'Acumula toneladas por maquinaria y genera la orden preventiva al superar el umbral.',
@@ -70,6 +70,19 @@ class EstadoProcesosService
                 'editable' => false,
             ],
         ];
+
+        $ejecuciones = app(EjecucionAutomatizacionService::class)->porComando();
+
+        return array_map(function (array $fila) use ($ejecuciones) {
+            $ultima = $ejecuciones[$fila['comando']] ?? null;
+
+            return array_merge($fila, [
+                'ultima_at' => $ultima?->ultima_ejecucion_at,
+                'ultimo_estado' => $ultima?->estado,
+                'ultimo_motivo' => $ultima?->motivo_error,
+                'duracion_ms' => $ultima?->duracion_ms,
+            ]);
+        }, $filas);
     }
 
     private function proximaEjecucion(string $cron): ?string
@@ -146,7 +159,7 @@ class EstadoProcesosService
     /**
      * Estado de la cola de trabajos: pendientes y últimos fallidos.
      *
-     * @return array{pendientes: int, fallidos: array<int, array{id: int, nombre: ?string, cola: string, error: ?string, fallido_en: ?string}>}
+     * @return array{pendientes: int, fallidos: array<int, array{id: int, uuid: string, nombre: ?string, cola: string, error: ?string, fallido_en: ?string}>}
      */
     public function colaTrabajos(): array
     {
@@ -161,6 +174,7 @@ class EstadoProcesosService
 
                 return [
                     'id' => (int) $job->id,
+                    'uuid' => (string) $job->uuid,
                     'nombre' => $payload['displayName'] ?? null,
                     'cola' => (string) $job->queue,
                     'error' => strtok((string) ($job->exception ?? ''), "\n") ?: null,

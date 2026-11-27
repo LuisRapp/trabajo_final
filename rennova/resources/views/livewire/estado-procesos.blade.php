@@ -1,4 +1,12 @@
 <div class="w-full" wire:poll.60s="refrescar">
+    @if (session()->has('message'))
+        <x-ui.alert variant="success" class="mb-4">{{ session('message') }}</x-ui.alert>
+    @endif
+
+    @if (session()->has('error'))
+        <x-ui.alert variant="danger" class="mb-4" :dismissible="false">{{ session('error') }}</x-ui.alert>
+    @endif
+
     <x-ui.card class="overflow-hidden">
         <div class="flex items-center justify-between gap-3 border-b border-arena px-5 py-4">
             <h2 class="flex items-center gap-2 text-lg font-semibold text-tinta mb-0">
@@ -17,6 +25,8 @@
                         <th class="px-4 py-3 font-semibold">Tarea</th>
                         <th class="px-4 py-3 font-semibold">Frecuencia</th>
                         <th class="px-4 py-3 font-semibold">Próxima ejecución</th>
+                        <th class="px-4 py-3 font-semibold">Última ejecución</th>
+                        <th class="px-4 py-3 font-semibold">Resultado</th>
                         <th class="px-4 py-3 font-semibold">Comando</th>
                     </tr>
                 </thead>
@@ -37,6 +47,35 @@
                                 @endif
                             </td>
                             <td class="px-4 py-3 text-tinta-suave">{{ $proceso['proximo'] ?? '—' }}</td>
+                            <td class="px-4 py-3 text-tinta-suave">
+                                {{ $proceso['ultima_at']?->format('d/m/Y H:i') ?? '—' }}
+                            </td>
+                            <td class="px-4 py-3">
+                                @if ($proceso['ultimo_estado'] === 'ok')
+                                    <span class="inline-flex items-center gap-1 rounded-full bg-musgo-suave px-2.5 py-0.5 text-xs font-semibold text-musgo">
+                                        <flux:icon.check-circle class="size-3" />
+                                        OK
+                                    </span>
+                                    @if ($proceso['duracion_ms'])
+                                        <span class="ml-1 whitespace-nowrap text-xs text-tinta-suave">{{ $proceso['duracion_ms'] }} ms</span>
+                                    @endif
+                                @elseif ($proceso['ultimo_estado'] === 'error')
+                                    <span class="inline-flex items-center gap-1 rounded-full bg-tierra-suave px-2.5 py-0.5 text-xs font-semibold text-tierra"
+                                        title="{{ $proceso['ultimo_motivo'] }}">
+                                        <flux:icon.exclamation-triangle class="size-3" />
+                                        Error
+                                    </span>
+                                    <div class="mt-1 max-w-xs truncate text-xs text-tierra" title="{{ $proceso['ultimo_motivo'] }}">
+                                        {{ $proceso['ultimo_motivo'] }}
+                                    </div>
+                                @elseif ($proceso['ultimo_estado'] === 'skipped')
+                                    <span class="inline-flex items-center gap-1 rounded-full bg-corteza-suave px-2.5 py-0.5 text-xs font-semibold text-tinta">
+                                        Omitida
+                                    </span>
+                                @else
+                                    <span class="text-xs text-tinta-suave">Sin ejecuciones</span>
+                                @endif
+                            </td>
                             <td class="px-4 py-3 font-mono text-xs text-tinta-suave">{{ $proceso['comando'] }}</td>
                         </tr>
                     @endforeach
@@ -45,7 +84,7 @@
         </div>
     </x-ui.card>
 
-    <div class="mt-6 grid gap-6 xl:grid-cols-2">
+    <div class="mt-6 grid gap-6">
         <x-ui.card>
             <div class="border-b border-arena px-5 py-4">
                 <h2 class="flex items-center gap-2 text-lg font-semibold text-tinta mb-0">
@@ -149,27 +188,47 @@
                         <thead>
                             <tr class="bg-corteza-suave text-left text-xs uppercase tracking-wide text-tinta-suave">
                                 <th class="px-4 py-3 font-semibold">Trabajo</th>
-                                <th class="px-4 py-3 font-semibold">Error</th>
+                                <th class="px-4 py-3 font-semibold">Motivo</th>
                                 <th class="px-4 py-3 font-semibold">Fallido</th>
+                                <th class="px-4 py-3 font-semibold text-right">Acciones</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-arena">
                             @foreach ($cola['fallidos'] as $job)
-                                <tr class="hover:bg-corteza-suave/60">
+                                <tr class="hover:bg-corteza-suave/60" wire:key="job-{{ $job['uuid'] }}">
                                     <td class="px-4 py-3 text-tinta font-mono text-xs">
                                         {{ $job['nombre'] ?? 'Job #'.$job['id'] }}
                                     </td>
                                     <td class="px-4 py-3 text-tierra text-xs" title="{{ $job['error'] }}">
-                                        {{ \Illuminate\Support\Str::limit($job['error'], 60) }}
+                                        {{ \Illuminate\Support\Str::limit($job['error'], 70) }}
                                     </td>
                                     <td class="px-4 py-3 text-tinta-suave text-xs">{{ $job['fallido_en'] }}</td>
+                                    <td class="px-4 py-3">
+                                        <div class="flex justify-end gap-1.5">
+                                            <x-ui.button type="button" size="sm" variant="secondary" icon="arrow-path"
+                                                wire:click="reintentarJob('{{ $job['uuid'] }}')"
+                                                wire:loading.attr="disabled"
+                                                title="Reintentar trabajo">
+                                                Reintentar
+                                            </x-ui.button>
+                                            <x-ui.confirmador
+                                                accion="descartarJob"
+                                                :parametros="[$job['uuid']]"
+                                                mensaje="¿Descartar este trabajo fallido?"
+                                                detalle="Se borra de la cola de fallidos y no se puede recuperar."
+                                                titulo="Descartar trabajo"
+                                                etiqueta="Descartar"
+                                                texto="Descartar"
+                                                variante="danger"
+                                                icono="trash"
+                                                tituloBoton="Descartar trabajo"
+                                            />
+                                        </div>
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>
                     </table>
-                </div>
-                <div class="border-t border-arena px-5 py-3 text-xs text-tinta-suave">
-                    Revisá <code class="font-mono">php artisan queue:failed</code> para reintentar o descartar trabajos fallidos.
                 </div>
             @endif
         </x-ui.card>

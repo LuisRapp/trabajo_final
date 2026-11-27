@@ -49,3 +49,14 @@ test('una frecuencia personalizada se describe en lenguaje claro', function () {
         ->set('expresion_cron', '0 5 * * *')
         ->assertSee('Todos los días a las 05:00');
 });
+
+test('la ejecucion manual deja registrado el estado de la tarea', function () {
+    Livewire::actingAs(usuarioConPermisos(['configurar-mantenimiento']))
+        ->test(ConfiguracionMantenimiento::class)
+        ->call('ejecutarVerificacionUmbrales')
+        ->assertHasNoErrors();
+
+    expect(
+        \App\Models\EjecucionAutomatizacion::where('comando', 'mantenimiento:check-umbrales')->exists()
+    )->toBeTrue();
+});

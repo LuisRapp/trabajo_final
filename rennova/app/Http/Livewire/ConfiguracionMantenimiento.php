@@ -4,6 +4,7 @@ namespace App\Http\Livewire;
 
 use App\Http\Livewire\Traits\MensajesErrorUsuario;
 use App\Services\ConfiguracionService;
+use App\Services\EjecucionAutomatizacionService;
 use Cron\CronExpression;
 use Illuminate\Support\Facades\Artisan;
 use Livewire\Component;
@@ -137,10 +138,14 @@ class ConfiguracionMantenimiento extends Component
         $this->authorize('configurar-mantenimiento');
 
         try {
-            Artisan::call('mantenimiento:check-umbrales');
+            $exit = Artisan::call('mantenimiento:check-umbrales');
+            $output = Artisan::output();
+            $this->registrarEjecucion('mantenimiento:check-umbrales', $exit, $output);
+
             session()->flash('message', 'Verificación de umbrales ejecutada correctamente.');
-            session()->flash('command_output', Artisan::output());
+            session()->flash('command_output', $output);
         } catch (\Exception $e) {
+            app(EjecucionAutomatizacionService::class)->registrar('mantenimiento:check-umbrales', 'error', $e->getMessage());
             session()->flash('error', $this->mensajeErrorUsuario($e, 'ejecutar la verificación'));
         }
     }
@@ -150,12 +155,37 @@ class ConfiguracionMantenimiento extends Component
         $this->authorize('configurar-mantenimiento');
 
         try {
-            Artisan::call('mantenimiento:check-programados', ['--forzar' => true]);
+            $exit = Artisan::call('mantenimiento:check-programados', ['--forzar' => true]);
+            $output = Artisan::output();
+            $this->registrarEjecucion('mantenimiento:check-programados', $exit, $output);
+
             session()->flash('message', 'Revisión de órdenes programadas ejecutada correctamente.');
-            session()->flash('command_output', Artisan::output());
+            session()->flash('command_output', $output);
         } catch (\Exception $e) {
+            app(EjecucionAutomatizacionService::class)->registrar('mantenimiento:check-programados', 'error', $e->getMessage());
             session()->flash('error', $this->mensajeErrorUsuario($e, 'ejecutar la revisión'));
         }
+    }
+
+    /**
+     * Deja registrada la ejecucion manual para el tablero de estado.
+     */
+    private function registrarEjecucion(string $comando, int $exitCode, string $output): void
+    {
+        $servicio = app(EjecucionAutomatizacionService::class);
+
+        if ($exitCode === 0) {
+            $servicio->registrar($comando, 'ok');
+
+            return;
+        }
+
+        $motivo = trim($output);
+        $servicio->registrar(
+            $comando,
+            'error',
+            $motivo !== '' ? mb_substr($motivo, 0, 500) : 'El comando terminó con código '.$exitCode.'.'
+        );
     }
 
     private function proxima(?string $cron): ?string
