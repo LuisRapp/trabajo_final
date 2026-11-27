@@ -80,7 +80,7 @@ class AnalizarDecisionesClimaticas extends Command
             $this->line("🌲 <fg=cyan>{$lote->propietario}</> - {$lote->ubicacion}");
             $this->newLine();
 
-            $resultado = $this->climaService->analizarYRecomendar($lote);
+            $resultado = $this->climaService->analizarYRecomendar($lote, true);
 
             if (! $resultado['success']) {
                 $this->error("   ❌ {$resultado['error']}");

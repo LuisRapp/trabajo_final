@@ -277,7 +277,8 @@ class ProcesoMantenimientoService
         $ultimoMantenimiento = Mantenimiento::query()
             ->where('id_maquinaria', $maquinaria->id_maquinaria)
             ->whereNotNull('toneladas_snapshot')
-            ->orderBy('fecha_fin', 'desc')
+            ->orderByDesc('fecha_fin')
+            ->orderByDesc('id_mantenimiento')
             ->first();
 
         if (! $ultimoMantenimiento) {

@@ -89,9 +89,10 @@ class ClimaEstrategiaService
         if ($totalDiasOperativos > 0) {
             $aumentoNecesario = $volumenRiesgo / $totalDiasOperativos;
             $porcentajeAumento = ($aumentoNecesario / $metaDiaria) * 100;
+            $maxAumentoPct = (float) config('clima.aumento_maximo_pct', 25);
 
-            // Subcaso 2A: Aumento viable (≤ 25%)
-            if ($porcentajeAumento <= 25) {
+            // Subcaso 2A: Aumento viable (<= maximo configurado)
+            if ($porcentajeAumento <= $maxAumentoPct) {
                 $nuevaMetaDiaria = $metaDiaria + $aumentoNecesario;
                 $recomendacion = $this->generarRecomendacionAnticipacion($analisisDias, $porcentajeAumento, $nuevaMetaDiaria, 'VIABLE');
 
@@ -117,10 +118,10 @@ class ClimaEstrategiaService
 
             // Subcaso 2B: Aumento excesivo (> 25%) → Máximo esfuerzo
             else {
-                $aumentoMaximo = $metaDiaria * 0.25;
+                $aumentoMaximo = $metaDiaria * ($maxAumentoPct / 100);
                 $volumenRecuperable = $aumentoMaximo * $totalDiasOperativos;
                 $deficitResidual = $volumenRiesgo - $volumenRecuperable;
-                $recomendacion = $this->generarRecomendacionAnticipacion($analisisDias, 25, $metaDiaria * 1.25, 'MAXIMA', $volumenRecuperable, $deficitResidual);
+                $recomendacion = $this->generarRecomendacionAnticipacion($analisisDias, $maxAumentoPct, $metaDiaria * (1 + $maxAumentoPct / 100), 'MAXIMA', $volumenRecuperable, $deficitResidual);
 
                 return [
                     'success' => true,
@@ -132,8 +133,8 @@ class ClimaEstrategiaService
                     'datos_calculados' => [
                         'volumen_riesgo' => $volumenRiesgo,
                         'meta_diaria' => $metaDiaria,
-                        'nueva_meta_diaria' => round($metaDiaria * 1.25, 2),
-                        'aumento_necesario_pct' => 25,
+                        'nueva_meta_diaria' => round($metaDiaria * (1 + $maxAumentoPct / 100), 2),
+                        'aumento_necesario_pct' => $maxAumentoPct,
                         'dias_perdidos' => $diasPerdidos,
                         'volumen_recuperable' => round($volumenRecuperable, 2),
                         'deficit_residual' => round($deficitResidual, 2),
@@ -207,7 +208,7 @@ class ClimaEstrategiaService
             $recomendacion .= '   • Déficit proyectado: '.round($volumenRiesgo, 2)." toneladas\n\n";
 
             $recomendacion .= "⚠️ ESTRATEGIA DE MÁXIMO ESFUERZO:\n";
-            $recomendacion .= "   • Aumentar producción al MÁXIMO: 25%\n";
+            $recomendacion .= '   • Aumentar producción al MÁXIMO: '.round($porcentaje)."%\n";
             $recomendacion .= '   • Meta diaria ajustada: '.round($nuevaMeta, 2)." toneladas\n";
             $recomendacion .= '   • Volumen recuperable: '.round($volRecuperable, 2)." toneladas ({$porcentajeCobertura}%)\n";
             $recomendacion .= '   • Déficit residual: '.round($deficitResidual, 2)." toneladas\n\n";
@@ -277,7 +278,7 @@ class ClimaEstrategiaService
 
             $recomendacion = "🚨 LLUVIA INMINENTE EN {$diasHastaDiaCero} DÍAS ({$diaCero['fecha_str']})\n\n";
             $recomendacion .= "📊 ESTRATEGIA DE ANTICIPACIÓN (LÍMITE ALCANZADO):\n";
-            $recomendacion .= "   • Aumentar producción al MÁXIMO: 25%\n";
+            $recomendacion .= '   • Aumentar producción al MÁXIMO: '.round($porcentaje)."%\n";
             $recomendacion .= '   • Meta diaria ajustada: '.round($metaDiaria * self::MAX_AUMENTO_PRODUCCION, 2)." toneladas\n";
             $recomendacion .= "   • Volumen recuperable: {$volumenRecuperable} toneladas ({$porcentajeCobertura}%)\n";
             $recomendacion .= "   • Déficit residual: {$deficitResidual} toneladas\n\n";
@@ -408,6 +409,7 @@ class ClimaEstrategiaService
                 ->where('id_maquinaria', $maquinaria->id_maquinaria)
                 ->whereNotNull('fecha_fin')
                 ->orderByDesc('fecha_fin')
+                ->orderByDesc('id_mantenimiento')
                 ->first();
 
             $toneladas = (float) $maquinaria->toneladas_acumuladas - (float) ($ultimo->toneladas_snapshot ?? 0);
@@ -426,7 +428,7 @@ class ClimaEstrategiaService
                 continue;
             }
 
-            if ($porcentaje >= 80) {
+            if ($porcentaje >= (float) config('clima.mantenimiento_umbral_pct', 80)) {
                 $resultado[] = [
                     'nombre' => $maquinaria->modelo,
                     'porcentaje' => $porcentaje,

@@ -209,7 +209,7 @@ class SelectorLote extends Component
                 ],
                 'loteNombre' => $lote->nombre ?? $lote->propietario ?? ('Lote #'.$lote->id_lote),
                 'recomendacionDetallada' => $recomendacion,
-                'generadoEn' => Carbon::now()->format('H:i'),
+                'generadoEn' => isset($climaData['generado_en']) ? Carbon::parse($climaData['generado_en'])->format('H:i') : Carbon::now()->format('H:i'),
             ];
         } else {
             $this->pronosticoData = null;

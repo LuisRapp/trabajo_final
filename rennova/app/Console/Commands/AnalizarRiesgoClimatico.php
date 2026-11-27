@@ -76,7 +76,7 @@ class AnalizarRiesgoClimatico extends Command
                 $diasCaidosPronosticados = $this->analizarDiasDeLluvia($pronostico);
 
                 if (empty($diasCaidosPronosticados)) {
-                    $this->line('   ✅ Sin riesgo de lluvia significativa (< '.self::UMBRAL_LLUVIA.'mm)');
+                    $this->line('   ✅ Sin riesgo de lluvia significativa (< '.(float) config('clima.umbral_lluvia_mm', self::UMBRAL_LLUVIA).'mm)');
 
                     continue;
                 }
@@ -169,7 +169,7 @@ class AnalizarRiesgoClimatico extends Command
         foreach ($fechas as $index => $fecha) {
             $mm = $precipitaciones[$index] ?? 0;
 
-            if ($mm >= self::UMBRAL_LLUVIA) {
+            if ($mm >= (float) config('clima.umbral_lluvia_mm', self::UMBRAL_LLUVIA)) {
                 $diasCaidos[] = [
                     'fecha' => Carbon::parse($fecha),
                     'mm' => $mm,

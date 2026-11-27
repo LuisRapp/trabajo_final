@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Lote;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -49,7 +50,27 @@ class ClimaDecisionService
      *               'datos_calculados' => array
      *               ]
      */
-    public function analizarYRecomendar(Lote $lote): array
+    public function analizarYRecomendar(Lote $lote, bool $forzar = false): array
+    {
+        $clave = 'clima.analisis.'.$lote->id_lote;
+
+        if ($forzar) {
+            Cache::forget($clave);
+        } elseif ($cacheado = Cache::get($clave)) {
+            return $cacheado;
+        }
+
+        $resultado = $this->analizarSinCache($lote);
+
+        if ($resultado['success'] ?? false) {
+            $resultado['generado_en'] = now()->toIso8601String();
+            Cache::put($clave, $resultado, now()->addMinutes(10));
+        }
+
+        return $resultado;
+    }
+
+    private function analizarSinCache(Lote $lote): array
     {
         try {
             // Validar que el lote tenga coordenadas

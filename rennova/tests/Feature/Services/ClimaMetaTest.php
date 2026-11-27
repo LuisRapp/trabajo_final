@@ -1,8 +1,13 @@
 <?php
 
 use App\Models\Carga;
+use App\Models\Empleado;
+use App\Models\HistoricoCostosMaquinaria;
+use App\Models\HistoricoRolLaboral;
 use App\Models\Lote;
+use App\Models\Maquinaria;
 use App\Models\ParteDiario;
+use App\Models\RolLaboral;
 use App\Services\ClimaAnalisisService;
 
 function parteConPeso(Lote $lote, float $kg, string $fecha): void
@@ -43,4 +48,41 @@ it('devuelve sin_datos cuando el lote no tiene produccion', function () {
 
     expect($meta['valor'])->toBe(0.0)
         ->and($meta['fuente'])->toBe('sin_datos');
+});
+
+it('calcula el costo estructural solo con los empleados y maquinas del lote', function () {
+    $lote = Lote::factory()->create();
+    $rol = RolLaboral::factory()->create();
+
+    HistoricoRolLaboral::create([
+        'rol_laboral_id' => $rol->id_rol_laboral,
+        'jornal_diario' => 1000,
+        'precio_tonelada' => 0,
+        'fecha_inicio' => '2026-01-01',
+    ]);
+
+    $empleado = Empleado::factory()->create(['id_rol_laboral' => $rol->id_rol_laboral]);
+    $lote->empleados()->attach($empleado->id_empleado);
+
+    parteConPeso($lote, 1000, now()->subDay()->toDateString());
+
+    $maquina = Maquinaria::factory()->create(['es_alquilada' => true]);
+    $lote->maquinarias()->attach($maquina->id_maquinaria);
+    HistoricoCostosMaquinaria::create([
+        'id_maquinaria' => $maquina->id_maquinaria,
+        'costo_por_tonelada' => 10,
+        'fecha_inicio_vigencia' => '2026-01-01',
+    ]);
+
+    // Otro lote con su propio empleado y maquina: no debe sumarse.
+    $otroLote = Lote::factory()->create();
+    $otroEmpleado = Empleado::factory()->create(['id_rol_laboral' => $rol->id_rol_laboral]);
+    $otroLote->empleados()->attach($otroEmpleado->id_empleado);
+    $otraMaquina = Maquinaria::factory()->create(['es_alquilada' => true]);
+    $otroLote->maquinarias()->attach($otraMaquina->id_maquinaria);
+
+    $costo = app(ClimaAnalisisService::class)->calcularCostoEstructuralDiario($lote);
+
+    // Jornal 1000 + 1 tn de produccion * 10 = 1010.
+    expect($costo)->toBe(1010.0);
 });

@@ -82,3 +82,27 @@ it('incluye las maquinas con orden abierta en el plan de recuperacion', function
     expect($estrategia['datos_calculados']['maquinarias_mantenimiento'])->toHaveCount(1)
         ->and($estrategia['datos_calculados']['maquinarias_mantenimiento'][0]['motivo'])->toContain('orden');
 });
+
+it('no sugiere mantenimiento si el ultimo cierre del mismo dia ya tiene el odometro actual', function () {
+    $lote = Lote::factory()->create();
+    $maquina = Maquinaria::factory()->create([
+        'toneladas_acumuladas' => 5000,
+        'umbral_toneladas' => 600,
+    ]);
+    $lote->maquinarias()->attach($maquina->id_maquinaria);
+
+    Mantenimiento::factory()->completado()->create([
+        'id_maquinaria' => $maquina->id_maquinaria,
+        'fecha_fin' => '2026-11-27',
+        'toneladas_snapshot' => 3000,
+    ]);
+    Mantenimiento::factory()->completado()->create([
+        'id_maquinaria' => $maquina->id_maquinaria,
+        'fecha_fin' => '2026-11-27',
+        'toneladas_snapshot' => 5000,
+    ]);
+
+    $estrategia = app(ClimaEstrategiaService::class)->determinarEstrategia($lote, analisisConLluviaHoy(4, 300));
+
+    expect($estrategia['datos_calculados']['maquinarias_mantenimiento'])->toBe([]);
+});

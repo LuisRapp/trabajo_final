@@ -31,7 +31,7 @@ class ClimaApiService
             'daily' => 'precipitation_sum,cloudcover_mean,wind_speed_10m_max,et0_fao_evapotranspiration',
             'hourly' => 'precipitation',
             'timezone' => self::TIMEZONE,
-            'forecast_days' => self::DIAS_FORECAST,
+            'forecast_days' => (int) config('clima.forecast_dias', self::DIAS_FORECAST),
         ];
 
         try {

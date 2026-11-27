@@ -233,3 +233,32 @@ test('renombrar el tipo preventivo no detiene el proceso automatico', function (
         Mantenimiento::query()->where('id_maquinaria', $maquinaria->id_maquinaria)->exists()
     )->toBeTrue();
 });
+
+test('no genera orden si el ultimo cierre del mismo dia ya tiene el odometro actual', function () {
+    $maquinaria = Maquinaria::factory()->create([
+        'estado' => 'disponible',
+        'umbral_toneladas' => 600,
+        'toneladas_acumuladas' => 5000,
+    ]);
+
+    // Dos cierres el mismo dia: el segundo es el que vale (snapshot 5000).
+    Mantenimiento::factory()->completado()->create([
+        'id_maquinaria' => $maquinaria->id_maquinaria,
+        'fecha_fin' => '2026-11-27',
+        'toneladas_snapshot' => 3000,
+    ]);
+    Mantenimiento::factory()->completado()->create([
+        'id_maquinaria' => $maquinaria->id_maquinaria,
+        'fecha_fin' => '2026-11-27',
+        'toneladas_snapshot' => 5000,
+    ]);
+
+    $this->artisan('mantenimiento:check-umbrales')->assertExitCode(0);
+
+    expect(
+        Mantenimiento::query()
+            ->where('id_maquinaria', $maquinaria->id_maquinaria)
+            ->where('estado', 'programado')
+            ->count()
+    )->toBe(0);
+});

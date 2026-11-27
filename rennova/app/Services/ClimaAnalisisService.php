@@ -48,6 +48,14 @@ class ClimaAnalisisService
         $vientosMax = $pronostico['daily']['wind_speed_10m_max'] ?? [];
         $et0s = $pronostico['daily']['et0_fao_evapotranspiration'] ?? [];
 
+        $umbralLluvia = (float) config('clima.umbral_lluvia_mm', self::UMBRAL_LLUVIA);
+        $umbralNubosidad = (float) config('clima.umbral_nubosidad_pct', self::UMBRAL_NUBOSIDAD);
+        $saturacionMm = (float) config('clima.saturacion_mm', 12);
+        $secadoViento = (float) config('clima.secado_viento_kmh', 15);
+        $secadoEt0 = (float) config('clima.secado_et0_mm', 4);
+        $umbralMadrugada = (float) config('clima.lluvia_madrugada_mm', 2);
+        $umbralDiurna = (float) config('clima.lluvia_diurna_mm', 5);
+
         $horas = $pronostico['hourly']['time'] ?? [];
         $precipitacionHoraria = $pronostico['hourly']['precipitation'] ?? [];
 
@@ -97,13 +105,13 @@ class ClimaAnalisisService
             }
             $lluviaAyer = ($index > 0) ? ($precipitaciones[$index - 1] ?? 0) : 0;
             $saturacionIndex = $mm + ($lluviaAyer * 0.5);
-            $saturacionAlta = $saturacionIndex > 12;
-            $secadoActivo = ($vientoMax > 15) || ($et0 > 4);
+            $saturacionAlta = $saturacionIndex > $saturacionMm;
+            $secadoActivo = ($vientoMax > $secadoViento) || ($et0 > $secadoEt0);
             $ayerKey = $index > 0 ? Carbon::parse($fechas[$index - 1])->toDateString() : null;
             $madrugadaAyer = $ayerKey ? ($lluviaPorFecha[$ayerKey]['madrugada'] ?? 0) : 0;
             $lluviaDiurnaAyer = $ayerKey ? ($lluviaPorFecha[$ayerKey]['diurna'] ?? 0) : 0;
-            $lluviaRealAyer = ($lluviaAyer >= self::UMBRAL_LLUVIA) && ($madrugadaAyer > 2 || $lluviaDiurnaAyer > 5);
-            $lluviaRealHoy = ($mm >= self::UMBRAL_LLUVIA) && ($madrugada > 2 || $lluviaDiurna > 5);
+            $lluviaRealAyer = ($lluviaAyer >= $umbralLluvia) && ($madrugadaAyer > $umbralMadrugada || $lluviaDiurnaAyer > $umbralDiurna);
+            $lluviaRealHoy = ($mm >= $umbralLluvia) && ($madrugada > $umbralMadrugada || $lluviaDiurna > $umbralDiurna);
 
             // Analizar estado del día
             $estado = 'OPERATIVO';
@@ -129,12 +137,12 @@ class ClimaAnalisisService
                 $totalDiasPerdidos++;
             } else {
                 // 2. Lluvia nocturna (operativo condicional)
-                if ($mm >= self::UMBRAL_LLUVIA && $lluviaDiurna <= 5) {
+                if ($mm >= $umbralLluvia && $lluviaDiurna <= $umbralDiurna) {
                     $estado = 'OPERATIVO_CONDICIONAL';
                     $razon = 'Lluvia nocturna';
                 }
                 // 3. Barro por saturación + nubosidad + poco viento (solo si ayer hubo lluvia real)
-                elseif ($saturacionAlta && $cloudCover > self::UMBRAL_NUBOSIDAD && ! $secadoActivo && $lluviaRealAyer) {
+                elseif ($saturacionAlta && $cloudCover > $umbralNubosidad && ! $secadoActivo && $lluviaRealAyer) {
                     $estado = 'INACTIVO';
                     $razon = 'Saturación alta + nubosidad + poco viento';
 
@@ -261,36 +269,30 @@ class ClimaAnalisisService
      */
     public function calcularCostoEstructuralDiario(Lote $lote): float
     {
-        $costoTotal = 0;
+        $costo = 0.0;
 
-        // A) Costo de empleados activos (sin fecha_fin_actividades o fecha futura)
-        $empleadosActivos = \App\Models\Empleado::where(function ($query) {
-            $query->whereNull('fecha_fin_actividades')
-                ->orWhere('fecha_fin_actividades', '>', Carbon::today());
-        })->get();
-
-        foreach ($empleadosActivos as $empleado) {
+        // Mano de obra: solo los empleados asignados al lote (jornal del dia).
+        foreach ($lote->empleados()->with('rolLaboral')->get() as $empleado) {
             try {
-                $costoTotal += EmpleadoPagoService::calcularCostoDia($empleado, Carbon::today(), true, null);
+                $costo += EmpleadoPagoService::calcularCostoDia($empleado, now()->toDateString(), true, null);
             } catch (\Exception $e) {
-                // Si no hay histórico, ignorar este empleado
+                // Sin historico de rol: se omite ese empleado.
             }
         }
 
-        // B) Costo de maquinaria en alquiler
-        $maquinariasAlquiladas = Maquinaria::where('es_alquilada', true)->get();
+        // Alquiler: la produccion diaria esperada del lote por el costo por tonelada.
+        $metaDiaria = $this->calcularMetaDiaria($lote)['valor'];
 
-        foreach ($maquinariasAlquiladas as $maquinaria) {
-            // Estimar costo diario: usar toneladas_acumuladas si existe
-            $toneladas = $maquinaria->toneladas_acumuladas ?? 10;
+        foreach ($lote->maquinarias()->where('es_alquilada', true)->get() as $maquinaria) {
             $precio = (float) (HistoricoCostosMaquinaria::query()
                 ->where('id_maquinaria', $maquinaria->id_maquinaria)
                 ->vigenteEnFecha(now())
                 ->value('costo_por_tonelada') ?? 0);
-            $costoTotal += $precio * min($toneladas, 10); // Max 10 ton estimadas
+
+            $costo += $metaDiaria * $precio;
         }
 
-        return round($costoTotal, 2);
+        return round($costo, 2);
     }
 
     /**
