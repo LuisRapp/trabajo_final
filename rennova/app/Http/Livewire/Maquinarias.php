@@ -20,6 +20,8 @@ class Maquinarias extends Component
 
     public $es_alquilada = 0;
 
+    public $precio_alquiler_destajo;
+
     public $fecha_inicio_actividades;
 
     public $umbral_toneladas;
@@ -48,6 +50,8 @@ class Maquinarias extends Component
         'modelo.min' => 'El modelo debe tener al menos 2 caracteres.',
         'estado.required' => 'El estado es obligatorio.',
         'es_alquilada.required' => 'Debe indicar si es alquilada.',
+        'precio_alquiler_destajo.numeric' => 'El precio de alquiler debe ser un número.',
+        'precio_alquiler_destajo.min' => 'El precio de alquiler no puede ser negativo.',
         'fecha_inicio_actividades.required' => 'La fecha de inicio es obligatoria.',
         'umbral_toneladas.numeric' => 'El umbral debe ser un número.',
         'umbral_toneladas.min' => 'El umbral debe ser mayor o igual a 0.',
@@ -80,6 +84,7 @@ class Maquinarias extends Component
             'modelo' => $this->modelo,
             'estado' => $this->estado,
             'es_alquilada' => $this->es_alquilada,
+            'precio_alquiler_destajo' => $this->precio_alquiler_destajo !== '' ? $this->precio_alquiler_destajo : null,
             'fecha_inicio_actividades' => $this->fecha_inicio_actividades,
             'umbral_toneladas' => $this->umbral_toneladas,
         ]);
@@ -100,6 +105,7 @@ class Maquinarias extends Component
         $this->modelo = $maquinaria->modelo;
         $this->estado = $maquinaria->estado;
         $this->es_alquilada = $maquinaria->es_alquilada;
+        $this->precio_alquiler_destajo = $maquinaria->precio_alquiler_destajo;
         $this->fecha_inicio_actividades = $maquinaria->fecha_inicio_actividades;
         $this->umbral_toneladas = $maquinaria->umbral_toneladas;
     }
@@ -113,7 +119,7 @@ class Maquinarias extends Component
 
     public function resetCampos()
     {
-        $this->reset(['maquinaria_id', 'id_tipo_maquinaria', 'modelo', 'estado', 'es_alquilada', 'fecha_inicio_actividades', 'umbral_toneladas']);
+        $this->reset(['maquinaria_id', 'id_tipo_maquinaria', 'modelo', 'estado', 'es_alquilada', 'fecha_inicio_actividades', 'umbral_toneladas', 'precio_alquiler_destajo']);
 
         // El select muestra "No" por defecto: el valor tiene que reflejarlo,
         // si queda en null el required falla sin que el usuario lo vea.

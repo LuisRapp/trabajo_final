@@ -78,3 +78,20 @@ test('guarda una maquinaria dejando "Es alquilada" en el valor por defecto', fun
     expect($maquinaria)->not->toBeNull()
         ->and((bool) $maquinaria->es_alquilada)->toBeFalse();
 });
+
+test('guarda el precio de alquiler por tonelada de la maquina', function () {
+    $tipo = TipoMaquinaria::factory()->create();
+
+    Livewire::actingAs(usuarioConPermisos(['crear-maquinarias', 'editar-maquinarias', 'eliminar-maquinarias']))
+        ->test(Maquinarias::class)
+        ->set('id_tipo_maquinaria', $tipo->id_tipo_maquinaria)
+        ->set('modelo', 'ALQ-500')
+        ->set('estado', 'disponible')
+        ->set('es_alquilada', 1)
+        ->set('fecha_inicio_actividades', '2020-01-01')
+        ->set('precio_alquiler_destajo', 250.5)
+        ->call('guardar')
+        ->assertHasNoErrors();
+
+    expect((float) Maquinaria::where('modelo', 'ALQ-500')->first()->precio_alquiler_destajo)->toBe(250.5);
+});

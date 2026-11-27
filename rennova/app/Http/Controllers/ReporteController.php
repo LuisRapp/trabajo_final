@@ -172,7 +172,7 @@ class ReporteController extends Controller
 
             return [
                 'id' => $lote->id_lote,
-                'nombre' => $lote->ubicacion ?? $lote->propietario ?? 'Lote '.$lote->id_lote,
+                'nombre' => $lote->propietario ?? $lote->ubicacion ?? 'Lote '.$lote->id_lote,
                 'hectareas' => $lote->superficie ?? 0,
                 'precio_promedio' => $precio_promedio,
                 'costo_promedio' => $costo_promedio,
@@ -454,7 +454,7 @@ class ReporteController extends Controller
 
                 return [
                     'id' => $lote->id_lote,
-                    'nombre' => $lote->ubicacion ?? $lote->propietario ?? 'Lote '.$lote->id_lote,
+                    'nombre' => $lote->propietario ?? $lote->ubicacion ?? 'Lote '.$lote->id_lote,
                     'hectareas' => $lote->superficie ?? 0,
                     'produccion' => round($produccion, 2),
                     'precio_promedio' => $precio_promedio,
@@ -544,7 +544,7 @@ class ReporteController extends Controller
 
                 return [
                     'id' => $lote->id_lote,
-                    'nombre' => $lote->ubicacion ?? $lote->propietario ?? 'Lote '.$lote->id_lote,
+                    'nombre' => $lote->propietario ?? $lote->ubicacion ?? 'Lote '.$lote->id_lote,
                     'superficie' => $superficie,
                     'toneladas' => round($toneladas, 2),
                     'rendimiento' => round($rendimiento, 2),

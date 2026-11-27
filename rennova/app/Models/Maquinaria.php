@@ -23,6 +23,7 @@ class Maquinaria extends Model implements Auditable
         'fecha_inicio_actividades',
         'toneladas_acumuladas',
         'umbral_toneladas',
+        'precio_alquiler_destajo',
     ];
 
     public function tipoMaquinaria()

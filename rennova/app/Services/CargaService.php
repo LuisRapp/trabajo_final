@@ -114,7 +114,9 @@ class CargaService
             throw new ValidationException($validator);
         }
 
-        return Carga::updateOrCreate(
+        $parteAnterior = $id ? Carga::find($id)?->id_parte_diario : null;
+
+        $carga = Carga::updateOrCreate(
             ['id_carga' => $id],
             [
                 'id_lote' => $datos['id_lote'],
@@ -129,6 +131,24 @@ class CargaService
                 'fecha_carga' => $datos['fecha_carga'],
             ]
         );
+
+        $this->recalcularParte($parteAnterior);
+        $this->recalcularParte($carga->id_parte_diario);
+
+        return $carga;
+    }
+
+    private function recalcularParte(?int $idParte): void
+    {
+        if (! $idParte) {
+            return;
+        }
+
+        $parte = ParteDiario::find($idParte);
+
+        if ($parte) {
+            ParteDiarioCostoService::calcularYGuardarCostos($parte);
+        }
     }
 
     public function obtener(int $id): Carga
@@ -138,6 +158,10 @@ class CargaService
 
     public function eliminar(int $id): void
     {
-        Carga::findOrFail($id)->delete();
+        $carga = Carga::findOrFail($id);
+        $idParte = $carga->id_parte_diario;
+        $carga->delete();
+
+        $this->recalcularParte($idParte);
     }
 }

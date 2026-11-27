@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\Carga;
 use App\Models\Mantenimiento;
 use App\Models\MovimientoStock;
 use App\Models\ParteDiario;
@@ -29,16 +28,17 @@ class ParteDiarioCostoService
         $costoMaquinaria = 0.0;
         $totalToneladas = 0.0;
 
-        $empleados = $parteDiario->empleados()->with('rolLaboral')->get();
+        $cargasDelParte = $parteDiario->cargas()->with(['empleados.rolLaboral', 'maquinarias'])->get();
 
-        // Pre-load all cargas for this date with empleados to avoid N+1
-        $cargasDelDia = Carga::whereDate('fecha_carga', $parteDiario->fecha)
-            ->with('empleados')
-            ->get();
+        // La mano de obra incluye los empleados del parte y los asignados a las
+        // cargas: la liquidacion paga a ambos, asi que el costo del dia tambien.
+        $empleados = $parteDiario->empleados()->with('rolLaboral')->get()
+            ->merge($cargasDelParte->flatMap(fn ($carga) => $carga->empleados))
+            ->unique('id_empleado');
 
-        if (! $empleados->isEmpty()) {
+        if ($empleados->isNotEmpty()) {
             foreach ($empleados as $empleado) {
-                $cargasDelEmpleado = $cargasDelDia->filter(function ($carga) use ($empleado) {
+                $cargasDelEmpleado = $cargasDelParte->filter(function ($carga) use ($empleado) {
                     return $carga->empleados->contains('id_empleado', $empleado->id_empleado);
                 });
 
@@ -64,8 +64,6 @@ class ParteDiarioCostoService
             }
         }
 
-        $cargasDelParte = $parteDiario->cargas()->with('maquinarias')->get();
-
         foreach ($cargasDelParte as $carga) {
             $totalToneladas += ($carga->peso_neto / 1000);
         }
@@ -80,10 +78,21 @@ class ParteDiarioCostoService
         }
 
         foreach ($maquinariasUsadas as $maq) {
-            if ($maq->es_alquilada && $maq->tipoMaquinaria) {
-                $precioAlquilerPorTon = (float) ($maq->tipoMaquinaria->precio_alquiler_destajo ?? 0);
-                $costoMaquinaria += $totalToneladas * $precioAlquilerPorTon;
+            if (! $maq->es_alquilada) {
+                continue;
             }
+
+            $precioAlquilerPorTon = (float) ($maq->precio_alquiler_destajo ?? 0);
+
+            if ($precioAlquilerPorTon <= 0) {
+                continue;
+            }
+
+            $toneladasMaquina = $cargasDelParte
+                ->filter(fn ($carga) => $carga->maquinarias->contains('id_maquinaria', $maq->id_maquinaria))
+                ->sum(fn ($carga) => $carga->peso_neto / 1000);
+
+            $costoMaquinaria += $toneladasMaquina * $precioAlquilerPorTon;
         }
 
         $idsMaquinarias = $maquinariasUsadas->pluck('id_maquinaria')->toArray();

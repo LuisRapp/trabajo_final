@@ -253,7 +253,7 @@ class ClimaAnalisisService
         foreach ($maquinariasAlquiladas as $maquinaria) {
             // Estimar costo diario: usar toneladas_acumuladas si existe
             $toneladas = $maquinaria->toneladas_acumuladas ?? 10;
-            $precio = $maquinaria->tipoMaquinaria->precio_alquiler_destajo ?? 0;
+            $precio = $maquinaria->precio_alquiler_destajo ?? 0;
             $costoTotal += $precio * min($toneladas, 10); // Max 10 ton estimadas
         }
 

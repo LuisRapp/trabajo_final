@@ -167,9 +167,9 @@
                 <tbody>
                     <tr>
                         <td><strong>Identificación</strong></td>
-                        <td>{{ $lote->ubicacion ?? $lote->propietario ?? ('Lote ' . $lote->id_lote) }}</td>
-                        <td><strong>Propietario</strong></td>
-                        <td>{{ $lote->propietario ?? 'Sin datos' }}</td>
+                        <td>{{ $lote->propietario ?? ('Lote ' . $lote->id_lote) }}</td>
+                        <td><strong>Ubicación</strong></td>
+                        <td>{{ $lote->ubicacion ?? 'Sin datos' }}</td>
                     </tr>
                     <tr>
                         <td><strong>Condición de compra</strong></td>

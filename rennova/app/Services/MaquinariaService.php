@@ -2,7 +2,9 @@
 
 namespace App\Services;
 
+use App\Models\Carga;
 use App\Models\Maquinaria;
+use App\Models\ParteDiario;
 use App\Models\TipoMaquinaria;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Validator;
@@ -42,6 +44,7 @@ class MaquinariaService
             'es_alquilada' => 'required|boolean',
             'fecha_inicio_actividades' => 'required|date',
             'umbral_toneladas' => 'nullable|numeric|min:0',
+            'precio_alquiler_destajo' => 'nullable|numeric|min:0',
         ];
     }
 
@@ -56,7 +59,7 @@ class MaquinariaService
             throw new ValidationException($validator);
         }
 
-        return Maquinaria::updateOrCreate(
+        $maquinaria = Maquinaria::updateOrCreate(
             ['id_maquinaria' => $id],
             [
                 'id_tipo_maquinaria' => $datos['id_tipo_maquinaria'],
@@ -65,8 +68,34 @@ class MaquinariaService
                 'es_alquilada' => $datos['es_alquilada'],
                 'fecha_inicio_actividades' => $datos['fecha_inicio_actividades'],
                 'umbral_toneladas' => $datos['umbral_toneladas'] ?? null,
+                'precio_alquiler_destajo' => $datos['precio_alquiler_destajo'] ?? null,
             ]
         );
+
+        $this->recalcularPartesDeMaquina((int) $maquinaria->id_maquinaria);
+
+        return $maquinaria;
+    }
+
+    /**
+     * El precio de alquiler de la maquina afecta el costo de los partes donde
+     * trabajo: se recalculan para que el indicador no quede viejo.
+     */
+    private function recalcularPartesDeMaquina(int $idMaquinaria): void
+    {
+        $idsPartes = Carga::query()
+            ->whereHas('maquinarias', fn ($query) => $query->where('maquinarias.id_maquinaria', $idMaquinaria))
+            ->whereNotNull('id_parte_diario')
+            ->pluck('id_parte_diario')
+            ->unique();
+
+        foreach ($idsPartes as $idParte) {
+            $parte = ParteDiario::find($idParte);
+
+            if ($parte) {
+                ParteDiarioCostoService::calcularYGuardarCostos($parte);
+            }
+        }
     }
 
     public function obtener(int $id): Maquinaria
