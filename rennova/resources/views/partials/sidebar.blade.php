@@ -1,14 +1,14 @@
 <aside
     class="sidebar"
     :class="{ 'collapsed': collapsed, 'show': mobileOpen }"
-    x-data="sidebarState()"
-    x-init="initSidebar()"
+    x-data="estadoSidebar()"
+    x-init="iniciarSidebar()"
     id="sidebar"
 >
     @php
         $user = auth()->user();
 
-        $canOperacionesForestales = $user && (
+        $puedeOperacionesForestales = $user && (
             $user->can('ver-lotes')
             || $user->can('ver-partes-diarios')
             || $user->can('ver-cargas')
@@ -18,13 +18,13 @@
             || $user->can('ver-clientes')
         );
 
-        $canInventarioAbastecimiento = $user && (
+        $puedeInventarioAbastecimiento = $user && (
             $user->can('ver-gestion-stock')
             || $user->can('ver-insumos')
             || $user->can('ver-proveedores')
         );
 
-        $canMaquinaria = $user && (
+        $puedeMaquinaria = $user && (
             $user->can('ver-maquinarias')
             || $user->can('ver-mantenimientos')
             || $user->can('ver-kits-mantenimiento')
@@ -32,7 +32,7 @@
             || $user->can('configurar-notificaciones-mantenimiento')
         );
 
-        $canPersonalPagos = $user && (
+        $puedePersonalPagos = $user && (
             $user->can('ver-empleados')
             || $user->can('ver-choferes')
             || $user->can('ver-adelantos')
@@ -40,12 +40,12 @@
             || $user->can('ver-liquidacion-pagos')
         );
 
-        $canReportesAuditoria = $user && (
+        $puedeReportesAuditoria = $user && (
             $user->can('ver-reportes')
             || $user->can('ver-auditoria')
         );
 
-        $canAdministracion = $user && (
+        $puedeAdministracion = $user && (
             $user->can('gestionar-usuarios')
             || $user->can('gestionar-permisos')
             || $user->can('configurar-mantenimiento')
@@ -54,6 +54,7 @@
             || $user->can('ver-unidades-medida')
             || $user->can('ver-lista-precios')
             || $user->can('ver-tipos-maquinaria')
+            || $user->can('ver-tipos-mantenimiento')
             || $user->can('ver-roles-laborales')
         );
 
@@ -71,11 +72,11 @@
         </div>
 
         <!-- Operaciones forestales -->
-        @if($canOperacionesForestales)
+        @if($puedeOperacionesForestales)
         <div class="sidebar-menu-group">
             <button
                 type="button"
-                @click="toggle('operaciones-forestales')"
+                @click="alternarMenu('operaciones-forestales')"
                 :aria-expanded="open['operaciones-forestales']"
                 class="sidebar-menu-btn"
                 aria-controls="menuOperacionesForestales"
@@ -112,11 +113,11 @@
         @endif
 
         <!-- Inventario y abastecimiento -->
-        @if($canInventarioAbastecimiento)
+        @if($puedeInventarioAbastecimiento)
         <div class="sidebar-menu-group">
             <button
                 type="button"
-                @click="toggle('inventario-abastecimiento')"
+                @click="alternarMenu('inventario-abastecimiento')"
                 :aria-expanded="open['inventario-abastecimiento']"
                 class="sidebar-menu-btn"
                 aria-controls="menuInventarioAbastecimiento"
@@ -144,11 +145,11 @@
         @endif
 
         <!-- Maquinaria -->
-        @if($canMaquinaria)
+        @if($puedeMaquinaria)
         <div class="sidebar-menu-group">
             <button
                 type="button"
-                @click="toggle('maquinaria')"
+                @click="alternarMenu('maquinaria')"
                 :aria-expanded="open.maquinaria"
                 class="sidebar-menu-btn"
                 aria-controls="menuMaquinaria"
@@ -182,11 +183,11 @@
         @endif
 
         <!-- Personal y pagos -->
-        @if($canPersonalPagos)
+        @if($puedePersonalPagos)
         <div class="sidebar-menu-group">
             <button
                 type="button"
-                @click="toggle('personal-pagos')"
+                @click="alternarMenu('personal-pagos')"
                 :aria-expanded="open['personal-pagos']"
                 class="sidebar-menu-btn"
                 aria-controls="menuPersonalPagos"
@@ -223,11 +224,11 @@
         @endif
 
         <!-- Reportes y auditoría -->
-        @if($canReportesAuditoria)
+        @if($puedeReportesAuditoria)
         <div class="sidebar-menu-group">
             <button
                 type="button"
-                @click="toggle('reportes-auditoria')"
+                @click="alternarMenu('reportes-auditoria')"
                 :aria-expanded="open['reportes-auditoria']"
                 class="sidebar-menu-btn"
                 aria-controls="menuReportesAuditoria"
@@ -252,11 +253,11 @@
         @endif
 
         <!-- Administración -->
-        @if($canAdministracion)
+        @if($puedeAdministracion)
         <div class="sidebar-menu-group">
             <button
                 type="button"
-                @click="toggle('administracion')"
+                @click="alternarMenu('administracion')"
                 :aria-expanded="open.administracion"
                 class="sidebar-menu-btn"
                 aria-controls="menuAdministracion"
@@ -297,6 +298,9 @@
                 @can('ver-tipos-maquinaria')
                 <a href="{{ route('tipos-maquinaria.index') }}" class="sidebar-link {{ $esActiva('tipos-maquinaria.*') ? 'active' : '' }}"><span class="inline-flex items-center gap-1.5"><flux:icon.cog-6-tooth class="size-3.5" /> Tipos de maquinaria</span></a>
                 @endcan
+                @can('ver-tipos-mantenimiento')
+                <a href="{{ route('tipos-mantenimiento.index') }}" class="sidebar-link {{ $esActiva('tipos-mantenimiento.*') ? 'active' : '' }}"><span class="inline-flex items-center gap-1.5"><flux:icon.wrench-screwdriver class="size-3.5" /> Tipos de mantenimiento</span></a>
+                @endcan
                 @can('ver-roles-laborales')
                 <a href="{{ route('roles-laborales.index') }}" class="sidebar-link {{ $esActiva('roles-laborales.*') ? 'active' : '' }}"><span class="inline-flex items-center gap-1.5"><flux:icon.briefcase class="size-3.5" /> Roles laborales</span></a>
                 @endcan
@@ -307,7 +311,7 @@
 </aside>
 
 <script>
-    function sidebarState() {
+    function estadoSidebar() {
         return {
             open: {
                 'operaciones-forestales': false,
@@ -317,14 +321,14 @@
                 'reportes-auditoria': false,
                 'administracion': false,
             },
-            toggle(menu) {
+            alternarMenu(menu) {
                 this.open[menu] = !this.open[menu];
-                this.saveSidebarState();
+                this.guardarEstadoSidebar();
             },
-            saveSidebarState() {
+            guardarEstadoSidebar() {
                 localStorage.setItem('sidebarState', JSON.stringify(this.open));
             },
-            loadSidebarState() {
+            cargarEstadoSidebar() {
                 const saved = localStorage.getItem('sidebarState');
                 if (saved) {
                     try {
@@ -334,8 +338,8 @@
                     }
                 }
             },
-            initSidebar() {
-                this.loadSidebarState();
+            iniciarSidebar() {
+                this.cargarEstadoSidebar();
             }
         }
     }

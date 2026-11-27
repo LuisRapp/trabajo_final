@@ -92,3 +92,18 @@ test('editar el comportamiento de un tipo lo actualiza', function () {
 
     expect($tipo->fresh()->comportamiento->value)->toBe('preventivo');
 });
+
+test('el sidebar enlaza tipos de mantenimiento con el permiso', function () {
+    $this->actingAs(usuarioConPermisos(['ver-tipos-mantenimiento']))
+        ->get(route('tipos-mantenimiento.index'))
+        ->assertOk()
+        ->assertSee('Tipos de mantenimiento')
+        ->assertSee(route('tipos-mantenimiento.index'), false);
+});
+
+test('el sidebar no enlaza tipos de mantenimiento sin el permiso', function () {
+    $this->actingAs(usuarioConPermisos(['ver-insumos']))
+        ->get(route('insumos.index'))
+        ->assertOk()
+        ->assertDontSee(route('tipos-mantenimiento.index'), false);
+});
