@@ -236,7 +236,9 @@ class LiquidacionPagos extends Component
                 $this->monto_bruto,
                 $this->descuentos ?? 0,
                 $this->observaciones,
-                $this->adelantos_pendientes ?? collect()
+                $this->adelantos_pendientes ?? collect(),
+                $this->fecha_inicio,
+                $this->fecha_fin
             );
 
             $this->recibo_generado = true;

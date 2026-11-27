@@ -51,7 +51,9 @@ class Carga extends Model implements Auditable
 
     public function empleados()
     {
-        return $this->belongsToMany(Empleado::class, 'carga_empleado', 'id_carga', 'id_empleado')->withTimestamps();
+        return $this->belongsToMany(Empleado::class, 'carga_empleado', 'id_carga', 'id_empleado')
+            ->withPivot('id_recibo')
+            ->withTimestamps();
     }
 
     public function maquinarias()

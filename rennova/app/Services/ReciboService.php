@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Dompdf\Dompdf;
 use Dompdf\Options;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 
@@ -82,9 +83,20 @@ class ReciboService
         return Recibo::findOrFail($id);
     }
 
+    /**
+     * Baja logica del recibo. Libera las cargas y jornales que habia pagado
+     * para que puedan volver a liquidarse.
+     */
     public function eliminar(int $id): void
     {
-        Recibo::findOrFail($id)->delete();
+        DB::transaction(function () use ($id): void {
+            $recibo = Recibo::findOrFail($id);
+
+            DB::table('carga_empleado')->where('id_recibo', $recibo->id_recibo)->update(['id_recibo' => null]);
+            DB::table('parte_diario_empleado')->where('id_recibo', $recibo->id_recibo)->update(['id_recibo' => null]);
+
+            $recibo->delete();
+        });
     }
 
     /**

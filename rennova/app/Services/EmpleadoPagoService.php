@@ -127,39 +127,46 @@ class EmpleadoPagoService
             }
         }
 
-        $partes = ParteDiario::whereBetween('fecha', [$fechaInicio, $fechaFin])->get();
+        // Dias caidos trabajados y aun no liquidados.
+        $cantidad_dias_caidos = DB::table('parte_diario_empleado as pde')
+            ->join('parte_diarios as pd', 'pd.id_parte_diario', '=', 'pde.id_parte_diario')
+            ->where('pde.id_empleado', $empleado->id_empleado)
+            ->whereNull('pde.id_recibo')
+            ->where('pd.es_dia_caido', true)
+            ->whereBetween('pd.fecha', [$fechaInicio, $fechaFin])
+            ->distinct()
+            ->count('pd.id_parte_diario');
 
-        // Pre-load all cargas for the date range with empleados to avoid N+1
-        $cargasDelRango = Carga::whereBetween('fecha_carga', [$fechaInicio, $fechaFin])
-            ->with('empleados')
-            ->get()
-            ->groupBy(function ($carga) {
-                return \Carbon\Carbon::parse($carga->fecha_carga)->format('Y-m-d');
-            });
+        // Produccion: cargas de dias operativos, del empleado y aun no liquidadas.
+        $diasOperativos = ParteDiario::whereBetween('fecha', [$fechaInicio, $fechaFin])
+            ->where('es_dia_caido', false)
+            ->pluck('fecha')
+            ->map(fn ($fecha) => \Carbon\Carbon::parse($fecha)->format('Y-m-d'))
+            ->unique()
+            ->flip();
 
-        foreach ($partes as $parte) {
-            $fechaStr = \Carbon\Carbon::parse($parte->fecha)->format('Y-m-d');
+        if ($diasOperativos->isNotEmpty()) {
+            $cargas = Carga::whereBetween('fecha_carga', [$fechaInicio, $fechaFin])
+                ->whereHas('empleados', function ($query) use ($empleado) {
+                    $query->where('empleados.id_empleado', $empleado->id_empleado);
+                })
+                ->with('empleados')
+                ->get()
+                ->filter(function ($carga) use ($empleado, $diasOperativos) {
+                    $dia = \Carbon\Carbon::parse($carga->fecha_carga)->format('Y-m-d');
 
-            if ($parte->es_dia_caido) {
-                $trabajoEseDia = DB::table('parte_diario_empleado')
-                    ->where('id_parte_diario', $parte->id_parte_diario)
-                    ->where('id_empleado', $empleado->id_empleado)
-                    ->exists();
+                    if (! $diasOperativos->has($dia)) {
+                        return false;
+                    }
 
-                if ($trabajoEseDia) {
-                    $cantidad_dias_caidos += 1;
-                }
-            } else {
-                $cargasDelDia = collect($cargasDelRango[$fechaStr] ?? [])
-                    ->filter(function ($carga) use ($empleado) {
-                        return $carga->empleados->contains('id_empleado', $empleado->id_empleado);
-                    });
+                    $vinculo = $carga->empleados->firstWhere('id_empleado', $empleado->id_empleado);
 
-                foreach ($cargasDelDia as $carga) {
-                    $cantidadEmpleados = $carga->empleados->count();
-                    $pesoAsignado = $cantidadEmpleados > 0 ? $carga->peso_neto / $cantidadEmpleados : 0;
-                    $total_peso_neto += $pesoAsignado;
-                }
+                    return $vinculo !== null && $vinculo->pivot->id_recibo === null;
+                });
+
+            foreach ($cargas as $carga) {
+                $cantidadEmpleados = $carga->empleados->count();
+                $total_peso_neto += $cantidadEmpleados > 0 ? $carga->peso_neto / $cantidadEmpleados : 0;
             }
         }
 
@@ -197,7 +204,7 @@ class EmpleadoPagoService
      *
      * @throws \Exception Si ocurre un error de base de datos (transacción revertida)
      */
-    public static function generarRecibo(int $idEmpleado, float $montoBruto, float $otrosDescuentos, string $observaciones, $adelantosPendientes): Recibo
+    public static function generarRecibo(int $idEmpleado, float $montoBruto, float $otrosDescuentos, string $observaciones, $adelantosPendientes, string $fechaInicio, string $fechaFin): Recibo
     {
         $otros = max(0, round($otrosDescuentos, 2));
 
@@ -221,6 +228,8 @@ class EmpleadoPagoService
                 'monto' => $montoNeto,
                 'observaciones' => $observaciones,
             ]);
+
+            self::marcarPivotesPagados($recibo->id_recibo, $idEmpleado, $fechaInicio, $fechaFin);
 
             DB::commit();
 
@@ -297,6 +306,8 @@ class EmpleadoPagoService
                     'observaciones' => $obsBase,
                 ]);
 
+                self::marcarPivotesPagados($recibo->id_recibo, $empleado->id_empleado, $fechaInicio, $fechaFin);
+
                 $recibos[] = [
                     'recibo' => $recibo,
                     'empleado' => $empleado,
@@ -348,6 +359,33 @@ class EmpleadoPagoService
         }
 
         return round((float) $query->get()->sum(fn ($adelanto) => $adelanto->saldoPendiente()), 2);
+    }
+
+    /**
+     * Marca como pagadas (por empleado) las cargas y los jornales del periodo.
+     * Asi una segunda liquidacion no vuelve a contar la misma produccion.
+     */
+    private static function marcarPivotesPagados(int $idRecibo, int $idEmpleado, string $fechaInicio, string $fechaFin): void
+    {
+        DB::table('carga_empleado')
+            ->where('id_empleado', $idEmpleado)
+            ->whereNull('id_recibo')
+            ->whereIn('id_carga', function ($query) use ($fechaInicio, $fechaFin) {
+                $query->select('id_carga')
+                    ->from('cargas')
+                    ->whereBetween('fecha_carga', [$fechaInicio, $fechaFin]);
+            })
+            ->update(['id_recibo' => $idRecibo]);
+
+        DB::table('parte_diario_empleado')
+            ->where('id_empleado', $idEmpleado)
+            ->whereNull('id_recibo')
+            ->whereIn('id_parte_diario', function ($query) use ($fechaInicio, $fechaFin) {
+                $query->select('id_parte_diario')
+                    ->from('parte_diarios')
+                    ->whereBetween('fecha', [$fechaInicio, $fechaFin]);
+            })
+            ->update(['id_recibo' => $idRecibo]);
     }
 
     /**
