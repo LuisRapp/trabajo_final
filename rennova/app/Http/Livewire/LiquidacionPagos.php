@@ -123,7 +123,7 @@ class LiquidacionPagos extends Component
         // Cargar valores editables
         $this->monto_bruto = $this->calculo['total_pagar_final'];
         $this->descuentos = $this->total_adelantos; // Descuento automático por adelantos
-        $this->monto_neto = $this->monto_bruto - $this->descuentos;
+        $this->monto_neto = max(0, $this->monto_bruto - $this->descuentos);
 
         // Generar observaciones automáticas
         $obs_base = sprintf(
@@ -226,7 +226,6 @@ class LiquidacionPagos extends Component
                 $this->empleado_seleccionado->id_empleado,
                 $this->monto_bruto,
                 $this->descuentos ?? 0,
-                $this->monto_neto,
                 $this->observaciones,
                 $this->adelantos_pendientes ?? collect()
             );
@@ -245,6 +244,8 @@ class LiquidacionPagos extends Component
             session()->flash('message', $mensaje);
             $this->dispatch('reciboGenerado');
 
+        } catch (\DomainException $e) {
+            session()->flash('error', $e->getMessage());
         } catch (\Exception $e) {
             session()->flash('error', $this->mensajeErrorUsuario($e, 'generar el recibo'));
         }

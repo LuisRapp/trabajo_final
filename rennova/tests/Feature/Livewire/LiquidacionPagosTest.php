@@ -689,6 +689,56 @@ class LiquidacionPagosTest extends TestCase
         $this->assertDatabaseHas('adelantos', ['id_adelanto' => $adelanto2->id_adelanto, 'estado' => 'pagado']);
     }
 
+    public function test_no_genera_recibo_si_los_descuentos_no_cubren_los_adelantos(): void
+    {
+        $this->setupComponentForGenerarRecibo();
+
+        $adelanto = Adelanto::create([
+            'id_empleado' => $this->empleadoActivo->id_empleado,
+            'monto' => 500.00,
+            'fecha_emision' => Carbon::now()->startOfMonth()->addDays(2)->format('Y-m-d'),
+            'estado' => 'pendiente',
+        ]);
+
+        Livewire::actingAs($this->usuario)
+            ->test(LiquidacionPagos::class)
+            ->set('empleado_seleccionado', $this->empleadoActivo)
+            ->set('monto_bruto', 15000.00)
+            ->set('descuentos', 100.00)
+            ->set('observaciones', 'Test')
+            ->set('adelantos_pendientes', [$adelanto])
+            ->set('fecha_inicio', Carbon::now()->startOfMonth()->format('Y-m-d'))
+            ->set('fecha_fin', Carbon::now()->endOfMonth()->format('Y-m-d'))
+            ->call('generarRecibo')
+            ->assertSee('no cubren los adelantos pendientes');
+
+        $this->assertDatabaseMissing('recibos', ['id_empleado' => $this->empleadoActivo->id_empleado])
+            ->assertDatabaseHas('adelantos', ['id_adelanto' => $adelanto->id_adelanto, 'estado' => 'pendiente']);
+    }
+
+    public function test_el_monto_neto_nunca_queda_negativo(): void
+    {
+        $this->setupComponentForGenerarRecibo();
+
+        Livewire::actingAs($this->usuario)
+            ->test(LiquidacionPagos::class)
+            ->set('empleado_seleccionado', $this->empleadoActivo)
+            ->set('monto_bruto', 1000.00)
+            ->set('descuentos', 5000.00)
+            ->set('observaciones', 'Test')
+            ->set('adelantos_pendientes', collect())
+            ->set('fecha_inicio', Carbon::now()->startOfMonth()->format('Y-m-d'))
+            ->set('fecha_fin', Carbon::now()->endOfMonth()->format('Y-m-d'))
+            ->call('generarRecibo');
+
+        $this->assertDatabaseHas('recibos', [
+            'id_empleado' => $this->empleadoActivo->id_empleado,
+            'monto_bruto' => 1000.00,
+            'descuentos' => 5000.00,
+            'monto' => 0,
+        ]);
+    }
+
     public function test_generar_recibo_dispatches_recibo_generado_event(): void
     {
         $this->setupComponentForGenerarRecibo();

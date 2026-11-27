@@ -90,3 +90,19 @@ test('el listado muestra el acceso al comprobante del recibo', function () {
         ->test(Recibos::class)
         ->assertSee(route('recibos.pdf', $recibo->id_recibo), false);
 });
+
+test('no guarda un recibo con descuentos mayores al monto bruto', function () {
+    $empleado = Empleado::factory()->create();
+    $user = usuarioConPermisos(['crear-recibos', 'editar-recibos', 'eliminar-recibos']);
+
+    Livewire::actingAs($user)
+        ->test(Recibos::class)
+        ->set('id_empleado', $empleado->id_empleado)
+        ->set('fecha_emision', now()->toDateString())
+        ->set('monto_bruto', 100)
+        ->set('descuentos', 200)
+        ->call('guardar')
+        ->assertHasErrors(['descuentos']);
+
+    expect(Recibo::count())->toBe(0);
+});

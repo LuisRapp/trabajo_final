@@ -44,7 +44,7 @@ class ReciboService
             'id_empleado' => 'required|exists:empleados,id_empleado',
             'fecha_emision' => 'required|date',
             'monto_bruto' => 'required|numeric|min:0',
-            'descuentos' => 'nullable|numeric|min:0',
+            'descuentos' => 'nullable|numeric|min:0|lte:monto_bruto',
             'observaciones' => 'nullable|string|max:150',
         ];
     }
@@ -62,7 +62,7 @@ class ReciboService
 
         $montoBruto = (float) $datos['monto_bruto'];
         $descuentos = (float) ($datos['descuentos'] ?? 0);
-        $monto = $montoBruto - $descuentos;
+        $monto = max(0, $montoBruto - $descuentos);
 
         return Recibo::updateOrCreate(
             ['id_recibo' => $id],

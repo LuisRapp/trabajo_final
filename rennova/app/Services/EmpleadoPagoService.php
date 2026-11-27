@@ -197,8 +197,16 @@ class EmpleadoPagoService
      *
      * @throws \Exception Si ocurre un error de base de datos (transacción revertida)
      */
-    public static function generarRecibo(int $idEmpleado, float $montoBruto, float $descuentos, float $montoNeto, string $observaciones, $adelantosPendientes): Recibo
+    public static function generarRecibo(int $idEmpleado, float $montoBruto, float $descuentos, string $observaciones, $adelantosPendientes): Recibo
     {
+        $totalAdelantos = collect($adelantosPendientes)->sum(fn ($adelanto) => (float) $adelanto->monto);
+
+        if ($totalAdelantos > 0 && $descuentos + 0.001 < $totalAdelantos) {
+            throw new \DomainException('Los descuentos no cubren los adelantos pendientes. Ajustá el descuento antes de generar el recibo.');
+        }
+
+        $montoNeto = max(0, $montoBruto - $descuentos);
+
         DB::beginTransaction();
 
         try {

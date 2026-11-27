@@ -97,6 +97,7 @@ Estado del trabajo validado al cierre de F8: `php artisan test` = **711 passed, 
 ## Deuda nueva — detectada en el Gate de entrega (2026-11-23)
 
 - **`SelectorLote` consulta la base directamente desde el componente Livewire** (`::where()`, `::find()`), lo que viola la prohibicion arquitectonica de AGENTS.md. El hook `gga run` la marco al tocar el archivo para corregir el bug del snapshot del dashboard. Es deuda **preexistente**, no introducida en el gate. **Fix:** extraer `SelectorLoteService` y dejar el componente con interaccion + validacion solamente. **Esfuerzo:** ~1 h.
+- **`LiquidacionPagos` consulta la base desde el componente Livewire** (`Empleado::with()->whereNull()`, `Empleado::find()`, `Adelanto::where()->whereBetween()`), lo que viola la prohibicion arquitectonica de AGENTS.md. Detectado por el hook al tocar el archivo en el Bloque 7; es **preexistente**. **Fix:** mover las consultas a `EmpleadoPagoService` (empleados activos, adelantos pendientes) y dejar el componente con interaccion y validacion. **Esfuerzo:** ~1 h.
 - **`ConfiguracionKits`**: resuelta en el gate. El acceso a datos se movio a `KitMantenimientoPreventivoService`, `eliminarKit()` corre dentro de `DB::transaction()` y se elimino el historial de bajas de la vista (el metodo `restaurar()` queda sin UI, cubierto por tests).
 
 ---

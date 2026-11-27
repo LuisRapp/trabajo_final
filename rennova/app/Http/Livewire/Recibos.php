@@ -48,6 +48,7 @@ class Recibos extends Component
         'monto_bruto.required' => 'El monto bruto es obligatorio.',
         'monto_bruto.min' => 'El monto bruto debe ser mayor o igual a 0.',
         'descuentos.min' => 'Los descuentos deben ser mayor o igual a 0.',
+        'descuentos.lte' => 'Los descuentos no pueden superar el monto bruto.',
     ];
 
     public function updated($propertyName)
