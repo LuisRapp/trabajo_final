@@ -183,7 +183,7 @@ class ForestalStatsService
     public function getProyeccionVsEquilibrio(): array
     {
         $objetivoDiario = $this->objetivoDiarioGlobal();
-        $metaDiaria = app(ClimaAnalisisService::class)->calcularMetaDiaria();
+        $metaDiaria = app(ClimaAnalisisService::class)->calcularMetaDiaria()['valor'];
         $diasHabiles = $this->diasHabilesDelMes(Carbon::now());
 
         return $this->calcularProyeccionMensual($objetivoDiario, $metaDiaria, $diasHabiles);

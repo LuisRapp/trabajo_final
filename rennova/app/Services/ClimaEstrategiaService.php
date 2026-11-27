@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Lote;
+use App\Models\Mantenimiento;
 
 /**
  * Servicio de Estrategia Climática
@@ -30,11 +31,14 @@ class ClimaEstrategiaService
         $diasPrevios = $analisisDias['dias_operativos_previos'];
         $diasPosterior = $analisisDias['dias_operativos_posterior'];
         $totalDiasOperativos = $analisisDias['total_dias_operativos'];
-        $metaDiaria = $analisisDias['meta_diaria'];
-        $diaCeroIndex = $analisisDias['dia_cero_index'];
+        $metaDiaria = (float) ($analisisDias['meta_diaria'] ?? 0);
+        $metaFuente = $analisisDias['meta_fuente'] ?? 'sin_datos';
+        $diaCeroIndex = $analisisDias['dia_cero_index'] ?? null;
+
+        $mantenimiento = $diasPerdidos > 0 ? $this->buscarMaquinariasParaMantenimiento($lote) : [];
 
         // CASO 1: No hay días perdidos por lluvia → Operación normal
-        if ($diasPerdidos === 0 || $volumenRiesgo == 0) {
+        if ($diasPerdidos === 0) {
             return [
                 'success' => true,
                 'estrategia' => 'NORMAL',
@@ -45,8 +49,31 @@ class ClimaEstrategiaService
                 'datos_calculados' => [
                     'volumen_riesgo' => 0,
                     'meta_diaria' => $metaDiaria,
+                    'meta_fuente' => $metaFuente,
                     'aumento_necesario_pct' => 0,
                     'dias_perdidos' => 0,
+                    'maquinarias_mantenimiento' => $mantenimiento,
+                ],
+            ];
+        }
+
+        // CASO 1B: Hay lluvia pero el lote no tiene produccion historica:
+        // no se inventa un deficit con una meta global.
+        if ($volumenRiesgo <= 0 || $metaDiaria <= 0) {
+            return [
+                'success' => true,
+                'estrategia' => 'SIN_HISTORIAL',
+                'nivel_urgencia' => 'BAJA',
+                'recomendacion' => 'Hay días no operativos por lluvia o barro, pero el lote no tiene producción histórica para estimar el tonelaje en riesgo.',
+                'pronostico' => $analisisDias['dias_detalle'],
+                'dias_inactivos' => $this->analisisService->extraerDiasInactivos($analisisDias['dias_detalle']),
+                'datos_calculados' => [
+                    'volumen_riesgo' => 0,
+                    'meta_diaria' => 0,
+                    'meta_fuente' => 'sin_datos',
+                    'aumento_necesario_pct' => 0,
+                    'dias_perdidos' => $diasPerdidos,
+                    'maquinarias_mantenimiento' => $mantenimiento,
                 ],
             ];
         }
@@ -82,6 +109,8 @@ class ClimaEstrategiaService
                         'aumento_necesario_pct' => round($porcentajeAumento, 0),
                         'dias_perdidos' => $diasPerdidos,
                         'dias_operativos_disponibles' => $totalDiasOperativos,
+                        'meta_fuente' => $metaFuente,
+                        'maquinarias_mantenimiento' => $mantenimiento,
                     ],
                 ];
             }
@@ -109,6 +138,8 @@ class ClimaEstrategiaService
                         'volumen_recuperable' => round($volumenRecuperable, 2),
                         'deficit_residual' => round($deficitResidual, 2),
                         'dias_operativos_disponibles' => $totalDiasOperativos,
+                        'meta_fuente' => $metaFuente,
+                        'maquinarias_mantenimiento' => $mantenimiento,
                     ],
                 ];
             }
@@ -305,8 +336,7 @@ class ClimaEstrategiaService
             $recomendacion .= "🔧 MAQUINARIAS IDENTIFICADAS ({$cantidadMaquinas}):\n";
 
             foreach ($maquinariasMantenimiento as $maq) {
-                $recomendacion .= "   • {$maq['nombre']} - Desgaste: {$maq['desgaste_pct']}%\n";
-                $recomendacion .= "     Odómetro: {$maq['odometro']} hs | Próximo mant.: {$maq['horas_proximo_mant']} hs\n";
+                $recomendacion .= "   • {$maq['nombre']} - {$maq['motivo']}\n";
             }
 
             $recomendacion .= "\n💡 ACCIÓN INMEDIATA:\n";
@@ -352,6 +382,8 @@ class ClimaEstrategiaService
             'datos_calculados' => [
                 'dias_perdidos_proyectados' => $analisisDias['total_dias_perdidos'],
                 'volumen_riesgo' => $analisisDias['volumen_riesgo'],
+                'meta_diaria' => (float) ($analisisDias['meta_diaria'] ?? 0),
+                'meta_fuente' => $analisisDias['meta_fuente'] ?? 'sin_datos',
                 'maquinarias_mantenimiento' => $maquinariasMantenimiento,
             ],
             'dias_detalle' => $analisisDias['dias_detalle'],
@@ -363,8 +395,48 @@ class ClimaEstrategiaService
      */
     private function buscarMaquinariasParaMantenimiento(Lote $lote): array
     {
-        // Por ahora retornamos array vacío para evitar errores
-        // TODO: Implementar cuando se defina estructura correcta de maquinarias
-        return [];
+        $resultado = [];
+
+        foreach ($lote->maquinarias()->get() as $maquinaria) {
+            $orden = Mantenimiento::query()
+                ->where('id_maquinaria', $maquinaria->id_maquinaria)
+                ->whereIn('estado', ['programado', 'en curso'])
+                ->orderByDesc('id_mantenimiento')
+                ->first();
+
+            $ultimo = Mantenimiento::query()
+                ->where('id_maquinaria', $maquinaria->id_maquinaria)
+                ->whereNotNull('fecha_fin')
+                ->orderByDesc('fecha_fin')
+                ->first();
+
+            $toneladas = (float) $maquinaria->toneladas_acumuladas - (float) ($ultimo->toneladas_snapshot ?? 0);
+            $umbral = (float) $maquinaria->umbral_toneladas;
+            $porcentaje = $umbral > 0 ? (int) round(min(100, $toneladas / $umbral * 100)) : 0;
+
+            if ($orden) {
+                $resultado[] = [
+                    'nombre' => $maquinaria->modelo,
+                    'porcentaje' => $porcentaje,
+                    'orden' => $orden->id_mantenimiento,
+                    'estado_orden' => $orden->estado,
+                    'motivo' => "orden #{$orden->id_mantenimiento} ({$orden->estado})",
+                ];
+
+                continue;
+            }
+
+            if ($porcentaje >= 80) {
+                $resultado[] = [
+                    'nombre' => $maquinaria->modelo,
+                    'porcentaje' => $porcentaje,
+                    'orden' => null,
+                    'estado_orden' => null,
+                    'motivo' => "{$porcentaje}% del umbral de mantenimiento",
+                ];
+            }
+        }
+
+        return $resultado;
     }
 }

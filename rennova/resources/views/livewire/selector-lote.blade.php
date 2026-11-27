@@ -24,7 +24,12 @@
                 :analisisImpacto="$pronosticoData['analisisImpacto'] ?? []"
                 :lote="$pronosticoData['loteNombre'] ?? null"
                 :recomendacionDetallada="$pronosticoData['recomendacionDetallada'] ?? null"
+                :generadoEn="$pronosticoData['generadoEn'] ?? null"
             />
         </div>
+    @elseif($loteSeleccionado)
+        <x-ui.alert variant="warning" class="mb-8">
+            No se pudo obtener el pronóstico de este lote. Revisá que tenga coordenadas y la conexión con el servicio climático.
+        </x-ui.alert>
     @endif
 </div>

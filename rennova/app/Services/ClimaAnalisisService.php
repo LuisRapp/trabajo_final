@@ -38,7 +38,7 @@ class ClimaAnalisisService
      *               'dias_operativos_previos' => int (días operativos antes del Día Cero)
      *               ]
      */
-    public function mapearDiasInactivos(array $pronostico, bool $ignorarFinDeSemana = false): array
+    public function mapearDiasInactivos(array $pronostico, bool $ignorarFinDeSemana = false, ?Lote $lote = null): array
     {
         $fechas = $pronostico['daily']['time'] ?? [];
         $precipitaciones = $pronostico['daily']['precipitation_sum'] ?? [];
@@ -193,8 +193,9 @@ class ClimaAnalisisService
             }
         }
 
-        // Calcular volumen de riesgo (días perdidos × meta diaria estimada)
-        $metaDiaria = $this->calcularMetaDiaria();
+        // Calcular volumen de riesgo (días perdidos × meta diaria DEL LOTE)
+        $meta = $this->calcularMetaDiaria($lote);
+        $metaDiaria = $meta['valor'];
         $volumenRiesgo = $totalDiasPerdidos * $metaDiaria;
 
         return [
@@ -202,6 +203,7 @@ class ClimaAnalisisService
             'total_dias_perdidos' => $totalDiasPerdidos,
             'volumen_riesgo' => round($volumenRiesgo, 2),
             'meta_diaria' => $metaDiaria,
+            'meta_fuente' => $meta['fuente'],
             'dia_cero_index' => $diaCeroIndex,
             'dias_operativos_previos' => $diasOperativosPrevios,
             'dias_operativos_posterior' => $diasOperativosPosterior,
@@ -212,19 +214,46 @@ class ClimaAnalisisService
     /**
      * Calcula la meta diaria estimada basada en partes diarios históricos
      */
-    public function calcularMetaDiaria(): float
+    /**
+     * Produccion diaria promedio del lote (o global si no se indica lote).
+     *
+     * Se usan los ultimos 30 dias operativos; si no alcanza, todo el historico
+     * del lote. Sin produccion devuelve 0 y fuente 'sin_datos': no se inventa
+     * un deficit con una meta global.
+     *
+     * @return array{valor: float, fuente: string}
+     */
+    public function calcularMetaDiaria(?Lote $lote = null): array
     {
-        // Calcular promedio de los últimos 30 días operativos
-        $promedioHistorico = ParteDiario::where('fecha', '>=', Carbon::now()->subDays(30))
-            ->whereHas('cargas')
+        $base = ParteDiario::query()->whereHas('cargas');
+
+        if ($lote) {
+            $base->where('id_lote', $lote->id_lote);
+        }
+
+        $reciente = (clone $base)
+            ->where('fecha', '>=', Carbon::now()->subDays(30))
             ->withSum('cargas', 'peso_neto')
             ->get()
             ->avg('cargas_sum_peso_neto');
 
-        // Convertir de kilos a toneladas
-        $promedioToneladas = $promedioHistorico ? $promedioHistorico / 1000.0 : 50;
+        if ($reciente) {
+            return [
+                'valor' => round($reciente / 1000.0, 2),
+                'fuente' => $lote ? 'lote_30d' : 'global_30d',
+            ];
+        }
 
-        return round($promedioToneladas, 2); // Default 50 ton si no hay histórico
+        $historico = $base->withSum('cargas', 'peso_neto')->get()->avg('cargas_sum_peso_neto');
+
+        if ($historico) {
+            return [
+                'valor' => round($historico / 1000.0, 2),
+                'fuente' => $lote ? 'lote_historico' : 'global_historico',
+            ];
+        }
+
+        return ['valor' => 0.0, 'fuente' => 'sin_datos'];
     }
 
     /**

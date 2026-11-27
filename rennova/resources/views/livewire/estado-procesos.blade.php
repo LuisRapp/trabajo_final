@@ -44,6 +44,9 @@
                             <tr class="bg-corteza-suave text-left text-xs uppercase tracking-wide text-tinta-suave">
                                 <th class="px-4 py-3 font-semibold">Lote</th>
                                 <th class="px-4 py-3 font-semibold">Estado hoy</th>
+                                <th class="px-4 py-3 font-semibold">Decisión</th>
+                                <th class="px-4 py-3 font-semibold text-right">Días no op.</th>
+                                <th class="px-4 py-3 font-semibold text-right">Déficit</th>
                                 <th class="px-4 py-3 font-semibold">Fuente</th>
                                 <th class="px-4 py-3 font-semibold">Última sync</th>
                             </tr>
@@ -74,6 +77,24 @@
                                                 <flux:icon.check-circle class="size-3" />
                                                 {{ $fila['estado_operativo'] ?? 'OPERATIVO' }}
                                             </span>
+                                        @endif
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        @if ($fila['decision_label'])
+                                            <span class="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold
+                                                {{ $fila['decision_label'] === 'Priorizar' ? 'bg-tierra-suave text-tierra' : ($fila['decision_label'] === 'Reprogramar' ? 'bg-corteza-suave text-tinta' : ($fila['decision_label'] === 'Compensar' ? 'bg-resina-suave text-resina' : 'bg-musgo-suave text-musgo')) }}">
+                                                {{ $fila['decision_label'] }}
+                                            </span>
+                                        @else
+                                            <span class="text-xs text-tinta-suave">Sin decisión</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-4 py-3 text-right text-tinta-suave">{{ $fila['decision_dias'] ?? '—' }}</td>
+                                    <td class="px-4 py-3 text-right text-tinta-suave">
+                                        @if ($fila['decision_deficit'] !== null)
+                                            {{ number_format((float) $fila['decision_deficit'], 0, ',', '.') }} tn
+                                        @else
+                                            —
                                         @endif
                                     </td>
                                     <td class="px-4 py-3 text-tinta-suave font-mono text-xs">{{ $fila['fuente'] ?? '—' }}</td>

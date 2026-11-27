@@ -2,9 +2,13 @@
 
 namespace App\Console\Commands;
 
+use App\Models\DecisionClima;
 use App\Models\Lote;
+use App\Models\NotificacionSistema;
 use App\Services\ClimaDecisionService;
+use App\Services\NotificacionService;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 
 class AnalizarDecisionesClimaticas extends Command
 {
@@ -88,6 +92,8 @@ class AnalizarDecisionesClimaticas extends Command
                 // Mostrar recomendación
                 $this->renderRecomendacion($resultado);
 
+                $this->guardarDecision($lote, $resultado);
+
                 // Contabilizar estrategia
                 if (str_starts_with($resultado['estrategia'], 'ANTICIPACION')) {
                     $resultados['anticipacion']++;
@@ -107,6 +113,85 @@ class AnalizarDecisionesClimaticas extends Command
         $this->renderResumen($resultados, $lotes->count());
 
         return Command::SUCCESS;
+    }
+
+    /**
+     * Persiste la decisión del día por lote y notifica si cambió la estrategia.
+     */
+    private function guardarDecision(Lote $lote, array $resultado): void
+    {
+        try {
+            $datos = $resultado['datos_calculados'] ?? [];
+            $estrategia = (string) ($resultado['estrategia'] ?? 'NORMAL');
+
+            $existente = DecisionClima::query()
+                ->where('id_lote', $lote->id_lote)
+                ->whereDate('fecha', now()->toDateString())
+                ->first();
+
+            $cambio = ! $existente || $existente->estrategia !== $estrategia;
+
+            $decision = DecisionClima::updateOrCreate(
+                ['id_lote' => $lote->id_lote, 'fecha' => now()->toDateString()],
+                [
+                    'estrategia' => $estrategia,
+                    'nivel' => (string) ($resultado['nivel_urgencia'] ?? 'BAJA'),
+                    'dias_no_operativos' => (int) ($datos['dias_perdidos'] ?? $datos['dias_perdidos_proyectados'] ?? 0),
+                    'deficit_tn' => (float) ($datos['volumen_riesgo'] ?? 0),
+                    'residual_tn' => (float) ($datos['deficit_residual'] ?? 0),
+                    'meta_diaria' => (float) ($datos['meta_diaria'] ?? 0),
+                    'mensaje' => (string) ($resultado['recomendacion'] ?? ''),
+                    'payload' => $resultado,
+                ]
+            );
+
+            if ($cambio) {
+                $this->notificarDecision($lote, $decision);
+            }
+        } catch (\Throwable $e) {
+            Log::error('No se pudo guardar la decision climatica', [
+                'lote_id' => $lote->id_lote,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Aviso interno a los usuarios configurados para recordatorios.
+     * Best-effort: la decision ya quedo guardada.
+     */
+    private function notificarDecision(Lote $lote, DecisionClima $decision): void
+    {
+        try {
+            $usuarios = app(NotificacionService::class)->cargarConfiguracionMantenimiento()['recordatorio'];
+
+            if (empty($usuarios)) {
+                return;
+            }
+
+            $mensaje = "Estrategia: {$decision->estrategia}. Días no operativos: {$decision->dias_no_operativos}. "
+                .'Déficit: '.number_format((float) $decision->deficit_tn, 2, ',', '.').' tn.';
+
+            if ((float) $decision->residual_tn > 0) {
+                $mensaje .= ' Sin cubrir: '.number_format((float) $decision->residual_tn, 2, ',', '.').' tn.';
+            }
+
+            foreach ($usuarios as $idUsuario) {
+                NotificacionSistema::create([
+                    'user_id' => $idUsuario,
+                    'mantenimiento_id' => null,
+                    'tipo' => 'clima_decision',
+                    'titulo' => 'Clima - '.($lote->propietario ?? 'Lote').': '.$decision->estrategia,
+                    'mensaje' => $mensaje,
+                    'fecha_limite' => now()->addDay()->toDateString(),
+                ]);
+            }
+        } catch (\Throwable $e) {
+            Log::error('No se pudo notificar la decision climatica', [
+                'lote_id' => $lote->id_lote,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**
@@ -138,12 +223,12 @@ class AnalizarDecisionesClimaticas extends Command
             $this->table(
                 ['Métrica', 'Valor'],
                 [
-                    ['Días hasta lluvia', $datos['dias_hasta_lluvia'] ?? 'N/A'],
-                    ['Primer día de lluvia', $datos['dia_cero'] ?? 'N/A'],
-                    ['Días operativos previos', $datos['dias_operativos_previos'] ?? 'N/A'],
-                    ['Volumen en riesgo', ($datos['volumen_riesgo'] ?? 0).' ton'],
-                    ['Aumento necesario', round($datos['aumento_necesario_pct'] ?? 0, 1).'%'],
-                    ['¿Viable 100%?', ($datos['es_viable_100'] ?? false) ? '✅ SÍ' : '⚠️  NO'],
+                    ['Días no operativos', $datos['dias_perdidos'] ?? 0],
+                    ['Días operativos disponibles', $datos['dias_operativos_disponibles'] ?? 0],
+                    ['Volumen en riesgo', round((float) ($datos['volumen_riesgo'] ?? 0), 2).' ton'],
+                    ['Aumento necesario', round((float) ($datos['aumento_necesario_pct'] ?? 0), 1).'%'],
+                    ['Déficit residual', round((float) ($datos['deficit_residual'] ?? 0), 2).' ton'],
+                    ['Meta diaria del lote', round((float) ($datos['meta_diaria'] ?? 0), 2).' ton'],
                 ]
             );
         }

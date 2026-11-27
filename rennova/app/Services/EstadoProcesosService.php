@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\ClimaDiaLote;
+use App\Models\DecisionClima;
 use App\Models\Lote;
 use Illuminate\Support\Facades\DB;
 
@@ -69,8 +70,26 @@ class EstadoProcesosService
             ->get()
             ->groupBy('id_lote');
 
-        return $lotes->map(function (Lote $lote) use ($registrosHoy) {
+        $decisiones = DecisionClima::query()
+            ->whereIn('id_lote', $lotes->pluck('id_lote'))
+            ->orderByDesc('fecha')
+            ->orderByDesc('id_decision')
+            ->get()
+            ->groupBy('id_lote')
+            ->map->first();
+
+        return $lotes->map(function (Lote $lote) use ($registrosHoy, $decisiones) {
             $registro = $registrosHoy->get($lote->id_lote)?->first();
+            $decision = $decisiones->get($lote->id_lote);
+
+            $label = match ($decision?->estrategia) {
+                'ANTICIPACION_PLANIFICADA' => 'Compensar',
+                'ANTICIPACION_MAXIMA' => 'Priorizar',
+                'REACCION' => 'Reprogramar',
+                'SIN_HISTORIAL' => 'Sin historial',
+                'NORMAL' => 'Normal',
+                default => null,
+            };
 
             return [
                 'lote' => $lote->propietario.' - '.$lote->ubicacion,
@@ -79,6 +98,13 @@ class EstadoProcesosService
                 'fuente' => $registro?->fuente,
                 'api_error' => $registro?->api_error,
                 'actualizado' => $registro?->updated_at?->format('d/m/Y H:i'),
+                'decision' => $decision?->estrategia,
+                'decision_label' => $label,
+                'decision_nivel' => $decision?->nivel,
+                'decision_dias' => $decision?->dias_no_operativos,
+                'decision_deficit' => $decision?->deficit_tn,
+                'decision_residual' => $decision?->residual_tn,
+                'decision_actualizada' => $decision?->updated_at?->format('d/m/Y H:i'),
             ];
         })->all();
     }

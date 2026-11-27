@@ -124,13 +124,9 @@ class SelectorLote extends Component
             ));
 
             $datos = $climaData['datos_calculados'] ?? [];
-
+            $estrategia = (string) ($climaData['estrategia'] ?? '');
+            $accionRecomendada = $climaData['accion_recomendada'] ?? null;
             $nivelUrgencia = $climaData['nivel_urgencia'] ?? 'BAJA';
-            $tipoAlerta = match ($nivelUrgencia) {
-                'ALTA', 'MEDIA' => 'ACELERAR',
-                'CRITICA' => 'REPROGRAMAR',
-                default => 'NORMAL',
-            };
 
             $diasCriticos = array_values(array_map(
                 fn (array $dia): string => $dia['label'],
@@ -154,17 +150,45 @@ class SelectorLote extends Component
             $deficit = round((float) ($datos['volumen_riesgo'] ?? 0), 0);
             $porcentaje = round((float) ($datos['aumento_necesario_pct'] ?? 0));
             $nuevaMeta = isset($datos['nueva_meta_diaria']) ? (float) $datos['nueva_meta_diaria'] : null;
+            $residual = round((float) ($datos['deficit_residual'] ?? 0), 0);
+            $recuperable = round((float) ($datos['volumen_recuperable'] ?? 0), 0);
+            $metaFuente = $datos['meta_fuente'] ?? 'sin_datos';
+            $mantenimiento = $datos['maquinarias_mantenimiento'] ?? [];
 
-            $listaDias = $diasCriticos !== [] ? ' ('.implode(', ', $diasCriticos).')' : '';
+            $tipoAlerta = match (true) {
+                $estrategia === 'SIN_HISTORIAL' => 'SIN HISTORIAL',
+                $nivelUrgencia === 'CRITICA' && $accionRecomendada === 'MANTENIMIENTO_PREVENTIVO' => 'MANTENIMIENTO',
+                $nivelUrgencia === 'CRITICA' => 'REPROGRAMAR',
+                $nivelUrgencia === 'ALTA' && $residual > 0.01 => 'PRIORIZAR',
+                in_array($nivelUrgencia, ['ALTA', 'MEDIA'], true) => 'COMPENSAR',
+                default => 'NORMAL',
+            };
+
+            $corto = fn (string $label): string => preg_replace('/ \((\d{2}\/\d{2})\/\d{4}\)/', ' $1', $label);
+
+            $diasTexto = $diasPerdidos === 1 ? '1 día' : $diasPerdidos.' días';
+            $operativosTexto = $diasOperativos === 1 ? '1 día operativo' : $diasOperativos.' días operativos';
+            $listaDias = $diasCriticos !== [] ? ' ('.implode(', ', array_map($corto, $diasCriticos)).')' : '';
+            $listaMantenimiento = implode(', ', array_map(
+                fn (array $maq): string => $maq['nombre'].' ('.$maq['motivo'].')',
+                $mantenimiento
+            ));
+            $textoMantenimiento = $mantenimiento !== []
+                ? ' Aprovechá el día no operativo para mantenimiento: '.$listaMantenimiento.'.'
+                : '';
 
             $recomendacion = match ($tipoAlerta) {
                 'NORMAL' => 'No se pronostican lluvias en la ventana. Mantené el ritmo actual.',
-                'REPROGRAMAR' => 'No hay días operativos en la ventana. Reprogramá las tareas y revisá el pronóstico en 24 h.',
-                default => 'Se pierden '.$diasPerdidos.' día(s) por lluvia/barro'.$listaDias.'. '
-                    .'Quedan '.$diasOperativos.' días operativos: sumá '.$porcentaje.'%'
+                'SIN HISTORIAL' => 'Hay '.$diasTexto.' no operativos'.$listaDias.', pero el lote no tiene producción histórica para estimar el tonelaje en riesgo.',
+                'MANTENIMIENTO' => 'No quedan días operativos en la ventana. Aprovechá para mantenimiento preventivo: '.$listaMantenimiento.'.',
+                'REPROGRAMAR' => 'No hay días operativos en la ventana. Reprogramá las tareas y revisá el pronóstico en 24 h.'.$textoMantenimiento,
+                'PRIORIZAR' => 'Se pierden '.$diasTexto.' no operativos'.$listaDias.'. Con +25% en '.$operativosTexto
+                    .' recuperás '.number_format($recuperable, 0, ',', '.').' tn; quedan '.number_format($residual, 0, ',', '.')
+                    .' tn sin cubrir. Evaluá horas extras o priorizá cargas de mayor valor.'.$textoMantenimiento,
+                default => 'Se pierden '.$diasTexto.' no operativos'.$listaDias.'. Sumá '.$porcentaje.'%'
                     .($nuevaMeta ? ' ('.number_format($nuevaMeta, 0, ',', '.').' tn/día)' : '')
-                    .' desde '.($primerOperativo ?? 'el próximo día operativo')
-                    .' para recuperar '.number_format($deficit, 0, ',', '.').' tn.',
+                    .' desde '.($primerOperativo ? $corto($primerOperativo) : 'el próximo día operativo')
+                    .' para recuperar '.number_format($deficit, 0, ',', '.').' tn.'.$textoMantenimiento,
             };
 
             $this->pronosticoData = [
@@ -178,9 +202,14 @@ class SelectorLote extends Component
                     'primerOperativo' => $primerOperativo,
                     'diasCriticos' => $diasCriticos,
                     'nuevaMetaDiaria' => $nuevaMeta,
+                    'residual' => $residual,
+                    'recuperable' => $recuperable,
+                    'mantenimiento' => $mantenimiento,
+                    'metaFuente' => $metaFuente,
                 ],
                 'loteNombre' => $lote->nombre ?? $lote->propietario ?? ('Lote #'.$lote->id_lote),
                 'recomendacionDetallada' => $recomendacion,
+                'generadoEn' => Carbon::now()->format('H:i'),
             ];
         } else {
             $this->pronosticoData = null;

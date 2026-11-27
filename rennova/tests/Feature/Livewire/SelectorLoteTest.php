@@ -150,11 +150,11 @@ test('calcula el dia en espanol y arma una accion concreta aunque el servicio de
     $componente = Livewire::actingAs(Usuario::factory()->create())->test(SelectorLote::class);
     $datos = $componente->get('pronosticoData');
 
-    $componente->assertSee('sumá 18%');
+    $componente->assertSee('Sumá 18%');
 
-    expect($datos['alerta'])->toBe('ACELERAR')
+    expect($datos['alerta'])->toBe('COMPENSAR')
         ->and($datos['pronostico'][0]['label'])->toStartWith('Vie')
         ->and($datos['analisisImpacto']['diasPerdidos'])->toBe(1)
         ->and($datos['analisisImpacto']['primerOperativo'])->toStartWith('Lun')
-        ->and($datos['recomendacionDetallada'])->toContain('sumá 18%');
+        ->and($datos['recomendacionDetallada'])->toContain('Sumá 18%');
 });
