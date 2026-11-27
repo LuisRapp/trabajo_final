@@ -166,3 +166,23 @@ test('rechaza un adelanto de monto cero', function () {
 
     expect(Adelanto::where('id_empleado', $empleado->id_empleado)->count())->toBe(0);
 });
+
+test('el listado muestra el estado real del adelanto', function () {
+    $empleado = crearEmpleadoValido();
+
+    Adelanto::factory()->create([
+        'id_empleado' => $empleado->id_empleado,
+        'estado' => 'pendiente',
+        'monto' => 1000,
+    ]);
+    Adelanto::factory()->pagado()->create([
+        'id_empleado' => $empleado->id_empleado,
+        'monto' => 2000,
+    ]);
+
+    Livewire::actingAs(usuarioConPermisos(['ver-adelantos', 'crear-adelantos', 'editar-adelantos', 'eliminar-adelantos']))
+        ->test(Adelantos::class)
+        ->assertSee('Pendiente')
+        ->assertSee('Pagado')
+        ->assertDontSee('Inactivo');
+});

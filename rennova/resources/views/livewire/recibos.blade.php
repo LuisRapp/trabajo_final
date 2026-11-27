@@ -134,11 +134,18 @@
                                     <td class="text-right font-semibold text-tinta">${{ number_format($recibo->monto, 2, ',', '.') }}</td>
                                     <td class="text-right">
                                         <div class="inline-flex rounded-sm shadow-xs">
+                                            @can('ver-recibos')
+                                            <x-ui.button variant="ghost" size="sm" icon="eye"
+                                                href="{{ route('recibos.pdf', $recibo->id_recibo) }}"
+                                                target="_blank" rel="noopener"
+                                                title="Ver recibo"
+                                                class="rounded-r-none border-r-0" />
+                                            @endcan
                                             @can('editar-recibos')
                                             <x-ui.button variant="ghost" size="sm" icon="pencil-square"
                                                 wire:click="editar({{ $recibo->id_recibo }})"
                                                 title="Editar"
-                                                class="rounded-r-none border-r-0" />
+                                                class="rounded-none border-r-0" />
                                             @endcan
                                             @can('eliminar-recibos')
                                             <x-ui.confirmador accion="eliminar" :parametros="[$recibo->id_recibo]"

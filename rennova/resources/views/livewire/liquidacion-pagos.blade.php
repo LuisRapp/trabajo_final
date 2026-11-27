@@ -238,9 +238,18 @@
                         <flux:icon.check-circle class="size-16 mx-auto" />
                         <h3 class="mt-3 text-2xl font-semibold">Recibo generado correctamente</h3>
                         <p class="mt-2 text-sm">El pago ha sido registrado en el sistema.</p>
-                        <x-ui.button type="button" variant="primary" icon="plus" wire:click="nuevaLiquidacion" class="mt-4 justify-center">
-                            Nueva Liquidación
-                        </x-ui.button>
+                        <div class="mt-4 flex flex-wrap justify-center gap-2">
+                            @if ($recibo_generado_id)
+                                <x-ui.button variant="secondary" icon="document-text"
+                                    href="{{ route('recibos.pdf', $recibo_generado_id) }}"
+                                    target="_blank" rel="noopener">
+                                    Ver recibo
+                                </x-ui.button>
+                            @endif
+                            <x-ui.button type="button" variant="primary" icon="plus" wire:click="nuevaLiquidacion">
+                                Nueva Liquidación
+                            </x-ui.button>
+                        </div>
                     </div>
                 @endif
             @endif

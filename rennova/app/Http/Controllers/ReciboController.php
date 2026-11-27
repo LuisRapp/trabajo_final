@@ -40,6 +40,19 @@ class ReciboController extends Controller
     }
 
     /**
+     * Comprobante de pago en PDF del recibo.
+     */
+    public function pdf(Recibo $recibo)
+    {
+        $pdf = app(\App\Services\ReciboService::class)->comprobantePdf($recibo);
+
+        return response($pdf['output'], 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="'.$pdf['filename'].'"',
+        ]);
+    }
+
+    /**
      * Show the form for editing the specified resource.
      */
     public function edit(Recibo $recibo)

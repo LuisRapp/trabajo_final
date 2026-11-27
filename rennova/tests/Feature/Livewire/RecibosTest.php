@@ -81,3 +81,12 @@ test('editar un recibo abre la pestana del formulario', function () {
         ->assertSet('tab_activo', 'nuevo')
         ->assertSet('recibo_id', $recibo->id_recibo);
 });
+
+test('el listado muestra el acceso al comprobante del recibo', function () {
+    $recibo = Recibo::factory()->create();
+    $user = usuarioConPermisos(['ver-recibos', 'editar-recibos', 'eliminar-recibos']);
+
+    Livewire::actingAs($user)
+        ->test(Recibos::class)
+        ->assertSee(route('recibos.pdf', $recibo->id_recibo), false);
+});

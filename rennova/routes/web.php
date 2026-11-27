@@ -131,6 +131,7 @@ Route::middleware(['auth'])->group(function () {
         ->middleware(['permission:ver-ventas'])->name('ventas.comprobante');
     Route::get('/adelantos', [AdelantoController::class, 'index'])->middleware(['permission:ver-adelantos'])->name('adelantos.index');
     Route::get('/recibos', [ReciboController::class, 'index'])->middleware(['permission:ver-recibos'])->name('recibos.index');
+    Route::get('/recibos/{recibo}/pdf', [ReciboController::class, 'pdf'])->middleware(['permission:ver-recibos'])->name('recibos.pdf');
 
     Route::get('/historico-costos-maquinarias', [HistoricoCostosMaquinariaController::class, 'index'])->middleware(['permission:ver-historico-costos-maquinarias'])->name('historico-costos-maquinarias.index');
     Route::view('/historico-roles-laborales', 'historico-roles-laborales.index')->middleware(['permission:ver-roles-laborales'])->name('historico-roles-laborales.index');

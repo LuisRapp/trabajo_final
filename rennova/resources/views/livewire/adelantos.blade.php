@@ -117,10 +117,12 @@
                                     <td class="text-tinta-suave">${{ number_format($adelanto->monto, 2, ',', '.') }}</td>
                                     <td class="text-tinta-suave">{{ $adelanto->fecha_emision ? \Carbon\Carbon::parse($adelanto->fecha_emision)->format('d/m/Y') : 'N/A' }}</td>
                                     <td>
-                                        @if($adelanto->activo)
-                                            <x-ui.badge variant="success">Activo</x-ui.badge>
+                                        @if($adelanto->estado === 'pendiente')
+                                            <x-ui.badge variant="warning">Pendiente</x-ui.badge>
+                                        @elseif($adelanto->estado === 'pagado')
+                                            <x-ui.badge variant="success">Pagado</x-ui.badge>
                                         @else
-                                            <x-ui.badge variant="danger">Inactivo</x-ui.badge>
+                                            <x-ui.badge variant="neutral">{{ ucfirst($adelanto->estado ?? '—') }}</x-ui.badge>
                                         @endif
                                     </td>
                                     <td class="text-right">

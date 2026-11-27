@@ -7,9 +7,8 @@ use App\Models\Adelanto;
 use App\Models\Empleado;
 use App\Models\Recibo;
 use App\Services\EmpleadoPagoService;
+use App\Services\ReciboService;
 use Carbon\Carbon;
-use Dompdf\Dompdf;
-use Dompdf\Options;
 use Illuminate\Support\Facades\Mail;
 use Livewire\Component;
 
@@ -47,6 +46,8 @@ class LiquidacionPagos extends Component
     public $mostrar_liquidacion = false;
 
     public $recibo_generado = false;
+
+    public $recibo_generado_id;
 
     public $liquidar_todos = false;
 
@@ -176,43 +177,19 @@ class LiquidacionPagos extends Component
     private function enviarRecibosMasivosPorEmail(array $recibosData, string $periodo): void
     {
         try {
-            $options = new Options;
-            $options->set('defaultFont', 'DejaVu Sans');
-
             $generadoPor = auth()->user()->name ?? auth()->user()->email ?? 'Usuario';
             $fechaGeneracion = Carbon::now()->format('d/m/Y H:i');
 
             $body = 'Se generaron '.count($recibosData)." comprobantes de pago.\n";
             $body .= "Período: {$periodo}\n";
 
-            Mail::raw($body, function ($message) use ($recibosData, $periodo, $options, $generadoPor, $fechaGeneracion) {
+            Mail::raw($body, function ($message) use ($recibosData, $periodo, $generadoPor, $fechaGeneracion) {
                 $message->to('contabilidad@rennova.com')
                     ->subject('Comprobantes de pago - Liquidación masiva ('.$periodo.')');
 
                 foreach ($recibosData as $item) {
-                    $empleado = $item['empleado'];
-                    $recibo = $item['recibo'];
-                    $empleadoNombre = trim(($empleado->apellido ?? '').' '.($empleado->nombre ?? '')) ?: 'N/A';
-                    $empleadoRol = $empleado->rolLaboral->nombre ?? $empleado->rolLaboral->descripcion ?? 'N/A';
-                    $empleadoDni = $empleado->dni ?? null;
-
-                    $dompdf = new Dompdf($options);
-                    $html = view('recibos.pdf.comprobante', [
-                        'recibo' => $recibo,
-                        'empleado_nombre' => $empleadoNombre,
-                        'empleado_rol' => $empleadoRol,
-                        'empleado_dni' => $empleadoDni,
-                        'periodo' => $periodo,
-                        'generado_por' => $generadoPor,
-                        'fecha_generacion' => $fechaGeneracion,
-                    ])->render();
-                    $dompdf->loadHtml($html, 'UTF-8');
-                    $dompdf->setPaper('A4', 'portrait');
-                    $dompdf->render();
-
-                    $pdfOutput = $dompdf->output();
-                    $pdfFilename = 'comprobante-recibo-'.$recibo->id_recibo.'.pdf';
-                    $message->attachData($pdfOutput, $pdfFilename, ['mime' => 'application/pdf']);
+                    $pdf = app(ReciboService::class)->comprobantePdf($item['recibo'], $periodo, $generadoPor, $fechaGeneracion);
+                    $message->attachData($pdf['output'], $pdf['filename'], ['mime' => 'application/pdf']);
                 }
             });
         } catch (\Throwable $mailException) {
@@ -255,6 +232,7 @@ class LiquidacionPagos extends Component
             );
 
             $this->recibo_generado = true;
+            $this->recibo_generado_id = $recibo->id_recibo;
 
             $mensaje = 'Recibo #'.$recibo->id_recibo.' generado correctamente.';
             $cantidadAdelantos = count($this->adelantos_pendientes ?? []);
@@ -276,30 +254,14 @@ class LiquidacionPagos extends Component
     {
         try {
             $empleadoNombre = trim(($this->empleado_seleccionado->apellido ?? '').' '.($this->empleado_seleccionado->nombre ?? ''));
-            $empleadoRol = $this->empleado_seleccionado->rolLaboral->nombre ?? $this->empleado_seleccionado->rolLaboral->descripcion ?? 'N/A';
-            $empleadoDni = $this->empleado_seleccionado->dni ?? null;
             $periodo = Carbon::parse($this->fecha_inicio)->format('d/m/Y').' a '.Carbon::parse($this->fecha_fin)->format('d/m/Y');
 
             $generadoPor = auth()->user()->name ?? auth()->user()->email ?? 'Usuario';
             $fechaGeneracion = Carbon::now()->format('d/m/Y H:i');
 
-            $options = new Options;
-            $options->set('defaultFont', 'DejaVu Sans');
-            $dompdf = new Dompdf($options);
-            $html = view('recibos.pdf.comprobante', [
-                'recibo' => $recibo,
-                'empleado_nombre' => $empleadoNombre ?: 'N/A',
-                'empleado_rol' => $empleadoRol,
-                'empleado_dni' => $empleadoDni,
-                'periodo' => $periodo,
-                'generado_por' => $generadoPor,
-                'fecha_generacion' => $fechaGeneracion,
-            ])->render();
-            $dompdf->loadHtml($html, 'UTF-8');
-            $dompdf->setPaper('A4', 'portrait');
-            $dompdf->render();
-            $pdfOutput = $dompdf->output();
-            $pdfFilename = 'comprobante-recibo-'.$recibo->id_recibo.'.pdf';
+            $pdf = app(ReciboService::class)->comprobantePdf($recibo, $periodo, $generadoPor, $fechaGeneracion);
+            $pdfOutput = $pdf['output'];
+            $pdfFilename = $pdf['filename'];
 
             $body = "Se generó un comprobante de pago.\n\n";
             $body .= "Recibo: #{$recibo->id_recibo}\n";
@@ -340,6 +302,7 @@ class LiquidacionPagos extends Component
             'observaciones',
             'mostrar_liquidacion',
             'recibo_generado',
+            'recibo_generado_id',
         ]);
         $this->fecha_inicio = Carbon::now()->startOfMonth()->format('Y-m-d');
         $this->fecha_fin = Carbon::now()->endOfMonth()->format('Y-m-d');

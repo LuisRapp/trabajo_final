@@ -4,6 +4,9 @@ namespace App\Services;
 
 use App\Models\Empleado;
 use App\Models\Recibo;
+use Carbon\Carbon;
+use Dompdf\Dompdf;
+use Dompdf\Options;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
@@ -82,5 +85,61 @@ class ReciboService
     public function eliminar(int $id): void
     {
         Recibo::findOrFail($id)->delete();
+    }
+
+    /**
+     * Genera el comprobante de pago en PDF del recibo.
+     *
+     * El periodo se toma de las observaciones (donde lo deja la liquidacion)
+     * para que una reimpresion conserve el dato.
+     *
+     * @return array{output: string, filename: string}
+     */
+    public function comprobantePdf(Recibo $recibo, ?string $periodo = null, ?string $generadoPor = null, ?string $fechaGeneracion = null): array
+    {
+        $recibo->loadMissing(['empleado.rolLaboral']);
+        $empleado = $recibo->empleado;
+
+        $empleadoNombre = trim(($empleado?->apellido ?? '').' '.($empleado?->nombre ?? ''));
+        $empleadoRol = $empleado?->rolLaboral?->nombre ?? 'N/A';
+        $empleadoDni = $empleado?->dni;
+
+        $periodo = $periodo
+            ?: $this->periodoDesdeObservaciones($recibo->observaciones)
+            ?: Carbon::parse($recibo->fecha_emision)->format('d/m/Y');
+        $generadoPor = $generadoPor ?: (auth()->user()->name ?? auth()->user()->email ?? 'Sistema');
+        $fechaGeneracion = $fechaGeneracion ?: Carbon::now()->format('d/m/Y H:i');
+
+        $options = new Options;
+        $options->set('defaultFont', 'DejaVu Sans');
+        $dompdf = new Dompdf($options);
+
+        $html = view('recibos.pdf.comprobante', [
+            'recibo' => $recibo,
+            'empleado_nombre' => $empleadoNombre ?: 'N/A',
+            'empleado_rol' => $empleadoRol,
+            'empleado_dni' => $empleadoDni,
+            'periodo' => $periodo,
+            'generado_por' => $generadoPor,
+            'fecha_generacion' => $fechaGeneracion,
+        ])->render();
+
+        $dompdf->loadHtml($html, 'UTF-8');
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->render();
+
+        return [
+            'output' => $dompdf->output(),
+            'filename' => 'comprobante-recibo-'.$recibo->id_recibo.'.pdf',
+        ];
+    }
+
+    private function periodoDesdeObservaciones(?string $observaciones): ?string
+    {
+        if ($observaciones && preg_match('/(\d{2}\/\d{2}\/\d{4}\s+a\s+\d{2}\/\d{2}\/\d{4})/', $observaciones, $coincidencia)) {
+            return $coincidencia[1];
+        }
+
+        return null;
     }
 }
