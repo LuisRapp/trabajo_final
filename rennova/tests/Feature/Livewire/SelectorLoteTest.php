@@ -36,6 +36,21 @@ test('un pronóstico con días acentuados produce un snapshot serializable', fun
         'longitud' => -58.4,
     ]);
 
+    // Sin mock este test pegaba a Open-Meteo real y fallaba de forma
+    // intermitente cuando la API no respondia.
+    $this->mock(\App\Services\ClimaDecisionService::class, function ($mock) {
+        $mock->shouldReceive('analizarYRecomendar')->andReturn([
+            'success' => true,
+            'nivel_urgencia' => 'BAJA',
+            'recomendacion' => 'Sin lluvia en la ventana.',
+            'dias_detalle' => [
+                ['fecha' => \Carbon\Carbon::parse('2026-12-02'), 'fecha_str' => '02/12/2026', 'dia_semana' => 'miércoles', 'estado' => 'OPERATIVO', 'razon' => null],
+                ['fecha' => \Carbon\Carbon::parse('2026-12-03'), 'fecha_str' => '03/12/2026', 'dia_semana' => 'jueves', 'estado' => 'OPERATIVO', 'razon' => null],
+            ],
+            'datos_calculados' => ['volumen_riesgo' => 0, 'aumento_necesario_pct' => 0],
+        ]);
+    });
+
     $componente = Livewire::actingAs(Usuario::factory()->create())->test(SelectorLote::class);
     $pronostico = $componente->get('pronosticoData');
 
