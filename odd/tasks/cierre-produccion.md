@@ -295,7 +295,7 @@ Se instala Docker **una sola vez**, al final del plan, para no abrir cambios de 
   - [x] **Queue worker procesa un job** (2026-11-23): job despachado dentro del contenedor y consumido por el worker; `jobs` volvio a 0 y quedo la marca en `storage/logs/`. Worker corriendo como `www-data` (`queue:work --sleep=3 --tries=3 --timeout=90`).
   - [x] **Cron programado y disparando** (2026-11-23): `/etc/cron.d/laravel-cron` presente; `schedule:list` muestra 5 tareas (umbrales, decisiones climaticas, riesgo climatico, clima real, mantenimientos programados); sonda de un minuto ejecutada por cron y removida.
 - [x] Verificar que el `.env` del working copy **no se modifico** (2026-11-23: `rennova/.env` con mtime 2026-06-03, anterior a todo el trabajo de Docker; `APP_KEY` local intacta; `git status` limpio).
-- [ ] **Probar funcionalmente la app en el deploy** (guion abajo). Es lo unico que falta para cerrar el gate.
+- [x] **Probar funcionalmente la app en el deploy** (guion abajo). (2026-11-27: bloques 0 a 10 con evidencia; ver L62-L68.)
 - [ ] Recien con eso verde: entregar.
 
 ### Guion de prueba funcional (deploy en Docker)
@@ -466,10 +466,16 @@ maquinaria, rol laboral, cliente, proveedor, insumo y kit de mantenimiento.
 
 #### Bloque 10 - Transversal de UI (10 min)
 
-- [ ] Tabs en 3 modulos distintos: la activa se marca y el contenido cambia.
-- [ ] Formulario vacio en 2-3 modulos: el error aparece debajo del campo.
-- [ ] Un campo de texto no muestra el autocompletado del navegador.
-- [ ] Confirmacion con boton custom: lotes (menu de tres puntos) y roles y permisos.
+- [x] Tabs en 3 modulos distintos: la activa se marca y el contenido cambia.
+      (2026-11-27: verificado por el usuario en categorias de madera, roles y
+      permisos y mantenimientos.)
+- [x] Formulario vacio en 2-3 modulos: el error aparece debajo del campo.
+      (2026-11-27: verificado por el usuario.)
+- [x] Un campo de texto no muestra el autocompletado del navegador.
+      (2026-11-27: verificado por el usuario.)
+- [x] Confirmacion con boton custom: lotes y roles y permisos. (2026-11-27:
+      verificado por el usuario; en lotes las acciones son botones directos, el
+      menu de tres puntos ya no existe.)
 
 > Lo de kits, login y confirmaciones ya se verifico contra este deploy (L21), asi que
 > alcanza con un vistazo. Lo que falta recorrer es el ciclo de datos: bloques 3 a 9.
@@ -488,12 +494,12 @@ maquinaria, rol laboral, cliente, proveedor, insumo y kit de mantenimiento.
 | 7 - Pagos | 2026-11-27 | 7 recibos y 6 adelantos; recibo #4 descuenta $67.400 y neto $74.440. |
 | 8 - Indicadores y reportes | 2026-11-27 | Indicadores y tendencia visibles y coherentes; PDF de lluvias y de estadisticas descargan (`application/pdf`, `%PDF-`). En el bloque se corrigieron: odometro del mantenimiento (desempate de cierres del mismo dia), barro domingo->lunes (lluvia nocturna + dia previo), lluvia diurna como no operativa (27/11), parametros climaticos editables con permiso y sidebar, rediseno de las tres pantallas de mantenimiento y estado de procesos con ultima ejecucion, motivo y acciones. |
 | 9 - Permisos | 2026-11-27 | Usuario con rol Vendedor (sin `ver-empleados`): `/empleados` da 403 y el link no aparece; ambos probados por separado. La ruta tiene `permission:ver-empleados` y el sidebar `@can`. |
-| 10 - UI transversal | | |
+| 10 - UI transversal | 2026-11-27 | Verificado por el usuario: tabs en categorias de madera, roles y permisos y mantenimientos; errores debajo del campo; autocompletado desactivado; modal propio en lotes y roles y permisos. |
 
 #### Cierre del gate
 
-- [ ] Todos los bloques con evidencia y fecha.
-- [ ] Marcar el item del gate (linea 298) con el resumen.
+- [x] Todos los bloques con evidencia y fecha. (2026-11-27: bloques 0-10 en la tabla de registro.)
+- [x] Marcar el item del gate con el resumen. (2026-11-27: marcado; quedan los pasos de entrega.)
 - [ ] Cambiar la password del admin antes de entregar (hoy es `password`).
 - [ ] No correr los seeders demo en la entrega.
 
@@ -586,3 +592,4 @@ Todo lo que aparezca durante F2-F8 y no sea un defecto de la fase en curso se an
 - L65 (2026-11-27): crear usuario fallaba con "Debe indicar si está activo" aunque el select mostrara Activo. `$activo` arrancaba en `null` (y `resetCampos()` lo dejaba en null); el `<select>` mostraba la primera opción pero el modelo iba vacío y `required` fallaba. Se declara `public $activo = 1;` y `resetCampos()` lo vuelve a 1. Test nuevo: crear sin tocar el estado. Verificado en el deploy con Firefox: usuario creado sin tocar el select, sin error y aparece en el listado. Suite 851 passed / 9 skipped.
 - L66 (2026-11-27): Bloque 9 cerrado. Verificado por el usuario en el deploy con el rol Vendedor (no tiene `ver-empleados`): `/empleados` responde 403 por URL directa y el link del sidebar no aparece, probados por separado. En codigo la ruta lleva `middleware(['permission:ver-empleados'])` y el link esta dentro de `@can('ver-empleados')`. Queda solo el Bloque 10 (UI transversal).
 - L67 (2026-11-27): auditoria del patron "el select muestra una opcion pero el modelo no coincide" (como `activo` y `es_alquilada`). Resultado: **un bug real** en `MovimientoForm` (Partes Diarios). El `<select>` de motivo ofrecia `Produccion` (sin tilde) mientras la regla, el default y `resetMovimientoForm()` usan `Producción` (con tilde), y los datos guardados ya usan la tilde; al elegir la opcion, la validacion `in:Producción` la rechazaba. Se unifica la opcion a `Producción` con test de regresion. El resto de la auditoria quedo limpia: `required|boolean` solo en `es_alquilada` (L19) y `activo` (L65); 0 campos `required` sin `@error`; `Mantenimientos::$estado` se inicializa en `mount()`; `Lotes` y `ListaPrecios` resetean sus campos de otra forma; `TipoMantenimiento::comportamiento='otro'` es un case valido del enum. Suite 852 passed / 9 skipped.
+- L68 (2026-11-27): Bloque 10 cerrado y prueba funcional del gate completa. Verificado por el usuario: tabs en categorias de madera, roles y permisos y mantenimientos; errores debajo del campo; autocompletado desactivado; modal propio en lotes y roles y permisos. Todos los bloques 0-10 tienen evidencia y fecha; el item de "probar funcionalmente la app" queda marcado. Restan solo los pasos de entrega: cambiar la password del admin (hoy `password`) y no correr los seeders demo.
