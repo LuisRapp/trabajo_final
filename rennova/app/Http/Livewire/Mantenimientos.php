@@ -6,6 +6,7 @@ use App\Http\Livewire\Traits\MensajesErrorUsuario;
 use App\Models\TipoMantenimiento;
 use App\Services\MantenimientoService;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 class Mantenimientos extends Component
@@ -140,13 +141,12 @@ class Mantenimientos extends Component
         $this->validate();
 
         $servicio = app(MantenimientoService::class);
-        $fechaInicio = $this->fecha_programada ?: $this->fecha_inicio;
 
         $resultado = $servicio->guardarMantenimiento(
             [
                 'id_maquinaria' => $this->id_maquinaria,
                 'id_tipo_mantenimiento' => $this->id_tipo_mantenimiento,
-                'fecha_inicio' => $fechaInicio,
+                'fecha_inicio' => $this->fecha_inicio,
                 'fecha_programada' => $this->fecha_programada,
                 'estado' => $this->estado,
             ],
@@ -203,8 +203,14 @@ class Mantenimientos extends Component
         $this->dispatch('abrirCompletarOrden', $id);
     }
 
-    public function onOrdenCompletada(): void
+    #[On('ordenCompletada')]
+    public function onOrdenCompletada(?string $mensaje = null): void
     {
+        if ($mensaje) {
+            session()->flash('message', $mensaje);
+        }
+
+        $this->tab_activo = 'listado';
         $this->cargarMantenimientos();
     }
 

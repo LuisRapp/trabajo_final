@@ -205,6 +205,7 @@
                                         @php
                                             $isCompletado = strtolower(trim($mantenimiento->estado ?? '')) === 'completado';
                                             $isProgramado = strtolower(trim($mantenimiento->estado ?? '')) === 'programado';
+                                            $isEnCurso = strtolower(trim($mantenimiento->estado ?? '')) === 'en curso';
                                             $isVencido = strtolower(trim($mantenimiento->estado ?? '')) === 'vencido';
                                         @endphp
                                         <div class="flex gap-1 justify-center">
@@ -218,10 +219,18 @@
                                                 <x-ui.button size="sm" variant="secondary" icon="calendar-date-range" wire:click="reprogramarMantenimiento({{ $mantenimiento->id_mantenimiento }})" title="Reprogramar" />
                                                 @endcan
                                             @endif
-                                            @can('editar-mantenimientos')
-                                            <x-ui.button size="sm" variant="secondary" icon="check" wire:click="abrirModalCompletar({{ $mantenimiento->id_mantenimiento }})" title="Completar" class="{{ ($isCompletado || $isVencido) ? 'opacity-50 cursor-not-allowed' : '' }}" @if($isCompletado || $isVencido) disabled @endif />
-                                            <x-ui.button size="sm" variant="secondary" icon="pencil-square" wire:click="editar({{ $mantenimiento->id_mantenimiento }})" title="Editar" />
-                                            @endcan
+                                            @if($isEnCurso)
+                                                @can('completar-mantenimiento')
+                                                <x-ui.button size="sm" variant="secondary" icon="flag" wire:click="abrirModalCompletar({{ $mantenimiento->id_mantenimiento }})" title="Completar y cerrar la orden">
+                                                    Completar
+                                                </x-ui.button>
+                                                @endcan
+                                            @endif
+                                            @unless($isCompletado)
+                                                @can('editar-mantenimientos')
+                                                <x-ui.button size="sm" variant="secondary" icon="pencil-square" wire:click="editar({{ $mantenimiento->id_mantenimiento }})" title="Editar" />
+                                                @endcan
+                                            @endunless
                                             @can('eliminar-mantenimientos')
                                             <x-ui.confirmador accion="eliminar" :parametros="[$mantenimiento->id_mantenimiento]"
                                                 mensaje="¿Eliminar el mantenimiento #{{ $mantenimiento->id_mantenimiento }} de «{{ $mantenimiento->maquinaria?->modelo ?? 'la maquinaria' }}»?"
@@ -334,7 +343,7 @@
                         @endif
                     @else
                         <x-ui.alert variant="info" :dismissible="false">
-                            Es un mantenimiento correctivo: se aprueba sin verificar el kit preventivo.
+                            Es un mantenimiento correctivo: se aprueba sin verificar insumos.
                         </x-ui.alert>
                     @endif
                 </div>

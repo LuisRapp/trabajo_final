@@ -61,12 +61,6 @@
                     </button>
                 </div>
                 <div class="lw-modal-body">
-                    @if (session()->has('error'))
-                        <x-ui.alert variant="danger" class="mb-4" :dismissible="false">
-                            {{ session('error') }}
-                        </x-ui.alert>
-                    @endif
-
                     @error('general')
                         <x-ui.alert variant="danger" class="mb-4" :dismissible="false">
                             {{ $message }}
@@ -87,7 +81,7 @@
                             @error('fecha_fin_completar') <p class="mt-1 text-sm text-tierra">{{ $message }}</p> @enderror
                         </div>
                         <div>
-                            <label class="block text-sm font-semibold text-tinta mb-2">Costo Total (opcional)</label>
+                            <label class="block text-sm font-semibold text-tinta mb-2">Mano de obra / costo adicional (opcional)</label>
                             <div class="flex items-center gap-2">
                                 <span class="px-4 py-3 bg-corteza-suave text-tinta-suave rounded-sm border border-arena">$</span>
                                 <input autocomplete="off" type="number" wire:model="costo_total_completar" step="1" min="0" class="flex-1 form-input @error('costo_total_completar') ring-2 ring-tierra @enderror" placeholder="0.00">
@@ -107,14 +101,14 @@
                     </h6>
 
                     @foreach($insumos_usados as $index => $insumo)
-                        <div class="grid grid-cols-1 md:grid-cols-5 gap-3 mb-4 p-4 bg-hueso rounded-sm border border-arena" wire:key="insumo-{{ $index }}">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4 p-4 bg-hueso rounded-sm border border-arena" wire:key="insumo-{{ $index }}">
                             <div class="md:col-span-2">
                                 <label class="block text-xs font-semibold text-tinta mb-2">Insumo</label>
                                 <select wire:model.live="insumos_usados.{{ $index }}.id_insumo" class="form-input">
                                     <option value="">Seleccione...</option>
                                     @foreach($insumosDisponibles as $ins)
-                                        <option value="{{ $ins->id_insumo }}" wire:key="option-{{ $ins->id_insumo }}">
-                                            {{ $ins->nombre }} (Stock: {{ number_format($ins->stock_disponible, 2) }} - ${{ number_format($ins->precio_promedio, 2) }}/u)
+                                        <option value="{{ $ins['id_insumo'] }}" wire:key="option-{{ $ins['id_insumo'] }}">
+                                            {{ $ins['nombre'] }} (Stock: {{ number_format($ins['stock'], 2) }})
                                         </option>
                                     @endforeach
                                 </select>
@@ -124,17 +118,10 @@
                                 <input autocomplete="off" type="number" wire:model="insumos_usados.{{ $index }}.cantidad" step="0.1" min="0" class="form-input" placeholder="0">
                                 @if(!empty($insumo['id_insumo']))
                                     @php
-                                        $stockDisponible = optional($insumosDisponibles->firstWhere('id_insumo', $insumo['id_insumo']))->stock_disponible ?? 0;
+                                        $stockDisponible = data_get($insumosDisponibles->firstWhere('id_insumo', $insumo['id_insumo']), 'stock', 0);
                                     @endphp
                                     <small class="text-tinta-suave text-xs mt-1 block">Disponible: {{ number_format($stockDisponible, 2) }}</small>
                                 @endif
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-tinta mb-2">Precio Unitario</label>
-                                <div class="flex items-center gap-1">
-                                    <span class="text-tinta-suave">$</span>
-                                    <input autocomplete="off" type="number" wire:model="insumos_usados.{{ $index }}.precio_unitario" step="0.01" min="0" class="flex-1 form-input bg-hueso" readonly>
-                                </div>
                             </div>
                             <div class="flex items-end justify-end">
                                 @if($index > 0 || count($insumos_usados) > 1)

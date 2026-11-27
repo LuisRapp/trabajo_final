@@ -187,3 +187,14 @@ test('aprobar un correctivo no verifica el kit ni genera propuesta de compra', f
         ->and($mantenimiento->fresh()->estado)->toBe('en curso')
         ->and(PropuestaCompraMantenimiento::query()->count())->toBe(0);
 });
+
+test('no se puede completar una orden programada', function () {
+    $mantenimiento = Mantenimiento::factory()->programado()->create();
+
+    $resultado = app(MantenimientoService::class)
+        ->completarMantenimiento($mantenimiento->id_mantenimiento, [], 0);
+
+    expect($resultado['success'])->toBeFalse()
+        ->and($resultado['message'])->toContain('en curso')
+        ->and($mantenimiento->fresh()->estado)->toBe('programado');
+});

@@ -89,7 +89,7 @@ Estado del trabajo validado al cierre de F8: `php artisan test` = **711 passed, 
 
 - **`ReporteController`**: `DB::raw('peso_neto / 1000.0')` para aritmetica de toneladas, `buildChartImage` con nombre en ingles, y `desde`/`hasta` alimentados a `Carbon::parse` sin validar. Aparecio en el hook `gga run` durante F5.
 - **`contarInsumosCriticos()`** (codigo muerto): cuenta TODOS los insumos bajo umbral, pero la regla documentada es "kits de mantenimiento + combustible" (identificado por nombre). Si se conecta, no va a coincidir.
-- **`completarMantenimiento()`** no exige pasar por "en curso": se puede completar una orden desde "programado" o "vencido". Pre-existente; requiere decision de regla de negocio.
+- **`completarMantenimiento()`** no exigia pasar por "en curso". **Resuelta en el Gate (L45):** ahora solo completa ordenes `en curso` y la UI oculta el cierre en las demas.
 - **`ReporteController::buildChartImage`** usa `quickchart.io` con `Http::get` sin fake en algunos flujos de test (acoplado a red externa).
 
 ---

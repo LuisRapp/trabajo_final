@@ -381,5 +381,19 @@ class CompletarOrdenModalTest extends TestCase
         $insumos = $component->get('insumosDisponibles');
         $this->assertTrue($insumos->contains('id_insumo', $insumo1->id_insumo));
         $this->assertTrue($insumos->contains('id_insumo', $insumo2->id_insumo));
+
+        $primero = $insumos->firstWhere('id_insumo', $insumo1->id_insumo);
+        $this->assertArrayHasKey('stock', $primero);
+        $this->assertArrayHasKey('precio', $primero);
+    }
+
+    public function test_no_abre_el_modal_para_una_orden_que_no_esta_en_curso(): void
+    {
+        $mantenimiento = Mantenimiento::factory()->completado()->create();
+
+        Livewire::actingAs($this->usuario)
+            ->test(CompletarOrdenModal::class)
+            ->dispatch('abrirCompletarOrden', $mantenimiento->id_mantenimiento)
+            ->assertSet('mostrarModal', false);
     }
 }

@@ -30,7 +30,23 @@ class CompletarOrdenModal extends Component
 
     public function mount(): void
     {
-        $this->insumosDisponibles = app(MantenimientoService::class)->obtenerInsumosParaCierre();
+        $this->cargarInsumosDisponibles();
+    }
+
+    /**
+     * Guarda solo datos planos: los atributos calculados de un modelo se
+     * pierden al rehidratar el componente y el stock se mostraba en cero.
+     */
+    private function cargarInsumosDisponibles(): void
+    {
+        $this->insumosDisponibles = app(MantenimientoService::class)
+            ->obtenerInsumosParaCierre()
+            ->map(fn ($insumo) => [
+                'id_insumo' => $insumo->id_insumo,
+                'nombre' => $insumo->nombre,
+                'stock' => (float) $insumo->stock_disponible,
+                'precio' => (float) $insumo->precio_promedio,
+            ]);
     }
 
     #[On('abrirCompletarOrden')]
@@ -38,6 +54,15 @@ class CompletarOrdenModal extends Component
     {
         $servicio = app(MantenimientoService::class);
         $orden = $servicio->obtenerOrdenParaCompletar($id);
+
+        if ($orden->estado !== 'en curso') {
+            session()->flash('error', 'Solo se puede completar una orden en curso.');
+
+            return;
+        }
+
+        $this->resetErrorBag();
+        $this->cargarInsumosDisponibles();
 
         $this->orden_completar_id = $orden->id_mantenimiento;
         $this->orden_completar_info = [
@@ -80,6 +105,7 @@ class CompletarOrdenModal extends Component
     public function cerrarModal(): void
     {
         $this->mostrarModal = false;
+        $this->resetErrorBag();
         $this->reset(['orden_completar_id', 'orden_completar_info', 'orden_es_correctivo', 'fecha_fin_completar', 'costo_total_completar', 'insumos_usados']);
     }
 
@@ -132,16 +158,15 @@ class CompletarOrdenModal extends Component
             );
 
             if (! $resultado['success']) {
-                session()->flash('error', $resultado['message']);
                 $this->addError('general', $resultado['message']);
 
                 return;
             }
 
-            session()->flash('message', 'Orden completada exitosamente. Costo total: $'.number_format($resultado['costo_total'], 2));
+            $mensaje = 'Orden completada exitosamente. Costo total: $'.number_format($resultado['costo_total'], 2, ',', '.');
 
             $this->cerrarModal();
-            $this->dispatch('ordenCompletada');
+            $this->dispatch('ordenCompletada', mensaje: $mensaje);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             throw $e;
@@ -152,8 +177,7 @@ class CompletarOrdenModal extends Component
                 'line' => $e->getLine(),
                 'trace' => $e->getTraceAsString(),
             ]);
-            session()->flash('error', $this->mensajeErrorUsuario($e, 'completar la orden de mantenimiento'));
-            $this->addError('general', 'Ocurrió un error al completar la orden. Intente nuevamente o contacte al administrador.');
+            $this->addError('general', $this->mensajeErrorUsuario($e, 'completar la orden de mantenimiento'));
         }
     }
 

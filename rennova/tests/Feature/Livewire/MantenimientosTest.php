@@ -25,7 +25,7 @@ class MantenimientosTest extends TestCase
     {
         parent::setUp();
 
-        $this->usuario = usuarioConPermisos(['crear-mantenimientos', 'editar-mantenimientos', 'eliminar-mantenimientos', 'confirmar-mantenimiento', 'reprogramar-mantenimiento']);
+        $this->usuario = usuarioConPermisos(['crear-mantenimientos', 'editar-mantenimientos', 'eliminar-mantenimientos', 'confirmar-mantenimiento', 'completar-mantenimiento', 'reprogramar-mantenimiento']);
     }
 
     // =========================================================================
@@ -317,7 +317,29 @@ class MantenimientosTest extends TestCase
             ->call('abrirModalAprobar', $mantenimiento->id_mantenimiento)
             ->assertSet('modal_aprobar', true)
             ->assertSet('verificacion_stock', null)
-            ->assertSee('correctivo');
+            ->assertSee('correctivo')
+            ->assertDontSee('kit preventivo');
+    }
+
+    public function test_el_boton_completar_solo_se_muestra_en_ordenes_en_curso(): void
+    {
+        $programado = Mantenimiento::factory()->programado()->create();
+        $enCurso = Mantenimiento::factory()->enCurso()->create();
+
+        Livewire::actingAs($this->usuario)
+            ->test(Mantenimientos::class)
+            ->assertDontSee('abrirModalCompletar('.$programado->id_mantenimiento.')', false)
+            ->assertSee('abrirModalCompletar('.$enCurso->id_mantenimiento.')', false);
+    }
+
+    public function test_el_evento_orden_completada_vuelve_al_listado(): void
+    {
+        Livewire::actingAs($this->usuario)
+            ->test(Mantenimientos::class)
+            ->set('tab_activo', 'nuevo')
+            ->dispatch('ordenCompletada', mensaje: 'Orden completada exitosamente. Costo total: $2,00')
+            ->assertSet('tab_activo', 'listado')
+            ->assertSee('Orden completada exitosamente. Costo total: $2,00');
     }
 
     public function test_confirmar_mantenimiento_no_programado_falla(): void
@@ -705,5 +727,27 @@ class MantenimientosTest extends TestCase
             ->test(Mantenimientos::class)
             ->call('abrirModalCompletar', $mantenimiento->id_mantenimiento)
             ->assertDispatched('abrirCompletarOrden', $mantenimiento->id_mantenimiento);
+    }
+
+    public function test_editar_conserva_la_fecha_de_inicio_cuando_hay_fecha_programada(): void
+    {
+        $tipo = TipoMantenimiento::factory()->preventivo()->create();
+        $maquinaria = Maquinaria::factory()->create(['estado' => 'disponible']);
+        $mantenimiento = Mantenimiento::factory()->programado()->create([
+            'id_maquinaria' => $maquinaria->id_maquinaria,
+            'id_tipo_mantenimiento' => $tipo->id_tipo_mantenimiento,
+            'fecha_inicio' => '2026-11-26',
+            'fecha_programada' => null,
+        ]);
+
+        Livewire::actingAs($this->usuario)
+            ->test(Mantenimientos::class)
+            ->call('editar', $mantenimiento->id_mantenimiento)
+            ->set('fecha_programada', '2026-11-28')
+            ->call('guardar')
+            ->assertHasNoErrors();
+
+        expect(\Carbon\Carbon::parse($mantenimiento->fresh()->fecha_inicio)->format('Y-m-d'))->toBe('2026-11-26')
+            ->and(\Carbon\Carbon::parse($mantenimiento->fresh()->fecha_programada)->format('Y-m-d'))->toBe('2026-11-28');
     }
 }

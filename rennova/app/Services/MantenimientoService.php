@@ -211,10 +211,12 @@ class MantenimientoService
                     ->lockForUpdate()
                     ->findOrFail($mantenimientoId);
 
-                if ($mantenimiento->estado === 'completado') {
+                if ($mantenimiento->estado !== 'en curso') {
                     return [
                         'success' => false,
-                        'message' => 'Este mantenimiento ya está completado',
+                        'message' => $mantenimiento->estado === 'completado'
+                            ? 'Este mantenimiento ya está completado.'
+                            : 'Solo se puede completar una orden en curso.',
                     ];
                 }
 
