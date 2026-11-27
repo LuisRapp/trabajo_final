@@ -500,8 +500,12 @@ maquinaria, rol laboral, cliente, proveedor, insumo y kit de mantenimiento.
 
 - [x] Todos los bloques con evidencia y fecha. (2026-11-27: bloques 0-10 en la tabla de registro.)
 - [x] Marcar el item del gate con el resumen. (2026-11-27: marcado; quedan los pasos de entrega.)
-- [ ] Cambiar la password del admin antes de entregar (hoy es `password`).
-- [ ] No correr los seeders demo en la entrega.
+- [x] Cambiar la password del admin antes de entregar. (2026-11-27: cambiada y
+      login verificado con la nueva. El valor se entrego al usuario y **no** se
+      registra en el repo.)
+- [x] No correr los seeders demo en la entrega. (2026-11-27: el entrypoint solo
+      corre `CatalogoMantenimientoSeeder`, requerido e idempotente; los seeders demo
+      estan condicionados a `local`/`testing` y el deploy corre `APP_ENV=production`.)
 
 Cuando algo falla, el log se mira con
 `docker-compose -f docker-compose.prod.yml --env-file .env.production logs --tail=50 app`
@@ -593,3 +597,4 @@ Todo lo que aparezca durante F2-F8 y no sea un defecto de la fase en curso se an
 - L66 (2026-11-27): Bloque 9 cerrado. Verificado por el usuario en el deploy con el rol Vendedor (no tiene `ver-empleados`): `/empleados` responde 403 por URL directa y el link del sidebar no aparece, probados por separado. En codigo la ruta lleva `middleware(['permission:ver-empleados'])` y el link esta dentro de `@can('ver-empleados')`. Queda solo el Bloque 10 (UI transversal).
 - L67 (2026-11-27): auditoria del patron "el select muestra una opcion pero el modelo no coincide" (como `activo` y `es_alquilada`). Resultado: **un bug real** en `MovimientoForm` (Partes Diarios). El `<select>` de motivo ofrecia `Produccion` (sin tilde) mientras la regla, el default y `resetMovimientoForm()` usan `Producción` (con tilde), y los datos guardados ya usan la tilde; al elegir la opcion, la validacion `in:Producción` la rechazaba. Se unifica la opcion a `Producción` con test de regresion. El resto de la auditoria quedo limpia: `required|boolean` solo en `es_alquilada` (L19) y `activo` (L65); 0 campos `required` sin `@error`; `Mantenimientos::$estado` se inicializa en `mount()`; `Lotes` y `ListaPrecios` resetean sus campos de otra forma; `TipoMantenimiento::comportamiento='otro'` es un case valido del enum. Suite 852 passed / 9 skipped.
 - L68 (2026-11-27): Bloque 10 cerrado y prueba funcional del gate completa. Verificado por el usuario: tabs en categorias de madera, roles y permisos y mantenimientos; errores debajo del campo; autocompletado desactivado; modal propio en lotes y roles y permisos. Todos los bloques 0-10 tienen evidencia y fecha; el item de "probar funcionalmente la app" queda marcado. Restan solo los pasos de entrega: cambiar la password del admin (hoy `password`) y no correr los seeders demo.
+- L69 (2026-11-27): pasos de entrega cerrados. Password del admin cambiada y login verificado en el deploy (el valor se entrego al usuario; no se registra en el repo). Seeders demo: el entrypoint solo corre `CatalogoMantenimientoSeeder` (catalogo de tipos de mantenimiento, requerido e idempotente); `DatabaseSeeder` limita los datos de demostracion a `local`/`testing` y el deploy corre `APP_ENV=production`. Gate completo.
