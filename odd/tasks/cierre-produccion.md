@@ -428,11 +428,16 @@ maquinaria, rol laboral, cliente, proveedor, insumo y kit de mantenimiento.
 
 #### Bloque 8 - Indicadores y reportes
 
-- [ ] Costo/tn, punto de equilibrio y tn/dia operativo coherentes con las cargas
-      creadas.
-- [ ] Tendencia mes vs mes: compara solo meses cerrados y marca el mes en curso
-      como parcial.
-- [ ] El PDF de clima descarga y abre (prueba el render de PDF en el contenedor).
+- [x] Costo/tn, punto de equilibrio y tn/dia operativo coherentes con las cargas
+      creadas. (2026-11-27: `/reportes/estadisticas-forestales` 200; Costo Promedio
+      $151,15/tn, Punto de Equilibrio 75,00 tn/dia, Margen Bruto -50,96%, Ingresos
+      Totales $95.676,20.)
+- [x] Tendencia mes vs mes: compara solo meses cerrados y marca el mes en curso
+      como parcial. (2026-11-27: seccion "Tendencia Mensual de Produccion (meses
+      cerrados)" con la leyenda de que el mes en curso queda parcial.)
+- [x] El PDF de clima descarga y abre (prueba el render de PDF en el contenedor).
+      (2026-11-27: `/reportes/clima-lluvias/pdf` 200, `application/pdf`, 9.095 bytes,
+      cabecera `%PDF-`; el PDF de estadisticas tambien, 11.589 bytes.)
 
 #### Bloque 9 - Permisos
 
@@ -463,7 +468,7 @@ maquinaria, rol laboral, cliente, proveedor, insumo y kit de mantenimiento.
 | 5 - Inventario | | |
 | 6 - Mantenimiento | 2026-11-26 | Orden #1 para Fiat 800 (1301,92 tn sobre umbral de 600) programada el 27/11, dia de lluvia de la ventana (41,8 mm). Aprobacion desde `/mantenimientos` verifico el kit y genero la propuesta de compra del insumo faltante. Se creo el catalogo de tipos (Preventivo/Correctivo), que estaba vacio y rompia el proceso. |
 | 7 - Pagos | | |
-| 8 - Indicadores y reportes | | |
+| 8 - Indicadores y reportes | 2026-11-27 | Indicadores y tendencia visibles y coherentes; PDF de lluvias y de estadisticas descargan (`application/pdf`, `%PDF-`). En el bloque se corrigieron: odometro del mantenimiento (desempate de cierres del mismo dia), barro domingo->lunes (lluvia nocturna + dia previo), lluvia diurna como no operativa (27/11), parametros climaticos editables con permiso y sidebar, rediseno de las tres pantallas de mantenimiento y estado de procesos con ultima ejecucion, motivo y acciones. |
 | 9 - Permisos | | |
 | 10 - UI transversal | | |
 
@@ -557,3 +562,4 @@ Todo lo que aparezca durante F2-F8 y no sea un defecto de la fase en curso se an
 - L59 (2026-11-27): el dia 27/11 pasaba de INACTIVO a OPERATIVO a las 19:50. Causa: la regla exigia acumulado diario >= umbral (10 mm) **ademas** de lluvia diurna, asi que al bajar el pronostico de 11 a 8,9 mm (8,2 mm cayeron entre 06 y 18, con picos de 2,9 mm/h) el dia quedaba operativo aunque hubiera llovido en plena jornada. Se cambia `lluviaRealHoy`: la lluvia diurna por encima del umbral alcanza por si sola; la de madrugada sigue requiriendo dia significativo (>= 10 mm) para evitar falsos positivos. Verificado en deploy: 27/11 queda INACTIVO (8,9 mm / 8,2 diurnos), la decision vuelve a 3 dias no operativos (Vie 27/11, Mar 01/12, Mie 02/12), deficit 716,67 y residual 597,22; `clima_dias_lote` de hoy INACTIVO. Tests: 3 en `ClimaDiasInactivosTest`. Suite 848 passed / 9 skipped.
 - L60 (2026-11-27): aclaracion del umbral diurno. La regla no usa 2 mm para la jornada: `clima_lluvia_diurna_mm` vale 5 (configurable). Los 2 mm son `lluvia_madrugada_mm` (ventana 0-6 h) y solo cuentan si el dia trae >= 10 mm, para evitar falsos positivos por rocio. Tests de regresion: 2 mm diurnos -> OPERATIVO; 5,5 mm -> INACTIVO. Suite 850 passed.
 - L61 (2026-11-27): test intermitente de `SelectorLoteTest` ("pronostico con dias acentuados") usaba un lote con coordenadas y no mockeaba `ClimaDecisionService`, asi que pegaba a Open-Meteo real y fallaba si la API no respondia. Se mockea el servicio con un payload fijo que incluye un miercoles; determinista. Suite 850 passed verificada dos veces.
+- L62 (2026-11-27): Bloque 8 cerrado con evidencia. Verificado en el deploy: `/reportes/estadisticas-forestales` 200 con Costo Promedio $151,15/tn, Punto de Equilibrio 75,00 tn/dia, Margen Bruto -50,96% e Ingresos Totales $95.676,20; tendencia de meses cerrados con el mes en curso parcial; `/reportes/clima-lluvias/pdf` 200 `application/pdf` 9.095 bytes con cabecera `%PDF-` y el PDF de estadisticas 11.589 bytes. El bloque incluyo las correcciones de clima y de las pantallas de mantenimiento (L55-L61). Quedan abiertos los bloques 2, 5, 7, 9 y 10 del gate.
