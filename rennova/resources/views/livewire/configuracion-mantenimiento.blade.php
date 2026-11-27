@@ -29,7 +29,7 @@
             <div class="mb-4">
                 <h2 class="text-sm font-semibold text-tinta">Frecuencias automáticas</h2>
                 <p class="mt-0.5 text-xs text-tinta-suave">
-                    El servidor corre el scheduler de Laravel; estas frecuencias se aplican sin tocar código.
+                    Elegí cada cuánto se ejecuta cada tarea. El servidor corre el scheduler de Laravel; estos valores se aplican sin tocar código.
                 </p>
             </div>
 
@@ -45,47 +45,59 @@
                 </div>
 
                 <div>
-                    <label for="expresion_cron" class="mb-1.5 block text-sm font-semibold text-tinta">Verificación de umbrales</label>
-                    <input autocomplete="off" type="text" id="expresion_cron" wire:model="expresion_cron"
-                        class="form-input font-mono @error('expresion_cron') border-tierra bg-tierra-suave @enderror"
-                        placeholder="minuto hora día mes día_semana">
-                    <div class="mt-2 flex flex-wrap gap-1">
-                        @foreach (['30 6 * * *' => 'Diario 06:30', '0 8 * * *' => 'Diario 08:00', '0 */6 * * *' => 'Cada 6 h', '0 */12 * * *' => 'Cada 12 h'] as $cron => $etiqueta)
-                            <button type="button" wire:click="setCronUmbrales('{{ $cron }}')"
-                                class="rounded-sm border border-arena bg-white px-2 py-1 text-xs text-tinta hover:bg-corteza-suave">
-                                {{ $etiqueta }}
-                            </button>
+                    <label for="modoUmbrales" class="mb-1.5 block text-sm font-semibold text-tinta">Verificación de umbrales</label>
+                    <select id="modoUmbrales" wire:model.live="modoUmbrales"
+                        class="form-input @error('expresion_cron') border-tierra bg-tierra-suave @enderror">
+                        @foreach ($presetsUmbrales as $cron => $etiqueta)
+                            <option value="{{ $cron }}">{{ $etiqueta }}</option>
                         @endforeach
-                    </div>
-                    <p class="mt-1 text-xs text-tinta-suave">
-                        @if ($proximaUmbrales)
-                            Próxima ejecución: <strong>{{ $proximaUmbrales }}</strong>.
-                        @endif
-                        Conviene después de las 06:00, cuando corre el análisis climático.
+                        <option value="custom">Personalizado…</option>
+                    </select>
+
+                    @if ($modoUmbrales === 'custom')
+                        <input autocomplete="off" type="text" wire:model.live.debounce.500ms="expresion_cron"
+                            class="form-input mt-2 font-mono @error('expresion_cron') border-tierra bg-tierra-suave @enderror"
+                            placeholder="minuto hora día mes día_semana">
+                        @error('expresion_cron') <p class="mt-1 text-xs text-tierra">{{ $message }}</p> @enderror
+                    @endif
+
+                    <p class="mt-2 text-sm text-tinta">
+                        Se ejecuta: <strong>{{ $descripcionUmbrales }}</strong>
                     </p>
-                    @error('expresion_cron') <p class="mt-1 text-xs text-tierra">{{ $message }}</p> @enderror
+                    <p class="text-xs text-tinta-suave">
+                        @if ($proximaUmbrales)
+                            Próxima ejecución: {{ $proximaUmbrales }}.
+                        @endif
+                        Revisa si alguna máquina superó su umbral de toneladas.
+                    </p>
                 </div>
 
                 <div>
-                    <label for="cron_programados" class="mb-1.5 block text-sm font-semibold text-tinta">Revisión de órdenes programadas</label>
-                    <input autocomplete="off" type="text" id="cron_programados" wire:model="cron_programados"
-                        class="form-input font-mono @error('cron_programados') border-tierra bg-tierra-suave @enderror"
-                        placeholder="minuto hora día mes día_semana">
-                    <div class="mt-2 flex flex-wrap gap-1">
-                        @foreach (['0 */4 * * *' => 'Cada 4 h', '0 */6 * * *' => 'Cada 6 h', '0 8 * * *' => 'Diario 08:00', '0 8,16 * * *' => '8 y 16 h'] as $cron => $etiqueta)
-                            <button type="button" wire:click="setCronProgramados('{{ $cron }}')"
-                                class="rounded-sm border border-arena bg-white px-2 py-1 text-xs text-tinta hover:bg-corteza-suave">
-                                {{ $etiqueta }}
-                            </button>
+                    <label for="modoProgramados" class="mb-1.5 block text-sm font-semibold text-tinta">Revisión de órdenes programadas</label>
+                    <select id="modoProgramados" wire:model.live="modoProgramados"
+                        class="form-input @error('cron_programados') border-tierra bg-tierra-suave @enderror">
+                        @foreach ($presetsProgramados as $cron => $etiqueta)
+                            <option value="{{ $cron }}">{{ $etiqueta }}</option>
                         @endforeach
-                    </div>
-                    <p class="mt-1 text-xs text-tinta-suave">
-                        @if ($proximaProgramados)
-                            Próxima ejecución: <strong>{{ $proximaProgramados }}</strong>.
-                        @endif
-                        Marca vencidas y envía el recordatorio diario.
+                        <option value="custom">Personalizado…</option>
+                    </select>
+
+                    @if ($modoProgramados === 'custom')
+                        <input autocomplete="off" type="text" wire:model.live.debounce.500ms="cron_programados"
+                            class="form-input mt-2 font-mono @error('cron_programados') border-tierra bg-tierra-suave @enderror"
+                            placeholder="minuto hora día mes día_semana">
+                        @error('cron_programados') <p class="mt-1 text-xs text-tierra">{{ $message }}</p> @enderror
+                    @endif
+
+                    <p class="mt-2 text-sm text-tinta">
+                        Se ejecuta: <strong>{{ $descripcionProgramados }}</strong>
                     </p>
-                    @error('cron_programados') <p class="mt-1 text-xs text-tierra">{{ $message }}</p> @enderror
+                    <p class="text-xs text-tinta-suave">
+                        @if ($proximaProgramados)
+                            Próxima ejecución: {{ $proximaProgramados }}.
+                        @endif
+                        Marca vencidas las órdenes y envía el recordatorio diario.
+                    </p>
                 </div>
             </div>
 

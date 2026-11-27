@@ -12,11 +12,33 @@ class ConfiguracionMantenimiento extends Component
 {
     use MensajesErrorUsuario;
 
+    /** @var array<string, string> */
+    public const PRESETS_UMBRALES = [
+        '30 6 * * *' => 'Todos los días a las 06:30',
+        '0 8 * * *' => 'Todos los días a las 08:00',
+        '0 */6 * * *' => 'Cada 6 horas',
+        '0 */12 * * *' => 'Cada 12 horas',
+    ];
+
+    /** @var array<string, string> */
+    public const PRESETS_PROGRAMADOS = [
+        '0 */4 * * *' => 'Cada 4 horas',
+        '0 */6 * * *' => 'Cada 6 horas',
+        '0 8 * * *' => 'Todos los días a las 08:00',
+        '0 8,16 * * *' => 'Todos los días a las 08:00 y 16:00',
+    ];
+
     public $hora_recordatorio = '08:00';
 
     public $expresion_cron = '30 6 * * *';
 
     public $cron_programados = '0 */4 * * *';
+
+    /** @var string Valor del preset seleccionado o 'custom'. */
+    public $modoUmbrales = '30 6 * * *';
+
+    /** @var string Valor del preset seleccionado o 'custom'. */
+    public $modoProgramados = '0 */4 * * *';
 
     public function mount()
     {
@@ -28,6 +50,23 @@ class ConfiguracionMantenimiento extends Component
         $this->hora_recordatorio = ConfiguracionService::obtener('mantenimiento_hora_recordatorio', '08:00');
         $this->expresion_cron = ConfiguracionService::obtener('mantenimiento_hora_verificacion_umbrales', '30 6 * * *');
         $this->cron_programados = ConfiguracionService::obtener('mantenimiento_cron_programados', '0 */4 * * *');
+
+        $this->modoUmbrales = array_key_exists($this->expresion_cron, self::PRESETS_UMBRALES) ? $this->expresion_cron : 'custom';
+        $this->modoProgramados = array_key_exists($this->cron_programados, self::PRESETS_PROGRAMADOS) ? $this->cron_programados : 'custom';
+    }
+
+    public function updatedModoUmbrales(string $valor): void
+    {
+        if ($valor !== 'custom') {
+            $this->expresion_cron = $valor;
+        }
+    }
+
+    public function updatedModoProgramados(string $valor): void
+    {
+        if ($valor !== 'custom') {
+            $this->cron_programados = $valor;
+        }
     }
 
     protected function rules(): array
@@ -55,19 +94,9 @@ class ConfiguracionMantenimiento extends Component
             try {
                 new CronExpression($value);
             } catch (\Throwable $e) {
-                $fail('La expresión cron no es válida. Formato: minuto hora día mes día_semana.');
+                $fail('La expresión de frecuencia no es válida.');
             }
         };
-    }
-
-    public function setCronUmbrales(string $cron): void
-    {
-        $this->expresion_cron = $cron;
-    }
-
-    public function setCronProgramados(string $cron): void
-    {
-        $this->cron_programados = $cron;
     }
 
     public function guardarConfiguracion()
@@ -142,9 +171,49 @@ class ConfiguracionMantenimiento extends Component
         }
     }
 
+    /**
+     * Traduce una expresión cron a una frase legible.
+     */
+    private function describir(string $cron): string
+    {
+        $cron = trim((string) preg_replace('/\s+/', ' ', $cron));
+
+        $presets = self::PRESETS_UMBRALES + self::PRESETS_PROGRAMADOS;
+
+        if (isset($presets[$cron])) {
+            return $presets[$cron];
+        }
+
+        $partes = explode(' ', $cron);
+
+        if (count($partes) === 5) {
+            [$minuto, $hora, $dia, $mes, $diaSemana] = $partes;
+
+            if ($dia === '*' && $mes === '*' && $diaSemana === '*') {
+                if ($hora === '*' && preg_match('#^\*/([0-9]+)$#', $minuto, $m)) {
+                    return 'Cada '.$m[1].' minutos';
+                }
+
+                if ($minuto === '0' && preg_match('#^\*/([0-9]+)$#', $hora, $m)) {
+                    return 'Cada '.$m[1].' horas';
+                }
+
+                if (ctype_digit($minuto) && ctype_digit($hora)) {
+                    return 'Todos los días a las '.str_pad($hora, 2, '0', STR_PAD_LEFT).':'.str_pad($minuto, 2, '0', STR_PAD_LEFT);
+                }
+            }
+        }
+
+        return 'Personalizado ('.$cron.')';
+    }
+
     public function render()
     {
         return view('livewire.configuracion-mantenimiento', [
+            'presetsUmbrales' => self::PRESETS_UMBRALES,
+            'presetsProgramados' => self::PRESETS_PROGRAMADOS,
+            'descripcionUmbrales' => $this->describir((string) $this->expresion_cron),
+            'descripcionProgramados' => $this->describir((string) $this->cron_programados),
             'proximaUmbrales' => $this->proxima($this->expresion_cron),
             'proximaProgramados' => $this->proxima($this->cron_programados),
         ]);
