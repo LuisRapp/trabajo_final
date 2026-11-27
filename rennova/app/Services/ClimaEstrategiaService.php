@@ -89,7 +89,7 @@ class ClimaEstrategiaService
         if ($totalDiasOperativos > 0) {
             $aumentoNecesario = $volumenRiesgo / $totalDiasOperativos;
             $porcentajeAumento = ($aumentoNecesario / $metaDiaria) * 100;
-            $maxAumentoPct = (float) config('clima.aumento_maximo_pct', 25);
+            $maxAumentoPct = (float) app(ClimaConfiguracionService::class)->valor('aumento_maximo_pct', 25);
 
             // Subcaso 2A: Aumento viable (<= maximo configurado)
             if ($porcentajeAumento <= $maxAumentoPct) {
@@ -428,7 +428,7 @@ class ClimaEstrategiaService
                 continue;
             }
 
-            if ($porcentaje >= (float) config('clima.mantenimiento_umbral_pct', 80)) {
+            if ($porcentaje >= (float) app(ClimaConfiguracionService::class)->valor('mantenimiento_umbral_pct', 80)) {
                 $resultado[] = [
                     'nombre' => $maquinaria->modelo,
                     'porcentaje' => $porcentaje,

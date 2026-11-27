@@ -114,6 +114,11 @@ Route::middleware(['auth'])->group(function () {
         ->middleware(['permission:configurar-mantenimiento'])
         ->name('configuracion-mantenimiento.index');
 
+    // Configuración de Parámetros Climáticos
+    Route::view('/configuracion-clima', 'configuracion-clima.index')
+        ->middleware(['permission:configurar-clima'])
+        ->name('configuracion-clima.index');
+
     // Notificaciones del Sistema
     Route::view('/notificaciones', 'notificaciones.index')->name('notificaciones.index');
 

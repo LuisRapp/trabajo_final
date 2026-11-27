@@ -48,13 +48,14 @@ class ClimaAnalisisService
         $vientosMax = $pronostico['daily']['wind_speed_10m_max'] ?? [];
         $et0s = $pronostico['daily']['et0_fao_evapotranspiration'] ?? [];
 
-        $umbralLluvia = (float) config('clima.umbral_lluvia_mm', self::UMBRAL_LLUVIA);
-        $umbralNubosidad = (float) config('clima.umbral_nubosidad_pct', self::UMBRAL_NUBOSIDAD);
-        $saturacionMm = (float) config('clima.saturacion_mm', 12);
-        $secadoViento = (float) config('clima.secado_viento_kmh', 15);
-        $secadoEt0 = (float) config('clima.secado_et0_mm', 4);
-        $umbralMadrugada = (float) config('clima.lluvia_madrugada_mm', 2);
-        $umbralDiurna = (float) config('clima.lluvia_diurna_mm', 5);
+        $climaConfig = app(ClimaConfiguracionService::class);
+        $umbralLluvia = (float) $climaConfig->valor('umbral_lluvia_mm', self::UMBRAL_LLUVIA);
+        $umbralNubosidad = (float) $climaConfig->valor('umbral_nubosidad_pct', self::UMBRAL_NUBOSIDAD);
+        $saturacionMm = (float) $climaConfig->valor('saturacion_mm', 12);
+        $secadoViento = (float) $climaConfig->valor('secado_viento_kmh', 15);
+        $secadoEt0 = (float) $climaConfig->valor('secado_et0_mm', 4);
+        $umbralMadrugada = (float) $climaConfig->valor('lluvia_madrugada_mm', 2);
+        $umbralDiurna = (float) $climaConfig->valor('lluvia_diurna_mm', 5);
 
         $horas = $pronostico['hourly']['time'] ?? [];
         $precipitacionHoraria = $pronostico['hourly']['precipitation'] ?? [];

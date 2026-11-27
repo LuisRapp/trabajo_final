@@ -286,6 +286,9 @@
                 @can('configurar-notificaciones-mantenimiento')
                 <a href="{{ route('configuracion-notificaciones.index') }}" class="sidebar-link {{ $esActiva('configuracion-notificaciones.*') ? 'active' : '' }}"><span class="inline-flex items-center gap-1.5"><flux:icon.bell class="size-3.5" /> Configuración de notificaciones</span></a>
                 @endcan
+                @can('configurar-clima')
+                <a href="{{ route('configuracion-clima.index') }}" class="sidebar-link {{ $esActiva('configuracion-clima.*') ? 'active' : '' }}"><span class="inline-flex items-center gap-1.5"><flux:icon.cloud class="size-3.5" /> Parámetros climáticos</span></a>
+                @endcan
                 @can('ver-categorias-madera')
                 <a href="{{ route('categorias-madera.index') }}" class="sidebar-link {{ $esActiva('categorias-madera.*') ? 'active' : '' }}"><span class="inline-flex items-center gap-1.5"><flux:icon.tag class="size-3.5" /> Categorías de madera</span></a>
                 @endcan
