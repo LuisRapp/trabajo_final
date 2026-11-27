@@ -9,12 +9,16 @@
         </p>
     </div>
 
-    @if (session()->has('message'))
-        <x-ui.alert variant="success" class="mb-4">{{ session('message') }}</x-ui.alert>
-    @endif
+    {{-- Los avisos de los paneles se muestran dentro de cada panel; aca solo
+         cuando no hay ningun panel abierto, para que no queden detras. --}}
+    @if (! $panel_nueva && ! ($mostrar_modal && $venta_seleccionada))
+        @if (session()->has('message'))
+            <x-ui.alert variant="success" class="mb-4">{{ session('message') }}</x-ui.alert>
+        @endif
 
-    @if (session()->has('error'))
-        <x-ui.alert variant="danger" class="mb-4">{{ session('error') }}</x-ui.alert>
+        @if (session()->has('error'))
+            <x-ui.alert variant="danger" class="mb-4">{{ session('error') }}</x-ui.alert>
+        @endif
     @endif
 
     <!-- Barra de herramientas -->
@@ -130,6 +134,14 @@
                 </div>
 
                 <div class="flex-1 overflow-y-auto px-5 py-5">
+                    @if (session()->has('message'))
+                        <x-ui.alert variant="success" class="mb-4">{{ session('message') }}</x-ui.alert>
+                    @endif
+
+                    @if (session()->has('error'))
+                        <x-ui.alert variant="danger" class="mb-4" :dismissible="false">{{ session('error') }}</x-ui.alert>
+                    @endif
+
                     @if ($paso_nueva === 1)
                         <div class="space-y-4">
                             <div>
@@ -244,6 +256,14 @@
                 </div>
 
                 <div class="flex-1 overflow-y-auto px-5 py-5">
+                    @if (session()->has('message'))
+                        <x-ui.alert variant="success" class="mb-4">{{ session('message') }}</x-ui.alert>
+                    @endif
+
+                    @if (session()->has('error'))
+                        <x-ui.alert variant="danger" class="mb-4" :dismissible="false">{{ session('error') }}</x-ui.alert>
+                    @endif
+
                     <x-ui.table-container>
                         <table class="data-table">
                             <thead>
