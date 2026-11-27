@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\ClimaDiaLote;
 use App\Models\DecisionClima;
 use App\Models\Lote;
+use Cron\CronExpression;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -22,29 +23,62 @@ class EstadoProcesosService
      */
     public function procesos(): array
     {
+        $cronUmbrales = (string) (ConfiguracionService::obtener('mantenimiento_hora_verificacion_umbrales', '30 6 * * *') ?: '30 6 * * *');
+        $cronProgramados = (string) (ConfiguracionService::obtener('mantenimiento_cron_programados', '0 */4 * * *') ?: '0 */4 * * *');
+        $horaRecordatorio = (string) (ConfiguracionService::obtener('mantenimiento_hora_recordatorio', '08:00') ?: '08:00');
+
         return [
             [
-                'nombre' => 'Mantenimiento preventivo por umbral',
-                'descripcion' => 'Acumula toneladas por maquinaria con cada carga registrada y, al superar el umbral, genera la orden de mantenimiento con personal, avisos internos y email.',
-                'disparador' => 'Tiempo y evento',
-                'frecuencia' => 'Umbrales: diario 06:30 · Programados: cada 4 horas · Odómetro: tiempo real',
-                'comando' => 'mantenimiento:check-umbrales / mantenimiento:check-programados',
+                'nombre' => 'Verificación de umbrales de mantenimiento',
+                'descripcion' => 'Acumula toneladas por maquinaria y genera la orden preventiva al superar el umbral.',
+                'comando' => 'mantenimiento:check-umbrales',
+                'cron' => $cronUmbrales,
+                'proximo' => $this->proximaEjecucion($cronUmbrales),
+                'editable' => true,
             ],
             [
-                'nombre' => 'Análisis climático operativo',
-                'descripcion' => 'Sincroniza pronóstico e histórico por lote contra la API externa, mapea días operativos/inactivos y recomienda estrategia (anticipación/reacción).',
-                'disparador' => 'Tiempo',
-                'frecuencia' => 'Decisiones: cada 6 horas · Riesgo: diario 06:00 · Clima real: diario 00:30',
-                'comando' => 'clima:decisiones / clima:analizar / clima:real',
+                'nombre' => 'Recordatorio y vencimiento de órdenes',
+                'descripcion' => 'Marca vencidas las órdenes no confirmadas y envía el recordatorio diario.',
+                'comando' => 'mantenimiento:check-programados',
+                'cron' => $cronProgramados,
+                'proximo' => $this->proximaEjecucion($cronProgramados),
+                'detalle' => 'Recordatorio diario a partir de las '.$horaRecordatorio,
+                'editable' => true,
             ],
             [
-                'nombre' => 'Propuestas de asignación automática',
-                'descripcion' => 'Al cambiar el estado de un lote o guardar su planificación, genera propuestas de empleados, maquinarias e insumos basadas en el histórico de desempeño.',
-                'disparador' => 'Cambio de estado / planificación',
-                'frecuencia' => 'Bajo demanda (jobs encolados, únicos e idempotentes)',
-                'comando' => 'Jobs: GenerateAllocationProposalsForLote / ProcessAllocationProposal',
+                'nombre' => 'Decisiones climáticas',
+                'descripcion' => 'Analiza el pronóstico por lote y persiste la estrategia (compensar, priorizar o reprogramar).',
+                'comando' => 'clima:decisiones',
+                'cron' => '0 */6 * * *',
+                'proximo' => $this->proximaEjecucion('0 */6 * * *'),
+                'editable' => false,
+            ],
+            [
+                'nombre' => 'Análisis de riesgo de lluvia',
+                'descripcion' => 'Reporte diario de riesgo de lluvia por lote.',
+                'comando' => 'clima:analizar',
+                'cron' => '0 6 * * *',
+                'proximo' => $this->proximaEjecucion('0 6 * * *'),
+                'editable' => false,
+            ],
+            [
+                'nombre' => 'Sincronización del clima observado',
+                'descripcion' => 'Guarda el clima real del día anterior por lote.',
+                'comando' => 'clima:real',
+                'cron' => '30 0 * * *',
+                'proximo' => $this->proximaEjecucion('30 0 * * *'),
+                'editable' => false,
             ],
         ];
+    }
+
+    private function proximaEjecucion(string $cron): ?string
+    {
+        try {
+            return (new CronExpression($cron))->getNextRunDate(now())->format('d/m/Y H:i');
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 
     /**

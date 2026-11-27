@@ -1,30 +1,51 @@
-<div class="w-full">
-    <div class="grid gap-6 lg:grid-cols-3">
-        @foreach ($procesos as $proceso)
-            <x-ui.card class="flex flex-col gap-3">
-                <div class="flex items-start justify-between gap-3">
-                    <h3 class="text-base font-semibold text-tinta leading-snug">{{ $proceso['nombre'] }}</h3>
-                    <span class="shrink-0 inline-flex items-center gap-1 rounded-full bg-pino-suave px-2.5 py-0.5 text-xs font-semibold text-pino">
-                        <flux:icon.bolt class="size-3" />
-                        {{ $proceso['disparador'] }}
-                    </span>
-                </div>
-                <p class="text-sm text-tinta-suave leading-relaxed">{{ $proceso['descripcion'] }}</p>
-                <dl class="mt-auto space-y-1.5 text-xs">
-                    <div class="flex gap-2">
-                        <dt class="font-semibold text-tinta">Frecuencia:</dt>
-                        <dd class="text-tinta-suave">{{ $proceso['frecuencia'] }}</dd>
-                    </div>
-                    <div class="flex gap-2">
-                        <dt class="font-semibold text-tinta">Ejecución:</dt>
-                        <dd class="text-tinta-suave font-mono">{{ $proceso['comando'] }}</dd>
-                    </div>
-                </dl>
-            </x-ui.card>
-        @endforeach
-    </div>
+<div class="w-full" wire:poll.60s="refrescar">
+    <x-ui.card class="overflow-hidden">
+        <div class="flex items-center justify-between gap-3 border-b border-arena px-5 py-4">
+            <h2 class="flex items-center gap-2 text-lg font-semibold text-tinta mb-0">
+                <flux:icon.bolt class="size-5 text-pino" />
+                Automatizaciones programadas
+            </h2>
+            <a href="{{ route('configuracion-mantenimiento.index') }}" class="text-xs font-medium text-pino underline">
+                Editar frecuencias
+            </a>
+        </div>
 
-    <div class="mt-8 grid gap-6 xl:grid-cols-2">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="bg-corteza-suave text-left text-xs uppercase tracking-wide text-tinta-suave">
+                        <th class="px-4 py-3 font-semibold">Tarea</th>
+                        <th class="px-4 py-3 font-semibold">Frecuencia</th>
+                        <th class="px-4 py-3 font-semibold">Próxima ejecución</th>
+                        <th class="px-4 py-3 font-semibold">Comando</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-arena">
+                    @foreach ($procesos as $proceso)
+                        <tr class="hover:bg-corteza-suave/60">
+                            <td class="px-4 py-3">
+                                <div class="font-medium text-tinta">{{ $proceso['nombre'] }}</div>
+                                <div class="text-xs text-tinta-suave">{{ $proceso['descripcion'] }}</div>
+                                @if (! empty($proceso['detalle']))
+                                    <div class="text-xs text-tinta-suave">{{ $proceso['detalle'] }}</div>
+                                @endif
+                            </td>
+                            <td class="px-4 py-3">
+                                <code class="rounded-sm bg-corteza-suave px-1.5 py-0.5 font-mono text-xs text-tinta">{{ $proceso['cron'] }}</code>
+                                @if ($proceso['editable'])
+                                    <span class="ml-1 inline-flex items-center rounded-full bg-pino-suave px-2 py-0.5 text-xs font-semibold text-pino">editable</span>
+                                @endif
+                            </td>
+                            <td class="px-4 py-3 text-tinta-suave">{{ $proceso['proximo'] ?? '—' }}</td>
+                            <td class="px-4 py-3 font-mono text-xs text-tinta-suave">{{ $proceso['comando'] }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </x-ui.card>
+
+    <div class="mt-6 grid gap-6 xl:grid-cols-2">
         <x-ui.card>
             <div class="border-b border-arena px-5 py-4">
                 <h2 class="flex items-center gap-2 text-lg font-semibold text-tinta mb-0">
@@ -47,7 +68,6 @@
                                 <th class="px-4 py-3 font-semibold">Decisión</th>
                                 <th class="px-4 py-3 font-semibold text-right">Días no op.</th>
                                 <th class="px-4 py-3 font-semibold text-right">Déficit</th>
-                                <th class="px-4 py-3 font-semibold">Fuente</th>
                                 <th class="px-4 py-3 font-semibold">Última sync</th>
                             </tr>
                         </thead>
@@ -97,7 +117,6 @@
                                             —
                                         @endif
                                     </td>
-                                    <td class="px-4 py-3 text-tinta-suave font-mono text-xs">{{ $fila['fuente'] ?? '—' }}</td>
                                     <td class="px-4 py-3 text-tinta-suave">{{ $fila['actualizado'] ?? '—' }}</td>
                                 </tr>
                             @endforeach
@@ -150,7 +169,7 @@
                     </table>
                 </div>
                 <div class="border-t border-arena px-5 py-3 text-xs text-tinta-suave">
-                    Revise <code class="font-mono">php artisan queue:failed</code> para reintentar o descartar trabajos fallidos.
+                    Revisá <code class="font-mono">php artisan queue:failed</code> para reintentar o descartar trabajos fallidos.
                 </div>
             @endif
         </x-ui.card>

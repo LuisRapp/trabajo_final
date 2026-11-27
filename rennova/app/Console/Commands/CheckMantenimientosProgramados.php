@@ -2,12 +2,15 @@
 
 namespace App\Console\Commands;
 
+use App\Services\ConfiguracionService;
 use App\Services\ProcesoMantenimientoService;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Cache;
 
 class CheckMantenimientosProgramados extends Command
 {
-    protected $signature = 'mantenimiento:check-programados';
+    protected $signature = 'mantenimiento:check-programados
+                            {--forzar : Envia el recordatorio sin respetar la hora configurada}';
 
     protected $description = 'Verifica mantenimientos programados para hoy y marca como vencidos los no confirmados';
 
@@ -36,8 +39,17 @@ class CheckMantenimientosProgramados extends Command
             $this->info("{$pendientesProgramar->count()} mantenimiento(s) pendientes de programar (limite <= {$limiteAviso})");
         }
 
-        if ($mantenimientosHoy->count() > 0 || $pendientesProgramar->count() > 0) {
+        // El recordatorio es diario: se envia una sola vez, a partir de la
+        // hora configurada. La revision de vencidos corre siempre.
+        $horaRecordatorio = (string) ConfiguracionService::obtener('mantenimiento_hora_recordatorio', '08:00');
+        $claveRecordatorio = 'mantenimiento:recordatorio:'.now()->toDateString();
+        $correspondeRecordatorio = now()->format('H:i') >= $horaRecordatorio
+            && ! Cache::has($claveRecordatorio);
+
+        if (($mantenimientosHoy->count() > 0 || $pendientesProgramar->count() > 0)
+            && ($this->option('forzar') || $correspondeRecordatorio)) {
             $servicio->enviarRecordatorioProgramados($mantenimientosHoy, $pendientesProgramar);
+            Cache::put($claveRecordatorio, true, now()->endOfDay());
         }
 
         $vencidos = $servicio->marcarMantenimientosVencidos($hoy);

@@ -18,6 +18,14 @@ class EstadoProcesos extends Component
 
     public function mount(): void
     {
+        $this->refrescar();
+    }
+
+    /**
+     * Recarga los datos de monitoreo (invocado por el poll de la vista).
+     */
+    public function refrescar(): void
+    {
         $servicio = app(EstadoProcesosService::class);
 
         $this->procesos = $servicio->procesos();
