@@ -454,10 +454,15 @@ maquinaria, rol laboral, cliente, proveedor, insumo y kit de mantenimiento.
 
 #### Bloque 9 - Permisos
 
-- [ ] Crear un usuario con un rol que **no** tenga `ver-empleados`.
-- [ ] Abrir `/empleados` por URL directa con ese usuario: 403, no la pagina.
-- [ ] El link del sidebar no aparece. Las dos cosas se prueban por separado: ocultar
-      el link no es seguridad.
+- [x] Crear un usuario con un rol que **no** tenga `ver-empleados`. (2026-11-27:
+      verificado por el usuario en el deploy con el rol **Vendedor**, que no tiene
+      `ver-empleados`.)
+- [x] Abrir `/empleados` por URL directa con ese usuario: 403, no la pagina.
+      (2026-11-27: verificado por el usuario; la ruta lleva
+      `middleware(['permission:ver-empleados'])`.)
+- [x] El link del sidebar no aparece. Las dos cosas se prueban por separado: ocultar
+      el link no es seguridad. (2026-11-27: verificado por el usuario; el link esta
+      dentro de `@can('ver-empleados')`.)
 
 #### Bloque 10 - Transversal de UI (10 min)
 
@@ -482,7 +487,7 @@ maquinaria, rol laboral, cliente, proveedor, insumo y kit de mantenimiento.
 | 6 - Mantenimiento | 2026-11-26 | Orden #1 para Fiat 800 (1301,92 tn sobre umbral de 600) programada el 27/11, dia de lluvia de la ventana (41,8 mm). Aprobacion desde `/mantenimientos` verifico el kit y genero la propuesta de compra del insumo faltante. Se creo el catalogo de tipos (Preventivo/Correctivo), que estaba vacio y rompia el proceso. |
 | 7 - Pagos | 2026-11-27 | 7 recibos y 6 adelantos; recibo #4 descuenta $67.400 y neto $74.440. |
 | 8 - Indicadores y reportes | 2026-11-27 | Indicadores y tendencia visibles y coherentes; PDF de lluvias y de estadisticas descargan (`application/pdf`, `%PDF-`). En el bloque se corrigieron: odometro del mantenimiento (desempate de cierres del mismo dia), barro domingo->lunes (lluvia nocturna + dia previo), lluvia diurna como no operativa (27/11), parametros climaticos editables con permiso y sidebar, rediseno de las tres pantallas de mantenimiento y estado de procesos con ultima ejecucion, motivo y acciones. |
-| 9 - Permisos | | |
+| 9 - Permisos | 2026-11-27 | Usuario con rol Vendedor (sin `ver-empleados`): `/empleados` da 403 y el link no aparece; ambos probados por separado. La ruta tiene `permission:ver-empleados` y el sidebar `@can`. |
 | 10 - UI transversal | | |
 
 #### Cierre del gate
@@ -579,3 +584,4 @@ Todo lo que aparezca durante F2-F8 y no sea un defecto de la fase en curso se an
 - L63 (2026-11-27): bloques 2, 5 y 7 cerrados con evidencia de la base. **2**: Fiat 800 600 tn, fsdfs 200 tn, Fiat 700 150 tn, todas `disponible`; Luis Rapp rol Gruista, jornal $10,00 y $150/tn. **5**: Hidro 98 con lotes a $150 y $200; la salida de 15 kg del Parte Diario #1 se partio 10x150 + 5x200 = $2.500,00 (FIFO, no promedio). **7**: 7 recibos y 6 adelantos; el recibo #4 descuenta $67.400 de un bruto de $141.840 y deja neto $74.440 (> 0). Los rechazos (salida mayor al stock, adelanto > 50%, empleado sin liquidaciones) son de UI y no dejan fila; quedan cubiertos por la suite y la prueba del bloque. Quedan abiertos los bloques 9 y 10.
 - L64 (2026-11-27): en `/ventas`, el aviso "No hay cargas pendientes con esos filtros." se renderizaba en el encabezado de la pagina y quedaba detras del panel `fixed z-50` de "Nueva venta". Ahora los flases de `message`/`error` se muestran dentro del cuerpo de cada panel y los del encabezado se ocultan mientras hay un panel abierto, para no duplicar detras del overlay. Verificado con Playwright: el aviso es visible dentro del panel y queda una sola instancia. Tests de Ventas: 23 passed.
 - L65 (2026-11-27): crear usuario fallaba con "Debe indicar si está activo" aunque el select mostrara Activo. `$activo` arrancaba en `null` (y `resetCampos()` lo dejaba en null); el `<select>` mostraba la primera opción pero el modelo iba vacío y `required` fallaba. Se declara `public $activo = 1;` y `resetCampos()` lo vuelve a 1. Test nuevo: crear sin tocar el estado. Verificado en el deploy con Firefox: usuario creado sin tocar el select, sin error y aparece en el listado. Suite 851 passed / 9 skipped.
+- L66 (2026-11-27): Bloque 9 cerrado. Verificado por el usuario en el deploy con el rol Vendedor (no tiene `ver-empleados`): `/empleados` responde 403 por URL directa y el link del sidebar no aparece, probados por separado. En codigo la ruta lleva `middleware(['permission:ver-empleados'])` y el link esta dentro de `@can('ver-empleados')`. Queda solo el Bloque 10 (UI transversal).
