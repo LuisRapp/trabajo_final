@@ -124,7 +124,12 @@ class ClimaAnalisisService
             // manana siguiente: cuenta igual que la de madrugada o diurna.
             $lluviaRealAyer = ($lluviaAyer >= $umbralLluvia)
                 && ($madrugadaAyer > $umbralMadrugada || $lluviaDiurnaAyer > $umbralDiurna || $lluviaNocturnaAyer > $umbralDiurna);
-            $lluviaRealHoy = ($mm >= $umbralLluvia) && ($madrugada > $umbralMadrugada || $lluviaDiurna > $umbralDiurna);
+            // La lluvia durante la jornada (06-18) alcanza por si sola para un
+            // dia no operativo: es la que impide trabajar, aunque el acumulado
+            // diario no llegue al umbral. La de madrugada solo cuenta si el dia
+            // trae lluvia significativa (evita falsos positivos por rocio).
+            $lluviaRealHoy = ($lluviaDiurna > $umbralDiurna)
+                || ($mm >= $umbralLluvia && $madrugada > $umbralMadrugada);
 
             // Analizar estado del día
             $estado = 'OPERATIVO';
