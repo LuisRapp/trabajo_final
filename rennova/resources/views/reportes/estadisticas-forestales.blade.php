@@ -24,9 +24,14 @@
                     <h2 class="text-sm font-semibold text-tinta">Reportes PDF</h2>
                     <p class="mt-1 text-xs text-tinta-suave">Generá reportes por lote o global con rango de fechas.</p>
                 </div>
-                <x-ui.button type="button" id="openReporteModal" icon="document-arrow-down">
-                    Generar reporte
-                </x-ui.button>
+                <div class="flex flex-wrap gap-2">
+                    <x-ui.button type="button" id="openReporteModal" icon="document-arrow-down">
+                        Generar reporte
+                    </x-ui.button>
+                    <x-ui.button variant="secondary" href="{{ route('reportes.clima-lluvias.pdf') }}" target="_blank" rel="noopener" icon="document-arrow-down">
+                        Reporte de lluvias (PDF)
+                    </x-ui.button>
+                </div>
             </div>
         </x-ui.card>
 

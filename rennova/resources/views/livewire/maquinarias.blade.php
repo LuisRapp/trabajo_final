@@ -33,7 +33,7 @@
             </div>
             <div class="p-6">
                 <form autocomplete="off" wire:submit.prevent="guardar">
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                         <div>
                             <label for="id_tipo_maquinaria" class="block text-sm font-semibold text-tinta mb-1.5">Tipo de Maquinaria <span class="text-tierra">*</span></label>
                             <select id="id_tipo_maquinaria" wire:model="id_tipo_maquinaria"
@@ -64,7 +64,7 @@
                             @error('estado') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                         <div>
                             <label for="es_alquilada" class="block text-sm font-semibold text-tinta mb-1.5">Es alquilada?</label>
                             <select id="es_alquilada" wire:model="es_alquilada" class="form-input @error('es_alquilada') border-tierra bg-tierra-suave @enderror">
@@ -72,14 +72,6 @@
                                 <option value="1">Si</option>
                             </select>
                             @error('es_alquilada') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
-                        </div>
-                        <div>
-                            <label for="precio_alquiler_destajo" class="block text-sm font-semibold text-tinta mb-1.5">Precio alquiler por tonelada</label>
-                            <input autocomplete="off" type="number" id="precio_alquiler_destajo" wire:model="precio_alquiler_destajo" step="0.01" min="0"
-                                class="form-input @error('precio_alquiler_destajo') border-tierra bg-tierra-suave @enderror"
-                                placeholder="Ej: 1500">
-                            @error('precio_alquiler_destajo') <p class="text-tierra text-xs mt-1">{{ $message }}</p> @enderror
-                            <small class="text-tinta-suave text-xs mt-1 block">Solo si es alquilada. Se multiplica por las toneladas que transporta la máquina.</small>
                         </div>
                         <div>
                             <label for="fecha_inicio_actividades" class="block text-sm font-semibold text-tinta mb-1.5">Fecha Inicio Actividades <span class="text-tierra">*</span></label>
@@ -134,7 +126,6 @@
                                 <th>Modelo</th>
                                 <th>Estado</th>
                                 <th>Alquilada</th>
-                                <th class="text-right">Alquiler $/tn</th>
                                 <th class="text-right">Toneladas Mantenimiento (t)</th>
                                 <th class="text-right">Acciones</th>
                             </tr>
@@ -157,7 +148,6 @@
                                         <x-ui.badge variant="{{ $estadoVariant }}">{{ ucfirst($maquinaria->estado) }}</x-ui.badge>
                                     </td>
                                     <td class="text-tinta-suave">{{ $maquinaria->es_alquilada ? 'Si' : 'No' }}</td>
-                                    <td class="text-right text-tinta-suave">{{ $maquinaria->precio_alquiler_destajo ? '$'.number_format($maquinaria->precio_alquiler_destajo, 2, ',', '.') : '—' }}</td>
                                     <td class="text-right text-tinta-suave">{{ number_format($maquinaria->umbral_toneladas, 2, ',', '.') }}</td>
                                     <td class="text-right">
                                         <div class="flex gap-1 justify-end">
@@ -175,7 +165,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="8" class="text-center py-8 text-tinta-suave">
+                                    <td colspan="7" class="text-center py-8 text-tinta-suave">
                                         No hay maquinarias registradas.
                                     </td>
                                 </tr>

@@ -44,7 +44,6 @@ class MaquinariaService
             'es_alquilada' => 'required|boolean',
             'fecha_inicio_actividades' => 'required|date',
             'umbral_toneladas' => 'nullable|numeric|min:0',
-            'precio_alquiler_destajo' => 'nullable|numeric|min:0',
         ];
     }
 
@@ -68,7 +67,6 @@ class MaquinariaService
                 'es_alquilada' => $datos['es_alquilada'],
                 'fecha_inicio_actividades' => $datos['fecha_inicio_actividades'],
                 'umbral_toneladas' => $datos['umbral_toneladas'] ?? null,
-                'precio_alquiler_destajo' => $datos['precio_alquiler_destajo'] ?? null,
             ]
         );
 

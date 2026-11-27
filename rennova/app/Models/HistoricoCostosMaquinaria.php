@@ -26,4 +26,13 @@ class HistoricoCostosMaquinaria extends Model implements Auditable
     {
         return $this->belongsTo(Maquinaria::class, 'id_maquinaria');
     }
+
+    public function scopeVigenteEnFecha($query, $fecha): void
+    {
+        $query->where('fecha_inicio_vigencia', '<=', $fecha)
+            ->where(function ($query) use ($fecha) {
+                $query->whereNull('fecha_fin_vigencia')
+                    ->orWhere('fecha_fin_vigencia', '>=', $fecha);
+            });
+    }
 }

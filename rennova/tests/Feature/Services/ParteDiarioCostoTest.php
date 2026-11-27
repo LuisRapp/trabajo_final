@@ -2,6 +2,7 @@
 
 use App\Models\Carga;
 use App\Models\Empleado;
+use App\Models\HistoricoCostosMaquinaria;
 use App\Models\HistoricoRolLaboral;
 use App\Models\Maquinaria;
 use App\Models\ParteDiario;
@@ -50,11 +51,14 @@ it('incluye la mano de obra de los empleados asignados a las cargas', function (
 it('suma el alquiler como precio por tonelada de cada maquina', function () {
     [$parte, $carga] = prepararParteConCarga(1000);
 
-    $maquina = Maquinaria::factory()->create([
-        'es_alquilada' => true,
-        'precio_alquiler_destajo' => 10,
-    ]);
+    $maquina = Maquinaria::factory()->create(['es_alquilada' => true]);
     $carga->maquinarias()->attach($maquina->id_maquinaria);
+
+    HistoricoCostosMaquinaria::create([
+        'id_maquinaria' => $maquina->id_maquinaria,
+        'costo_por_tonelada' => 10,
+        'fecha_inicio_vigencia' => '2026-01-01',
+    ]);
 
     ParteDiarioCostoService::calcularYGuardarCostos($parte);
 
@@ -68,9 +72,20 @@ it('suma el alquiler como precio por tonelada de cada maquina', function () {
 it('con dos maquinas alquiladas cobra el alquiler de las dos', function () {
     [$parte, $carga] = prepararParteConCarga(1000);
 
-    $maquina1 = Maquinaria::factory()->create(['es_alquilada' => true, 'precio_alquiler_destajo' => 10]);
-    $maquina2 = Maquinaria::factory()->create(['es_alquilada' => true, 'precio_alquiler_destajo' => 5]);
+    $maquina1 = Maquinaria::factory()->create(['es_alquilada' => true]);
+    $maquina2 = Maquinaria::factory()->create(['es_alquilada' => true]);
     $carga->maquinarias()->attach([$maquina1->id_maquinaria, $maquina2->id_maquinaria]);
+
+    HistoricoCostosMaquinaria::create([
+        'id_maquinaria' => $maquina1->id_maquinaria,
+        'costo_por_tonelada' => 10,
+        'fecha_inicio_vigencia' => '2026-01-01',
+    ]);
+    HistoricoCostosMaquinaria::create([
+        'id_maquinaria' => $maquina2->id_maquinaria,
+        'costo_por_tonelada' => 5,
+        'fecha_inicio_vigencia' => '2026-01-01',
+    ]);
 
     ParteDiarioCostoService::calcularYGuardarCostos($parte);
 
@@ -83,11 +98,31 @@ it('con dos maquinas alquiladas cobra el alquiler de las dos', function () {
 it('no cobra alquiler de una maquina que no es alquilada', function () {
     [$parte, $carga] = prepararParteConCarga(1000);
 
-    $maquina = Maquinaria::factory()->create([
-        'es_alquilada' => false,
-        'precio_alquiler_destajo' => 10,
-    ]);
+    $maquina = Maquinaria::factory()->create(['es_alquilada' => false]);
     $carga->maquinarias()->attach($maquina->id_maquinaria);
+
+    HistoricoCostosMaquinaria::create([
+        'id_maquinaria' => $maquina->id_maquinaria,
+        'costo_por_tonelada' => 10,
+        'fecha_inicio_vigencia' => '2026-01-01',
+    ]);
+
+    ParteDiarioCostoService::calcularYGuardarCostos($parte);
+
+    expect((float) $parte->fresh()->costo_maquinaria)->toBe(0.0);
+});
+
+it('no aplica un costo de alquiler que todavia no esta vigente', function () {
+    [$parte, $carga] = prepararParteConCarga(1000);
+
+    $maquina = Maquinaria::factory()->create(['es_alquilada' => true]);
+    $carga->maquinarias()->attach($maquina->id_maquinaria);
+
+    HistoricoCostosMaquinaria::create([
+        'id_maquinaria' => $maquina->id_maquinaria,
+        'costo_por_tonelada' => 10,
+        'fecha_inicio_vigencia' => '2026-12-01',
+    ]);
 
     ParteDiarioCostoService::calcularYGuardarCostos($parte);
 

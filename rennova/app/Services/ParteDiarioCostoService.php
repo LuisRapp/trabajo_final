@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\HistoricoCostosMaquinaria;
 use App\Models\Mantenimiento;
 use App\Models\MovimientoStock;
 use App\Models\ParteDiario;
@@ -82,7 +83,10 @@ class ParteDiarioCostoService
                 continue;
             }
 
-            $precioAlquilerPorTon = (float) ($maq->precio_alquiler_destajo ?? 0);
+            $precioAlquilerPorTon = (float) (HistoricoCostosMaquinaria::query()
+                ->where('id_maquinaria', $maq->id_maquinaria)
+                ->vigenteEnFecha($parteDiario->fecha)
+                ->value('costo_por_tonelada') ?? 0);
 
             if ($precioAlquilerPorTon <= 0) {
                 continue;

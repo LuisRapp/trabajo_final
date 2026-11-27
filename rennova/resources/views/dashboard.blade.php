@@ -14,17 +14,6 @@
         {{-- Pronóstico del tiempo por lote --}}
         <livewire:selector-lote />
 
-        <x-ui.card class="p-5 mb-6">
-            <div class="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                    <p class="text-sm font-semibold text-tinta">Reporte de lluvias (PDF)</p>
-                    <p class="text-xs text-tinta-suave">Análisis de lluvias de los últimos 30 días, con el detalle por lote.</p>
-                </div>
-                <x-ui.button href="{{ route('reportes.clima-lluvias.pdf') }}" target="_blank" rel="noopener" icon="document-arrow-down">
-                    Descargar PDF
-                </x-ui.button>
-            </div>
-        </x-ui.card>
 
         {{-- Proyección global vs punto de equilibrio --}}
         @if(!empty($proyeccion) && $proyeccion['objetivo_mensual_tn'] > 0)

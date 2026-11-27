@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\HistoricoCostosMaquinaria;
 use App\Models\Lote;
 use App\Models\Maquinaria;
 use App\Models\ParteDiario;
@@ -253,7 +254,10 @@ class ClimaAnalisisService
         foreach ($maquinariasAlquiladas as $maquinaria) {
             // Estimar costo diario: usar toneladas_acumuladas si existe
             $toneladas = $maquinaria->toneladas_acumuladas ?? 10;
-            $precio = $maquinaria->precio_alquiler_destajo ?? 0;
+            $precio = (float) (HistoricoCostosMaquinaria::query()
+                ->where('id_maquinaria', $maquinaria->id_maquinaria)
+                ->vigenteEnFecha(now())
+                ->value('costo_por_tonelada') ?? 0);
             $costoTotal += $precio * min($toneladas, 10); // Max 10 ton estimadas
         }
 
