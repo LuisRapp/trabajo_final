@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\ComportamientoMantenimiento;
 use App\Models\Empleado;
 use App\Models\Lote;
 use App\Models\Mantenimiento;
@@ -62,7 +63,7 @@ class ProcesoMantenimientoService
     public function obtenerTipoPreventivo(): ?TipoMantenimiento
     {
         return TipoMantenimiento::query()
-            ->whereLike('nombre', '%preventivo%')
+            ->where('comportamiento', ComportamientoMantenimiento::PREVENTIVO->value)
             ->orderBy('id_tipo_mantenimiento')
             ->first();
     }

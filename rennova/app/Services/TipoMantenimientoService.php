@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\ComportamientoMantenimiento;
 use App\Models\TipoMantenimiento;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Validator;
@@ -26,6 +27,7 @@ class TipoMantenimientoService
             'nombre' => $id
                 ? 'required|min:3|unique:tipo_mantenimientos,nombre,'.$id.',id_tipo_mantenimiento'
                 : 'required|min:3|unique:tipo_mantenimientos,nombre',
+            'comportamiento' => 'required|in:'.implode(',', ComportamientoMantenimiento::values()),
         ];
     }
 
@@ -42,7 +44,10 @@ class TipoMantenimientoService
 
         return TipoMantenimiento::updateOrCreate(
             ['id_tipo_mantenimiento' => $id],
-            ['nombre' => $datos['nombre']]
+            [
+                'nombre' => $datos['nombre'],
+                'comportamiento' => $datos['comportamiento'],
+            ]
         );
     }
 

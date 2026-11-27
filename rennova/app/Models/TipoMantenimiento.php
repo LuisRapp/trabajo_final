@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ComportamientoMantenimiento;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -16,7 +17,14 @@ class TipoMantenimiento extends Model implements Auditable
 
     protected $primaryKey = 'id_tipo_mantenimiento';
 
-    protected $fillable = ['nombre'];
+    protected function casts(): array
+    {
+        return [
+            'comportamiento' => ComportamientoMantenimiento::class,
+        ];
+    }
+
+    protected $fillable = ['nombre', 'comportamiento'];
 
     public function mantenimientos()
     {

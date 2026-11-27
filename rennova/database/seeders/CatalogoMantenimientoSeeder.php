@@ -17,18 +17,30 @@ use Illuminate\Database\Seeder;
 class CatalogoMantenimientoSeeder extends Seeder
 {
     /**
-     * @var array<int, string>
+     * @var array<int, array{nombre: string, comportamiento: string}>
      */
-    private const TIPOS = ['Preventivo', 'Correctivo'];
+    private const TIPOS = [
+        ['nombre' => 'Preventivo', 'comportamiento' => 'preventivo'],
+        ['nombre' => 'Correctivo', 'comportamiento' => 'correctivo'],
+    ];
 
     public function run(): void
     {
-        foreach (self::TIPOS as $nombre) {
-            $tipo = TipoMantenimiento::withTrashed()->firstOrCreate(['nombre' => $nombre]);
+        foreach (self::TIPOS as $tipo) {
+            $existente = TipoMantenimiento::withTrashed()
+                ->where('comportamiento', $tipo['comportamiento'])
+                ->orderBy('id_tipo_mantenimiento')
+                ->first();
 
-            if ($tipo->trashed()) {
-                $tipo->restore();
+            if ($existente) {
+                if ($existente->trashed()) {
+                    $existente->restore();
+                }
+
+                continue;
             }
+
+            TipoMantenimiento::create($tipo);
         }
     }
 }

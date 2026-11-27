@@ -234,9 +234,11 @@ class MantenimientosTest extends TestCase
 
     public function test_confirmar_desde_la_pantalla_verifica_el_kit_y_genera_la_propuesta_de_compra(): void
     {
+        $tipo = TipoMantenimiento::factory()->preventivo()->create();
         $maquinaria = Maquinaria::factory()->create();
         $mantenimiento = Mantenimiento::factory()->programado()->create([
             'id_maquinaria' => $maquinaria->id_maquinaria,
+            'id_tipo_mantenimiento' => $tipo->id_tipo_mantenimiento,
         ]);
 
         $insumo = Insumo::factory()->create();

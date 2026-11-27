@@ -63,3 +63,32 @@ test('la pagina de tipos de mantenimiento exige el permiso ver', function () {
         ->get(route('tipos-mantenimiento.index'))
         ->assertForbidden();
 });
+
+test('crea un tipo con comportamiento preventivo', function () {
+    Livewire::actingAs(usuarioConPermisos(['crear-tipos-mantenimiento', 'editar-tipos-mantenimiento']))
+        ->test(TipoMantenimiento::class)
+        ->set('nombre', 'Service 500 hs')
+        ->set('comportamiento', 'preventivo')
+        ->call('guardar')
+        ->assertHasNoErrors();
+
+    expect(
+        TipoMantenimientoModel::where('nombre', 'Service 500 hs')->first()->comportamiento->value
+    )->toBe('preventivo');
+});
+
+test('editar el comportamiento de un tipo lo actualiza', function () {
+    $tipo = TipoMantenimientoModel::factory()->create([
+        'nombre' => 'Cambio de aceite',
+        'comportamiento' => 'otro',
+    ]);
+
+    Livewire::actingAs(usuarioConPermisos(['crear-tipos-mantenimiento', 'editar-tipos-mantenimiento']))
+        ->test(TipoMantenimiento::class)
+        ->call('editar', $tipo->id_tipo_mantenimiento)
+        ->set('comportamiento', 'preventivo')
+        ->call('guardar')
+        ->assertHasNoErrors();
+
+    expect($tipo->fresh()->comportamiento->value)->toBe('preventivo');
+});

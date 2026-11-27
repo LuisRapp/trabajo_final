@@ -14,6 +14,8 @@ class TipoMantenimiento extends Component
 
     public $nombre;
 
+    public $comportamiento = 'otro';
+
     public $busqueda = '';
 
     public $tab_activo = 'listado';
@@ -34,6 +36,8 @@ class TipoMantenimiento extends Component
         'nombre.required' => 'El nombre es obligatorio.',
         'nombre.min' => 'El nombre debe tener al menos 3 caracteres.',
         'nombre.unique' => 'Este nombre ya existe.',
+        'comportamiento.required' => 'El comportamiento es obligatorio.',
+        'comportamiento.in' => 'El comportamiento seleccionado no es válido.',
     ];
 
     public function render()
@@ -55,6 +59,7 @@ class TipoMantenimiento extends Component
 
         $this->servicio->crearOActualizar($this->tipo_id, [
             'nombre' => $this->nombre,
+            'comportamiento' => $this->comportamiento,
         ]);
 
         session()->flash('message', $this->tipo_id ? 'Tipo actualizado correctamente.' : 'Tipo creado correctamente.');
@@ -70,6 +75,7 @@ class TipoMantenimiento extends Component
         $tipo = $this->servicio->obtener($id);
         $this->tipo_id = $tipo->id_tipo_mantenimiento;
         $this->nombre = $tipo->nombre;
+        $this->comportamiento = $tipo->comportamiento?->value ?? 'otro';
     }
 
     public function eliminar($id)
@@ -82,5 +88,6 @@ class TipoMantenimiento extends Component
     public function resetCampos()
     {
         $this->reset(['tipo_id', 'nombre']);
+        $this->comportamiento = 'otro';
     }
 }

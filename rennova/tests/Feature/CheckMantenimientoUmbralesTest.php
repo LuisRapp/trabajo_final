@@ -217,3 +217,19 @@ test('check-umbrales falla cuando no hay tipo preventivo en el catalogo', functi
 
     expect(Mantenimiento::query()->count())->toBe(0);
 });
+
+test('renombrar el tipo preventivo no detiene el proceso automatico', function () {
+    TipoMantenimiento::query()->firstOrFail()->update(['nombre' => 'Service 500 hs']);
+
+    $maquinaria = Maquinaria::factory()->create([
+        'estado' => 'disponible',
+        'umbral_toneladas' => 1000,
+        'toneladas_acumuladas' => 1500,
+    ]);
+
+    $this->artisan('mantenimiento:check-umbrales')->assertExitCode(0);
+
+    expect(
+        Mantenimiento::query()->where('id_maquinaria', $maquinaria->id_maquinaria)->exists()
+    )->toBeTrue();
+});

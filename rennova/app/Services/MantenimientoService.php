@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\ComportamientoMantenimiento;
 use App\Models\Insumo;
 use App\Models\KitMantenimientoPreventivo;
 use App\Models\Mantenimiento;
@@ -372,23 +373,24 @@ class MantenimientoService
     /**
      * Si un tipo de mantenimiento es preventivo.
      *
-     * Regla única del dominio: el nombre del tipo contiene "preventivo".
-     * Toda la aplicación (componentes, vistas y proceso automático) debe
-     * resolver esta condición a través de este método.
+     * Regla única del dominio: lo define el comportamiento del tipo, no su
+     * nombre. Toda la aplicación (componentes, vistas y proceso automático)
+     * debe resolver esta condición a través de este método.
      */
     public function esTipoPreventivo(TipoMantenimiento $tipo): bool
     {
-        return str_contains(mb_strtolower($tipo->nombre), 'preventivo');
+        return $tipo->comportamiento === ComportamientoMantenimiento::PREVENTIVO;
     }
 
     /**
      * Si un tipo de mantenimiento es correctivo.
      *
-     * Regla única del dominio: el nombre del tipo contiene "correctivo".
+     * Regla única del dominio: lo define el comportamiento del tipo, no su
+     * nombre.
      */
     public function esTipoCorrectivo(TipoMantenimiento $tipo): bool
     {
-        return str_contains(mb_strtolower($tipo->nombre), 'correctivo');
+        return $tipo->comportamiento === ComportamientoMantenimiento::CORRECTIVO;
     }
 
     /**

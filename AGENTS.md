@@ -31,6 +31,8 @@
 
 - La maquinaria acumula toneladas; al superar `umbral_toneladas` se genera la
   orden preventiva (`mantenimiento:check-umbrales`).
+- El tipo preventivo se identifica por su `comportamiento`, no por el nombre:
+  renombrar la etiqueta no cambia el comportamiento ni rompe el proceso.
 - **Las órdenes se programan en días de lluvia** (ventana de 72 h): el
   mantenimiento aprovecha el día no productivo. Si no hay lluvia en la ventana,
   se agenda al día siguiente.
