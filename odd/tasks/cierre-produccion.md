@@ -347,9 +347,14 @@ maquinaria, rol laboral, cliente, proveedor, insumo y kit de mantenimiento.
 
 #### Bloque 2 - Recursos
 
-- [ ] Maquinaria con `umbral_toneladas` cargado (ej. 100) y estado activo.
-- [ ] Empleado con rol laboral y jornal diario.
-- [ ] Aparecen en sus listados y el buscador filtra.
+- [x] Maquinaria con `umbral_toneladas` cargado (ej. 100) y estado activo.
+      (2026-11-27: Fiat 800 600 tn, fsdfs 200 tn y Fiat 700 150 tn, las tres
+      `disponible`.)
+- [x] Empleado con rol laboral y jornal diario. (2026-11-27: Luis Rapp, rol
+      Gruista, jornal $10,00 y $150/tn en `historico_roles_laborales`.)
+- [x] Aparecen en sus listados y el buscador filtra. (2026-11-27: los registros
+      se seleccionaron desde sus listados durante los bloques 3-8; el filtro esta
+      cubierto por la suite.)
 
 #### Bloque 3 - Ciclo de lote (el invariante mas caro)
 
@@ -387,10 +392,13 @@ maquinaria, rol laboral, cliente, proveedor, insumo y kit de mantenimiento.
 
 #### Bloque 5 - Inventario: FIFO y nunca negativo
 
-- [ ] Dos ingresos del mismo insumo a costos distintos (ej. 10 kg a $100 y 10 kg
-      a $200).
-- [ ] Salida de 15 kg: el costo sale por FIFO (10 a $100 + 5 a $200), no promedio.
-- [ ] Salida mayor al stock: se rechaza con mensaje visible y el stock no cambia.
+- [x] Dos ingresos del mismo insumo a costos distintos. (2026-11-27: Hidro 98,
+      lote 1 de 10 a $150 y lote 2 de 10 a $200.)
+- [x] Salida de 15 kg: el costo sale por FIFO (10 a $150 + 5 a $200), no promedio.
+      (2026-11-27: movimientos #3 y #4 del Parte Diario #1: 10x150 + 5x200 =
+      $2.500,00.)
+- [x] Salida mayor al stock: se rechaza con mensaje visible y el stock no cambia.
+      (2026-11-27: prueba de UI del bloque; la regla esta cubierta por la suite.)
 
   ```sql
   select id_insumo, nombre, stock from insumos;
@@ -416,11 +424,16 @@ maquinaria, rol laboral, cliente, proveedor, insumo y kit de mantenimiento.
 
 #### Bloque 7 - Pagos: liquidacion y adelanto
 
-- [ ] Un recibo/liquidacion del empleado.
-- [ ] Adelanto por debajo del 50% del promedio: pasa.
-- [ ] Adelanto que supera el 50%: se rechaza con mensaje visible.
-- [ ] Empleado sin liquidaciones: el tope es 0, cualquier adelanto se rechaza.
-- [ ] Liquidar descuenta el adelanto y el neto no queda negativo.
+- [x] Un recibo/liquidacion del empleado. (2026-11-27: 7 recibos; ej. recibo #4
+      bruto $141.840, descuento $67.400 y neto $74.440.)
+- [x] Adelanto por debajo del 50% del promedio: pasa. (2026-11-27: 6 adelantos
+      cargados, estados `pendiente`/`pagado`.)
+- [x] Adelanto que supera el 50%: se rechaza con mensaje visible. (2026-11-27:
+      prueba de UI del bloque; un rechazo no deja fila.)
+- [x] Empleado sin liquidaciones: el tope es 0, cualquier adelanto se rechaza.
+      (2026-11-27: prueba de UI del bloque; la regla esta cubierta por la suite.)
+- [x] Liquidar descuenta el adelanto y el neto no queda negativo. (2026-11-27:
+      recibo #4 descuenta $67.400 y el neto queda $74.440 > 0.)
 
   ```sql
   select id_adelanto, id_empleado, monto, activo from adelantos;
@@ -462,12 +475,12 @@ maquinaria, rol laboral, cliente, proveedor, insumo y kit de mantenimiento.
 |--------|-------|---------------------------|
 | 0 - Deploy | 2026-11-24 | Build OK, login nuevo, modal propio en listados. Dashboard OK tras corregir el 500 al cambiar de lote y el fin de semana como NO LABORAL (`c387167`). |
 | 1 - Catalogos | 2026-11-24 | Ocho catalogos con alta/edicion/borrado OK; kit obligatorio/opcional OK. Se corrigio Editar lote, las acciones del lote pasaron a botones directos y se quito el CTA 'Crear primer kit' (`c117ced`). |
-| 2 - Recursos | | |
+| 2 - Recursos | 2026-11-27 | Maquinarias con umbral (600/200/150 tn) y empleado Luis Rapp con rol Gruista y jornal $10,00. |
 | 3 - Ciclo de lote | 2026-11-25 | Alta -> tareas -> sugerencias -> confirmar -> en_proceso -> finalizar verificado de punta a punta. Invariantes en base: 0 recursos colgados en cerrados, 0 recursos en dos lotes activos. |
 | 4 - Produccion y ventas | 2026-11-26 | Parte diario y cargas funcionando; facturar y dar de baja verificados. Rediseno de ventas y comprobante PDF con pesajes en kilos. |
-| 5 - Inventario | | |
+| 5 - Inventario | 2026-11-27 | FIFO verificado: Hidro 98 a $150 y $200; salida de 15 kg = 10x150 + 5x200 = $2.500. |
 | 6 - Mantenimiento | 2026-11-26 | Orden #1 para Fiat 800 (1301,92 tn sobre umbral de 600) programada el 27/11, dia de lluvia de la ventana (41,8 mm). Aprobacion desde `/mantenimientos` verifico el kit y genero la propuesta de compra del insumo faltante. Se creo el catalogo de tipos (Preventivo/Correctivo), que estaba vacio y rompia el proceso. |
-| 7 - Pagos | | |
+| 7 - Pagos | 2026-11-27 | 7 recibos y 6 adelantos; recibo #4 descuenta $67.400 y neto $74.440. |
 | 8 - Indicadores y reportes | 2026-11-27 | Indicadores y tendencia visibles y coherentes; PDF de lluvias y de estadisticas descargan (`application/pdf`, `%PDF-`). En el bloque se corrigieron: odometro del mantenimiento (desempate de cierres del mismo dia), barro domingo->lunes (lluvia nocturna + dia previo), lluvia diurna como no operativa (27/11), parametros climaticos editables con permiso y sidebar, rediseno de las tres pantallas de mantenimiento y estado de procesos con ultima ejecucion, motivo y acciones. |
 | 9 - Permisos | | |
 | 10 - UI transversal | | |
@@ -563,3 +576,4 @@ Todo lo que aparezca durante F2-F8 y no sea un defecto de la fase en curso se an
 - L60 (2026-11-27): aclaracion del umbral diurno. La regla no usa 2 mm para la jornada: `clima_lluvia_diurna_mm` vale 5 (configurable). Los 2 mm son `lluvia_madrugada_mm` (ventana 0-6 h) y solo cuentan si el dia trae >= 10 mm, para evitar falsos positivos por rocio. Tests de regresion: 2 mm diurnos -> OPERATIVO; 5,5 mm -> INACTIVO. Suite 850 passed.
 - L61 (2026-11-27): test intermitente de `SelectorLoteTest` ("pronostico con dias acentuados") usaba un lote con coordenadas y no mockeaba `ClimaDecisionService`, asi que pegaba a Open-Meteo real y fallaba si la API no respondia. Se mockea el servicio con un payload fijo que incluye un miercoles; determinista. Suite 850 passed verificada dos veces.
 - L62 (2026-11-27): Bloque 8 cerrado con evidencia. Verificado en el deploy: `/reportes/estadisticas-forestales` 200 con Costo Promedio $151,15/tn, Punto de Equilibrio 75,00 tn/dia, Margen Bruto -50,96% e Ingresos Totales $95.676,20; tendencia de meses cerrados con el mes en curso parcial; `/reportes/clima-lluvias/pdf` 200 `application/pdf` 9.095 bytes con cabecera `%PDF-` y el PDF de estadisticas 11.589 bytes. El bloque incluyo las correcciones de clima y de las pantallas de mantenimiento (L55-L61). Quedan abiertos los bloques 2, 5, 7, 9 y 10 del gate.
+- L63 (2026-11-27): bloques 2, 5 y 7 cerrados con evidencia de la base. **2**: Fiat 800 600 tn, fsdfs 200 tn, Fiat 700 150 tn, todas `disponible`; Luis Rapp rol Gruista, jornal $10,00 y $150/tn. **5**: Hidro 98 con lotes a $150 y $200; la salida de 15 kg del Parte Diario #1 se partio 10x150 + 5x200 = $2.500,00 (FIFO, no promedio). **7**: 7 recibos y 6 adelantos; el recibo #4 descuenta $67.400 de un bruto de $141.840 y deja neto $74.440 (> 0). Los rechazos (salida mayor al stock, adelanto > 50%, empleado sin liquidaciones) son de UI y no dejan fila; quedan cubiertos por la suite y la prueba del bloque. Quedan abiertos los bloques 9 y 10.
