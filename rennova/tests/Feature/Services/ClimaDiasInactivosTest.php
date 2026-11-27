@@ -71,3 +71,32 @@ it('marca inactivo por lluvia de madrugada cuando el dia trae lluvia significati
 
     expect($analisis['dias_detalle'][0]['estado'])->toBe('INACTIVO');
 });
+
+it('no marca inactivo con 2 mm de lluvia diurna', function () {
+    $analisis = app(ClimaAnalisisService::class)->mapearDiasInactivos(
+        pronosticoUnDia(2, [
+            ['2026-11-27T14:00', 1],
+            ['2026-11-27T15:00', 1],
+        ]),
+        false,
+        null,
+        0
+    );
+
+    expect($analisis['dias_detalle'][0]['estado'])->toBe('OPERATIVO')
+        ->and($analisis['total_dias_perdidos'])->toBe(0);
+});
+
+it('marca inactivo apenas la lluvia diurna supera los 5 mm', function () {
+    $analisis = app(ClimaAnalisisService::class)->mapearDiasInactivos(
+        pronosticoUnDia(5.5, [
+            ['2026-11-27T14:00', 3],
+            ['2026-11-27T15:00', 2.5],
+        ]),
+        false,
+        null,
+        0
+    );
+
+    expect($analisis['dias_detalle'][0]['estado'])->toBe('INACTIVO');
+});
