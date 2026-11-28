@@ -48,7 +48,7 @@ Estado del trabajo validado al cierre de F8: `php artisan test` = **711 passed, 
 
 ### D5. Renombre de `AutomaticAllocationService` al espanol
 - **Donde:** clase + metodos `proposeForLotAndTask`, `proposeForLoteTarea`, `ensureWeek1SupplyEstimates`, `findBestFallback` + variables en ingles en `PropuestaAsignacionService`.
-- **Callers:** 2 Jobs, `LotePlanificacionTareas`, comandos `allocation:*`, tests, `ARQUITECTURA_ASIGNACION_AUTOMATICA_RECURSOS.md`.
+- **Callers:** 2 Jobs, `LotePlanificacionTareas`, comandos `allocation:*`, tests.
 - **Esfuerzo:** ~2 h. Las tablas `allocation_proposals*` siguen en ingles (renombrar en migracion dedicada junto con este trabajo).
 
 ---
