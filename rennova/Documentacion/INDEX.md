@@ -14,17 +14,11 @@ Indice curado de la documentacion vigente del sistema.
 - Diseño: `../3.-Diseño.doc.md`
 
 ## Guias de Uso
-- Gestion de mantenimientos (flujo y UI): `./GUIA_MANTENIMIENTOS_USO.md`
 - Recomendaciones por lote (planificacion y parte diario): `./GUIA_RECOMENDACIONES_POR_LOTE.md`
 - Liquidacion de pagos: `./GUIA_LIQUIDACION_PAGOS.md`
 
-## Clima y Analisis
-- Guia completa de API y decisiones: `./GUIA_API_CLIMA_Y_DECISIONES.md`
-
-## Mantenimientos (Tecnico)
-- Proceso automatico y scheduler: `./PROCESO_AUTOMATICO_MANTENIMIENTO.md`
+## Scheduler
 - Tareas programadas: `./TAREAS_PROGRAMADAS_SCHEDULER.md`
-- Sistema de mantenimiento (referencia tecnica): `./SISTEMA_MANTENIMIENTO_DOCS.md`
 
 ## Costos y Pagos
 - Sistema de calculo de costos (parte diario): `./SISTEMA_CALCULO_COSTOS.md`
