@@ -4,40 +4,49 @@ namespace Database\Seeders;
 
 use App\Models\Usuario;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
 
 class AdminUserSeeder extends Seeder
 {
     /**
-     * Run the database seeds.
+     * Crea el administrador inicial.
+     *
+     * La password se toma de ADMIN_PASSWORD (nunca se hardcodea ni se imprime).
+     * Si el usuario ya existe no se toca su password. Si la variable no esta
+     * definida, no hace nada: la base puede quedar sin admin y se crea despues
+     * con este mismo comando.
      */
     public function run(): void
     {
-        // Asegurar que exista el rol "Administrador"
+        $password = (string) env('ADMIN_PASSWORD', '');
+
+        if ($password === '') {
+            $this->command->warn('ADMIN_PASSWORD no esta definida: no se crea el administrador.');
+
+            return;
+        }
+
+        $email = (string) env('ADMIN_EMAIL', 'admin@rennova.com');
+
         $role = Role::firstOrCreate([
             'name' => 'Administrador',
             'guard_name' => 'web',
         ]);
 
-        // Crear usuario administrador si no existe
+        // El cast "hashed" del modelo hashea la password al asignarla.
         $admin = Usuario::firstOrCreate(
-            ['email' => 'admin@rennova.com'],
+            ['email' => $email],
             [
                 'nombre' => 'Administrador',
                 'apellido' => 'Rennova',
-                'password' => Hash::make('password'), // Cambiar por una contraseña segura
+                'password' => $password,
             ]
         );
 
-        // Asignar rol de Administrador si no lo tiene
         if (! $admin->hasRole($role->name)) {
             $admin->assignRole($role);
         }
 
-        $this->command->info('Usuario administrador creado/actualizado:');
-        $this->command->info('Email: admin@rennova.com');
-        $this->command->info('Password: password');
-        $this->command->info('⚠️  IMPORTANTE: Cambiar la contraseña después del primer login');
+        $this->command->info('Administrador asegurado: '.$email);
     }
 }

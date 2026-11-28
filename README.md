@@ -54,15 +54,16 @@ npm run build
 php artisan serve
 ```
 
-Opcional, para tener datos de prueba y un usuario de demostración:
+Roles, permisos y administrador:
 
 ```bash
-php artisan db:seed
-# Usuario de demo: demo@example.com / demo1234
+php artisan db:seed --class=RolesAndPermissionsSeeder
+ADMIN_PASSWORD='una-clave-larga-y-unica' php artisan db:seed --class=AdminUserSeeder
 ```
 
-Para un usuario administrador real: `php artisan db:seed --class=AdminUserSeeder`
-o `SuperAdminSeeder`.
+No ejecutes `php artisan db:seed` en producción: `DatabaseSeeder` está pensado
+para desarrollo y resetea roles/permisos. Los datos de demostración solo se
+crean con `APP_ENV=local` o `testing`.
 
 ## Tests
 
@@ -82,6 +83,25 @@ Se entrega como imagen Docker. Resumen:
 cp .env.production.example .env.production   # completar APP_KEY y DB_*
 docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
 ```
+
+### Primer ingreso
+
+La base arranca vacía. Definí en `.env.production`:
+
+```env
+ADMIN_EMAIL=admin@rennova.com
+ADMIN_PASSWORD=una-clave-larga-y-unica
+```
+
+Al levantar, el entrypoint crea el administrador si `ADMIN_PASSWORD` tiene
+valor. Si preferís crearlo después a mano:
+
+```bash
+docker compose -f docker-compose.prod.yml --env-file .env.production exec -T app \
+  php artisan db:seed --class=AdminUserSeeder --force
+```
+
+Entrás en `http://localhost:8080` con ese email y esa password.
 
 El detalle completo (variables, verificación, scheduler, backup, rollback)
 está en [`rennova/Documentacion/GUIA_DESPLIEGUE_PRODUCCION.md`](rennova/Documentacion/GUIA_DESPLIEGUE_PRODUCCION.md).

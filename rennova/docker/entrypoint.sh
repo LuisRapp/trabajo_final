@@ -59,7 +59,16 @@ como_usuario_app php artisan migrate --force
 
 # Catalogo de referencia que necesita el proceso automatico de mantenimiento
 # (tipo preventivo y correctivo). Es idempotente: no duplica ni pisa datos.
+# Roles y permisos: solo en una base nueva (el seeder no resetea si ya existen).
+como_usuario_app php artisan db:seed --class=RolesAndPermissionsSeeder --force
+
 como_usuario_app php artisan db:seed --class=CatalogoMantenimientoSeeder --force
+
+# Administrador inicial: solo si se definio ADMIN_PASSWORD. El seeder no
+# hardcodea la password y no la imprime; si el usuario ya existe, no la cambia.
+if [ -n "${ADMIN_PASSWORD:-}" ]; then
+	como_usuario_app php artisan db:seed --class=AdminUserSeeder --force
+fi
 
 service cron start
 

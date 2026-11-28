@@ -16,6 +16,14 @@ class RolesAndPermissionsSeeder extends Seeder
         // Reset cached roles and permissions
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
+        // Solo siembra en una base nueva. En un redeploy no resetea los roles
+        // ni los permisos que el usuario haya ajustado desde la UI.
+        if (! app()->environment('testing') && Permission::count() > 0) {
+            $this->command->info('Roles y permisos ya existen; no se resetean.');
+
+            return;
+        }
+
         // Definir los módulos del sistema
         $modules = [
             'partes-diarios' => 'Partes Diarios',

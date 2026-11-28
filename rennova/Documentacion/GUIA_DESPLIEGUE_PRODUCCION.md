@@ -47,6 +47,8 @@ DB_PORT=5432
 DB_DATABASE=rennova
 DB_USERNAME=rennova
 DB_PASSWORD=clave-segura
+ADMIN_EMAIL=admin@rennova.com
+ADMIN_PASSWORD=una-clave-larga-y-unica
 ```
 
 **Sobre `APP_KEY`:** si queda vacía, el entrypoint genera una en el primer
@@ -72,11 +74,29 @@ Lo que hace el entrypoint en el arranque, en orden:
 3. Espera a que Postgres responda (máximo 60 s; si no, el contenedor falla).
 4. `php artisan migrate --force` — **sin `|| true`**: si migra mal, el
    despliegue está mal y el contenedor no queda arriba como si estuviera sano.
-5. `php artisan db:seed --class=CatalogoMantenimientoSeeder --force` — catálogo
+5. `php artisan db:seed --class=RolesAndPermissionsSeeder --force` — crea roles y
+   permisos **solo si la base es nueva** (si ya existen, no los resetea).
+6. `php artisan db:seed --class=CatalogoMantenimientoSeeder --force` — catálogo
    de referencia (tipos Preventivo y Correctivo) que necesita el proceso
    automático de mantenimiento. Es idempotente.
-6. Arranca `cron` (scheduler) y el worker de cola en background.
-7. Levanta Apache.
+7. Si `ADMIN_PASSWORD` está definida, `php artisan db:seed --class=AdminUserSeeder
+   --force` — crea el administrador inicial. No imprime la password y, si el
+   usuario ya existe, no la cambia.
+8. Arranca `cron` (scheduler) y el worker de cola en background.
+9. Levanta Apache.
+
+## Primer ingreso
+
+Con `ADMIN_PASSWORD` definida en `.env.production`, el arranque crea
+`admin@rennova.com` con esa password. Si no la definiste, podés crearlo
+después:
+
+```bash
+docker compose -f docker-compose.prod.yml --env-file .env.production exec -T app \
+  php artisan db:seed --class=AdminUserSeeder --force
+```
+
+La password solo se usa al crear el usuario; si ya existe, no se cambia.
 
 ## 3. Verificación post-despliegue
 
