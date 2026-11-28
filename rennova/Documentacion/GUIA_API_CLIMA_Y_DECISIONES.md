@@ -553,8 +553,7 @@ if ($resultado['success']) {
 - **scripts/demo_clima_decisions.php**: Demostración interactiva
 
 ### Documentación
-- **README_CLIMA_DECISION_SERVICE.md**: Documentación técnica detallada
-- **SISTEMA_ANALISIS_CLIMATICO.md**: Sistema de análisis climático base
+- **INDEX.md**: Índice de la documentación vigente
 - **TAREAS_PROGRAMADAS_SCHEDULER.md**: Integración con scheduler
 
 ---

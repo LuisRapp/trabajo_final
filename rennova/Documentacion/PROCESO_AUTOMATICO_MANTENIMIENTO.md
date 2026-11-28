@@ -383,7 +383,6 @@ grep "Odómetro actualizado" storage/logs/laravel.log
 
 ##  Documentación Relacionada
 
-- [Manual de Mantenimientos](MANUAL_MANTENIMIENTOS.md)
 - [Guía de Uso: Mantenimientos](GUIA_MANTENIMIENTOS_USO.md)
 - [Tareas Programadas (Scheduler)](TAREAS_PROGRAMADAS_SCHEDULER.md)
 - [Sistema de Notificaciones Internas](SISTEMA_NOTIFICACIONES_INTERNAS.md)
