@@ -77,38 +77,60 @@ La suite corre contra SQLite en memoria (configurada en `phpunit.xml`).
 
 ## Despliegue en producción
 
-Se entrega como imagen Docker. Resumen:
-
-```bash
-cp .env.production.example .env.production   # completar APP_KEY y DB_*
-docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
-```
+Se entrega como imagen Docker. El resumen: copiar `.env.production.example`,
+completar las variables y levantar el compose. El detalle (variables,
+verificación, scheduler, backup, rollback) está en
+[`rennova/Documentacion/GUIA_DESPLIEGUE_PRODUCCION.md`](rennova/Documentacion/GUIA_DESPLIEGUE_PRODUCCION.md).
 
 ### Primer ingreso
 
-La base arranca vacía. Definí en `.env.production`:
+La base arranca vacía: no hay ningún usuario hasta que se crea.
+
+1. Copiá la plantilla y completá `APP_KEY`, `DB_*` y el administrador:
+
+```bash
+cp .env.production.example .env.production
+```
 
 ```env
+APP_KEY=...
+DB_CONNECTION=pgsql
+DB_HOST=db
+DB_PORT=5432
+DB_DATABASE=rennova
+DB_USERNAME=rennova
+DB_PASSWORD=una-clave-segura
 ADMIN_EMAIL=admin@rennova.com
 ADMIN_PASSWORD=una-clave-larga-y-unica
 ```
 
-Al levantar, el entrypoint crea el administrador si `ADMIN_PASSWORD` tiene
-valor. Si preferís crearlo después a mano:
+2. Levantá:
+
+```bash
+docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
+```
+
+En el arranque, el entrypoint:
+
+- corre las migraciones,
+- crea roles y permisos (solo si la base es nueva),
+- crea el catálogo de mantenimiento (Preventivo/Correctivo),
+- y si `ADMIN_PASSWORD` está definida, crea el administrador con ese email y esa password.
+
+No hay usuario demo ni contraseña fija. Después entrás en
+`http://localhost:8080` con ese email y esa password.
+
+Si no definiste `ADMIN_PASSWORD`, podés crear el administrador a mano:
 
 ```bash
 docker compose -f docker-compose.prod.yml --env-file .env.production exec -T app \
   php artisan db:seed --class=AdminUserSeeder --force
 ```
 
-Entrás en `http://localhost:8080` con ese email y esa password.
-
-El detalle completo (variables, verificación, scheduler, backup, rollback)
-está en [`rennova/Documentacion/GUIA_DESPLIEGUE_PRODUCCION.md`](rennova/Documentacion/GUIA_DESPLIEGUE_PRODUCCION.md).
-
 ## Documentación
 
 - `rennova/Documentacion/GUIA_DESPLIEGUE_PRODUCCION.md` — despliegue en producción.
 - `rennova/Documentacion/DEUDA_TECNICA.md` — deuda técnica conocida y su estado.
-- `rennova/Documentacion/GUIA_*.md` — guías por módulo (mantenimiento, liquidaciones, clima, recomendaciones).
+- `rennova/Documentacion/INDEX.md` — índice de la documentación vigente.
+- `rennova/Documentacion/GUIA_LIQUIDACION_PAGOS.md` y `GUIA_RECOMENDACIONES_POR_LOTE.md` — guías de uso.
 - `rennova/AGENTS.md` — convenciones de arquitectura y desarrollo.
